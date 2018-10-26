@@ -1,4 +1,3 @@
-use std::ffi::CStr;
 use std::collections::HashMap;
 
 use worker::entity_id::EntityId;
@@ -53,25 +52,6 @@ pub enum WorkerOp {
     CreateEntityResponse(CreateEntityResponseOp),
     DeleteEntityResponse(DeleteEntityResponseOp),
     EntityQueryResponse(EntityQueryResponseOp)
-}
-
-fn cstr_to_string(ptr: *const std::os::raw::c_char) -> String {
-    assert!(!ptr.is_null());
-    unsafe {
-        CStr::from_ptr(ptr).to_str().unwrap().to_owned()
-    }
-}
-
-fn cstr_array_to_vec_string(char_ptr: *mut *const std::os::raw::c_char, count: u32) -> Vec<String> {
-    let mut strings = Vec::new();
-    unsafe {
-        for i in 0..count as isize {
-            let ptr = char_ptr.offset(i) as *mut *const std::os::raw::c_char;
-            assert!(!ptr.is_null());
-            strings.push(cstr_to_string(*ptr));
-        }
-    }    
-    strings
 }
 
 impl WorkerOp {
