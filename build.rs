@@ -1,3 +1,4 @@
+extern crate bindgen;
 extern crate zip;
 
 use std::fs;
@@ -27,9 +28,13 @@ fn main() {
     
     let sdk_version = "13.3.0";
     
-    download_and_unpack(SpatialPackageSource::WorkerSdk(), "c-dynamic-x86_64-msvc_mt-win32", sdk_version, "dependencies/win");
-    download_and_unpack(SpatialPackageSource::WorkerSdk(), "c-dynamic-x86_64-clang_libcpp-macos", sdk_version, "dependencies/macos");
-    download_and_unpack(SpatialPackageSource::WorkerSdk(), "c-dynamic-x86_64-gcc_libstdcpp-linux", sdk_version, "dependencies/linux");
+    // TODO: Maybe this should be done elsewhere?
+    /*
+    download_and_unpack(SpatialPackageSource::WorkerSdk(), "c-dynamic-x86_64-msvc_mt-win32", sdk_version, "dependencies/win").expect("Could not download package");
+    download_and_unpack(SpatialPackageSource::WorkerSdk(), "c-dynamic-x86_64-clang_libcpp-macos", sdk_version, "dependencies/macos").expect("Could not download package");
+    download_and_unpack(SpatialPackageSource::WorkerSdk(), "c-dynamic-x86_64-gcc_libstdcpp-linux", sdk_version, "dependencies/linux").expect("Could not download package");
+    */
+    generate_spatial_bindings();
 }
 
 /// Downloads and unpacks a Spatial package into a specified directory.
@@ -45,6 +50,7 @@ fn download_and_unpack(package_source: SpatialPackageSource, package_name: &str,
         .expect("Could not find current working directory with error");
     
     // Clean target directory.
+    // TODO: If things are present, assume they are there and early exit? 
     fs::remove_dir_all(target_directory)?;
     fs::create_dir_all(target_directory)?;
     
@@ -139,4 +145,23 @@ fn unpack_package(target_package_path: &str, target_directory: &str) -> Result<(
     }
     
     Ok(())
+}
+
+fn generate_spatial_bindings() {
+    
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let bindings = bindgen::Builder::default()
+        // The input header we would like to generate
+        // bindings for.
+        .header("wrapper.h")
+        // Finish the builder and generate the bindings.
+        .generate()
+        // Unwrap the Result and panic on failure.
+        .expect("Unable to generate bindings");
+
+    // Write the bindings to the $OUT_DIR/bindings.rs file.
+    let out_path = path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
+    bindings.write_to_file(out_path.join("bindings.rs")).expect("Couldn't write bindings!");
 }

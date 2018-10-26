@@ -8,3 +8,4 @@ build = "build.rs"
 
 [build-dependencies]
 zip = "0.4"
+bindgen = "0.42.2"
