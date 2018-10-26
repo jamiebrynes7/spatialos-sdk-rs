@@ -1,0 +1,10 @@
+[package]
+name = "spatialos-sdk-rs"
+version = "0.1.0"
+authors = ["Jamie Brynes <jamiebrynes7@gmail.com>"]
+build = "build.rs"
+
+[dependencies]
+
+[build-dependencies]
+zip = "0.4"
