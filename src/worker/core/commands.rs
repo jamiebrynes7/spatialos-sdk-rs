@@ -1,4 +1,6 @@
-use worker::core::internal::*;
+use worker::internal::bindings::{
+    Schema_CommandRequest, Schema_CommandResponse, Worker_CommandRequest, Worker_CommandResponse,
+};
 
 // TODO: Wrap Schema_CommandRequest
 pub struct CommandRequest {

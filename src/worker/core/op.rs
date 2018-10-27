@@ -7,9 +7,11 @@ use worker::core::commands::*;
 use worker::core::component::*;
 use worker::core::entity_id::EntityId;
 use worker::core::entity_snapshot::EntitySnapshot;
-use worker::core::internal::*;
 use worker::core::metrics::Metrics;
 use worker::core::request_id::RequestId;
+
+use worker::internal::bindings::*;
+use worker::internal::utils::*;
 
 // TODO: Investigate tying lifetimes of ops to the OpList - there is potentially C-level data contained
 // inside them.

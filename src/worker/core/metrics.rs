@@ -1,4 +1,7 @@
-use worker::core::internal::*;
+use worker::internal::bindings::{
+    Worker_GaugeMetric, Worker_HistogramMetric, Worker_HistogramMetricBucket, Worker_Metrics,
+};
+use worker::internal::utils::cstr_to_string;
 
 pub struct Metrics {
     pub load: f64,

@@ -1,4 +1,6 @@
-use worker::core::internal::*;
+use worker::internal::bindings::{
+    Schema_ComponentData, Schema_ComponentUpdate, Worker_ComponentData, Worker_ComponentUpdate,
+};
 
 // TODO: Wrap Schema_ComponentData
 pub struct ComponentData {

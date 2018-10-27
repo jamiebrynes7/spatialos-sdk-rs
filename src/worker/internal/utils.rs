@@ -1,9 +1,3 @@
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
-#[allow(dead_code)]
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-
 use std::ffi::CStr;
 
 pub fn cstr_to_string(ptr: *const std::os::raw::c_char) -> String {

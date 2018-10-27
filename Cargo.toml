@@ -2,10 +2,6 @@
 name = "spatialos-sdk"
 version = "0.1.0"
 authors = ["Jamie Brynes <jamiebrynes7@gmail.com>"]
-build = "build.rs"
 
 [dependencies]
 zip = "0.4"
-
-[build-dependencies]
-bindgen = "0.42.2"
