@@ -9,29 +9,29 @@ fn main() {
     let sdk_version = "13.3.0";
 
     download_and_unpack(
-        SpatialPackageSource::WorkerSdk(),
-        "c-dynamic-x86_64-msvc_mt-win32",
+        SpatialPackageSource::WorkerSdk,
+        "c-static-x86_64-msvc_md-win32",
         sdk_version,
         "dependencies/win",
     ).expect("Could not download package");
     download_and_unpack(
-        SpatialPackageSource::WorkerSdk(),
-        "c-dynamic-x86_64-clang_libcpp-macos",
+        SpatialPackageSource::WorkerSdk,
+        "c-static-x86_64-clang_libcpp-macos",
         sdk_version,
         "dependencies/macos",
     ).expect("Could not download package");
     download_and_unpack(
-        SpatialPackageSource::WorkerSdk(),
-        "c-dynamic-x86_64-gcc_libstdcpp-linux",
+        SpatialPackageSource::WorkerSdk,
+        "c-static-x86_64-gcc_libstdcpp-linux",
         sdk_version,
         "dependencies/linux",
     ).expect("Could not download package");
 }
 
 enum SpatialPackageSource {
-    WorkerSdk(),
-    Tools(),
-    Schema(),
+    WorkerSdk,
+    Tools,
+    Schema,
 }
 
 impl SpatialPackageSource {
@@ -39,9 +39,9 @@ impl SpatialPackageSource {
         use SpatialPackageSource::*;
 
         match *self {
-            WorkerSdk() => "worker_sdk",
-            Tools() => "tools",
-            Schema() => "schema",
+            WorkerSdk => "worker_sdk",
+            Tools => "tools",
+            Schema => "schema",
         }
     }
 }
