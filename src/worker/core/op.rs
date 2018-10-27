@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use worker::core::authority::Authority;
 use worker::core::component::*;
 use worker::core::entity_id::EntityId;
 use worker::core::internal::*;
@@ -124,7 +125,7 @@ impl WorkerOp {
                 let authority_change_op = AuthorityChangeOp {
                     entity_id: EntityId::new(erased_op.authority_change.entity_id),
                     component_id: erased_op.authority_change.component_id,
-                    authority: // TODO: u8 -> enum?
+                    authority: Authority::from(erased_op.authority_change.authority)
                 };
                 WorkerOp::AuthorityChange(authority_change_op)
             }
