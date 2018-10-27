@@ -44,26 +44,47 @@ impl<T> RequestId<T> {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Authority {
-    Authoritative(),
-    AuthorityLossImminent(),
-    NotAuthoritative(),
+    Authoritative,
+    AuthorityLossImminent,
+    NotAuthoritative,
 }
 
 impl Authority {
     pub fn has_authority(&self) -> bool {
-        self != &Authority::NotAuthoritative()
+        self != &Authority::NotAuthoritative
     }
 }
 
 impl From<u8> for Authority {
     fn from(auth: u8) -> Self {
         match auth {
-            0 => Authority::NotAuthoritative(),
-            1 => Authority::Authoritative(),
-            2 => Authority::AuthorityLossImminent(),
+            0 => Authority::NotAuthoritative,
+            1 => Authority::Authoritative,
+            2 => Authority::AuthorityLossImminent,
             _ => panic!("Unknown authority state: {}", auth),
+        }
+    }
+}
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd)]
+pub enum LogLevel {
+    Debug,
+    Info,
+    Warn,
+    Error,
+    Fatal
+}
+
+impl From<u8> for LogLevel {
+    fn from(log_level: u8) -> Self {
+        match log_level {
+            1 => LogLevel::Debug,
+            2 => LogLevel::Info,
+            3 => LogLevel::Warn,
+            4 => LogLevel::Error,
+            5 => LogLevel::Fatal,
+            _ => panic!("Unknown log level: {}", log_level)
         }
     }
 }

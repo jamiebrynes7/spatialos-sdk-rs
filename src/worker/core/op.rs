@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use worker::core::{Authority, EntityId, RequestId};
+use worker::core::{Authority, EntityId, LogLevel, RequestId};
 use worker::core::commands::*;
 use worker::core::component::*;
 use worker::core::entity_snapshot::EntitySnapshot;
@@ -87,7 +87,7 @@ impl WorkerOp {
                 let op = unsafe { erased_op.log_message };
                 let log_message_op = LogMessageOp {
                     message: cstr_to_string(op.message),
-                    log_level: op.level,
+                    log_level: LogLevel::from(op.level),
                 };
                 WorkerOp::LogMessage(log_message_op)
             }
@@ -373,7 +373,7 @@ pub struct FlagUpdateOp {
 
 pub struct LogMessageOp {
     pub message: String,
-    pub log_level: u8, // TODO: Make enum
+    pub log_level: LogLevel, // TODO: Make enum
 }
 
 pub struct MetricsOp {
