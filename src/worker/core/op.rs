@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use worker::core::component::*;
 use worker::core::entity_id::EntityId;
 use worker::core::internal::*;
 use worker::core::request_id::RequestId;
@@ -108,7 +109,7 @@ impl WorkerOp {
             Worker_OpType_WORKER_OP_TYPE_ADD_COMPONENT => {
                 let add_component_op = AddComponentOp {
                     entity_id: EntityId::new(erased_op.add_component.entity_id),
-                    component_data: // TODO: Figure this out.
+                    component_data: ComponentData::from_worker_sdk(&erased_op.add_component.data)
                 };
                 WorkerOp::AddComponent(add_component_op)
             }
@@ -130,7 +131,7 @@ impl WorkerOp {
             Worker_OpType_WORKER_OP_TYPE_COMPONENT_UPDATE => {
                 let component_update_op = ComponentUpdateOp {
                     entity_id: EntityId::new(erased_op.component_update.entity_id),
-                    component_update: // TODO: Figure this out too.
+                    component_update: ComponentUpdate::from_worker_sdk(&erased_op.component_update.update)
                 }
                 WorkerOp::ComponentUpdate(component_update_op)
             }
