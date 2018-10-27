@@ -49,7 +49,6 @@ fn download_and_unpack(
         std::env::current_dir().expect("Could not find current working directory.");
 
     // Clean target directory.
-    // TODO: If things are present, assume they are there and early exit?
     fs::remove_dir_all(target_directory)?;
     fs::create_dir_all(target_directory)?;
 
@@ -60,13 +59,16 @@ fn download_and_unpack(
 
     let mut tmp_file = tmp_dir.clone();
     tmp_file.push(package_name);
-
+    
+    println!("Downloading {}.", package_name);
     download_package(
         package_source,
         package_name,
         sdk_version,
         tmp_file.to_str().unwrap(),
     );
+    
+    println!("Unpacking {} to {}.", package_name, target_directory);
     unpack_package(tmp_file.to_str().unwrap(), target_directory)?;
 
     // Clean temp directory.
