@@ -2,13 +2,11 @@
 
 use std::collections::HashMap;
 
-use worker::core::authority::Authority;
+use worker::core::{Authority, EntityId, RequestId};
 use worker::core::commands::*;
 use worker::core::component::*;
-use worker::core::entity_id::EntityId;
 use worker::core::entity_snapshot::EntitySnapshot;
 use worker::core::metrics::Metrics;
-use worker::core::request_id::RequestId;
 
 use worker::internal::bindings::*;
 use worker::internal::utils::*;
