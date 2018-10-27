@@ -10,7 +10,7 @@ impl ComponentData {
     pub(crate) fn from_worker_sdk(component_data: &Worker_ComponentData) -> ComponentData {
         ComponentData {
             component_id: component_data.component_id,
-            schema_type: component_data.schema_type
+            schema_type: component_data.schema_type,
         }
     }
 }
@@ -25,7 +25,7 @@ impl ComponentUpdate {
     pub(crate) fn from_worker_sdk(component_update: &Worker_ComponentUpdate) -> ComponentUpdate {
         ComponentUpdate {
             component_id: component_update.component_id,
-            schema_type: component_update.schema_type
+            schema_type: component_update.schema_type,
         }
     }
 }

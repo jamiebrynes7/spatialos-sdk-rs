@@ -2,7 +2,7 @@
 pub enum Authority {
     Authoritative(),
     AuthorityLossImminent(),
-    NotAuthoritative()
+    NotAuthoritative(),
 }
 
 impl Authority {
@@ -17,7 +17,7 @@ impl From<u8> for Authority {
             0 => Authority::NotAuthoritative(),
             1 => Authority::Authoritative(),
             2 => Authority::AuthorityLossImminent(),
-            _ => panic!("Unknown authority state: {}", auth)
+            _ => panic!("Unknown authority state: {}", auth),
         }
     }
 }

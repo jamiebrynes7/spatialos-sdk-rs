@@ -1,4 +1,2 @@
 // TODO: Finish
-pub struct EntitySnapshot {
-    
-}
+pub struct EntitySnapshot {}

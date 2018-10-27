@@ -5,13 +5,13 @@ pub struct EntityId {
 
 impl EntityId {
     pub fn new(id: i64) -> EntityId {
-        EntityId {id}
+        EntityId { id }
     }
-    
+
     pub fn is_valid(&self) -> bool {
         self.id > 0
     }
-    
+
     pub fn to_string(&self) -> String {
         format!("EntityId: {}", self.id)
     }

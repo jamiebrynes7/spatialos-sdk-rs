@@ -1,16 +1,31 @@
 extern crate zip;
 
-use std::process;
 use std::fs;
-use std::path;
 use std::io;
+use std::path;
+use std::process;
 
 fn main() {
     let sdk_version = "13.3.0";
-    
-    download_and_unpack(SpatialPackageSource::WorkerSdk(), "c-dynamic-x86_64-msvc_mt-win32", sdk_version, "dependencies/win").expect("Could not download package");
-    download_and_unpack(SpatialPackageSource::WorkerSdk(), "c-dynamic-x86_64-clang_libcpp-macos", sdk_version, "dependencies/macos").expect("Could not download package");
-    download_and_unpack(SpatialPackageSource::WorkerSdk(), "c-dynamic-x86_64-gcc_libstdcpp-linux", sdk_version, "dependencies/linux").expect("Could not download package");
+
+    download_and_unpack(
+        SpatialPackageSource::WorkerSdk(),
+        "c-dynamic-x86_64-msvc_mt-win32",
+        sdk_version,
+        "dependencies/win",
+    ).expect("Could not download package");
+    download_and_unpack(
+        SpatialPackageSource::WorkerSdk(),
+        "c-dynamic-x86_64-clang_libcpp-macos",
+        sdk_version,
+        "dependencies/macos",
+    ).expect("Could not download package");
+    download_and_unpack(
+        SpatialPackageSource::WorkerSdk(),
+        "c-dynamic-x86_64-gcc_libstdcpp-linux",
+        sdk_version,
+        "dependencies/linux",
+    ).expect("Could not download package");
 }
 
 enum SpatialPackageSource {
@@ -45,8 +60,7 @@ fn download_and_unpack(
     sdk_version: &str,
     target_directory: &str,
 ) -> Result<(), io::Error> {
-    let current_dir =
-        std::env::current_dir().expect("Could not find current working directory.");
+    let current_dir = std::env::current_dir().expect("Could not find current working directory.");
 
     // Clean target directory.
     fs::remove_dir_all(target_directory)?;
@@ -59,7 +73,7 @@ fn download_and_unpack(
 
     let mut tmp_file = tmp_dir.clone();
     tmp_file.push(package_name);
-    
+
     println!("Downloading {}.", package_name);
     download_package(
         package_source,
@@ -67,7 +81,7 @@ fn download_and_unpack(
         sdk_version,
         tmp_file.to_str().unwrap(),
     );
-    
+
     println!("Unpacking {} to {}.", package_name, target_directory);
     unpack_package(tmp_file.to_str().unwrap(), target_directory)?;
 
@@ -160,14 +174,14 @@ fn unpack_package(target_package_path: &str, target_directory: &str) -> Result<(
             io::copy(&mut file, &mut outfile)?;
 
             #[cfg(any(unix))]
-                {
-                    use std::os::unix::fs::PermissionsExt;
+            {
+                use std::os::unix::fs::PermissionsExt;
 
-                    let metadata = outfile.metadata()?;
-                    let mut permissions = metadata.permissions();
-                    // TODO: Check if is binary before setting executable?
-                    permissions.set_mode(0o774);
-                }
+                let metadata = outfile.metadata()?;
+                let mut permissions = metadata.permissions();
+                // TODO: Check if is binary before setting executable?
+                permissions.set_mode(0o774);
+            }
         }
     }
 
