@@ -5,6 +5,7 @@ use worker::core::component::*;
 use worker::core::commands::*;
 use worker::core::entity_id::EntityId;
 use worker::core::internal::*;
+use worker::core::metrics::Metrics;
 use worker::core::request_id::RequestId;
 
 // TODO: Investigate tying lifetimes of ops to the OpList - there is potentially C-level data contained
@@ -86,7 +87,7 @@ impl WorkerOp {
             }
             Worker_OpType_WORKER_OP_TYPE_METRICS => {
                 let metrics_op = MetricsOp {
-                    metrics: Metrics::from_worker_sdk(erased_op.metrics.metrics) // TODO: Define
+                    metrics: Metrics::from_worker_sdk(&erased_op.metrics.metrics)
                 };
                 WorkerOp::Metrics(metrics_op)
             }
@@ -337,7 +338,7 @@ pub struct LogMessageOp {
 }
 
 pub struct MetricsOp {
-    pub metrics: Metrics, // TODO: Define.
+    pub metrics: Metrics, 
 }
 
 pub struct CriticalSectionOp {
@@ -353,7 +354,7 @@ pub struct RemoveEntityOp {
 }
 
 pub struct ReserveEntityIdsResponseOp {
-    pub request_id: RequestId<ReserveEntityIdsRequest>, // TODO: Define
+    pub request_id: RequestId<ReserveEntityIdsRequest>, 
     pub status_code: StatusCode<EntityId>,
     pub number_of_entity_ids: u32
 }
@@ -392,7 +393,7 @@ pub struct RemoveComponentOp {
 pub struct AuthorityChangeOp {
     pub entity_id: EntityId,
     pub component_id: u32,
-    pub authority: Authority // TODO: Define
+    pub authority: Authority 
 }
 
 pub struct ComponentUpdateOp {

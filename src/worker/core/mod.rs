@@ -5,3 +5,4 @@ pub mod entity_id;
 pub mod component;
 pub mod authority;
 pub mod commands;
+pub mod metrics;
