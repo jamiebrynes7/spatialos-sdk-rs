@@ -6,3 +6,4 @@ pub mod component;
 pub mod authority;
 pub mod commands;
 pub mod metrics;
+pub mod entity_snapshot;
