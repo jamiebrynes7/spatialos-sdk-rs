@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use worker::entity_id::EntityId;
-use worker::internal::*;
-use worker::request_id::RequestId;
+use worker::core::entity_id::EntityId;
+use worker::core::internal::*;
+use worker::core::request_id::RequestId;
 
 // TODO: Investigate tying lifetimes of ops to the OpList - there is potentially C-level data contained
 // inside them.
