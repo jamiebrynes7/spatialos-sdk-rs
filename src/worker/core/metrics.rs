@@ -43,7 +43,7 @@ pub struct GaugeMetric {
 }
 
 impl GaugeMetric {
-    pub(crate) fn from_worker_sdk(gauge_metric: Worker_GaugeMetric) -> Self
+    fn from_worker_sdk(gauge_metric: Worker_GaugeMetric) -> Self
     {
         GaugeMetric {
             key: cstr_to_string(gauge_metric.key),
@@ -59,7 +59,7 @@ pub struct HistogramMetric {
 }
 
 impl HistogramMetric {
-    pub(crate) fn from_worker_sdk(histogram_metric: Worker_HistogramMetric) -> Self
+    fn from_worker_sdk(histogram_metric: Worker_HistogramMetric) -> Self
     {
         let mut buckets = Vec::new();
 
