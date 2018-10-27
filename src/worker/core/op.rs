@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use worker::core::authority::Authority;
 use worker::core::component::*;
+use worker::core::commands::*;
 use worker::core::entity_id::EntityId;
 use worker::core::internal::*;
 use worker::core::request_id::RequestId;
@@ -133,7 +134,7 @@ impl WorkerOp {
                 let component_update_op = ComponentUpdateOp {
                     entity_id: EntityId::new(erased_op.component_update.entity_id),
                     component_update: ComponentUpdate::from_worker_sdk(&erased_op.component_update.update)
-                }
+                };
                 WorkerOp::ComponentUpdate(component_update_op)
             }
             Worker_OpType_WORKER_OP_TYPE_COMMAND_REQUEST => {
@@ -147,14 +148,14 @@ impl WorkerOp {
                     timeout_millis: erased_op.command_request.timeout_millis,
                     caller_worker_id: cstr_to_string(erased_op.command_request.caller_worker_id),
                     caller_attribute_set: attribute_set,
-                    request: // TODO: Figure this out too.
+                    request: CommandRequest::from_worker_sdk(&erased_op.command_request.request)
                 };
                 WorkerOp::CommandRequest(command_request_op)
             }
             Worker_OpType_WORKER_OP_TYPE_COMMAND_RESPONSE => {
                 let status_code = match erased_op.command_response.status_code as u32{
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
-                        StatusCode::Success()// TODO: Figure this out
+                        StatusCode::Success(CommandResponse::from_worker_sdk(&erased_op.command_response.response))
                     }
                     Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
                         StatusCode::Timeout(cstr_to_string(erased_op.command_response.message))
@@ -363,7 +364,7 @@ pub struct CreateEntityResponseOp {
 }
 
 pub struct DeleteEntityResponseOp {
-    pub request_id: RequestId<DeletEntityResponse>,
+    pub request_id: RequestId<DeleteEntityRequest>,
     pub entity_id: EntityId,
     pub status_code: StatusCode<()>,
 }

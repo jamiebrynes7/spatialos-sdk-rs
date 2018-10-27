@@ -4,3 +4,4 @@ pub mod request_id;
 pub mod entity_id;
 pub mod component;
 pub mod authority;
+pub mod commands;
