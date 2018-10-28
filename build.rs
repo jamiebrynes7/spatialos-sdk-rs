@@ -4,7 +4,7 @@ fn main() {
     let target = env::var("TARGET").unwrap();
 
     let mut libs = get_platform_libs(&target);
-    
+
     let package_dir = if target.contains("windows") {
         "dependencies/win/lib"
     } else if target.contains("apple") {
@@ -28,7 +28,7 @@ fn main() {
     }
 }
 
-fn get_platform_libs(target: &String) -> Vec<&str>{
+fn get_platform_libs(target: &String) -> Vec<&str> {
     if target.contains("windows") {
         vec![
             "worker",

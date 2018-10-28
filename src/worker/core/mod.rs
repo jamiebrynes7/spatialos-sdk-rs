@@ -78,7 +78,7 @@ pub enum LogLevel {
     Info,
     Warn,
     Error,
-    Fatal
+    Fatal,
 }
 
 impl From<u8> for LogLevel {
@@ -89,21 +89,21 @@ impl From<u8> for LogLevel {
             3 => LogLevel::Warn,
             4 => LogLevel::Error,
             5 => LogLevel::Fatal,
-            _ => panic!("Unknown log level: {}", log_level)
+            _ => panic!("Unknown log level: {}", log_level),
         }
     }
 }
 
-pub struct InterestOverride { 
+pub struct InterestOverride {
     component_id: u32,
-    is_interested: bool
+    is_interested: bool,
 }
 
 impl From<InterestOverride> for Worker_InterestOverride {
     fn from(interest_override: InterestOverride) -> Self {
         Worker_InterestOverride {
             is_interested: interest_override.is_interested as u8,
-            component_id: interest_override.component_id
+            component_id: interest_override.component_id,
         }
     }
 }

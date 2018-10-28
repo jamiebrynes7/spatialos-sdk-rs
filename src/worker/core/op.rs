@@ -2,11 +2,11 @@
 
 use std::collections::HashMap;
 
-use worker::core::{Authority, EntityId, LogLevel, RequestId};
 use worker::core::commands::*;
 use worker::core::component::*;
 use worker::core::entity_snapshot::EntitySnapshot;
 use worker::core::metrics::Metrics;
+use worker::core::{Authority, EntityId, LogLevel, RequestId};
 
 use worker::internal::bindings::*;
 use worker::internal::utils::*;
@@ -15,7 +15,7 @@ use worker::internal::utils::*;
 // inside them.
 pub struct OpList {
     pub ops: Vec<WorkerOp>,
-    ctype: Worker_OpList
+    ctype: Worker_OpList,
 }
 
 impl OpList {
@@ -28,16 +28,16 @@ impl OpList {
                 ops.push(WorkerOp::from_worker_op(ptr))
             }
         }
-        OpList { 
+        OpList {
             ops,
-            ctype: raw_ops_list
+            ctype: raw_ops_list,
         }
     }
 }
 
 impl Drop for OpList {
     fn drop(&mut self) {
-        unsafe { Worker_OpList_Destroy(&mut self.ctype)}
+        unsafe { Worker_OpList_Destroy(&mut self.ctype) }
     }
 }
 

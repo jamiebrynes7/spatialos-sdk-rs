@@ -1,7 +1,7 @@
 use std::ptr;
 use worker::internal::bindings::*;
 
-pub const PASSTHROUGH_VTABLE : Worker_ComponentVtable = Worker_ComponentVtable {
+pub const PASSTHROUGH_VTABLE: Worker_ComponentVtable = Worker_ComponentVtable {
     component_id: 0,
     user_data: ptr::null_mut(),
     command_request_free: None,
