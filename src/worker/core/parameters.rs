@@ -1,19 +1,23 @@
-use std::ffi::{CString};
+use std::ffi::CString;
 use std::ptr;
 
-use worker::internal::bindings::*;
 use worker::core::vtable;
+use worker::internal::bindings::*;
 
 pub enum ConnectionType {
     TCP,
-    RakNet
+    RakNet,
 }
 
 impl ConnectionType {
     fn to_u8(&self) -> u8 {
         match self {
-            ConnectionType::TCP => Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8,
-            ConnectionType::RakNet => Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8
+            ConnectionType::TCP => {
+                Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8
+            }
+            ConnectionType::RakNet => {
+                Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8
+            }
         }
     }
 }
@@ -21,12 +25,10 @@ impl ConnectionType {
 pub struct ReceptionistConnectionParameters {
     pub hostname: String,
     pub port: u16,
-    pub connection_params: ConnectionParameters
+    pub connection_params: ConnectionParameters,
 }
 
-pub struct LocatorConnectionParameters {
-
-}
+pub struct LocatorConnectionParameters {}
 
 pub struct ConnectionParameters {
     pub worker_type: String,
@@ -38,6 +40,8 @@ pub struct ConnectionParameters {
     pub protocol_logging: ProtocolLoggingParameters,
     pub enable_protocol_logging_at_startup: bool,
     pub thread_affinity: ThreadAffinityParameters,
+
+    native_worker_type: Option<CString>,
 }
 
 impl ConnectionParameters {
@@ -48,18 +52,23 @@ impl ConnectionParameters {
             send_queue_capacity: WORKER_DEFAULTS_SEND_QUEUE_CAPACITY,
             receive_queue_capacity: WORKER_DEFAULTS_RECEIVE_QUEUE_CAPACITY,
             log_message_queue_capacity: WORKER_DEFAULTS_LOG_MESSAGE_QUEUE_CAPACITY,
-            built_in_metrics_report_period_millis: WORKER_DEFAULTS_BUILT_IN_METRICS_REPORT_PERIOD_MILLIS,
+            built_in_metrics_report_period_millis:
+                WORKER_DEFAULTS_BUILT_IN_METRICS_REPORT_PERIOD_MILLIS,
             protocol_logging: ProtocolLoggingParameters::default(),
             enable_protocol_logging_at_startup: false,
-            thread_affinity: ThreadAffinityParameters::default()
+            thread_affinity: ThreadAffinityParameters::default(),
+
+            native_worker_type: None,
         }
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_ConnectionParameters {
-        let worker_type_cstr = CString::new(self.worker_type.clone()).expect("Received 0 byte in supplied worker_type.");
-        
+    pub(crate) fn to_worker_sdk(&mut self) -> Worker_ConnectionParameters {
+        let worker_type_cstr = CString::new(self.worker_type.clone())
+            .expect("Received 0 byte in supplied worker_type.");
+        let ptr = worker_type_cstr.as_ptr();
+        self.native_worker_type = Some(worker_type_cstr);
         Worker_ConnectionParameters {
-            worker_type: worker_type_cstr.as_ptr(),
+            worker_type: ptr,
             network: self.network.to_worker_sdk(),
             send_queue_capacity: self.send_queue_capacity,
             receive_queue_capacity: self.receive_queue_capacity,
@@ -81,7 +90,7 @@ pub struct NetworkParameters {
     pub raknet: RakNetNetworkParameters,
     pub tcp: TcpNetworkParameters,
     pub connection_timeout_millis: u64,
-    pub default_command_timeout_millis: u32
+    pub default_command_timeout_millis: u32,
 }
 
 impl NetworkParameters {
@@ -92,7 +101,7 @@ impl NetworkParameters {
             raknet: RakNetNetworkParameters::default(),
             tcp: TcpNetworkParameters::default(),
             connection_timeout_millis: WORKER_DEFAULTS_CONNECTION_TIMEOUT_MILLIS as u64,
-            default_command_timeout_millis: WORKER_DEFAULTS_DEFAULT_COMMAND_TIMEOUT_MILLIS
+            default_command_timeout_millis: WORKER_DEFAULTS_DEFAULT_COMMAND_TIMEOUT_MILLIS,
         }
     }
 
@@ -103,25 +112,25 @@ impl NetworkParameters {
             raknet: self.raknet.to_worker_sdk(),
             tcp: self.tcp.to_worker_sdk(),
             connection_timeout_millis: self.connection_timeout_millis,
-            default_command_timeout_millis: self.default_command_timeout_millis
+            default_command_timeout_millis: self.default_command_timeout_millis,
         }
     }
 }
 
 pub struct RakNetNetworkParameters {
-    pub heartbeat_timeout_millis: u32
+    pub heartbeat_timeout_millis: u32,
 }
 
 impl RakNetNetworkParameters {
     pub fn default() -> Self {
         RakNetNetworkParameters {
-            heartbeat_timeout_millis: WORKER_DEFAULTS_RAKNET_HEARTBEAT_TIMEOUT_MILLIS
+            heartbeat_timeout_millis: WORKER_DEFAULTS_RAKNET_HEARTBEAT_TIMEOUT_MILLIS,
         }
     }
 
     pub(crate) fn to_worker_sdk(&self) -> Worker_RakNetNetworkParameters {
         Worker_RakNetNetworkParameters {
-            heartbeat_timeout_millis: self.heartbeat_timeout_millis
+            heartbeat_timeout_millis: self.heartbeat_timeout_millis,
         }
     }
 }
@@ -130,7 +139,7 @@ pub struct TcpNetworkParameters {
     pub multiplex_level: u8,
     pub send_buffer_size: u32,
     pub receive_buffer_size: u32,
-    pub no_delay: bool
+    pub no_delay: bool,
 }
 
 impl TcpNetworkParameters {
@@ -139,7 +148,7 @@ impl TcpNetworkParameters {
             multiplex_level: WORKER_DEFAULTS_TCP_MULTIPLEX_LEVEL as u8,
             send_buffer_size: WORKER_DEFAULTS_TCP_SEND_BUFFER_SIZE,
             receive_buffer_size: WORKER_DEFAULTS_TCP_RECEIVE_BUFFER_SIZE,
-            no_delay: WORKER_DEFAULTS_TCP_NO_DELAY != 0
+            no_delay: WORKER_DEFAULTS_TCP_NO_DELAY != 0,
         }
     }
 
@@ -148,7 +157,7 @@ impl TcpNetworkParameters {
             multiplex_level: self.multiplex_level,
             send_buffer_size: self.send_buffer_size,
             receive_buffer_size: self.receive_buffer_size,
-            no_delay: self.no_delay as u8
+            no_delay: self.no_delay as u8,
         }
     }
 }
@@ -156,7 +165,7 @@ impl TcpNetworkParameters {
 pub struct ProtocolLoggingParameters {
     pub log_prefix: String,
     pub max_log_files: u32,
-    pub max_log_file_size_bytes: u32
+    pub max_log_file_size_bytes: u32,
 }
 
 impl ProtocolLoggingParameters {
@@ -164,17 +173,18 @@ impl ProtocolLoggingParameters {
         ProtocolLoggingParameters {
             log_prefix: "".to_owned(),
             max_log_files: WORKER_DEFAULTS_MAX_LOG_FILES,
-            max_log_file_size_bytes: WORKER_DEFAULTS_MAX_LOG_FILE_SIZE_BYTES
+            max_log_file_size_bytes: WORKER_DEFAULTS_MAX_LOG_FILE_SIZE_BYTES,
         }
     }
 
-    pub(crate) fn to_worker_sdk(& self) -> Worker_ProtocolLoggingParameters {
-        let log_prefix_cstr = CString::new(self.log_prefix.clone()).expect("Received 0 byte in supplied log prefix.");
-        
+    pub(crate) fn to_worker_sdk(&self) -> Worker_ProtocolLoggingParameters {
+        let log_prefix_cstr =
+            CString::new(self.log_prefix.clone()).expect("Received 0 byte in supplied log prefix.");
+
         Worker_ProtocolLoggingParameters {
             log_prefix: log_prefix_cstr.as_ptr(),
             max_log_files: self.max_log_files,
-            max_log_file_size_bytes: self.max_log_file_size_bytes
+            max_log_file_size_bytes: self.max_log_file_size_bytes,
         }
     }
 }
@@ -182,7 +192,7 @@ impl ProtocolLoggingParameters {
 pub struct ThreadAffinityParameters {
     pub receive_threads_affinity_mask: u64,
     pub send_threads_affinity_mask: u64,
-    pub temporary_threads_affinity_mask: u64
+    pub temporary_threads_affinity_mask: u64,
 }
 
 impl ThreadAffinityParameters {
@@ -190,7 +200,7 @@ impl ThreadAffinityParameters {
         ThreadAffinityParameters {
             receive_threads_affinity_mask: 0,
             send_threads_affinity_mask: 0,
-            temporary_threads_affinity_mask: 0
+            temporary_threads_affinity_mask: 0,
         }
     }
 
@@ -198,39 +208,39 @@ impl ThreadAffinityParameters {
         Worker_ThreadAffinityParameters {
             receive_threads_affinity_mask: self.receive_threads_affinity_mask,
             send_threads_affinity_mask: self.send_threads_affinity_mask,
-            temporary_threads_affinity_mask: self.temporary_threads_affinity_mask
+            temporary_threads_affinity_mask: self.temporary_threads_affinity_mask,
         }
     }
 }
 
 pub struct CommandParameters {
-    allow_short_circuit: bool
+    allow_short_circuit: bool,
 }
 
 impl CommandParameters {
     const SHORT_CIRCUIT: CommandParameters = CommandParameters {
-        allow_short_circuit: true
+        allow_short_circuit: true,
     };
 
     const DEFAULT: CommandParameters = CommandParameters {
-        allow_short_circuit: false
+        allow_short_circuit: false,
     };
 
     pub(crate) fn to_worker_sdk(&self) -> Worker_CommandParameters {
         Worker_CommandParameters {
-            allow_short_circuit: self.allow_short_circuit as u8
+            allow_short_circuit: self.allow_short_circuit as u8,
         }
     }
 }
 
-pub struct SnapshotParameters { }
+pub struct SnapshotParameters {}
 
 impl SnapshotParameters {
     pub(crate) fn to_worker_sdk(&self) -> Worker_SnapshotParameters {
         Worker_SnapshotParameters {
             component_vtable_count: 0,
             component_vtables: ::std::ptr::null(),
-            default_component_vtable: &vtable::PASSTHROUGH_VTABLE
+            default_component_vtable: &vtable::PASSTHROUGH_VTABLE,
         }
     }
 }
