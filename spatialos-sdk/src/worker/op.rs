@@ -134,7 +134,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
                 let op = erased_op.add_component;
                 let add_component_op = AddComponentOp {
                     entity_id: EntityId::new(op.entity_id),
-                    component_data: ComponentData::from_worker_sdk(&op.data),
+                    component_data: ::worker::component::internal::ComponentData::from_worker_sdk(&op.data),
                 };
                 WorkerOp::AddComponent(add_component_op)
             }
@@ -159,7 +159,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
                 let op = erased_op.component_update;
                 let component_update_op = ComponentUpdateOp {
                     entity_id: EntityId::new(op.entity_id),
-                    component_update: ComponentUpdate::from_worker_sdk(&op.update),
+                    component_update: ::worker::component::internal::ComponentUpdate::from_worker_sdk(&op.update),
                 };
                 WorkerOp::ComponentUpdate(component_update_op)
             }
@@ -176,7 +176,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
                     timeout_millis: op.timeout_millis,
                     caller_worker_id: cstr_to_string(op.caller_worker_id),
                     caller_attribute_set: attribute_set,
-                    request: CommandRequest::from_worker_sdk(&op.request),
+                    request: ::worker::component::internal::CommandRequest::from_worker_sdk(&op.request),
                 };
                 WorkerOp::CommandRequest(command_request_op)
             }
@@ -184,7 +184,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
                 let op = erased_op.command_response;
                 let status_code = match op.status_code as u32 {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
-                        StatusCode::Success(CommandResponse::from_worker_sdk(&op.response))
+                        StatusCode::Success(::worker::component::internal::CommandResponse::from_worker_sdk(&op.response))
                     }
                     Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
                         StatusCode::Timeout(cstr_to_string(op.message))
@@ -432,7 +432,7 @@ pub struct EntityQueryResponseOp {
 
 pub struct AddComponentOp {
     pub entity_id: EntityId,
-    pub component_data: ComponentData,
+    pub component_data: ::worker::component::internal::ComponentData,
 }
 
 pub struct RemoveComponentOp {
@@ -448,7 +448,7 @@ pub struct AuthorityChangeOp {
 
 pub struct ComponentUpdateOp {
     pub entity_id: EntityId,
-    pub component_update: ComponentUpdate,
+    pub component_update: ::worker::component::internal::ComponentUpdate,
 }
 
 pub struct CommandRequestOp {
@@ -457,11 +457,11 @@ pub struct CommandRequestOp {
     pub timeout_millis: u32,
     pub caller_worker_id: String,
     pub caller_attribute_set: Vec<String>,
-    pub request: CommandRequest,
+    pub request: ::worker::component::internal::CommandRequest,
 }
 
 pub struct CommandResponseOp {
     pub request_id: RequestId<OutgoingCommandRequest>,
     pub entity_id: EntityId,
-    pub status_code: StatusCode<CommandResponse>,
+    pub status_code: StatusCode<::worker::component::internal::CommandResponse>,
 }

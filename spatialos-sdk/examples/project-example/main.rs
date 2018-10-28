@@ -15,6 +15,8 @@ use uuid::Uuid;
 static HOST: &str = "127.0.0.1";
 static PORT: u16 = 7777;
 
+mod generated_code;
+
 fn main() {
     println!("Entered program");
 

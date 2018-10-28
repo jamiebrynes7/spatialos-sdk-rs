@@ -43,7 +43,7 @@ pub trait Connection {
     fn send_command_request(
         &mut self,
         entity_id: EntityId,
-        request: CommandRequest,
+        request: ::worker::component::internal::CommandRequest,
         timeout_millis: Option<u32>,
         command_parameters: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest>;
@@ -51,7 +51,7 @@ pub trait Connection {
     fn send_command_response(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
-        response: CommandResponse,
+        response: ::worker::component::internal::CommandResponse,
     );
 
     fn send_command_failure(
@@ -60,7 +60,7 @@ pub trait Connection {
         message: &str,
     );
 
-    fn send_component_update(&mut self, entity_id: EntityId, component_update: ComponentUpdate);
+    fn send_component_update(&mut self, entity_id: EntityId, component_update: ::worker::component::internal::ComponentUpdate);
     fn send_component_interest(
         &mut self,
         entity_id: EntityId,
@@ -237,7 +237,7 @@ impl Connection for WorkerConnection {
     fn send_command_request(
         &mut self,
         entity_id: EntityId,
-        request: CommandRequest,
+        request: ::worker::component::internal::CommandRequest,
         timeout_millis: Option<u32>,
         command_parameters: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest> {
@@ -247,7 +247,7 @@ impl Connection for WorkerConnection {
     fn send_command_response(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
-        response: CommandResponse,
+        response: ::worker::component::internal::CommandResponse,
     ) {
         unimplemented!()
     }
@@ -260,7 +260,7 @@ impl Connection for WorkerConnection {
         unimplemented!()
     }
 
-    fn send_component_update(&mut self, entity_id: EntityId, component_update: ComponentUpdate) {
+    fn send_component_update(&mut self, entity_id: EntityId, component_update: ::worker::component::internal::ComponentUpdate) {
         unimplemented!()
     }
 
