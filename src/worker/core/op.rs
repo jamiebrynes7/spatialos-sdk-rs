@@ -14,7 +14,8 @@ use worker::internal::utils::*;
 // TODO: Investigate tying lifetimes of ops to the OpList - there is potentially C-level data contained
 // inside them.
 pub struct OpList {
-    ops: Vec<WorkerOp>,
+    pub ops: Vec<WorkerOp>,
+    ctype: Worker_OpList
 }
 
 impl OpList {
@@ -27,7 +28,16 @@ impl OpList {
                 ops.push(WorkerOp::from_worker_op(ptr))
             }
         }
-        OpList { ops }
+        OpList { 
+            ops,
+            ctype: raw_ops_list
+        }
+    }
+}
+
+impl Drop for OpList {
+    fn drop(&mut self) {
+        unsafe { Worker_OpList_Destroy(&mut self.ctype)}
     }
 }
 
