@@ -5,6 +5,13 @@ use std::io;
 use std::path;
 use std::process;
 
+#[cfg(target_os = "linux")]
+static DEV_PLATFORM: &str = "linux";
+#[cfg(target_os = "macos")]
+static DEV_PLATFORM: &str = "macos";
+#[cfg(target_os = "windows")]
+static DEV_PLATFORM: &str = "win32";
+
 fn main() {
     let sdk_version = "13.3.0";
 
@@ -25,6 +32,18 @@ fn main() {
         "c-static-x86_64-gcc_libstdcpp_pic-linux",
         sdk_version,
         "dependencies/linux",
+    ).expect("Could not download package");
+    download_and_unpack(
+        SpatialPackageSource::Schema,
+        "standard_library",
+        sdk_version,
+        "dependencies/std-lib",
+    ).expect("Could not download package");
+    download_and_unpack(
+        SpatialPackageSource::Tools,
+        format!("schema_compiler-x86_64-{}", DEV_PLATFORM).as_ref(),
+        sdk_version,
+        "dependencies/schema-compiler",
     ).expect("Could not download package");
 }
 
@@ -63,7 +82,7 @@ fn download_and_unpack(
     let current_dir = std::env::current_dir().expect("Could not find current working directory.");
 
     // Clean target directory.
-    fs::remove_dir_all(target_directory)?;
+    fs::remove_dir_all(target_directory).unwrap_or(());
     fs::create_dir_all(target_directory)?;
 
     // Create temporary directory.
