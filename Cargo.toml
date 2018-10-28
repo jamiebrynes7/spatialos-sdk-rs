@@ -1,6 +1,6 @@
 [package]
 name = "spatialos-sdk"
-version = "0.1.0"
+version = "0.0.0"
 authors = ["Jamie Brynes <jamiebrynes7@gmail.com>"]
 build = "build.rs"
 
