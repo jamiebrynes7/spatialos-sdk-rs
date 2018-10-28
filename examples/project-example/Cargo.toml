@@ -1,0 +1,8 @@
+[package]
+name = "spatialos-sdk-project-example"
+version = "0.0.0"
+authors = ["Jamie Brynes <jamiebrynes7@gmail.com>"]
+publish = false
+
+[dependencies]
+spatialos-sdk = { path = "../../"} 

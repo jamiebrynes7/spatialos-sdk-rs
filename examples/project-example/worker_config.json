@@ -1,0 +1,61 @@
+{
+  "workerType": "RustWorker",
+  "attributeSet": {
+    "attributes": [
+      "rusty"
+    ]
+  },
+  "entity_interest": {
+    "range_entity_interest": {
+      "radius": 2
+    }
+  },
+  "componentDelivery": {
+    "default": "RELIABLE_ORDERED",
+    "checkout_all_initially": true
+  },
+  "launchConfiguration": {
+    "cloudDeployment": {
+      "linux": {
+        "localBuildDirectory": "../../target/release/examples/",
+        "command": "project-example",
+        "arguments": [
+          "${IMPROBABLE_RECEPTIONIST_HOST}",
+          "${IMPROBABLE_RECEPTIONIST_PORT}",
+          "${IMPROBABLE_WORKER_ID}"
+        ]
+      }
+    },
+    "localDeployment": {
+      "macos": {
+        "localBuildDirectory": "bin/x64/ReleaseMacOS",
+        "command": "mono",
+        "arguments": [
+          "--arch=64",
+          "DiceWorker.exe",
+          "${IMPROBABLE_RECEPTIONIST_HOST}",
+          "${IMPROBABLE_RECEPTIONIST_PORT}",
+          "${IMPROBABLE_WORKER_ID}"
+        ]
+      },
+      "linux": {
+        "localBuildDirectory": "../../target/release/examples/",
+        "command": "project-example",
+        "arguments": [
+          "${IMPROBABLE_RECEPTIONIST_HOST}",
+          "${IMPROBABLE_RECEPTIONIST_PORT}",
+          "${IMPROBABLE_WORKER_ID}"
+        ]
+      },
+      "windows": {
+        "localBuildDirectory": "bin/x64/ReleaseWindows",
+        "command": "DiceWorker.exe",
+        "arguments": [
+          "${IMPROBABLE_RECEPTIONIST_HOST}",
+          "${IMPROBABLE_RECEPTIONIST_PORT}",
+          "${IMPROBABLE_WORKER_ID}"
+        ]
+      }
+    }
+  }
+}
