@@ -1,10 +1,14 @@
 pub mod commands;
 pub mod component;
+pub mod connection;
 pub mod entity_snapshot;
 pub mod metrics;
 pub mod op;
+pub mod parameters;
+pub mod vtable;
 
 use std::marker::PhantomData;
+use worker::internal::bindings::Worker_InterestOverride;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct EntityId {
@@ -85,6 +89,20 @@ impl From<u8> for LogLevel {
             4 => LogLevel::Error,
             5 => LogLevel::Fatal,
             _ => panic!("Unknown log level: {}", log_level)
+        }
+    }
+}
+
+pub struct InterestOverride { 
+    component_id: u32,
+    is_interested: bool
+}
+
+impl From<InterestOverride> for Worker_InterestOverride {
+    fn from(interest_override: InterestOverride) -> Self {
+        Worker_InterestOverride {
+            is_interested: interest_override.is_interested as u8,
+            component_id: interest_override.component_id
         }
     }
 }
