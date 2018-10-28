@@ -222,3 +222,15 @@ impl CommandParameters {
         }
     }
 }
+
+pub struct SnapshotParameters { }
+
+impl SnapshotParameters {
+    pub(crate) fn to_worker_sdk(&self) -> Worker_SnapshotParameters {
+        Worker_SnapshotParameters {
+            component_vtable_count: 0,
+            component_vtables: ::std::ptr::null(),
+            default_component_vtable: &vtable::PASSTHROUGH_VTABLE
+        }
+    }
+}

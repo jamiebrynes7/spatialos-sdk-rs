@@ -5,6 +5,7 @@ pub mod entity_snapshot;
 pub mod metrics;
 pub mod op;
 pub mod parameters;
+pub mod snapshot;
 pub mod vtable;
 
 use std::marker::PhantomData;
