@@ -20,6 +20,12 @@ fn main() {
     for lib in libs {
         println!("cargo:rustc-link-lib=static={}", lib)
     }
+
+    if target.contains("apple") {
+        println!("cargo:rustc-link-lib=dylib=c++");
+    } else if target.contains("linux") {
+        println!("cargo:rustc-link-lib=dylib=stdc++");
+    }
 }
 
 fn get_platform_libs(target: &String) -> Vec<&str>{

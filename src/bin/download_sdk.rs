@@ -22,7 +22,7 @@ fn main() {
     ).expect("Could not download package");
     download_and_unpack(
         SpatialPackageSource::WorkerSdk,
-        "c-static-x86_64-gcc_libstdcpp-linux",
+        "c-static-x86_64-gcc_libstdcpp_pic-linux",
         sdk_version,
         "dependencies/linux",
     ).expect("Could not download package");
