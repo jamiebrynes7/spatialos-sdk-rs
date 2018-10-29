@@ -6,7 +6,7 @@ use std::io;
 use std::path;
 use std::process;
 
-use clap::{Arg, App};
+use clap::{App, Arg};
 
 #[cfg(target_os = "linux")]
 static DEV_PLATFORM: &str = "linux";
@@ -16,7 +16,6 @@ static DEV_PLATFORM: &str = "macos";
 static DEV_PLATFORM: &str = "win32";
 
 fn main() {
-    
     let (download_dir, sdk_version) = get_configuration();
 
     download_and_unpack(
@@ -69,29 +68,31 @@ impl SpatialPackageSource {
     }
 }
 
-fn get_configuration() ->  (String, String)  {
+fn get_configuration() -> (String, String) {
     let matches = App::new("Spatial OS SDK Downloader")
         .author("Jamie Brynes <jamiebrynes7@gmail.com>")
         .about("Downloads SDK packages used in the SpatialOS SDK for Rust")
-        .arg(Arg::with_name("download_location")
-            .short("d")
-            .long("download_location")
-            .value_name("DOWNLOAD_DIR")
-            .help("Download directory location. Relative to the current working directory.")
-            .takes_value(true)
-            .required(true))
-        .arg(Arg::with_name("sdk_version")
-            .short("s")
-            .long("sdk-version")
-            .value_name("SDK_VERSION")
-            .help("SDK version to download")
-            .takes_value(true)
-            .required(true))
-        .get_matches();
-    
+        .arg(
+            Arg::with_name("download_location")
+                .short("d")
+                .long("download_location")
+                .value_name("DOWNLOAD_DIR")
+                .help("Download directory location. Relative to the current working directory.")
+                .takes_value(true)
+                .required(true),
+        ).arg(
+            Arg::with_name("sdk_version")
+                .short("s")
+                .long("sdk-version")
+                .value_name("SDK_VERSION")
+                .help("SDK version to download")
+                .takes_value(true)
+                .required(true),
+        ).get_matches();
+
     let download_dir = matches.value_of("download_location").unwrap().to_string();
     let sdk_version = matches.value_of("sdk_version").unwrap().to_string();
-    
+
     (download_dir, sdk_version)
 }
 
@@ -223,14 +224,14 @@ fn unpack_package(target_package_path: &str, target_directory: &str) -> Result<(
             io::copy(&mut file, &mut outfile)?;
 
             #[cfg(any(unix))]
-                {
-                    use std::os::unix::fs::PermissionsExt;
+            {
+                use std::os::unix::fs::PermissionsExt;
 
-                    let metadata = outfile.metadata()?;
-                    let mut permissions = metadata.permissions();
-                    // TODO: Check if is binary before setting executable?
-                    permissions.set_mode(0o774);
-                }
+                let metadata = outfile.metadata()?;
+                let mut permissions = metadata.permissions();
+                // TODO: Check if is binary before setting executable?
+                permissions.set_mode(0o774);
+            }
         }
     }
 

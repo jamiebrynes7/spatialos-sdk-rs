@@ -7,29 +7,29 @@ use std::path::{Path, PathBuf};
 #[cfg(windows)]
 lazy_static! {
     static ref LIBS: Vec<&'static str> = vec![
-            "worker",
-            "grpc++",
-            "grpc",
-            "gpr",
-            "libprotobuf",
-            "RakNetLibStatic",
-            "ssl",
-            "zlibstatic",
-        ];
+        "worker",
+        "grpc++",
+        "grpc",
+        "gpr",
+        "libprotobuf",
+        "RakNetLibStatic",
+        "ssl",
+        "zlibstatic",
+    ];
 }
 
 #[cfg(unix)]
 lazy_static! {
     static ref LIBS: Vec<&'static str> = vec![
-            "worker",
-            "grpc++",
-            "grpc",
-            "gpr",
-            "protobuf",
-            "RakNetLibStatic",
-            "ssl",
-            "z",
-        ];
+        "worker",
+        "grpc++",
+        "grpc",
+        "gpr",
+        "protobuf",
+        "RakNetLibStatic",
+        "ssl",
+        "z",
+    ];
 }
 
 #[cfg(target_os = "linux")]
@@ -48,10 +48,10 @@ fn main() {
     for lib in LIBS.iter() {
         println!("cargo:rustc-link-lib=static={}", lib)
     }
-    
+
     #[cfg(target_os = "macos")]
     println!("cargo:rustc-link-lib=dylib=c++");
-    
+
     #[cfg(target_os = "linux")]
     println!("cargo:rustc-link-lib=dylib=stdc++");
 }
