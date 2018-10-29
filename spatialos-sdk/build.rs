@@ -1,9 +1,12 @@
 use std::env;
+use std::path::{Path, PathBuf};
 
 fn main() {
     let target = env::var("TARGET").unwrap();
 
     let mut libs = get_platform_libs(&target);
+
+    let cargo_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
     let package_dir = if target.contains("windows") {
         "dependencies/win/lib"
@@ -14,8 +17,10 @@ fn main() {
     } else {
         panic!("Unsupported build platform: {}", target);
     };
+    
+    let package_dir = Path::new(&cargo_dir).join(package_dir);
 
-    println!("cargo:rustc-link-search={}", package_dir);
+    println!("cargo:rustc-link-search={}", package_dir.to_str().unwrap());
 
     for lib in libs {
         println!("cargo:rustc-link-lib=static={}", lib)

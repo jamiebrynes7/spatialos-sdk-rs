@@ -1,8 +1,5 @@
-[package]
-name = "spatialos-sdk"
-version = "0.0.0"
-authors = ["Jamie Brynes <jamiebrynes7@gmail.com>"]
-build = "build.rs"
+[workspace]
 
-[dependencies]
-zip = "0.4"
+members = [
+    "spatialos-sdk"
+]
