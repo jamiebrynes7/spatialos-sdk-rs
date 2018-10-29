@@ -227,10 +227,9 @@ fn unpack_package(target_package_path: &str, target_directory: &str) -> Result<(
             {
                 use std::os::unix::fs::PermissionsExt;
 
-                let metadata = outfile.metadata()?;
-                let mut permissions = metadata.permissions();
-                // TODO: Check if is binary before setting executable?
-                permissions.set_mode(0o774);
+                let mut perms= outfile.metadata()?.permissions();
+                perms.set_mode(0o774);
+                fs::set_permissions(&output_path, perms)?;
             }
         }
     }
