@@ -1,0 +1,12 @@
+[package]
+name = "spatialos-sdk-tools"
+version = "0.0.0"
+authors = ["Jamie Brynes <jamiebrynes7@gmail.com>"]
+
+[[bin]]
+name = "download_sdk"
+path = "src/download_sdk/main.rs"
+
+[dependencies]
+zip = "0.4"
+clap = "2.32.0"

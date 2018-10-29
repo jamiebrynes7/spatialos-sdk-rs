@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
-    "spatialos-sdk"
+    "spatialos-sdk",
+    "spatialos-sdk-tools"
 ]
