@@ -78,7 +78,7 @@ impl WorkerConnection {
             )
         };
         assert!(!future_ptr.is_null());
-        WorkerConnectionFuture { future_ptr }
+        WorkerConnectionFuture::new(future_ptr)
     }
 
     pub fn get_disconnect_reason(&self, op_list: &OpList) -> Option<String> {
@@ -199,19 +199,28 @@ impl Drop for WorkerConnection {
 
 pub struct WorkerConnectionFuture {
     future_ptr: *mut Worker_ConnectionFuture,
+    was_consumed: bool
 }
 
 impl WorkerConnectionFuture {
     pub(crate) fn new(ptr: *mut Worker_ConnectionFuture) -> Self {
-        WorkerConnectionFuture { future_ptr: ptr }
+        WorkerConnectionFuture {
+            future_ptr: ptr,
+            was_consumed: false
+        }
     }
 
-    pub fn get(&self) -> Result<WorkerConnection, String> {
+    pub fn get(&mut self) -> Result<WorkerConnection, String> {
+        if self.was_consumed {
+            return Err("WorkerConnectionFuture has already been consumed.".to_owned());
+        }
+
         assert!(!self.future_ptr.is_null());
         let connection_ptr =
             unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ::std::ptr::null()) };
         assert!(!connection_ptr.is_null());
 
+        self.was_consumed = true;
         let worker_connection = WorkerConnection { connection_ptr };
 
         if worker_connection.is_connected() {
@@ -226,7 +235,11 @@ impl WorkerConnectionFuture {
         }
     }
 
-    pub fn poll(&self, timeout_millis: u32) -> Option<Result<WorkerConnection, String>> {
+    pub fn poll(&mut self, timeout_millis: u32) -> Option<Result<WorkerConnection, String>> {
+        if self.was_consumed {
+            return Some(Err("WorkerConnectionFuture has already been consumed.".to_owned()));
+        }
+
         assert!(!self.future_ptr.is_null());
         let connection_ptr =
             unsafe { Worker_ConnectionFuture_Get(self.future_ptr, &timeout_millis) };
@@ -235,12 +248,15 @@ impl WorkerConnectionFuture {
             // The get operation timed out.
             None
         } else {
+            // Connection future has returned - either a valid connection or a failed connection.
             let worker_connection = WorkerConnection { connection_ptr };
+            self.was_consumed = true;
             match worker_connection.is_connected() {
                 true => Some(Ok(worker_connection)),
                 false => {
-                    let op_list = worker_connection.get_op_list(0);
+                    let op_list = worker_connection.get_op_list(0); // Segfaults!
                     let disconnect_reason = worker_connection.get_disconnect_reason(&op_list);
+
                     match disconnect_reason {
                         Some(v) => Some(Err(v)),
                         None => Some(Err("No disconnect op found in ops list.".to_owned())),

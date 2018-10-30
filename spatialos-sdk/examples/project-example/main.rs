@@ -30,7 +30,7 @@ fn main() {
 fn get_connection_block(
     params: &parameters::ReceptionistConnectionParameters,
 ) -> Result<WorkerConnection, String> {
-    let future = WorkerConnection::connect_receptionist_async("test-worker", params);
+    let mut future = WorkerConnection::connect_receptionist_async("test-worker", params);
     future.get()
 }
 
@@ -40,11 +40,12 @@ fn get_connection_poll(
     const NUM_ATTEMPTS: u8 = 3;
     const TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 1000;
 
-    let future = WorkerConnection::connect_receptionist_async("test-worker", params);
+    let mut future = WorkerConnection::connect_receptionist_async("test-worker", params);
 
     let mut res: Option<WorkerConnection> = None;
     let mut err: Option<String> = None;
     for _ in 0..NUM_ATTEMPTS {
+        println!("Attempting to poll");
         match future.poll(100) {
             Some(r) => {
                 match r {
