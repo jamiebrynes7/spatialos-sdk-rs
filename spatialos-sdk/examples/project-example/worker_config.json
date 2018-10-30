@@ -48,8 +48,8 @@
         ]
       },
       "windows": {
-        "localBuildDirectory": "bin/x64/ReleaseWindows",
-        "command": "DiceWorker.exe",
+        "localBuildDirectory": "../../../target/release/examples/",
+        "command": "project-example",
         "arguments": [
           "${IMPROBABLE_RECEPTIONIST_HOST}",
           "${IMPROBABLE_RECEPTIONIST_PORT}",

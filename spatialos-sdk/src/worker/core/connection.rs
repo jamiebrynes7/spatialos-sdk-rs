@@ -226,13 +226,11 @@ impl WorkerConnectionFuture {
         }
     }
 
-    
-    pub fn poll(&self, timeout_millis: u32) -> Option<Result<WorkerConnection,String>> {
+    pub fn poll(&self, timeout_millis: u32) -> Option<Result<WorkerConnection, String>> {
         assert!(!self.future_ptr.is_null());
         let connection_ptr =
             unsafe { Worker_ConnectionFuture_Get(self.future_ptr, &timeout_millis) };
-        
-        
+
         if connection_ptr.is_null() {
             // The get operation timed out.
             None
@@ -251,9 +249,6 @@ impl WorkerConnectionFuture {
             }
         }
     }
-    
-
-    
 }
 
 impl Drop for WorkerConnectionFuture {
