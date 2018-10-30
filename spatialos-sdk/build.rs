@@ -54,4 +54,10 @@ fn main() {
 
     #[cfg(target_os = "linux")]
     println!("cargo:rustc-link-lib=dylib=stdc++");
+
+    #[cfg(target_os = "windows")]
+    {
+        println!("cargo:rustc-link-lib=dylib=gdi32");
+        println!("cargo:rustc-link-lib=dylib=user32");
+    }
 }
