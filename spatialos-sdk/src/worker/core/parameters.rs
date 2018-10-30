@@ -3,6 +3,7 @@ use std::ptr;
 
 use worker::core::vtable;
 use worker::internal::bindings::*;
+use worker::internal::utils::WrappedNativeStructWithString;
 
 pub enum ConnectionType {
     TCP,
@@ -40,8 +41,6 @@ pub struct ConnectionParameters {
     pub protocol_logging: ProtocolLoggingParameters,
     pub enable_protocol_logging_at_startup: bool,
     pub thread_affinity: ThreadAffinityParameters,
-
-    native_worker_type: Option<CString>,
 }
 
 impl ConnectionParameters {
@@ -57,17 +56,16 @@ impl ConnectionParameters {
             protocol_logging: ProtocolLoggingParameters::default(),
             enable_protocol_logging_at_startup: false,
             thread_affinity: ThreadAffinityParameters::default(),
-
-            native_worker_type: None,
         }
     }
 
-    pub(crate) fn to_worker_sdk(&mut self) -> Worker_ConnectionParameters {
+    pub(crate) fn to_worker_sdk(
+        &self,
+    ) -> WrappedNativeStructWithString<Worker_ConnectionParameters> {
         let worker_type_cstr = CString::new(self.worker_type.clone())
             .expect("Received 0 byte in supplied worker_type.");
         let ptr = worker_type_cstr.as_ptr();
-        self.native_worker_type = Some(worker_type_cstr);
-        Worker_ConnectionParameters {
+        let params = Worker_ConnectionParameters {
             worker_type: ptr,
             network: self.network.to_worker_sdk(),
             send_queue_capacity: self.send_queue_capacity,
@@ -80,6 +78,10 @@ impl ConnectionParameters {
             component_vtable_count: 0,
             component_vtables: ptr::null(),
             default_component_vtable: &vtable::PASSTHROUGH_VTABLE,
+        };
+        WrappedNativeStructWithString {
+            native_struct: params,
+            native_string_ref: worker_type_cstr,
         }
     }
 }

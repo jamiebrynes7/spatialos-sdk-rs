@@ -39,7 +39,7 @@
         ]
       },
       "linux": {
-        "localBuildDirectory": "../../target/release/examples/",
+        "localBuildDirectory": "../../../target/release/examples/",
         "command": "project-example",
         "arguments": [
           "${IMPROBABLE_RECEPTIONIST_HOST}",

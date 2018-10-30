@@ -15,29 +15,31 @@ use worker::internal::utils::*;
 // inside them.
 pub struct OpList {
     pub ops: Vec<WorkerOp>,
-    ctype: Worker_OpList,
+    internal_ptr: *mut Worker_OpList,
 }
 
 impl OpList {
-    pub(crate) fn new(raw_ops_list: Worker_OpList) -> OpList {
+    pub(crate) fn new(raw_ops_list_ptr: *mut Worker_OpList) -> OpList {
         let mut ops = Vec::new();
         unsafe {
-            for i in 0..raw_ops_list.op_count as isize {
-                let ptr = raw_ops_list.ops.offset(i);
+            let raw_ops = *raw_ops_list_ptr;
+            for i in 0..raw_ops.op_count as isize {
+                let ptr = raw_ops.ops.offset(i);
                 assert!(!ptr.is_null());
                 ops.push(WorkerOp::from_worker_op(ptr))
             }
         }
         OpList {
             ops,
-            ctype: raw_ops_list,
+            internal_ptr: raw_ops_list_ptr,
         }
     }
 }
 
 impl Drop for OpList {
     fn drop(&mut self) {
-        unsafe { Worker_OpList_Destroy(&mut self.ctype) }
+        assert!(!self.internal_ptr.is_null());
+        unsafe { Worker_OpList_Destroy(self.internal_ptr) }
     }
 }
 

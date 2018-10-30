@@ -3,7 +3,7 @@ use std::ffi::CString;
 use worker::core::commands::*;
 use worker::core::component::ComponentUpdate;
 use worker::core::metrics::Metrics;
-use worker::core::op::OpList;
+use worker::core::op::{DisconnectOp, OpList, WorkerOp};
 use worker::core::parameters::{CommandParameters, ReceptionistConnectionParameters};
 use worker::core::{EntityId, InterestOverride, LogLevel, RequestId};
 use worker::internal::bindings::*;
@@ -11,41 +11,48 @@ use worker::internal::bindings::*;
 /// Connection trait to allow for mocking the connection.
 trait Connection {
     fn send_log_message(
+        &self,
         level: LogLevel,
         logger_name: &str,
         message: &str,
         entity_id: Option<EntityId>,
     );
-    fn send_metrics(metrics: Metrics);
+    fn send_metrics(&self, metrics: Metrics);
 
-    fn send_reserve_entity_ids_request(payload: ReserveEntityIdsRequest);
-    fn send_create_entity_request(payload: CreateEntityRequest);
-    fn send_delete_entity_request(payload: DeleteEntityRequest);
-    fn send_entity_query_request(payload: EntityQueryRequest);
+    fn send_reserve_entity_ids_request(&self, payload: ReserveEntityIdsRequest);
+    fn send_create_entity_request(&self, payload: CreateEntityRequest);
+    fn send_delete_entity_request(&self, payload: DeleteEntityRequest);
+    fn send_entity_query_request(&self, payload: EntityQueryRequest);
 
     fn send_command_request(
+        &self,
         entity_id: EntityId,
         request: CommandRequest,
         command_parameters: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest>;
     fn send_command_response(
+        &self,
         request_id: RequestId<IncomingCommandRequest>,
         response: CommandResponse,
     );
-    fn send_command_failure(request_id: RequestId<IncomingCommandRequest>, message: &str);
+    fn send_command_failure(&self, request_id: RequestId<IncomingCommandRequest>, message: &str);
 
-    fn send_component_update(entity_id: EntityId, component_update: ComponentUpdate);
-    fn send_component_interest(entity_id: EntityId, interest_overrides: &Vec<InterestOverride>);
+    fn send_component_update(&self, entity_id: EntityId, component_update: ComponentUpdate);
+    fn send_component_interest(
+        &self,
+        entity_id: EntityId,
+        interest_overrides: &Vec<InterestOverride>,
+    );
 
-    fn send_authority_loss_imminent_acknowledgement(entity_id: EntityId, component_id: u32);
+    fn send_authority_loss_imminent_acknowledgement(&self, entity_id: EntityId, component_id: u32);
 
-    fn set_protocol_logging_enabled(enabled: bool);
-    fn is_connected() -> bool;
-    fn get_worker_id() -> String;
-    fn get_worker_attributes() -> Vec<String>;
-    fn get_worker_flag(name: &str) -> Option<String>;
+    fn set_protocol_logging_enabled(&self, enabled: bool);
+    fn is_connected(&self) -> bool;
+    fn get_worker_id(&self) -> String;
+    fn get_worker_attributes(&self) -> Vec<String>;
+    fn get_worker_flag(&self, name: &str) -> Option<String>;
 
-    fn get_op_list(timeout_millis: u32) -> OpList;
+    fn get_op_list(&self, timeout_millis: u32) -> OpList;
 }
 
 pub struct WorkerConnection {
@@ -55,7 +62,7 @@ pub struct WorkerConnection {
 impl WorkerConnection {
     pub fn connect_receptionist_async(
         worker_id: &str,
-        params: &mut ReceptionistConnectionParameters,
+        params: &ReceptionistConnectionParameters,
     ) -> WorkerConnectionFuture {
         let hostname_cstr =
             CString::new(params.hostname.clone()).expect("Received 0 byte in supplied hostname.");
@@ -67,11 +74,109 @@ impl WorkerConnection {
                 hostname_cstr.as_ptr(),
                 params.port,
                 worker_id_cstr.as_ptr(),
-                &conn_params,
+                &conn_params.native_struct,
             )
         };
         assert!(!future_ptr.is_null());
         WorkerConnectionFuture { future_ptr }
+    }
+}
+
+impl Connection for WorkerConnection {
+    fn send_log_message(
+        &self,
+        level: LogLevel,
+        logger_name: &str,
+        message: &str,
+        entity_id: Option<EntityId>,
+    ) {
+        unimplemented!()
+    }
+
+    fn send_metrics(&self, metrics: Metrics) {
+        unimplemented!()
+    }
+
+    fn send_reserve_entity_ids_request(&self, payload: ReserveEntityIdsRequest) {
+        unimplemented!()
+    }
+
+    fn send_create_entity_request(&self, payload: CreateEntityRequest) {
+        unimplemented!()
+    }
+
+    fn send_delete_entity_request(&self, payload: DeleteEntityRequest) {
+        unimplemented!()
+    }
+
+    fn send_entity_query_request(&self, payload: EntityQueryRequest) {
+        unimplemented!()
+    }
+
+    fn send_command_request(
+        &self,
+        entity_id: EntityId,
+        request: CommandRequest,
+        command_parameters: CommandParameters,
+    ) -> RequestId<OutgoingCommandRequest> {
+        unimplemented!()
+    }
+
+    fn send_command_response(
+        &self,
+        request_id: RequestId<IncomingCommandRequest>,
+        response: CommandResponse,
+    ) {
+        unimplemented!()
+    }
+
+    fn send_command_failure(&self, request_id: RequestId<IncomingCommandRequest>, message: &str) {
+        unimplemented!()
+    }
+
+    fn send_component_update(&self, entity_id: EntityId, component_update: ComponentUpdate) {
+        unimplemented!()
+    }
+
+    fn send_component_interest(
+        &self,
+        entity_id: EntityId,
+        interest_overrides: &Vec<InterestOverride>,
+    ) {
+        unimplemented!()
+    }
+
+    fn send_authority_loss_imminent_acknowledgement(&self, entity_id: EntityId, component_id: u32) {
+        unimplemented!()
+    }
+
+    fn set_protocol_logging_enabled(&self, enabled: bool) {
+        unimplemented!()
+    }
+
+    fn is_connected(&self) -> bool {
+        assert!(!self.connection_ptr.is_null());
+        (unsafe { Worker_Connection_IsConnected(self.connection_ptr) } != 0)
+    }
+
+    fn get_worker_id(&self) -> String {
+        unimplemented!()
+    }
+
+    fn get_worker_attributes(&self) -> Vec<String> {
+        unimplemented!()
+    }
+
+    fn get_worker_flag(&self, name: &str) -> Option<String> {
+        unimplemented!()
+    }
+
+    fn get_op_list(&self, timeout_millis: u32) -> OpList {
+        assert!(!self.connection_ptr.is_null());
+        let raw_op_list =
+            unsafe { Worker_Connection_GetOpList(self.connection_ptr, timeout_millis) };
+        assert!(!raw_op_list.is_null());
+        OpList::new(raw_op_list)
     }
 }
 
@@ -91,17 +196,49 @@ impl WorkerConnectionFuture {
         WorkerConnectionFuture { future_ptr: ptr }
     }
 
-    pub fn get(&self, timeout_millis: u32) -> Option<WorkerConnection> {
+    pub fn get(&self) -> Result<WorkerConnection, String> {
+        assert!(!self.future_ptr.is_null());
+        let connection_ptr =
+            unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ::std::ptr::null()) };
+        assert!(!connection_ptr.is_null());
+
+        let worker_connection = WorkerConnection { connection_ptr };
+
+        if worker_connection.is_connected() {
+            Ok(worker_connection)
+        } else {
+            let op_list = worker_connection.get_op_list(0);
+            let disconnect_reason = op_list
+                .ops
+                .iter()
+                .filter_map(|op| match op {
+                    WorkerOp::Disconnect(op) => Some(op.reason.clone()),
+                    _ => None,
+                }).next();
+
+            match disconnect_reason {
+                Some(v) => Err(v),
+                None => Err("No disconnect op found in ops list.".to_owned()),
+            }
+        }
+    }
+
+    /*
+    pub fn poll(&self, timeout_millis: u32) -> Option<WorkerConnection> {
         assert!(!self.future_ptr.is_null());
         let connection_ptr =
             unsafe { Worker_ConnectionFuture_Get(self.future_ptr, &timeout_millis) };
-
+        
+        // Should this assert pass? 
+        assert!(!connection_ptr.is_null());
+        
         if connection_ptr.is_null() {
             None
         } else {
             Some(WorkerConnection { connection_ptr })
         }
     }
+    */
 }
 
 impl Drop for WorkerConnectionFuture {
