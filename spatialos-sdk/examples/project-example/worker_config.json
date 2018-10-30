@@ -28,11 +28,9 @@
     },
     "localDeployment": {
       "macos": {
-        "localBuildDirectory": "bin/x64/ReleaseMacOS",
-        "command": "mono",
+        "localBuildDirectory": "../../../target/release/examples/",
+        "command": "project-example",
         "arguments": [
-          "--arch=64",
-          "DiceWorker.exe",
           "${IMPROBABLE_RECEPTIONIST_HOST}",
           "${IMPROBABLE_RECEPTIONIST_PORT}",
           "${IMPROBABLE_WORKER_ID}"
