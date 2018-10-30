@@ -80,6 +80,16 @@ impl WorkerConnection {
         assert!(!future_ptr.is_null());
         WorkerConnectionFuture { future_ptr }
     }
+
+    pub fn get_disconnect_reason(&self, op_list: &OpList) -> Option<String> {
+        op_list
+            .ops
+            .iter()
+            .filter_map(|op| match op {
+                WorkerOp::Disconnect(op) => Some(op.reason.clone()),
+                _ => None,
+            }).next()
+    }
 }
 
 impl Connection for WorkerConnection {
@@ -208,14 +218,7 @@ impl WorkerConnectionFuture {
             Ok(worker_connection)
         } else {
             let op_list = worker_connection.get_op_list(0);
-            let disconnect_reason = op_list
-                .ops
-                .iter()
-                .filter_map(|op| match op {
-                    WorkerOp::Disconnect(op) => Some(op.reason.clone()),
-                    _ => None,
-                }).next();
-
+            let disconnect_reason = worker_connection.get_disconnect_reason(&op_list);
             match disconnect_reason {
                 Some(v) => Err(v),
                 None => Err("No disconnect op found in ops list.".to_owned()),
@@ -223,22 +226,34 @@ impl WorkerConnectionFuture {
         }
     }
 
-    /*
-    pub fn poll(&self, timeout_millis: u32) -> Option<WorkerConnection> {
+    
+    pub fn poll(&self, timeout_millis: u32) -> Option<Result<WorkerConnection,String>> {
         assert!(!self.future_ptr.is_null());
         let connection_ptr =
             unsafe { Worker_ConnectionFuture_Get(self.future_ptr, &timeout_millis) };
         
-        // Should this assert pass? 
-        assert!(!connection_ptr.is_null());
         
         if connection_ptr.is_null() {
+            // The get operation timed out.
             None
         } else {
-            Some(WorkerConnection { connection_ptr })
+            let worker_connection = WorkerConnection { connection_ptr };
+            match worker_connection.is_connected() {
+                true => Some(Ok(worker_connection)),
+                false => {
+                    let op_list = worker_connection.get_op_list(0);
+                    let disconnect_reason = worker_connection.get_disconnect_reason(&op_list);
+                    match disconnect_reason {
+                        Some(v) => Some(Err(v)),
+                        None => Some(Err("No disconnect op found in ops list.".to_owned())),
+                    }
+                }
+            }
         }
     }
-    */
+    
+
+    
 }
 
 impl Drop for WorkerConnectionFuture {

@@ -43,9 +43,13 @@ fn get_connection_poll(params: &parameters::ReceptionistConnectionParameters) ->
     
     let mut res: Option<WorkerConnection> = None;
     for _ in 0..NUM_ATTEMPTS {
-        if let Some(c) = future.poll(100) {
-            res = Some(c);
-            break;
+        
+        match future.poll(100) {
+            Some(r) => r,
+            None => {
+                continue
+            }
+            
         }
         ::std::thread::sleep(::std::time::Duration::from_millis(TIME_BETWEEN_ATTEMPTS_MILLIS));
     }
