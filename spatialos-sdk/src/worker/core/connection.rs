@@ -1,4 +1,5 @@
 use std::ffi::CString;
+use std::ptr;
 
 use worker::core::commands::*;
 use worker::core::component::ComponentUpdate;
@@ -9,7 +10,7 @@ use worker::core::{EntityId, InterestOverride, LogLevel, RequestId};
 use worker::internal::bindings::*;
 
 /// Connection trait to allow for mocking the connection.
-trait Connection {
+pub trait Connection {
     fn send_log_message(
         &self,
         level: LogLevel,
@@ -100,7 +101,24 @@ impl Connection for WorkerConnection {
         message: &str,
         entity_id: Option<EntityId>,
     ) {
-        unimplemented!()
+        assert!(!self.connection_ptr.is_null());
+
+        let logger_name = CString::new(logger_name).unwrap();
+        let message = CString::new(message).unwrap();
+
+        unsafe {
+            let log_message = Worker_LogMessage {
+                level: level.to_worker_sdk(),
+                logger_name: logger_name.as_ptr(),
+                message: message.as_ptr(),
+                entity_id: match entity_id {
+                    Some(e) => &e.id,
+                    None => ptr::null(),
+                },
+            };
+
+            Worker_Connection_SendLogMessage(self.connection_ptr, &log_message);
+        }
     }
 
     fn send_metrics(&self, metrics: Metrics) {
@@ -199,14 +217,14 @@ impl Drop for WorkerConnection {
 
 pub struct WorkerConnectionFuture {
     future_ptr: *mut Worker_ConnectionFuture,
-    was_consumed: bool
+    was_consumed: bool,
 }
 
 impl WorkerConnectionFuture {
     pub(crate) fn new(ptr: *mut Worker_ConnectionFuture) -> Self {
         WorkerConnectionFuture {
             future_ptr: ptr,
-            was_consumed: false
+            was_consumed: false,
         }
     }
 
@@ -216,8 +234,7 @@ impl WorkerConnectionFuture {
         }
 
         assert!(!self.future_ptr.is_null());
-        let connection_ptr =
-            unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ::std::ptr::null()) };
+        let connection_ptr = unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ptr::null()) };
         assert!(!connection_ptr.is_null());
 
         self.was_consumed = true;
@@ -237,7 +254,9 @@ impl WorkerConnectionFuture {
 
     pub fn poll(&mut self, timeout_millis: u32) -> Option<Result<WorkerConnection, String>> {
         if self.was_consumed {
-            return Some(Err("WorkerConnectionFuture has already been consumed.".to_owned()));
+            return Some(Err(
+                "WorkerConnectionFuture has already been consumed.".to_owned()
+            ));
         }
 
         assert!(!self.future_ptr.is_null());
