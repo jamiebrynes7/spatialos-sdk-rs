@@ -1,6 +1,7 @@
 use worker::internal::bindings::{
     Schema_CommandRequest, Schema_CommandResponse, Worker_CommandRequest, Worker_CommandResponse,
 };
+use worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 
 // TODO: Wrap Schema_CommandRequest
 pub struct CommandRequest {
@@ -8,8 +9,8 @@ pub struct CommandRequest {
     pub schema_type: *mut Schema_CommandRequest,
 }
 
-impl CommandRequest {
-    pub(crate) fn from_worker_sdk(command_request: &Worker_CommandRequest) -> Self {
+unsafe impl WorkerSdkConversion<Worker_CommandRequest> for CommandRequest {
+    unsafe fn from_worker_sdk(command_request: &Worker_CommandRequest) -> Self {
         CommandRequest {
             component_id: command_request.component_id,
             schema_type: command_request.schema_type,
@@ -23,8 +24,8 @@ pub struct CommandResponse {
     pub schema_type: *mut Schema_CommandResponse,
 }
 
-impl CommandResponse {
-    pub(crate) fn from_worker_sdk(command_response: &Worker_CommandResponse) -> Self {
+unsafe impl WorkerSdkConversion<Worker_CommandResponse> for CommandResponse {
+    unsafe fn from_worker_sdk(command_response: &Worker_CommandResponse) -> Self {
         CommandResponse {
             component_id: command_response.component_id,
             schema_type: command_response.schema_type,
