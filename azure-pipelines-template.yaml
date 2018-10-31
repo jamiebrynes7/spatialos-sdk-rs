@@ -47,3 +47,17 @@ jobs:
           set PATH=%PATH%;%USERPROFILE%\.spatial
           spatial version
         displayName: Install Spatial CLI
+    # Setup Spatial oauth tokens
+    - task: DownloadSecureFile@1
+      inputs:
+        secureFile: spatial_oauth
+      displayName: Fetch Spatial OAuth Token
+    - ${{ if ne(parameters.name, 'Windows') }}:
+      - script: |
+          mkdir -p ~/.improbable/oauth2/
+          mv "${DOWNLOADSECUREFILE_SECUREFILEPATH}" ~/.improbable/oauth2/oauth2_refresh_token
+        displayName: Install Spatial OAuth Token
+    - ${{ if eq(parameters.name, 'Windows') }}:
+        - powershell: |
+            mkdir -p %LOCALAPPADTA\.improbable\oauth2
+            mv $env:DOWNLOADSECUREFILE_SECUREFILEPATH LOCALAPPADTA\.improbable\oauth2\oauth2_refresh_token
