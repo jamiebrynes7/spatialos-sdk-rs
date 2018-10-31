@@ -124,7 +124,7 @@ fn download_and_unpack(
     let mut tmp_file = tmp_dir.clone();
     tmp_file.push(package_name);
 
-    println!("Downloading {}.", package_name);
+    println!("Downloading {} to {}.", package_name, target_directory);
     download_package(
         package_source,
         package_name,
@@ -132,7 +132,6 @@ fn download_and_unpack(
         tmp_file.to_str().unwrap(),
     );
 
-    println!("Unpacking {} to {}.", package_name, target_directory);
     unpack_package(tmp_file.to_str().unwrap(), target_directory)?;
 
     // Clean temp directory.
