@@ -3,6 +3,7 @@ jobs:
   pool: 
     vmImage: ${{ parameters.vmImage }}
   steps: 
+    # Install Rust and cargo fmt
     - ${{ if ne(parameters.name, 'Windows') }}:
       - script: | 
           curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
@@ -10,13 +11,39 @@ jobs:
           echo "##vso[task.setvariable variable=PATH]$PATH"
           rustc -Vv
           cargo -V
+          rustup component add rustfmt-preview
         displayName: Install Rust
     - ${{ if eq(parameters.name, 'Windows') }}:
       - script: | 
             curl -sSf -o rustup-init.exe https://win.rustup.rs
-            rustup-init.exe -y --default-toolchain nightly
+            rustup-init.exe -y --default-toolchain stable
             set PATH=%PATH%;%USERPROFILE%\.cargo\bin
             echo "##vso[task.setvariable variable=PATH]%PATH%;%USERPROFILE%\.cargo\bin"
             rustc -Vv
             cargo -V
+            rustup component add rustfmt-preview
         displayName: Install Rust
+    # Install Spatial
+    - ${{ if eq(parameters.name, 'MacOS') }}:
+      - script: /
+          mkdir -p ~/.spatial
+          curl -sSf -o ~/.spatial/spatial https://console.improbable.io/toolbelt/download/latest/mac
+          chmod +x ~/.spatial/spatial
+          export PATH="${PATH}:~/.spatial/"
+          spatial version
+        displayName: Install Spatial CLI
+    - ${{ if eq(parameters.name, 'Linux') }}:
+      - script: /
+          mkdir -p ~/.spatial
+          curl -sSf -o ~/.spatial/spatial https://console.improbable.io/toolbelt/download/latest/linux
+          chmod +x ~/.spatial/spatial
+          export PATH="${PATH}:~/.spatial/"
+          spatial version
+        displayName: Install Spatial CLI
+    - ${{ if eq(parameters.name, 'Windows') }}:
+      - script: /
+          md %USERPROFILE%\.spatial
+          curl -sSf -o ~/.spatial/spatial https://console.improbable.io/toolbelt/download/latest/win
+          set PATH=%PATH%;%USERPROFILE%\.spatial
+          spatial version
+        displayName: Install Spatial CLI      
