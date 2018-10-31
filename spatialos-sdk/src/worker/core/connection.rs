@@ -12,48 +12,51 @@ use worker::internal::bindings::*;
 /// Connection trait to allow for mocking the connection.
 pub trait Connection {
     fn send_log_message(
-        &self,
+        &mut self,
         level: LogLevel,
         logger_name: &str,
         message: &str,
         entity_id: Option<EntityId>,
     );
-    fn send_metrics(&self, metrics: Metrics);
+    fn send_metrics(&mut self, metrics: Metrics);
 
-    fn send_reserve_entity_ids_request(&self, payload: ReserveEntityIdsRequest);
-    fn send_create_entity_request(&self, payload: CreateEntityRequest);
-    fn send_delete_entity_request(&self, payload: DeleteEntityRequest);
-    fn send_entity_query_request(&self, payload: EntityQueryRequest);
+    fn send_reserve_entity_ids_request(&mut self, payload: ReserveEntityIdsRequest, timeout_millis: u32) -> RequestId<ReserveEntityIdsRequest>;
+    fn send_create_entity_request(&mut self, payload: CreateEntityRequest, timeout_millis: u32) -> RequestId<CreateEntityRequest>;
+    fn send_delete_entity_request(&mut self, payload: DeleteEntityRequest, timeout_millis: u32) -> RequestId<DeleteEntityRequest>;
+    fn send_entity_query_request(&mut self, payload: EntityQueryRequest, timeout_millis: u32) -> RequestId<EntityQueryRequest>;
 
     fn send_command_request(
-        &self,
+        &mut self,
         entity_id: EntityId,
         request: CommandRequest,
+        timeout_millis: u32,
         command_parameters: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest>;
+
     fn send_command_response(
-        &self,
+        &mut self,
         request_id: RequestId<IncomingCommandRequest>,
         response: CommandResponse,
     );
-    fn send_command_failure(&self, request_id: RequestId<IncomingCommandRequest>, message: &str);
 
-    fn send_component_update(&self, entity_id: EntityId, component_update: ComponentUpdate);
+    fn send_command_failure(&mut self, request_id: RequestId<IncomingCommandRequest>, message: &str);
+
+    fn send_component_update(&mut self, entity_id: EntityId, component_update: ComponentUpdate);
     fn send_component_interest(
-        &self,
+        &mut self,
         entity_id: EntityId,
         interest_overrides: &Vec<InterestOverride>,
     );
 
-    fn send_authority_loss_imminent_acknowledgement(&self, entity_id: EntityId, component_id: u32);
+    fn send_authority_loss_imminent_acknowledgement(&mut self, entity_id: EntityId, component_id: u32);
 
-    fn set_protocol_logging_enabled(&self, enabled: bool);
+    fn set_protocol_logging_enabled(&mut self, enabled: bool);
     fn is_connected(&self) -> bool;
     fn get_worker_id(&self) -> String;
     fn get_worker_attributes(&self) -> Vec<String>;
     fn get_worker_flag(&self, name: &str) -> Option<String>;
 
-    fn get_op_list(&self, timeout_millis: u32) -> OpList;
+    fn get_op_list(&mut self, timeout_millis: u32) -> OpList;
 }
 
 pub struct WorkerConnection {
@@ -95,7 +98,7 @@ impl WorkerConnection {
 
 impl Connection for WorkerConnection {
     fn send_log_message(
-        &self,
+        &mut self,
         level: LogLevel,
         logger_name: &str,
         message: &str,
@@ -121,64 +124,71 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn send_metrics(&self, metrics: Metrics) {
+    fn send_metrics(&mut self, metrics: Metrics) {
         unimplemented!()
     }
 
-    fn send_reserve_entity_ids_request(&self, payload: ReserveEntityIdsRequest) {
+    fn send_reserve_entity_ids_request(&mut self, payload: ReserveEntityIdsRequest, timeout_millis: u32)  -> RequestId<ReserveEntityIdsRequest>{
+        unsafe {
+            let id = Worker_Connection_SendReserveEntityIdsRequest(self.connection_ptr, payload.0, &timeout_millis);
+            RequestId::new(id)
+        }
+    }
+
+    fn send_create_entity_request(&mut self, payload: CreateEntityRequest, timeout_millis: u32) -> RequestId<CreateEntityRequest> {
         unimplemented!()
     }
 
-    fn send_create_entity_request(&self, payload: CreateEntityRequest) {
-        unimplemented!()
+    fn send_delete_entity_request(&mut self, payload: DeleteEntityRequest, timeout_millis: u32) -> RequestId<DeleteEntityRequest> {
+        unsafe {
+            let id = Worker_Connection_SendDeleteEntityRequest(self.connection_ptr, payload.0.id, &timeout_millis);
+            RequestId::new(id)
+        }
     }
 
-    fn send_delete_entity_request(&self, payload: DeleteEntityRequest) {
-        unimplemented!()
-    }
-
-    fn send_entity_query_request(&self, payload: EntityQueryRequest) {
+    fn send_entity_query_request(&mut self, payload: EntityQueryRequest, timeout_millis: u32) -> RequestId<EntityQueryRequest> {
         unimplemented!()
     }
 
     fn send_command_request(
-        &self,
+        &mut self,
         entity_id: EntityId,
         request: CommandRequest,
-        command_parameters: CommandParameters,
+        timeout_millis: u32,
+        command_parameters: CommandParameters
     ) -> RequestId<OutgoingCommandRequest> {
         unimplemented!()
     }
 
     fn send_command_response(
-        &self,
+        &mut self,
         request_id: RequestId<IncomingCommandRequest>,
         response: CommandResponse,
     ) {
         unimplemented!()
     }
 
-    fn send_command_failure(&self, request_id: RequestId<IncomingCommandRequest>, message: &str) {
+    fn send_command_failure(&mut self, request_id: RequestId<IncomingCommandRequest>, message: &str) {
         unimplemented!()
     }
 
-    fn send_component_update(&self, entity_id: EntityId, component_update: ComponentUpdate) {
+    fn send_component_update(&mut self, entity_id: EntityId, component_update: ComponentUpdate) {
         unimplemented!()
     }
 
     fn send_component_interest(
-        &self,
+        &mut self,
         entity_id: EntityId,
         interest_overrides: &Vec<InterestOverride>,
     ) {
         unimplemented!()
     }
 
-    fn send_authority_loss_imminent_acknowledgement(&self, entity_id: EntityId, component_id: u32) {
+    fn send_authority_loss_imminent_acknowledgement(&mut self, entity_id: EntityId, component_id: u32) {
         unimplemented!()
     }
 
-    fn set_protocol_logging_enabled(&self, enabled: bool) {
+    fn set_protocol_logging_enabled(&mut self, enabled: bool) {
         unimplemented!()
     }
 
@@ -199,7 +209,7 @@ impl Connection for WorkerConnection {
         unimplemented!()
     }
 
-    fn get_op_list(&self, timeout_millis: u32) -> OpList {
+    fn get_op_list(&mut self, timeout_millis: u32) -> OpList {
         assert!(!self.connection_ptr.is_null());
         let raw_op_list =
             unsafe { Worker_Connection_GetOpList(self.connection_ptr, timeout_millis) };
@@ -238,7 +248,7 @@ impl WorkerConnectionFuture {
         assert!(!connection_ptr.is_null());
 
         self.was_consumed = true;
-        let worker_connection = WorkerConnection { connection_ptr };
+        let mut worker_connection = WorkerConnection { connection_ptr };
 
         if worker_connection.is_connected() {
             Ok(worker_connection)
@@ -268,7 +278,7 @@ impl WorkerConnectionFuture {
             None
         } else {
             // Connection future has returned - either a valid connection or a failed connection.
-            let worker_connection = WorkerConnection { connection_ptr };
+            let mut worker_connection = WorkerConnection { connection_ptr };
             self.was_consumed = true;
             match worker_connection.is_connected() {
                 true => Some(Ok(worker_connection)),

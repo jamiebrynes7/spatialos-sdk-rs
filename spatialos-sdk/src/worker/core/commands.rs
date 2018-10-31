@@ -1,3 +1,5 @@
+use worker::core::EntityId;
+
 use worker::internal::bindings::{
     Schema_CommandRequest, Schema_CommandResponse, Worker_CommandRequest, Worker_CommandResponse,
 };
@@ -38,10 +40,10 @@ pub struct IncomingCommandRequest {}
 pub struct OutgoingCommandRequest {}
 
 // =============================== World Commands =============================== //
-pub struct ReserveEntityIdsRequest {}
+pub struct ReserveEntityIdsRequest(pub u32);
 
 pub struct CreateEntityRequest {}
 
-pub struct DeleteEntityRequest {}
+pub struct DeleteEntityRequest(pub EntityId);
 
 pub struct EntityQueryRequest {}

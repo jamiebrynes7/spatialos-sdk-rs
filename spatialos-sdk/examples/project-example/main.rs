@@ -18,7 +18,7 @@ fn main() {
 
     let worker_id = get_worker_id();
 
-    let worker_connection = match get_connection_block(&connection_parameters, &worker_id) {
+    let mut worker_connection = match get_connection_block(&connection_parameters, &worker_id) {
         Ok(c) => c,
         Err(e) => panic!("Failed to connect with block: \n{}", e),
     };
@@ -35,7 +35,7 @@ fn main() {
     */
 }
 
-fn logic_loop(c: WorkerConnection) {
+fn logic_loop(mut c: WorkerConnection) {
     loop {
         let ops = c.get_op_list(0);
         c.send_log_message(
