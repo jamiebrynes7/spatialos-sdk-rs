@@ -112,6 +112,10 @@ fn download_and_unpack(
 ) -> Result<(), io::Error> {
     let current_dir = std::env::current_dir().expect("Could not find current working directory.");
 
+    let mut target = current_dir.clone();
+    target.push(target_directory);
+    let target_directory = target.to_str().unwrap();
+
     // Clean target directory.
     fs::remove_dir_all(target_directory).unwrap_or(());
     fs::create_dir_all(target_directory)?;
