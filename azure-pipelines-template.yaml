@@ -44,7 +44,7 @@ jobs:
       - bash: |
           mkdir -p  $USERPROFILE\.spatial
           curl -sSfL -o $USERPROFILE\.spatial\spatial.exe https://console.improbable.io/toolbelt/download/latest/win
-          export PATH = "$PATH:$USERPROFILE\.spatial"
+          export PATH="$PATH:$USERPROFILE\.spatial"
           echo "##vso[task.setvariable variable=PATH]$PATH%;$USERPROFILE\.spatial"
           spatial version
         displayName: Install Spatial CLI
