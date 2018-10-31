@@ -65,6 +65,7 @@ jobs:
           displayName: Install Spatial OAuth Token
     # Run the build
     - script: |
+        pwd
         ls -lah
         cargo run --bin download_sdk -- -d ./spatialos-sdk/dependencies -s 13.3.0
       displayName: Download C API dependencies
