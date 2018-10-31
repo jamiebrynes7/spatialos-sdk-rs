@@ -1,6 +1,7 @@
 extern crate spatialos_sdk;
 extern crate uuid;
 
+use spatialos_sdk::worker::core::commands::ReserveEntityIdsRequest;
 use spatialos_sdk::worker::core::connection::{Connection, WorkerConnection};
 use spatialos_sdk::worker::core::parameters;
 use spatialos_sdk::worker::core::LogLevel;
@@ -36,6 +37,8 @@ fn main() {
 }
 
 fn logic_loop(mut c: WorkerConnection) {
+    let mut counter = 0;
+
     loop {
         let ops = c.get_op_list(0);
         c.send_log_message(
@@ -45,6 +48,12 @@ fn logic_loop(mut c: WorkerConnection) {
             None,
         );
         ::std::thread::sleep(::std::time::Duration::from_millis(500));
+
+        if counter % 20 == 0 {
+            println!("Sending reserve entity ids request");
+            c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
+        }
+        counter += 1;
     }
 }
 

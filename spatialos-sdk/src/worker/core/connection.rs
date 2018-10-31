@@ -20,16 +20,16 @@ pub trait Connection {
     );
     fn send_metrics(&mut self, metrics: Metrics);
 
-    fn send_reserve_entity_ids_request(&mut self, payload: ReserveEntityIdsRequest, timeout_millis: u32) -> RequestId<ReserveEntityIdsRequest>;
-    fn send_create_entity_request(&mut self, payload: CreateEntityRequest, timeout_millis: u32) -> RequestId<CreateEntityRequest>;
-    fn send_delete_entity_request(&mut self, payload: DeleteEntityRequest, timeout_millis: u32) -> RequestId<DeleteEntityRequest>;
-    fn send_entity_query_request(&mut self, payload: EntityQueryRequest, timeout_millis: u32) -> RequestId<EntityQueryRequest>;
+    fn send_reserve_entity_ids_request(&mut self, payload: ReserveEntityIdsRequest, timeout_millis: Option<u32>) -> RequestId<ReserveEntityIdsRequest>;
+    fn send_create_entity_request(&mut self, payload: CreateEntityRequest, timeout_millis: Option<u32>) -> RequestId<CreateEntityRequest>;
+    fn send_delete_entity_request(&mut self, payload: DeleteEntityRequest, timeout_millis: Option<u32>) -> RequestId<DeleteEntityRequest>;
+    fn send_entity_query_request(&mut self, payload: EntityQueryRequest, timeout_millis: Option<u32>) -> RequestId<EntityQueryRequest>;
 
     fn send_command_request(
         &mut self,
         entity_id: EntityId,
         request: CommandRequest,
-        timeout_millis: u32,
+        timeout_millis: Option<u32>,
         command_parameters: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest>;
 
@@ -128,25 +128,33 @@ impl Connection for WorkerConnection {
         unimplemented!()
     }
 
-    fn send_reserve_entity_ids_request(&mut self, payload: ReserveEntityIdsRequest, timeout_millis: u32)  -> RequestId<ReserveEntityIdsRequest>{
+    fn send_reserve_entity_ids_request(&mut self, payload: ReserveEntityIdsRequest, timeout_millis: Option<u32>)  -> RequestId<ReserveEntityIdsRequest>{
         unsafe {
-            let id = Worker_Connection_SendReserveEntityIdsRequest(self.connection_ptr, payload.0, &timeout_millis);
+            let timeout = match timeout_millis {
+                Some(c) => &c,
+                None => ptr::null()
+            };
+            let id = Worker_Connection_SendReserveEntityIdsRequest(self.connection_ptr, payload.0, timeout);
             RequestId::new(id)
         }
     }
 
-    fn send_create_entity_request(&mut self, payload: CreateEntityRequest, timeout_millis: u32) -> RequestId<CreateEntityRequest> {
+    fn send_create_entity_request(&mut self, payload: CreateEntityRequest, timeout_millis: Option<u32>) -> RequestId<CreateEntityRequest> {
         unimplemented!()
     }
 
-    fn send_delete_entity_request(&mut self, payload: DeleteEntityRequest, timeout_millis: u32) -> RequestId<DeleteEntityRequest> {
+    fn send_delete_entity_request(&mut self, payload: DeleteEntityRequest, timeout_millis: Option<u32>) -> RequestId<DeleteEntityRequest> {
         unsafe {
-            let id = Worker_Connection_SendDeleteEntityRequest(self.connection_ptr, payload.0.id, &timeout_millis);
+            let timeout = match timeout_millis {
+                Some(c) => &c,
+                None => ptr::null()
+            };
+            let id = Worker_Connection_SendDeleteEntityRequest(self.connection_ptr, payload.0.id, timeout);
             RequestId::new(id)
         }
     }
 
-    fn send_entity_query_request(&mut self, payload: EntityQueryRequest, timeout_millis: u32) -> RequestId<EntityQueryRequest> {
+    fn send_entity_query_request(&mut self, payload: EntityQueryRequest, timeout_millis: Option<u32>) -> RequestId<EntityQueryRequest> {
         unimplemented!()
     }
 
@@ -154,7 +162,7 @@ impl Connection for WorkerConnection {
         &mut self,
         entity_id: EntityId,
         request: CommandRequest,
-        timeout_millis: u32,
+        timeout_millis: Option<u32>,
         command_parameters: CommandParameters
     ) -> RequestId<OutgoingCommandRequest> {
         unimplemented!()
