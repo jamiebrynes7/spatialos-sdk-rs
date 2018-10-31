@@ -128,15 +128,17 @@ fn download_and_unpack(
     let mut tmp_file = tmp_dir.clone();
     tmp_file.push(package_name);
 
-    println!("Downloading {} to {}.", package_name, target_directory);
+    let tmp_file = tmp_file.to_str().unwrap();
+
+    println!("Downloading {} to {}.", package_name, tmp_file);
     download_package(
         package_source,
         package_name,
         sdk_version,
-        tmp_file.to_str().unwrap(),
+        tmp_file,
     );
 
-    unpack_package(tmp_file.to_str().unwrap(), target_directory)?;
+    unpack_package(tmp_file, target_directory)?;
 
     // Clean temp directory.
     fs::remove_dir_all(&tmp_dir)?;
