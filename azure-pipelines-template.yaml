@@ -25,7 +25,7 @@ jobs:
         displayName: Install Rust
     # Install Spatial
     - ${{ if eq(parameters.name, 'MacOS') }}:
-      - script: /
+      - script: |
           mkdir -p ~/.spatial
           curl -sSf -o ~/.spatial/spatial https://console.improbable.io/toolbelt/download/latest/mac
           chmod +x ~/.spatial/spatial
@@ -33,7 +33,7 @@ jobs:
           spatial version
         displayName: Install Spatial CLI
     - ${{ if eq(parameters.name, 'Linux') }}:
-      - script: /
+      - script: |
           mkdir -p ~/.spatial
           curl -sSf -o ~/.spatial/spatial https://console.improbable.io/toolbelt/download/latest/linux
           chmod +x ~/.spatial/spatial
@@ -41,7 +41,7 @@ jobs:
           spatial version
         displayName: Install Spatial CLI
     - ${{ if eq(parameters.name, 'Windows') }}:
-      - script: /
+      - script: |
           md %USERPROFILE%\.spatial
           curl -sSf -o ~/.spatial/spatial https://console.improbable.io/toolbelt/download/latest/win
           set PATH=%PATH%;%USERPROFILE%\.spatial
