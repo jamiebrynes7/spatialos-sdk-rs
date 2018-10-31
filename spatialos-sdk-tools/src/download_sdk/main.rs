@@ -164,6 +164,8 @@ fn download_package(
         target_file,
     ];
 
+    println!("Running command: spatial {}", args.join(" "));
+
     let out = process::Command::new("spatial")
         .args(args)
         .output()
