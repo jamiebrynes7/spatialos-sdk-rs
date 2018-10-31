@@ -1,6 +1,7 @@
 #![allow(non_upper_case_globals)]
 
 use std::collections::HashMap;
+use std::slice;
 
 use worker::core::commands::*;
 use worker::core::component::*;
@@ -10,6 +11,7 @@ use worker::core::{Authority, EntityId, LogLevel, RequestId};
 
 use worker::internal::bindings::*;
 use worker::internal::utils::*;
+use worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 
 // TODO: Investigate tying lifetimes of ops to the OpList - there is potentially C-level data contained
 // inside them.
@@ -19,19 +21,18 @@ pub struct OpList {
 }
 
 impl OpList {
-    pub(crate) fn new(raw_ops_list_ptr: *mut Worker_OpList) -> OpList {
-        let mut ops = Vec::new();
+    pub(crate) fn new(raw_ops_list_ptr: *mut Worker_OpList) -> Self {
         unsafe {
-            let raw_ops = *raw_ops_list_ptr;
-            for i in 0..raw_ops.op_count as isize {
-                let ptr = raw_ops.ops.offset(i);
-                assert!(!ptr.is_null());
-                ops.push(WorkerOp::from_worker_op(ptr))
+            let worker_op_list = *raw_ops_list_ptr;
+            let ops = slice::from_raw_parts(worker_op_list.ops, worker_op_list.op_count as usize)
+                .iter()
+                .map(|op| WorkerOp::from_worker_sdk(op))
+                .collect::<Vec<WorkerOp>>();
+
+            OpList {
+                ops,
+                internal_ptr: raw_ops_list_ptr,
             }
-        }
-        OpList {
-            ops,
-            internal_ptr: raw_ops_list_ptr,
         }
     }
 }
@@ -73,21 +74,20 @@ pub enum WorkerOp {
     EntityQueryResponse(EntityQueryResponseOp),
 }
 
-impl WorkerOp {
-    pub(crate) fn from_worker_op(op: *mut Worker_Op) -> WorkerOp {
-        assert!(!op.is_null());
-        let erased_op = unsafe { (*op).__bindgen_anon_1 };
-        let op_type = unsafe { (*op).op_type as u32 };
+unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
+    unsafe fn from_worker_sdk(op: &Worker_Op) -> Self {
+        let erased_op = op.__bindgen_anon_1;
+        let op_type = op.op_type as u32;
         match op_type {
             Worker_OpType_WORKER_OP_TYPE_DISCONNECT => {
-                let op = unsafe { erased_op.disconnect };
+                let op = erased_op.disconnect;
                 let disconnect_op = DisconnectOp {
                     reason: cstr_to_string(op.reason),
                 };
                 WorkerOp::Disconnect(disconnect_op)
             }
             Worker_OpType_WORKER_OP_TYPE_FLAG_UPDATE => {
-                let op = unsafe { erased_op.flag_update };
+                let op = erased_op.flag_update;
                 let flag_update_op = FlagUpdateOp {
                     name: cstr_to_string(op.name),
                     value: cstr_to_string(op.value),
@@ -95,7 +95,7 @@ impl WorkerOp {
                 WorkerOp::FlagUpdate(flag_update_op)
             }
             Worker_OpType_WORKER_OP_TYPE_LOG_MESSAGE => {
-                let op = unsafe { erased_op.log_message };
+                let op = erased_op.log_message;
                 let log_message_op = LogMessageOp {
                     message: cstr_to_string(op.message),
                     log_level: LogLevel::from(op.level),
@@ -103,35 +103,35 @@ impl WorkerOp {
                 WorkerOp::LogMessage(log_message_op)
             }
             Worker_OpType_WORKER_OP_TYPE_METRICS => {
-                let op = unsafe { erased_op.metrics };
+                let op = erased_op.metrics;
                 let metrics_op = MetricsOp {
-                    metrics: unsafe { Metrics::from_worker_sdk(op.metrics) },
+                    metrics: unsafe { Metrics::from_worker_sdk(&op.metrics) },
                 };
                 WorkerOp::Metrics(metrics_op)
             }
             Worker_OpType_WORKER_OP_TYPE_CRITICAL_SECTION => {
-                let op = unsafe { erased_op.critical_section };
+                let op = erased_op.critical_section;
                 let critical_section_op = CriticalSectionOp {
                     in_critical_section: op.in_critical_section != 0,
                 };
                 WorkerOp::CriticalSection(critical_section_op)
             }
             Worker_OpType_WORKER_OP_TYPE_ADD_ENTITY => {
-                let op = unsafe { erased_op.add_entity };
+                let op = erased_op.add_entity;
                 let add_entity_op = AddEntityOp {
                     entity_id: EntityId::new(op.entity_id),
                 };
                 WorkerOp::AddEntity(add_entity_op)
             }
             Worker_OpType_WORKER_OP_TYPE_REMOVE_ENTITY => {
-                let op = unsafe { erased_op.remove_entity };
+                let op = erased_op.remove_entity;
                 let remove_entity_op = RemoveEntityOp {
                     entity_id: EntityId::new(op.entity_id),
                 };
                 WorkerOp::RemoveEntity(remove_entity_op)
             }
             Worker_OpType_WORKER_OP_TYPE_ADD_COMPONENT => {
-                let op = unsafe { erased_op.add_component };
+                let op = erased_op.add_component;
                 let add_component_op = AddComponentOp {
                     entity_id: EntityId::new(op.entity_id),
                     component_data: ComponentData::from_worker_sdk(&op.data),
@@ -139,7 +139,7 @@ impl WorkerOp {
                 WorkerOp::AddComponent(add_component_op)
             }
             Worker_OpType_WORKER_OP_TYPE_REMOVE_COMPONENT => {
-                let op = unsafe { erased_op.remove_component };
+                let op = erased_op.remove_component;
                 let remove_component_op = RemoveComponentOp {
                     entity_id: EntityId::new(op.entity_id),
                     component_id: op.component_id,
@@ -147,7 +147,7 @@ impl WorkerOp {
                 WorkerOp::RemoveComponent(remove_component_op)
             }
             Worker_OpType_WORKER_OP_TYPE_AUTHORITY_CHANGE => {
-                let op = unsafe { erased_op.authority_change };
+                let op = erased_op.authority_change;
                 let authority_change_op = AuthorityChangeOp {
                     entity_id: EntityId::new(op.entity_id),
                     component_id: op.component_id,
@@ -156,7 +156,7 @@ impl WorkerOp {
                 WorkerOp::AuthorityChange(authority_change_op)
             }
             Worker_OpType_WORKER_OP_TYPE_COMPONENT_UPDATE => {
-                let op = unsafe { erased_op.component_update };
+                let op = erased_op.component_update;
                 let component_update_op = ComponentUpdateOp {
                     entity_id: EntityId::new(op.entity_id),
                     component_update: ComponentUpdate::from_worker_sdk(&op.update),
@@ -164,7 +164,7 @@ impl WorkerOp {
                 WorkerOp::ComponentUpdate(component_update_op)
             }
             Worker_OpType_WORKER_OP_TYPE_COMMAND_REQUEST => {
-                let op = unsafe { erased_op.command_request };
+                let op = erased_op.command_request;
                 let attribute_set = cstr_array_to_vec_string(
                     op.caller_attribute_set.attributes,
                     op.caller_attribute_set.attribute_count,
@@ -181,7 +181,7 @@ impl WorkerOp {
                 WorkerOp::CommandRequest(command_request_op)
             }
             Worker_OpType_WORKER_OP_TYPE_COMMAND_RESPONSE => {
-                let op = unsafe { erased_op.command_response };
+                let op = erased_op.command_response;
                 let status_code = match op.status_code as u32 {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                         StatusCode::Success(CommandResponse::from_worker_sdk(&op.response))
@@ -218,7 +218,7 @@ impl WorkerOp {
                 WorkerOp::CommandResponse(command_response_op)
             }
             Worker_OpType_WORKER_OP_TYPE_RESERVE_ENTITY_IDS_RESPONSE => {
-                let op = unsafe { erased_op.reserve_entity_ids_response };
+                let op = erased_op.reserve_entity_ids_response;
                 let status_code = match op.status_code as u32 {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                         StatusCode::Success(EntityId::new(op.first_entity_id))
@@ -255,7 +255,7 @@ impl WorkerOp {
                 WorkerOp::ReserveEntityIdsResponse(reserve_entity_ids_response_op)
             }
             Worker_OpType_WORKER_OP_TYPE_CREATE_ENTITY_RESPONSE => {
-                let op = unsafe { erased_op.create_entity_response };
+                let op = erased_op.create_entity_response;
                 let status_code = match op.status_code as u32 {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                         StatusCode::Success(EntityId::new(op.entity_id))
@@ -291,7 +291,7 @@ impl WorkerOp {
                 WorkerOp::CreateEntityResponse(create_entity_response_op)
             }
             Worker_OpType_WORKER_OP_TYPE_DELETE_ENTITY_RESPONSE => {
-                let op = unsafe { erased_op.delete_entity_response };
+                let op = erased_op.delete_entity_response;
                 let status_code = match op.status_code as u32 {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => StatusCode::Success(()),
                     Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
@@ -326,7 +326,7 @@ impl WorkerOp {
                 WorkerOp::DeleteEntityResponse(delete_entity_response_op)
             }
             Worker_OpType_WORKER_OP_TYPE_ENTITY_QUERY_RESPONSE => {
-                let op = unsafe { erased_op.entity_query_response };
+                let op = erased_op.entity_query_response;
                 let status_code = match op.status_code as u32 {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                         if op.results.is_null() {
@@ -384,7 +384,7 @@ pub struct FlagUpdateOp {
 
 pub struct LogMessageOp {
     pub message: String,
-    pub log_level: LogLevel, // TODO: Make enum
+    pub log_level: LogLevel,
 }
 
 pub struct MetricsOp {

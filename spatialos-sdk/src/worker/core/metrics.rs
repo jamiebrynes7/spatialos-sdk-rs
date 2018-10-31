@@ -4,6 +4,7 @@ use worker::internal::bindings::{
     Worker_GaugeMetric, Worker_HistogramMetric, Worker_HistogramMetricBucket, Worker_Metrics,
 };
 use worker::internal::utils::cstr_to_string;
+use worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 
 pub struct Metrics {
     pub load: Option<f64>,
@@ -11,8 +12,8 @@ pub struct Metrics {
     pub histogram_metrics: Vec<HistogramMetric>,
 }
 
-impl Metrics {
-    pub(crate) unsafe fn from_worker_sdk(metrics: Worker_Metrics) -> Self {
+unsafe impl WorkerSdkConversion<Worker_Metrics> for Metrics {
+    unsafe fn from_worker_sdk(metrics: &Worker_Metrics) -> Self {
         let gauge_metrics =
             slice::from_raw_parts(metrics.gauge_metrics, metrics.gauge_metric_count as usize)
                 .iter()
@@ -44,7 +45,7 @@ pub struct GaugeMetric {
     pub value: f64,
 }
 
-impl GaugeMetric {
+unsafe impl WorkerSdkConversion<Worker_GaugeMetric> for GaugeMetric {
     unsafe fn from_worker_sdk(gauge_metric: &Worker_GaugeMetric) -> Self {
         GaugeMetric {
             key: cstr_to_string(gauge_metric.key),
@@ -59,10 +60,8 @@ pub struct HistogramMetric {
     pub buckets: Vec<HistogramMetricBucket>,
 }
 
-impl HistogramMetric {
+unsafe impl WorkerSdkConversion<Worker_HistogramMetric> for HistogramMetric {
     unsafe fn from_worker_sdk(histogram_metric: &Worker_HistogramMetric) -> Self {
-        let mut buckets = Vec::new();
-
         let buckets = slice::from_raw_parts(
             histogram_metric.buckets,
             histogram_metric.bucket_count as usize,
