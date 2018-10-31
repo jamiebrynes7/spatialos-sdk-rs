@@ -1,0 +1,15 @@
+os:
+  - windows
+  - osx
+  - linux
+language: rust
+
+before_install:
+  - set -e
+
+install:
+  - ./ci/install.sh
+
+script:
+  - ./ci/lint.sh
+  - ./ci/build.sh
