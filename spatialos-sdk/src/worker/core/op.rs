@@ -78,7 +78,6 @@ impl WorkerOp {
         assert!(!op.is_null());
         let erased_op = unsafe { (*op).__bindgen_anon_1 };
         let op_type = unsafe { (*op).op_type as u32 };
-
         match op_type {
             Worker_OpType_WORKER_OP_TYPE_DISCONNECT => {
                 let op = unsafe { erased_op.disconnect };
@@ -106,7 +105,7 @@ impl WorkerOp {
             Worker_OpType_WORKER_OP_TYPE_METRICS => {
                 let op = unsafe { erased_op.metrics };
                 let metrics_op = MetricsOp {
-                    metrics: Metrics::from_worker_sdk(&op.metrics),
+                    metrics: unsafe { Metrics::from_worker_sdk(op.metrics) },
                 };
                 WorkerOp::Metrics(metrics_op)
             }

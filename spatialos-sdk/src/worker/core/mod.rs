@@ -81,6 +81,19 @@ pub enum LogLevel {
     Fatal,
 }
 
+impl LogLevel {
+    fn to_worker_sdk(&self) -> u8 {
+        match self {
+            LogLevel::Debug => 1,
+            LogLevel::Info => 2,
+            LogLevel::Warn => 3,
+            LogLevel::Error => 4,
+            LogLevel::Fatal => 5,
+            _ => panic!("Unknown log level"),
+        }
+    }
+}
+
 impl From<u8> for LogLevel {
     fn from(log_level: u8) -> Self {
         match log_level {
