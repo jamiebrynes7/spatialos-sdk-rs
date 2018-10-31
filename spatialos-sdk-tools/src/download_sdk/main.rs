@@ -125,6 +125,11 @@ fn download_and_unpack(
     tmp_dir.push("tmp");
     fs::create_dir_all(&tmp_dir)?;
 
+    match path::Path::exists(&tmp_dir) {
+        true => println!("Tmp directory exists"),
+        false => println!("Tmp directory does not exist")
+    };
+
     let mut tmp_file = tmp_dir.clone();
     tmp_file.push(package_name);
 
