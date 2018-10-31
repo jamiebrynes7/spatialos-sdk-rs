@@ -3,3 +3,4 @@
 #![allow(non_snake_case)]
 pub(crate) mod bindings;
 pub(crate) mod utils;
+pub(crate) mod worker_sdk_conversion;
