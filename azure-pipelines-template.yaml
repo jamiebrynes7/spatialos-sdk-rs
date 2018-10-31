@@ -43,7 +43,7 @@ jobs:
     - ${{ if eq(parameters.name, 'Windows') }}:
       - script: |
           md %USERPROFILE%\.spatial
-          curl -sSfL -o ~/.spatial/spatial https://console.improbable.io/toolbelt/download/latest/win
+          curl -sSfL -o %USERPROFILE%\.spatial\spatial https://console.improbable.io/toolbelt/download/latest/win
           set PATH=%PATH%;%USERPROFILE%\.spatial
           spatial version
-        displayName: Install Spatial CLI      
+        displayName: Install Spatial CLI
