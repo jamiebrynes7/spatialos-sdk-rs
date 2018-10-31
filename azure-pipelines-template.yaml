@@ -41,12 +41,12 @@ jobs:
           spatial version
         displayName: Install Spatial CLI
     - ${{ if eq(parameters.name, 'Windows') }}:
-      - script: |
-          md %USERPROFILE%\.spatial
-          curl -sSfL -o %USERPROFILE%\.spatial\spatial.exe https://console.improbable.io/toolbelt/download/latest/win
-          set PATH=%PATH%;%USERPROFILE%\.spatial
+      - powershell: |
+          mmkdir -p  $env:UserProfile\.spatial
+          curl -sSfL -o $env:UserProfile\.spatial\spatial.exe https://console.improbable.io/toolbelt/download/latest/win
+          $env:PATH += "$env:UserProfile\.spatial"
           echo "##vso[task.setvariable variable=PATH]%PATH%;%USERPROFILE%\.spatial"
-          spatial.exe version
+          spatial version
         displayName: Install Spatial CLI
     # Setup Spatial oauth tokens
     - task: DownloadSecureFile@1
