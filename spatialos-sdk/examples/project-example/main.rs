@@ -1,7 +1,11 @@
 extern crate spatialos_sdk;
+extern crate uuid;
 
-use spatialos_sdk::worker::core::connection::WorkerConnection;
+use spatialos_sdk::worker::core::connection::{Connection, WorkerConnection};
 use spatialos_sdk::worker::core::parameters;
+use spatialos_sdk::worker::core::LogLevel;
+
+use uuid::Uuid;
 
 fn main() {
     println!("Entered program");
@@ -10,27 +14,53 @@ fn main() {
         port: 7777,
         connection_params: parameters::ConnectionParameters::default(),
     };
-
     connection_parameters.connection_params.worker_type = "RustWorker".to_owned();
 
+    let worker_id = get_worker_id();
+
+    let worker_connection = match get_connection_block(&connection_parameters, &worker_id) {
+        Ok(c) => c,
+        Err(e) => panic!("Failed to connect with block: \n{}", e),
+    };
+
+    worker_connection.send_log_message(LogLevel::Info, "main", "Connected successfully!", None);
+
+    logic_loop(worker_connection);
+
     /*
-    match get_connection_block(&connection_parameters) {
-        Ok(_) => println!("Connected successful with block."),
-        Err(e) => println!("Failed to connect with block: \n{}", e),
-    }
-    */
-    
     match get_connection_poll(&connection_parameters) {
         Ok(_) => println!("Connected successful with poll."),
         Err(e) => println!("Failed to connect with poll: \n{}", e),
     }
-    
+    */
+}
+
+fn logic_loop(c: WorkerConnection) {
+    loop {
+        let ops = c.get_op_list(0);
+        c.send_log_message(
+            LogLevel::Info,
+            "loop",
+            &format!("Received {} ops", ops.ops.len()),
+            None,
+        );
+        ::std::thread::sleep(::std::time::Duration::from_millis(500));
+    }
+}
+
+fn get_worker_id() -> String {
+    let worker_uuid = Uuid::new_v4();
+    let mut worker_id = String::from("RustWorker-");
+    worker_id.push_str(&worker_uuid.to_string());
+
+    worker_id
 }
 
 fn get_connection_block(
     params: &parameters::ReceptionistConnectionParameters,
+    worker_id: &str,
 ) -> Result<WorkerConnection, String> {
-    let mut future = WorkerConnection::connect_receptionist_async("test-worker", params);
+    let mut future = WorkerConnection::connect_receptionist_async(worker_id, params);
     future.get()
 }
 
