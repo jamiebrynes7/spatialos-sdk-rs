@@ -29,6 +29,6 @@ mkdir -p ~/.spatial
 curl -sSLf -o ~/.spatial/spatial "${DOWNLOAD_URL}"
 chmod +x ~/.spatial/spatial
 
-export PATH=${PATH}:~/.spatial/spatial
+export PATH=${PATH}:~/.spatial
 
 spatial version
