@@ -4,9 +4,11 @@ extern crate uuid;
 use spatialos_sdk::worker::core::commands::ReserveEntityIdsRequest;
 use spatialos_sdk::worker::core::connection::{Connection, WorkerConnection};
 use spatialos_sdk::worker::core::parameters;
+use spatialos_sdk::worker::core::query::{EntityQuery, ResultType, QueryConstraint};
 use spatialos_sdk::worker::core::LogLevel;
 
 use uuid::Uuid;
+use spatialos_sdk::worker::core::commands::EntityQueryRequest;
 
 fn main() {
     println!("Entered program");
@@ -52,6 +54,8 @@ fn logic_loop(mut c: WorkerConnection) {
         if counter % 20 == 0 {
             println!("Sending reserve entity ids request");
             c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
+            println!("Sending query");
+            send_query(&mut c);
         }
         counter += 1;
     }
@@ -107,4 +111,25 @@ fn get_connection_poll(
             None => Err("Max connection attempts failed.".to_owned()),
         },
     }
+}
+
+fn send_query(c: &mut WorkerConnection) {
+    let c1 = QueryConstraint::Component(0);
+    let c2 = QueryConstraint::Component(1);
+    let c3 = QueryConstraint::Component(2);
+    let c4 = QueryConstraint::Component(3);
+    let c5 = QueryConstraint::Component(4);
+    let c6 = QueryConstraint::Sphere(0.0,0.0,0.0,0.0);
+
+    let or = QueryConstraint::Or(vec![c1,c2]);
+    let not = QueryConstraint::Not(Box::new(c3));
+    let and_not = QueryConstraint::And(vec![c6, not]);
+
+    let final_constraint = QueryConstraint::And(vec![or, and_not, c4, c5]);
+    let query = EntityQuery {
+        constraint: final_constraint,
+        result_type: ResultType::Count
+    };
+
+    c.send_entity_query_request(EntityQueryRequest(query), None);
 }

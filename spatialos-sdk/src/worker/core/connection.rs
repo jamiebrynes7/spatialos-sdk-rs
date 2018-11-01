@@ -20,10 +20,26 @@ pub trait Connection {
     );
     fn send_metrics(&mut self, metrics: Metrics);
 
-    fn send_reserve_entity_ids_request(&mut self, payload: ReserveEntityIdsRequest, timeout_millis: Option<u32>) -> RequestId<ReserveEntityIdsRequest>;
-    fn send_create_entity_request(&mut self, payload: CreateEntityRequest, timeout_millis: Option<u32>) -> RequestId<CreateEntityRequest>;
-    fn send_delete_entity_request(&mut self, payload: DeleteEntityRequest, timeout_millis: Option<u32>) -> RequestId<DeleteEntityRequest>;
-    fn send_entity_query_request(&mut self, payload: EntityQueryRequest, timeout_millis: Option<u32>) -> RequestId<EntityQueryRequest>;
+    fn send_reserve_entity_ids_request(
+        &mut self,
+        payload: ReserveEntityIdsRequest,
+        timeout_millis: Option<u32>,
+    ) -> RequestId<ReserveEntityIdsRequest>;
+    fn send_create_entity_request(
+        &mut self,
+        payload: CreateEntityRequest,
+        timeout_millis: Option<u32>,
+    ) -> RequestId<CreateEntityRequest>;
+    fn send_delete_entity_request(
+        &mut self,
+        payload: DeleteEntityRequest,
+        timeout_millis: Option<u32>,
+    ) -> RequestId<DeleteEntityRequest>;
+    fn send_entity_query_request(
+        &mut self,
+        payload: EntityQueryRequest,
+        timeout_millis: Option<u32>,
+    ) -> RequestId<EntityQueryRequest>;
 
     fn send_command_request(
         &mut self,
@@ -39,7 +55,11 @@ pub trait Connection {
         response: CommandResponse,
     );
 
-    fn send_command_failure(&mut self, request_id: RequestId<IncomingCommandRequest>, message: &str);
+    fn send_command_failure(
+        &mut self,
+        request_id: RequestId<IncomingCommandRequest>,
+        message: &str,
+    );
 
     fn send_component_update(&mut self, entity_id: EntityId, component_update: ComponentUpdate);
     fn send_component_interest(
@@ -48,7 +68,11 @@ pub trait Connection {
         interest_overrides: &Vec<InterestOverride>,
     );
 
-    fn send_authority_loss_imminent_acknowledgement(&mut self, entity_id: EntityId, component_id: u32);
+    fn send_authority_loss_imminent_acknowledgement(
+        &mut self,
+        entity_id: EntityId,
+        component_id: u32,
+    );
 
     fn set_protocol_logging_enabled(&mut self, enabled: bool);
     fn is_connected(&self) -> bool;
@@ -128,34 +152,71 @@ impl Connection for WorkerConnection {
         unimplemented!()
     }
 
-    fn send_reserve_entity_ids_request(&mut self, payload: ReserveEntityIdsRequest, timeout_millis: Option<u32>)  -> RequestId<ReserveEntityIdsRequest>{
+    fn send_reserve_entity_ids_request(
+        &mut self,
+        payload: ReserveEntityIdsRequest,
+        timeout_millis: Option<u32>,
+    ) -> RequestId<ReserveEntityIdsRequest> {
         unsafe {
             let timeout = match timeout_millis {
                 Some(c) => &c,
-                None => ptr::null()
+                None => ptr::null(),
             };
-            let id = Worker_Connection_SendReserveEntityIdsRequest(self.connection_ptr, payload.0, timeout);
+            let id = Worker_Connection_SendReserveEntityIdsRequest(
+                self.connection_ptr,
+                payload.0,
+                timeout,
+            );
             RequestId::new(id)
         }
     }
 
-    fn send_create_entity_request(&mut self, payload: CreateEntityRequest, timeout_millis: Option<u32>) -> RequestId<CreateEntityRequest> {
+    fn send_create_entity_request(
+        &mut self,
+        payload: CreateEntityRequest,
+        timeout_millis: Option<u32>,
+    ) -> RequestId<CreateEntityRequest> {
         unimplemented!()
     }
 
-    fn send_delete_entity_request(&mut self, payload: DeleteEntityRequest, timeout_millis: Option<u32>) -> RequestId<DeleteEntityRequest> {
+    fn send_delete_entity_request(
+        &mut self,
+        payload: DeleteEntityRequest,
+        timeout_millis: Option<u32>,
+    ) -> RequestId<DeleteEntityRequest> {
         unsafe {
             let timeout = match timeout_millis {
                 Some(c) => &c,
-                None => ptr::null()
+                None => ptr::null(),
             };
-            let id = Worker_Connection_SendDeleteEntityRequest(self.connection_ptr, payload.0.id, timeout);
+            let id = Worker_Connection_SendDeleteEntityRequest(
+                self.connection_ptr,
+                payload.0.id,
+                timeout,
+            );
             RequestId::new(id)
         }
     }
 
-    fn send_entity_query_request(&mut self, payload: EntityQueryRequest, timeout_millis: Option<u32>) -> RequestId<EntityQueryRequest> {
-        unimplemented!()
+    fn send_entity_query_request(
+        &mut self,
+        payload: EntityQueryRequest,
+        timeout_millis: Option<u32>,
+    ) -> RequestId<EntityQueryRequest> {
+        unsafe {
+            let timeout = match timeout_millis {
+                Some(c) => &c,
+                None => ptr::null(),
+            };
+
+            let worker_query = payload.0.to_worker_sdk();
+            let id = Worker_Connection_SendEntityQueryRequest(
+                self.connection_ptr,
+                &worker_query.query,
+                timeout,
+            );
+            RequestId::new(id)
+        }
     }
 
     fn send_command_request(
@@ -163,7 +224,7 @@ impl Connection for WorkerConnection {
         entity_id: EntityId,
         request: CommandRequest,
         timeout_millis: Option<u32>,
-        command_parameters: CommandParameters
+        command_parameters: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest> {
         unimplemented!()
     }
@@ -176,7 +237,11 @@ impl Connection for WorkerConnection {
         unimplemented!()
     }
 
-    fn send_command_failure(&mut self, request_id: RequestId<IncomingCommandRequest>, message: &str) {
+    fn send_command_failure(
+        &mut self,
+        request_id: RequestId<IncomingCommandRequest>,
+        message: &str,
+    ) {
         unimplemented!()
     }
 
@@ -192,7 +257,11 @@ impl Connection for WorkerConnection {
         unimplemented!()
     }
 
-    fn send_authority_loss_imminent_acknowledgement(&mut self, entity_id: EntityId, component_id: u32) {
+    fn send_authority_loss_imminent_acknowledgement(
+        &mut self,
+        entity_id: EntityId,
+        component_id: u32,
+    ) {
         unimplemented!()
     }
 
