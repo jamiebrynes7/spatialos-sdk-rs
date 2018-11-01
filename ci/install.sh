@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 function isLinux() {
   [[ "$(uname -s)" == "Linux" ]];
 }

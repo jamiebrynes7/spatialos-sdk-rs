@@ -8,6 +8,7 @@ before_install:
   - set -e
 
 install:
+  - source ~/.cargo/env
   - ./ci/install.sh
 
 script:
