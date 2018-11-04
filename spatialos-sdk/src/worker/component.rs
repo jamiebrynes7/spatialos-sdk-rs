@@ -1,17 +1,16 @@
 use worker::internal::schema;
 
+pub type ComponentId = u32;
+
 pub trait ComponentMetaclass {
     type Data;
     type Update;
+
+    fn component_id() -> ComponentId;
 }
 
 pub trait ComponentUpdate<M: ComponentMetaclass> {
     fn to_data(self) -> M::Data;
-}
-
-pub trait ComponentUpdateSerializer<U> {
-    fn serialize(&self) -> schema::SchemaComponentUpdate;
-    fn deserialize(schema::SchemaComponentUpdate) -> Self;
 }
 
 pub trait ComponentData<M: ComponentMetaclass> {
@@ -19,9 +18,12 @@ pub trait ComponentData<M: ComponentMetaclass> {
     fn merge(&mut self, update: M::Update);
 }
 
-pub trait ComponentDataSerializer<U> {
-    fn serialize(&self) -> schema::SchemaComponentData;
-    fn deserialize(schema::SchemaComponentData) -> Self;
+pub trait ComponentVtable<M: ComponentMetaclass> {
+    fn serialize_update(&M::Update) -> schema::SchemaComponentUpdate;
+    fn deserialize_update(&schema::SchemaComponentUpdate) -> M::Update;
+    fn serialize_data(&M::Data) -> schema::SchemaComponentData;
+    fn deserialize_data(&schema::SchemaComponentData) -> M::Data;
+    // TODO: Command requests and command responses.
 }
 
 // TODO: CommandRequestSerializer and CommandResponseSerializer

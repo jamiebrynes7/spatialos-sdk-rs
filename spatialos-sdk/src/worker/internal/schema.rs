@@ -62,12 +62,42 @@ impl SchemaComponentUpdate {
     }
 }
 
+impl SchemaComponentData {
+    pub(crate) fn from_worker_sdk(component_id: u32, component_data: *mut Schema_ComponentData) -> SchemaComponentData {
+        SchemaComponentData {
+            component_id: component_id,
+            internal: component_data
+        }
+    }
+
+    pub fn new(component_id: u32) -> SchemaComponentData {
+        SchemaComponentData {
+            component_id: component_id,
+            internal: unsafe { Schema_CreateComponentData(component_id) }
+        }
+    }
+
+    pub fn fields(&self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_GetComponentDataFields(self.internal) }
+        }
+    }
+
+    pub fn fields_mut(&mut self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_GetComponentDataFields(self.internal) }
+        }
+    }
+}
+
 impl SchemaObject {
     pub fn field<T>(&self, field_id: usize) -> SchemaFieldContainer<T> {
         SchemaFieldContainer { field_id: field_id as u32, container: self, _phantom: PhantomData }
     }
 }
 
+// TODO: Generate this for all primitive types with a macro.
+// i.e. impl_field_primitives!([f32, Float], [f64, Double])
 impl<'a> SchemaField<f32> for SchemaFieldContainer<'a, f32> {
     fn get_or_default(&self) -> f32 {
         unsafe { Schema_GetFloat(self.container.internal, self.field_id) }
