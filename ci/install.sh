@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-set -x
+set -euo pipefail
+if [[ -n "${DEBUG-}" ]]; then
+  set -x
+fi
 
 function isLinux() {
   [[ "$(uname -s)" == "Linux" ]];
@@ -13,6 +16,8 @@ function isMacOS() {
 function isWindows() {
   ! ( isLinux || isMacOS );
 }
+
+echo "Downloading Spatial CLI"
 
 if isWindows; then
     DOWNLOAD_URL="https://console.improbable.io/toolbelt/download/latest/win"
@@ -31,4 +36,20 @@ chmod +x ~/.spatial/spatial
 
 export PATH=${PATH}:~/.spatial
 
+echo "Install Spatial OAuth"
+
+if isWindows; then
+    OAUTH_LOCATION="${APPDATA}/Local/.improbable/oauth2"
+else
+    OAUTH_LOCATION="~/.improbable/oauth2"
+fi
+
+echo $SPATIAL_OAUTH > ${OAUTH_LOCATION}/oauth2_refresh_token
+
+spatial auth login
+
 spatial version
+
+echo "Installing cargo fmt"
+
+rustup component add rustfmt-preview
