@@ -44,7 +44,8 @@ else
     OAUTH_LOCATION="~/.improbable/oauth2"
 fi
 
-echo $SPATIAL_OAUTH > ${OAUTH_LOCATION}/oauth2_refresh_token
+mkdir -p "${OAUTH_LOCATION}"
+echo "$SPATIAL_OAUTH" > "${OAUTH_LOCATION}/oauth2_refresh_token"
 
 spatial auth login
 
