@@ -30,8 +30,6 @@ else
     exit 1
 fi
 
-env
-
 mkdir -p ~/.spatial
 curl -sSLf -o ~/.spatial/spatial "${DOWNLOAD_URL}"
 chmod +x ~/.spatial/spatial
