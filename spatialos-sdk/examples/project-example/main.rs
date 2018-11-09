@@ -14,13 +14,15 @@ use uuid::Uuid;
 
 fn main() {
     println!("Entered program");
-    let mut connection_parameters = parameters::ReceptionistConnectionParameters {
-        hostname: "127.0.0.1".to_owned(),
-        port: 7777,
-        connection_params: parameters::ConnectionParameters::default(),
-    };
-    connection_parameters.connection_params.worker_type = "RustWorker".to_owned();
 
+    let connection_params = parameters::ConnectionParameters::new("RustWorker")
+        .using_tcp(None)
+        .using_external_ip();
+
+    let mut connection_parameters =
+        parameters::ReceptionistConnectionParameters::new("127.0.0.1", 7777)
+        .with_params(connection_params);
+    
     let worker_id = get_worker_id();
 
     let mut worker_connection = match get_connection_block(&connection_parameters, &worker_id) {

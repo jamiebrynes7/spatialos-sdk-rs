@@ -29,6 +29,21 @@ pub struct ReceptionistConnectionParameters {
     pub connection_params: ConnectionParameters,
 }
 
+impl ReceptionistConnectionParameters {
+    pub fn new(hostname: &str, port: u16) -> Self {
+        ReceptionistConnectionParameters {
+            hostname: hostname.to_owned(),
+            port,
+            connection_params: ConnectionParameters::default()
+        }
+    }
+
+    pub fn with_params(mut self, params: ConnectionParameters) -> Self{
+        self.connection_params = params;
+        self
+    }
+}
+
 pub struct LocatorConnectionParameters {}
 
 pub struct ConnectionParameters {
@@ -44,6 +59,46 @@ pub struct ConnectionParameters {
 }
 
 impl ConnectionParameters {
+    pub fn new(worker_type: &str) -> Self {
+        let mut params = ConnectionParameters::default();
+        params.worker_type = worker_type.to_owned();
+        params
+    }
+
+    pub fn with_protocol_logging(mut self, log_prefix: &str) -> Self {
+        self.enable_protocol_logging_at_startup = true;
+        self.protocol_logging.log_prefix = log_prefix.to_owned();
+        self
+    }
+
+    pub fn using_tcp(mut self, params: Option<TcpNetworkParameters>) -> Self {
+        self.network.connection_type = ConnectionType::TCP;
+        self.network.tcp = match params {
+            Some(p) => p,
+            None => TcpNetworkParameters::default()
+        };
+        self
+    }
+
+    pub fn using_raknet(mut self, params: Option<RakNetNetworkParameters>) -> Self {
+        self.network.connection_type = ConnectionType::RakNet;
+        self.network.raknet = match params {
+            Some(p) => p,
+            None => RakNetNetworkParameters::default()
+        };
+        self
+    }
+
+    pub fn using_external_ip(mut self) -> Self {
+        self.network.use_external_ip = true;
+        self
+    }
+
+    pub fn with_connection_timeout(mut self, timeout_millis: u64) -> Self {
+        self.network.connection_timeout_millis = timeout_millis;
+        self
+    }
+
     pub fn default() -> Self {
         ConnectionParameters {
             worker_type: "".to_owned(),
