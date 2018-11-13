@@ -18,7 +18,7 @@ pub trait Connection {
         message: &str,
         entity_id: Option<EntityId>,
     );
-    fn send_metrics(&mut self, metrics: Metrics);
+    fn send_metrics(&mut self, metrics: &Metrics);
 
     fn send_reserve_entity_ids_request(
         &mut self,
@@ -161,8 +161,10 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn send_metrics(&mut self, metrics: Metrics) {
-        unimplemented!()
+    fn send_metrics(&mut self, metrics: &Metrics) {
+        assert!(!self.connection_ptr.is_null());
+        let worker_metrics = metrics.to_worker_sdk();
+        unsafe { Worker_Connection_SendMetrics(self.connection_ptr, &worker_metrics.metrics) }
     }
 
     fn send_reserve_entity_ids_request(
