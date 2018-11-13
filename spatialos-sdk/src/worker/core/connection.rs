@@ -307,7 +307,15 @@ impl Connection for WorkerConnection {
     }
 
     fn get_worker_attributes(&self) -> Vec<String> {
-        unimplemented!()
+        assert!(!self.connection_ptr.is_null());
+        unsafe {
+            let sdk_attr = Worker_Connection_GetWorkerAttributes(self.connection_ptr);
+            let attributes = ::std::slice::from_raw_parts((*sdk_attr).attributes, (*sdk_attr).attribute_count as usize)
+                .iter()
+                .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
+                .collect();
+            attributes
+        }
     }
 
     fn get_worker_flag(&self, name: &str) -> Option<String> {

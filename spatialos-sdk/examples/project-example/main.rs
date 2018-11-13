@@ -26,6 +26,7 @@ fn main() {
     };
 
     println!("Connected as: {}", worker_connection.get_worker_id());
+    print_worker_attributes(&worker_connection);
 
     worker_connection.send_log_message(LogLevel::Info, "main", "Connected successfully!", None);
 
@@ -59,6 +60,14 @@ fn logic_loop(mut c: WorkerConnection) {
             send_query(&mut c);
         }
         counter += 1;
+    }
+}
+
+fn print_worker_attributes(connection: &WorkerConnection) {
+    let attrs = connection.get_worker_attributes();
+    println!("The worker has the following attributes: ");
+    for attr in attrs {
+        println!("{}", attr)
     }
 }
 
