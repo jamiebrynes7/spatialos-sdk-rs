@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::ptr;
 
 use worker::core::commands::*;
@@ -76,7 +76,7 @@ pub trait Connection {
 
     fn set_protocol_logging_enabled(&mut self, enabled: bool);
     fn is_connected(&self) -> bool;
-    fn get_worker_id(&self) -> String;
+    fn get_worker_id(&self) -> &str;
     fn get_worker_attributes(&self) -> Vec<String>;
     fn get_worker_flag(&self, name: &str) -> Option<String>;
 
@@ -85,9 +85,22 @@ pub trait Connection {
 
 pub struct WorkerConnection {
     connection_ptr: *mut Worker_Connection,
+    worker_id: String
 }
 
 impl WorkerConnection {
+    pub(crate) fn new(connection_ptr: *mut Worker_Connection) -> Self {
+        unsafe {
+            let worker_id = Worker_Connection_GetWorkerId(connection_ptr);
+            let cstr = CStr::from_ptr(worker_id);
+
+            WorkerConnection {
+                connection_ptr,
+                worker_id: cstr.to_string_lossy().to_string()
+            }
+        }
+    }
+
     pub fn connect_receptionist_async(
         worker_id: &str,
         params: &ReceptionistConnectionParameters,
@@ -254,19 +267,34 @@ impl Connection for WorkerConnection {
         entity_id: EntityId,
         interest_overrides: &Vec<InterestOverride>,
     ) {
-        unimplemented!()
+        assert!(!self.connection_ptr.is_null());
+        let worker_sdk_overrides = interest_overrides
+            .iter()
+            .map(|x| x.to_woker_sdk())
+            .collect::<Vec<Worker_InterestOverride>>();
+
+        unsafe {
+            Worker_Connection_SendComponentInterest(self.connection_ptr,
+                                                    entity_id.id,
+                                                    worker_sdk_overrides.as_ptr(),
+                                                    worker_sdk_overrides.len() as u32);
+        }
     }
 
-    fn send_authority_loss_imminent_acknowledgement(
-        &mut self,
-        entity_id: EntityId,
-        component_id: u32,
-    ) {
-        unimplemented!()
+    fn send_authority_loss_imminent_acknowledgement(&mut self, entity_id: EntityId, component_id: u32) {
+        assert!(!self.connection_ptr.is_null());
+
+        unsafe {
+            Worker_Connection_SendAuthorityLossImminentAcknowledgement(self.connection_ptr, entity_id.id, component_id);
+        }
     }
 
     fn set_protocol_logging_enabled(&mut self, enabled: bool) {
-        unimplemented!()
+        assert!(!self.connection_ptr.is_null());
+
+        unsafe {
+            Worker_Connection_SetProtocolLoggingEnabled(self.connection_ptr, enabled as u8);
+        }
     }
 
     fn is_connected(&self) -> bool {
@@ -274,8 +302,8 @@ impl Connection for WorkerConnection {
         (unsafe { Worker_Connection_IsConnected(self.connection_ptr) } != 0)
     }
 
-    fn get_worker_id(&self) -> String {
-        unimplemented!()
+    fn get_worker_id(&self) -> &str {
+        &self.worker_id
     }
 
     fn get_worker_attributes(&self) -> Vec<String> {
@@ -325,7 +353,7 @@ impl WorkerConnectionFuture {
         assert!(!connection_ptr.is_null());
 
         self.was_consumed = true;
-        let mut worker_connection = WorkerConnection { connection_ptr };
+        let mut worker_connection = WorkerConnection::new(connection_ptr);
 
         if worker_connection.is_connected() {
             Ok(worker_connection)
@@ -355,7 +383,7 @@ impl WorkerConnectionFuture {
             None
         } else {
             // Connection future has returned - either a valid connection or a failed connection.
-            let mut worker_connection = WorkerConnection { connection_ptr };
+            let mut worker_connection = WorkerConnection::new(connection_ptr);
             self.was_consumed = true;
             match worker_connection.is_connected() {
                 true => Some(Ok(worker_connection)),

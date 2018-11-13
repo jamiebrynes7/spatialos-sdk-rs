@@ -113,6 +113,15 @@ pub struct InterestOverride {
     is_interested: bool,
 }
 
+impl InterestOverride {
+    pub(crate) fn to_woker_sdk(&self) -> Worker_InterestOverride {
+        Worker_InterestOverride {
+            is_interested: self.is_interested as u8,
+            component_id: self.component_id
+        }
+    }
+}
+
 impl From<InterestOverride> for Worker_InterestOverride {
     fn from(interest_override: InterestOverride) -> Self {
         Worker_InterestOverride {

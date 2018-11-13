@@ -25,6 +25,8 @@ fn main() {
         Err(e) => panic!("Failed to connect with block: \n{}", e),
     };
 
+    println!("Connected as: {}", worker_connection.get_worker_id());
+
     worker_connection.send_log_message(LogLevel::Info, "main", "Connected successfully!", None);
 
     logic_loop(worker_connection);
