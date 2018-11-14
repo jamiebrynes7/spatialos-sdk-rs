@@ -73,6 +73,8 @@ impl ComponentVtable<Example> for Example {
     // TODO: Command requests.
     // TODO: Command responses.
 
+    // TODO: We can make this entirely generic on M: ComponentMetaclass (once the other vtable functions are generic),
+    // so move it to SpatialOS SDK crate once that's done.
     fn create_internal_vtable() -> bindings::Worker_ComponentVtable {
         bindings::Worker_ComponentVtable {
             component_id: Self::component_id(),
@@ -89,8 +91,8 @@ impl ComponentVtable<Example> for Example {
             component_data_copy: None,
             component_data_deserialize: None,
             component_data_serialize: None,
-            component_update_free: Some(Example_ComponentUpdate_Free),
-            component_update_copy: Some(Example_ComponentUpdate_Copy),
+            component_update_free: Some(ComponentUpdate_Free::<Example>),
+            component_update_copy: Some(ComponentUpdate_Copy::<Example>),
             component_update_deserialize: Some(Example_ComponentUpdate_Deserialize),
             component_update_serialize: Some(Example_ComponentUpdate_Serialize)
         }
@@ -184,14 +186,16 @@ unsafe fn do_serialize_update<M: ComponentMetaclass, V: ComponentVtable<M>>(
 }
 // TODO: Remaining component data.
 
-unsafe extern "C" fn Example_ComponentUpdate_Free(_: u32, _: *mut raw::c_void, handle: *mut raw::c_void) {
-    do_free::<ExampleUpdate>(handle)
+unsafe extern "C" fn ComponentUpdate_Free<M: ComponentMetaclass>(_: u32, _: *mut raw::c_void, handle: *mut raw::c_void) {
+    do_free::<M::Update>(handle)
 }
 
-unsafe extern "C" fn Example_ComponentUpdate_Copy(_: u32, _: *mut raw::c_void, handle: *mut raw::c_void) -> *mut raw::c_void {
-    do_copy::<ExampleUpdate>(handle)
+unsafe extern "C" fn ComponentUpdate_Copy<M: ComponentMetaclass>(_: u32, _: *mut raw::c_void, handle: *mut raw::c_void) -> *mut raw::c_void {
+    do_copy::<M::Update>(handle)
 }
 
+// TODO: Make these generic like above, then merge with do_ functions and move all these to SpatialOS crate (so we can
+// make bindings::* "internal" again).
 unsafe extern "C" fn Example_ComponentUpdate_Deserialize(
     _: u32, _: *mut raw::c_void,
     update: *mut bindings::Schema_ComponentUpdate,
