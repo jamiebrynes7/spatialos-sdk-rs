@@ -1,4 +1,4 @@
-pub(crate) mod internal;
+pub mod internal;
 
 pub mod commands;
 pub mod component;

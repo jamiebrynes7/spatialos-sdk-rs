@@ -1,4 +1,6 @@
 use worker::internal::schema;
+use spatialos_sdk_sys::worker;
+use std::collections::HashMap;
 
 pub type ComponentId = u32;
 
@@ -19,14 +21,31 @@ pub trait ComponentData<M: ComponentMetaclass> {
 }
 
 pub trait ComponentVtable<M: ComponentMetaclass> {
-    fn serialize_update(&M::Update) -> schema::SchemaComponentUpdate;
-    fn deserialize_update(&schema::SchemaComponentUpdate) -> M::Update;
-    fn serialize_data(&M::Data) -> schema::SchemaComponentData;
-    fn deserialize_data(&schema::SchemaComponentData) -> M::Data;
+    fn serialize_update(update: &M::Update) -> schema::SchemaComponentUpdate;
+    fn deserialize_update(update: &schema::SchemaComponentUpdate) -> Option<M::Update>;
+    fn serialize_data(update: &M::Data) -> schema::SchemaComponentData;
+    fn deserialize_data(update: &schema::SchemaComponentData) -> Option<M::Data>;
     // TODO: Command requests and command responses.
+    fn create_internal_vtable() -> worker::Worker_ComponentVtable;
 }
 
 // TODO: CommandRequestSerializer and CommandResponseSerializer
+
+// A data structure which represents all known component types.
+pub struct ComponentDatabase {
+    component_vtables: HashMap<ComponentId, worker::Worker_ComponentVtable>
+}
+
+impl ComponentDatabase {
+    fn new() -> Self {
+        ComponentDatabase{component_vtables: HashMap::new()}
+    }
+
+    fn add_component<M: ComponentMetaclass, V: ComponentVtable<M>>(mut self) -> Self {
+        self.component_vtables.insert(M::component_id(), V::create_internal_vtable());
+        self
+    }
+}
 
 pub mod internal {
 use spatialos_sdk_sys::worker::{
