@@ -7,12 +7,15 @@ pub type ComponentId = u32;
 pub trait ComponentMetaclass {
     type Data;
     type Update;
+    type CommandRequest;
+    type CommandResponse;
 
     fn component_id() -> ComponentId;
 }
 
 pub trait ComponentUpdate<M: ComponentMetaclass> {
     fn to_data(self) -> M::Data;
+    fn merge(&mut self, update: M::Update);
 }
 
 pub trait ComponentData<M: ComponentMetaclass> {
@@ -25,7 +28,10 @@ pub trait ComponentVtable<M: ComponentMetaclass> {
     fn deserialize_update(update: &schema::SchemaComponentUpdate) -> Option<M::Update>;
     fn serialize_data(update: &M::Data) -> schema::SchemaComponentData;
     fn deserialize_data(update: &schema::SchemaComponentData) -> Option<M::Data>;
-    // TODO: Command requests and command responses.
+    fn serialize_command_request(request: &M::CommandRequest) -> schema::SchemaCommandRequest;
+    fn deserialize_command_request(response: &schema::SchemaCommandRequest) -> Option<M::CommandRequest>;
+    fn serialize_command_response(request: &M::CommandResponse) -> schema::SchemaCommandResponse;
+    fn deserialize_command_response(response: &schema::SchemaCommandResponse) -> Option<M::CommandResponse>;
     fn create_internal_vtable() -> worker::Worker_ComponentVtable;
 }
 
@@ -33,17 +39,21 @@ pub trait ComponentVtable<M: ComponentMetaclass> {
 
 // A data structure which represents all known component types.
 pub struct ComponentDatabase {
-    component_vtables: HashMap<ComponentId, worker::Worker_ComponentVtable>
+    component_vtables: Vec<worker::Worker_ComponentVtable>
 }
 
 impl ComponentDatabase {
-    fn new() -> Self {
-        ComponentDatabase{component_vtables: HashMap::new()}
+    pub fn new() -> Self {
+        ComponentDatabase{component_vtables: Vec::new()}
     }
 
-    fn add_component<M: ComponentMetaclass, V: ComponentVtable<M>>(mut self) -> Self {
-        self.component_vtables.insert(M::component_id(), V::create_internal_vtable());
+    pub fn add_component<M: ComponentMetaclass, V: ComponentVtable<M>>(mut self) -> Self {
+        self.component_vtables.push( V::create_internal_vtable());
         self
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> *const worker::Worker_ComponentVtable {
+        self.component_vtables.as_ptr()
     }
 }
 

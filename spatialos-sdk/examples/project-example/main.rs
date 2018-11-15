@@ -1,15 +1,12 @@
 extern crate spatialos_sdk;
 extern crate uuid;
 
-use spatialos_sdk::worker::commands::{
-    DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
-};
+use spatialos_sdk::worker::commands::ReserveEntityIdsRequest;
 use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
 use spatialos_sdk::worker::parameters;
-use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
-use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
+use spatialos_sdk::worker::LogLevel;
+use spatialos_sdk::worker::component::ComponentDatabase;
 
-use spatialos_sdk::worker::metrics::*;
 use uuid::Uuid;
 
 static HOST: &str = "127.0.0.1";
@@ -20,6 +17,7 @@ mod generated_code;
 fn main() {
     println!("Entered program");
 
+    let components = ComponentDatabase::new().add_component::<generated_code::Example, generated_code::Example>();
     let connection_params = parameters::ConnectionParameters::new("RustWorker").using_tcp();
 
     let worker_id = get_worker_id();
@@ -44,6 +42,32 @@ fn main() {
     exercise_connection_code_paths(worker_connection);
 }
 
+fn logic_loop(mut c: WorkerConnection) {
+    let mut counter = 0;
+
+    loop {
+        let ops = c.get_op_list(0);
+        c.send_log_message(
+            LogLevel::Info,
+            "loop",
+            &format!("Received {} ops", ops.ops.len()),
+            None,
+        );
+
+        // Process ops.
+        for op in &ops.ops {
+            println!("Received op: {:?}", op);
+        }
+
+        ::std::thread::sleep(::std::time::Duration::from_millis(500));
+
+        if counter % 20 == 0 {
+            println!("Sending reserve entity ids request");
+            c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
+        }
+        counter += 1;
+    }
+}
 fn exercise_connection_code_paths(mut c: WorkerConnection) {
     c.send_log_message(LogLevel::Info, "main", "Connected successfully!", None);
     print_worker_attributes(&c);

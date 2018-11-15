@@ -3,7 +3,7 @@ use std::ptr;
 
 use spatialos_sdk_sys::worker::*;
 use worker::internal::utils::WrappedNativeStructWithString;
-use worker::vtable;
+use worker::component::ComponentDatabase;
 
 pub struct ConnectionParameters {
     pub worker_type: String,
@@ -15,6 +15,7 @@ pub struct ConnectionParameters {
     pub protocol_logging: ProtocolLoggingParameters,
     pub enable_protocol_logging_at_startup: bool,
     pub thread_affinity: ThreadAffinityParameters,
+    pub components: ComponentDatabase,
 }
 
 impl ConnectionParameters {

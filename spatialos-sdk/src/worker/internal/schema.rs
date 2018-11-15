@@ -1,14 +1,27 @@
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
+use worker::component::ComponentId;
+
+pub type FieldId = u32;
 
 pub struct SchemaComponentUpdate {
-    pub component_id: u32,
+    pub component_id: ComponentId,
     pub internal: *mut Schema_ComponentUpdate,
 }
 
 pub struct SchemaComponentData {
-    pub component_id: u32,
+    pub component_id: ComponentId,
     pub internal: *mut Schema_ComponentData,
+}
+
+pub struct SchemaCommandRequest {
+    pub component_id: ComponentId,
+    pub internal: *mut Schema_CommandRequest,
+}
+
+pub struct SchemaCommandResponse {
+    pub component_id: ComponentId,
+    pub internal: *mut Schema_CommandResponse,
 }
 
 pub struct SchemaObject {
@@ -16,7 +29,7 @@ pub struct SchemaObject {
 }
 
 pub struct SchemaFieldContainer<'a, T> {
-    field_id: u32,
+    field_id: FieldId,
     container: &'a SchemaObject,
     _phantom: PhantomData<T>,
 }
@@ -35,20 +48,24 @@ pub trait SchemaField<T> {
 }
 
 impl SchemaComponentUpdate {
-    pub(crate) fn from_worker_sdk(component_id: u32, component_update: *mut Schema_ComponentUpdate) -> SchemaComponentUpdate {
+    pub(crate) fn from_worker_sdk(component_id: ComponentId, component_update: *mut Schema_ComponentUpdate) -> SchemaComponentUpdate {
         SchemaComponentUpdate {
             component_id: component_id,
             internal: component_update
         }
     }
 
-    pub fn new(component_id: u32) -> SchemaComponentUpdate {
+    pub fn new(component_id: ComponentId) -> SchemaComponentUpdate {
         SchemaComponentUpdate {
             component_id: component_id,
             internal: unsafe { Schema_CreateComponentUpdate(component_id) }
         }
     }
 
+    pub fn component_id(&self) -> ComponentId {
+        unsafe { Schema_GetComponentUpdateComponentId(self.internal) }
+    }
+
     pub fn fields(&self) -> SchemaObject {
         SchemaObject {
             internal: unsafe { Schema_GetComponentUpdateFields(self.internal) }
@@ -60,21 +77,39 @@ impl SchemaComponentUpdate {
             internal: unsafe { Schema_GetComponentUpdateFields(self.internal) }
         }
     }
+
+    pub fn events(&self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) }
+        }
+    }
+
+    pub fn events_mut(&mut self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) }
+        }
+    }
+
+    // TODO: Cleared fields.
 }
 
 impl SchemaComponentData {
-    pub(crate) fn from_worker_sdk(component_id: u32, component_data: *mut Schema_ComponentData) -> SchemaComponentData {
+    pub(crate) fn from_worker_sdk(component_id: ComponentId, component_data: *mut Schema_ComponentData) -> SchemaComponentData {
         SchemaComponentData {
             component_id: component_id,
             internal: component_data
         }
     }
 
-    pub fn new(component_id: u32) -> SchemaComponentData {
+    pub fn new(component_id: ComponentId) -> SchemaComponentData {
         SchemaComponentData {
             component_id: component_id,
             internal: unsafe { Schema_CreateComponentData(component_id) }
         }
+    }
+
+    pub fn component_id(&self) -> ComponentId {
+        unsafe { Schema_GetComponentDataComponentId(self.internal) }
     }
 
     pub fn fields(&self) -> SchemaObject {
@@ -90,9 +125,81 @@ impl SchemaComponentData {
     }
 }
 
+impl SchemaCommandRequest {
+    pub(crate) fn from_worker_sdk(component_id: ComponentId, command_request: *mut Schema_CommandRequest) -> SchemaCommandRequest {
+        SchemaCommandRequest {
+            component_id: component_id,
+            internal: command_request
+        }
+    }
+
+    pub fn new(component_id: ComponentId, command_index: FieldId) -> SchemaCommandRequest {
+        SchemaCommandRequest {
+            component_id: component_id,
+            internal: unsafe { Schema_CreateCommandRequest(component_id, command_index) }
+        }
+    }
+
+    pub fn component_id(&self) -> ComponentId {
+        unsafe { Schema_GetCommandRequestComponentId(self.internal) }
+    }
+
+    pub fn command_index(&self) -> FieldId {
+        unsafe { Schema_GetCommandRequestCommandIndex(self.internal) }
+    }
+
+    pub fn object(&self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_GetCommandRequestObject(self.internal) }
+        }
+    }
+
+    pub fn object_mut(&mut self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_GetCommandRequestObject(self.internal) }
+        }
+    }
+}
+
+impl SchemaCommandResponse {
+    pub(crate) fn from_worker_sdk(component_id: u32, command_response: *mut Schema_CommandResponse) -> SchemaCommandResponse {
+        SchemaCommandResponse {
+            component_id: component_id,
+            internal: command_response
+        }
+    }
+
+    pub fn new(component_id: u32, command_index: u32) -> SchemaCommandResponse {
+        SchemaCommandResponse {
+            component_id: component_id,
+            internal: unsafe { Schema_CreateCommandResponse(component_id, command_index) }
+        }
+    }
+
+    pub fn component_id(&self) -> ComponentId {
+        unsafe { Schema_GetCommandResponseComponentId(self.internal) }
+    }
+
+    pub fn command_index(&self) -> FieldId {
+        unsafe { Schema_GetCommandResponseCommandIndex(self.internal) }
+    }
+
+    pub fn object(&self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_GetCommandResponseObject(self.internal) }
+        }
+    }
+
+    pub fn object_mut(&mut self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_GetCommandResponseObject(self.internal) }
+        }
+    }
+}
+
 impl SchemaObject {
-    pub fn field<T>(&self, field_id: usize) -> SchemaFieldContainer<T> {
-        SchemaFieldContainer { field_id: field_id as u32, container: self, _phantom: PhantomData }
+    pub fn field<T>(&self, field_id: ComponentId) -> SchemaFieldContainer<T> {
+        SchemaFieldContainer { field_id: field_id, container: self, _phantom: PhantomData }
     }
 }
 
@@ -116,6 +223,29 @@ impl<'a> SchemaField<f32> for SchemaFieldContainer<'a, f32> {
         unsafe {
             let ptr = value.as_ptr();
             Schema_AddFloatList(self.container.internal, self.field_id, ptr, value.len() as u32);
+        }
+    }
+}
+
+
+impl<'a> SchemaField<i32> for SchemaFieldContainer<'a, i32> {
+    fn get_or_default(&self) -> i32 {
+        unsafe { Schema_GetInt32(self.container.internal, self.field_id) }
+    }
+    fn index(&self, index: usize) -> i32 {
+        unsafe { Schema_IndexInt32(self.container.internal, self.field_id, index as u32) }
+    }
+    fn count(&self) -> usize {
+        unsafe { Schema_GetInt32Count(self.container.internal, self.field_id) as usize }
+    }
+
+    fn add(&mut self, value: i32) {
+        unsafe { Schema_AddInt32(self.container.internal, self.field_id, value); }
+    }
+    fn add_list(&mut self, value: &[i32]) {
+        unsafe {
+            let ptr = value.as_ptr();
+            Schema_AddInt32List(self.container.internal, self.field_id, ptr, value.len() as u32);
         }
     }
 }

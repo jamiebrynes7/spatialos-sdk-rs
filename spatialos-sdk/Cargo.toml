@@ -1,7 +1,10 @@
 [package]
 name = "spatialos-sdk"
 version = "0.0.0"
-authors = ["Jamie Brynes <jamiebrynes7@gmail.com>"]
+authors = [
+    "Jamie Brynes <jamiebrynes7@gmail.com>",
+    "David Avedissian <git@dga.me.uk>"
+]
 
 [dependencies]
 spatialos-sdk-sys = { path = "../spatialos-sdk-sys"} 

@@ -48,6 +48,12 @@ fn main() {
         &sdk_version,
         &format!("{}/schema-compiler", &download_dir),
     ).expect("Could not download package");
+    download_and_unpack(
+        SpatialPackageSource::Tools,
+        format!("snapshot_converter-x86_64-{}", DEV_PLATFORM).as_ref(),
+        &sdk_version,
+        &format!("{}/snapshot-converter", &download_dir),
+    ).expect("Could not download package");
 }
 
 enum SpatialPackageSource {

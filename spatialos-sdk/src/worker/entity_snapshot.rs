@@ -1,6 +1,7 @@
 use spatialos_sdk_sys::worker::Worker_Entity;
 
 // TODO: Finish
+#[derive(Debug)]
 pub struct EntitySnapshot {}
 
 impl EntitySnapshot {

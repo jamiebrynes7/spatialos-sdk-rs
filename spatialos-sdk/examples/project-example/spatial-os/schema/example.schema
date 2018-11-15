@@ -1,0 +1,12 @@
+package example;
+
+type CommandData {
+    int32 value = 1;
+}
+
+component Example {
+    id = 1000;
+    float x = 1;
+
+    command CommandData test_command(CommandData);
+}

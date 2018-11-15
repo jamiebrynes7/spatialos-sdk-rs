@@ -44,6 +44,7 @@ impl Drop for OpList {
     }
 }
 
+#[derive(Debug)]
 pub enum StatusCode<T> {
     Success(T),
     Timeout(String),
@@ -54,6 +55,7 @@ pub enum StatusCode<T> {
     InternalError(String),
 }
 
+#[derive(Debug)]
 pub enum WorkerOp {
     Disconnect(DisconnectOp),
     FlagUpdate(FlagUpdateOp),
@@ -373,84 +375,101 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
     }
 }
 
+#[derive(Debug)]
 pub struct DisconnectOp {
     pub reason: String,
 }
 
+#[derive(Debug)]
 pub struct FlagUpdateOp {
     pub name: String,
     pub value: String,
 }
 
+#[derive(Debug)]
 pub struct LogMessageOp {
     pub message: String,
     pub log_level: LogLevel,
 }
 
+#[derive(Debug)]
 pub struct MetricsOp {
     pub metrics: Metrics,
 }
 
+#[derive(Debug)]
 pub struct CriticalSectionOp {
     pub in_critical_section: bool,
 }
 
+#[derive(Debug)]
 pub struct AddEntityOp {
     pub entity_id: EntityId,
 }
 
+#[derive(Debug)]
 pub struct RemoveEntityOp {
     pub entity_id: EntityId,
 }
 
+#[derive(Debug)]
 pub struct ReserveEntityIdsResponseOp {
     pub request_id: RequestId<ReserveEntityIdsRequest>,
     pub status_code: StatusCode<EntityId>,
     pub number_of_entity_ids: u32,
 }
 
+#[derive(Debug)]
 pub struct CreateEntityResponseOp {
     pub request_id: RequestId<CreateEntityRequest>,
     pub status_code: StatusCode<EntityId>,
 }
 
+#[derive(Debug)]
 pub struct DeleteEntityResponseOp {
     pub request_id: RequestId<DeleteEntityRequest>,
     pub entity_id: EntityId,
     pub status_code: StatusCode<()>,
 }
 
+#[derive(Debug)]
 pub enum QueryResponse {
     Snapshot(HashMap<EntityId, EntitySnapshot>),
     Result(u32),
 }
 
+#[derive(Debug)]
 pub struct EntityQueryResponseOp {
     pub request_id: RequestId<EntityQueryRequest>,
     pub status_code: StatusCode<QueryResponse>,
 }
 
+#[derive(Debug)]
 pub struct AddComponentOp {
     pub entity_id: EntityId,
     pub component_data: ::worker::component::internal::ComponentData,
 }
 
+#[derive(Debug)]
 pub struct RemoveComponentOp {
     pub entity_id: EntityId,
     pub component_id: u32,
 }
 
+#[derive(Debug)]
 pub struct AuthorityChangeOp {
     pub entity_id: EntityId,
     pub component_id: u32,
     pub authority: Authority,
 }
 
+#[derive(Debug)]
 pub struct ComponentUpdateOp {
     pub entity_id: EntityId,
     pub component_update: ::worker::component::internal::ComponentUpdate,
 }
 
+#[derive(Debug)]
 pub struct CommandRequestOp {
     pub request_id: RequestId<IncomingCommandRequest>,
     pub entity_id: EntityId,
@@ -460,6 +479,7 @@ pub struct CommandRequestOp {
     pub request: ::worker::component::internal::CommandRequest,
 }
 
+#[derive(Debug)]
 pub struct CommandResponseOp {
     pub request_id: RequestId<OutgoingCommandRequest>,
     pub entity_id: EntityId,
