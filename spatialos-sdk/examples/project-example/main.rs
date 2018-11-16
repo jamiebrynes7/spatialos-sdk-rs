@@ -1,14 +1,13 @@
 extern crate spatialos_sdk;
 extern crate uuid;
 
-use spatialos_sdk::worker::core::commands::ReserveEntityIdsRequest;
+use spatialos_sdk::worker::core::commands::{EntityQueryRequest, ReserveEntityIdsRequest};
 use spatialos_sdk::worker::core::connection::{Connection, WorkerConnection};
 use spatialos_sdk::worker::core::parameters;
-use spatialos_sdk::worker::core::query::{EntityQuery, ResultType, QueryConstraint};
+use spatialos_sdk::worker::core::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::core::LogLevel;
 
 use uuid::Uuid;
-use spatialos_sdk::worker::core::commands::EntityQueryRequest;
 
 fn main() {
     println!("Entered program");
@@ -119,16 +118,16 @@ fn send_query(c: &mut WorkerConnection) {
     let c3 = QueryConstraint::Component(2);
     let c4 = QueryConstraint::Component(3);
     let c5 = QueryConstraint::Component(4);
-    let c6 = QueryConstraint::Sphere(0.0,0.0,0.0,0.0);
+    let c6 = QueryConstraint::Sphere(10.0, 10.0, 10.0, 250.0);
 
-    let or = QueryConstraint::Or(vec![c1,c2]);
+    let or = QueryConstraint::Or(vec![c1, c2]);
     let not = QueryConstraint::Not(Box::new(c3));
     let and_not = QueryConstraint::And(vec![c6, not]);
 
     let final_constraint = QueryConstraint::And(vec![or, and_not, c4, c5]);
     let query = EntityQuery {
         constraint: final_constraint,
-        result_type: ResultType::Count
+        result_type: ResultType::Count,
     };
 
     c.send_entity_query_request(EntityQueryRequest(query), None);
