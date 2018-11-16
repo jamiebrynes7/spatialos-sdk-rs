@@ -7,6 +7,7 @@ use spatialos_sdk_sys::worker::{
 use worker::internal::utils::cstr_to_string;
 use worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 
+#[derive(Debug)]
 pub struct Metrics {
     pub load: Option<f64>,
     pub gauge_metrics: Vec<GaugeMetric>,
@@ -95,6 +96,7 @@ unsafe impl WorkerSdkConversion<Worker_Metrics> for Metrics {
     }
 }
 
+#[derive(Debug)]
 pub struct GaugeMetric {
     pub key: String,
     pub value: f64,
@@ -121,6 +123,7 @@ unsafe impl WorkerSdkConversion<Worker_GaugeMetric> for GaugeMetric {
     }
 }
 
+#[derive(Debug)]
 pub struct HistogramMetric {
     pub key: String,
     pub sum: f64,
@@ -172,6 +175,7 @@ unsafe impl WorkerSdkConversion<Worker_HistogramMetric> for HistogramMetric {
     }
 }
 
+#[derive(Debug)]
 pub struct HistogramMetricBucket {
     pub upper_bound: f64,
     pub samples: u32,

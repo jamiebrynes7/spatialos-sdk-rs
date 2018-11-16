@@ -5,6 +5,7 @@ use worker::EntityId;
 
 use spatialos_sdk_sys::worker::*;
 
+#[derive(Debug)]
 pub enum ResultType {
     Count,
     Snapshot(Vec<u32>),
@@ -19,6 +20,7 @@ impl ResultType {
     }
 }
 
+#[derive(Debug)]
 pub struct EntityQuery {
     pub constraint: QueryConstraint,
     pub result_type: ResultType,
@@ -67,7 +69,7 @@ pub(crate) struct WrappedEntityQuery<'a> {
     underlying_constraint_data: Box<[Worker_Constraint]>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum QueryConstraint {
     EntityId(EntityId),
     Component(u32),

@@ -19,8 +19,8 @@ pub struct ConnectionParameters {
 }
 
 impl ConnectionParameters {
-    pub fn new(worker_type: &str) -> Self {
-        let mut params = ConnectionParameters::default();
+    pub fn new(worker_type: &str, components: ComponentDatabase) -> Self {
+        let mut params = ConnectionParameters::default(components);
         params.worker_type = worker_type.to_owned();
         params
     }
@@ -59,7 +59,7 @@ impl ConnectionParameters {
         self
     }
 
-    pub fn default() -> Self {
+    pub fn default(components: ComponentDatabase) -> Self {
         ConnectionParameters {
             worker_type: "".to_owned(),
             network: NetworkParameters::default(),
@@ -71,6 +71,7 @@ impl ConnectionParameters {
             protocol_logging: ProtocolLoggingParameters::default(),
             enable_protocol_logging_at_startup: false,
             thread_affinity: ThreadAffinityParameters::default(),
+            components: components
         }
     }
 
@@ -92,7 +93,7 @@ impl ConnectionParameters {
             thread_affinity: self.thread_affinity.to_worker_sdk(),
             component_vtable_count: 0,
             component_vtables: ptr::null(),
-            default_component_vtable: &vtable::PASSTHROUGH_VTABLE,
+            default_component_vtable: ptr::null(),
         };
         WrappedNativeStructWithString {
             native_struct: params,

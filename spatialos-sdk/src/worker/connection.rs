@@ -111,6 +111,7 @@ impl WorkerConnection {
             CString::new(worker_id).expect("Received 0 byte in supplied Worker ID");
         let mut conn_params = params.to_worker_sdk();
         conn_params.native_struct.component_vtables = params.components.to_worker_sdk();
+        conn_params.native_struct.component_vtable_count = params.components.len() as u32;
         let future_ptr = unsafe {
             Worker_ConnectAsync(
                 hostname_cstr.as_ptr(),

@@ -7,6 +7,5 @@ type CommandData {
 component Example {
     id = 1000;
     float x = 1;
-
     command CommandData test_command(CommandData);
 }

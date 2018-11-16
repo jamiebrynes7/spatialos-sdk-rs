@@ -1,11 +1,16 @@
 extern crate spatialos_sdk;
 extern crate uuid;
 
-use spatialos_sdk::worker::commands::ReserveEntityIdsRequest;
+use spatialos_sdk::worker::commands::{ReserveEntityIdsRequest, DeleteEntityRequest, EntityQueryRequest};
 use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
 use spatialos_sdk::worker::parameters;
+use spatialos_sdk::worker::metrics::*;
+use spatialos_sdk::worker::query::*;
+use spatialos_sdk::worker::{EntityId, InterestOverride};
 use spatialos_sdk::worker::LogLevel;
-use spatialos_sdk::worker::component::ComponentDatabase;
+use spatialos_sdk::worker::op::WorkerOp;
+use spatialos_sdk::worker::component::{self, ComponentDatabase};
+use spatialos_sdk::worker::ComponentMetaclass;
 
 use uuid::Uuid;
 
@@ -18,7 +23,7 @@ fn main() {
     println!("Entered program");
 
     let components = ComponentDatabase::new().add_component::<generated_code::Example, generated_code::Example>();
-    let connection_params = parameters::ConnectionParameters::new("RustWorker").using_tcp();
+    let connection_params = parameters::ConnectionParameters::new("RustWorker", components).using_tcp();
 
     let worker_id = get_worker_id();
 
@@ -39,10 +44,11 @@ fn main() {
 
     println!("Connected as: {}", worker_connection.get_worker_id());
 
-    exercise_connection_code_paths(worker_connection);
+    exercise_connection_code_paths(&mut worker_connection);
+    logic_loop(&mut worker_connection);
 }
 
-fn logic_loop(mut c: WorkerConnection) {
+fn logic_loop(c: &mut WorkerConnection) {
     let mut counter = 0;
 
     loop {
@@ -57,6 +63,22 @@ fn logic_loop(mut c: WorkerConnection) {
         // Process ops.
         for op in &ops.ops {
             println!("Received op: {:?}", op);
+            match op {
+                // TODO: Make this safer and not rely on `component::get_component_xx`
+                WorkerOp::AddComponent(add_component) => {
+                    if add_component.component_data.component_id == generated_code::Example::component_id() {
+                        let component_data = component::get_component_data::<generated_code::Example>(&add_component.component_data);
+                        println!("Received Example data: {:?}", component_data);
+                    }
+                },
+                WorkerOp::ComponentUpdate(update) => {
+                    if update.component_update.component_id == generated_code::Example::component_id() {
+                        let component_update = component::get_component_update::<generated_code::Example>(&update.component_update);
+                        println!("Received Example update: {:?}", component_update);
+                    }
+                },
+                _ => {}
+            }
         }
 
         ::std::thread::sleep(::std::time::Duration::from_millis(500));
@@ -68,7 +90,8 @@ fn logic_loop(mut c: WorkerConnection) {
         counter += 1;
     }
 }
-fn exercise_connection_code_paths(mut c: WorkerConnection) {
+
+fn exercise_connection_code_paths(c: &mut WorkerConnection) {
     c.send_log_message(LogLevel::Info, "main", "Connected successfully!", None);
     print_worker_attributes(&c);
     check_for_flag(&c, "my-flag");
@@ -77,7 +100,7 @@ fn exercise_connection_code_paths(mut c: WorkerConnection) {
     c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
     c.send_delete_entity_request(DeleteEntityRequest(EntityId::new(1)), None);
     // TODO: Send create entity command
-    send_query(&mut c);
+    send_query(c);
 
     let interested = vec![
         InterestOverride {
@@ -92,7 +115,7 @@ fn exercise_connection_code_paths(mut c: WorkerConnection) {
     c.send_component_interest(EntityId::new(1), &interested);
     c.send_authority_loss_imminent_acknowledgement(EntityId::new(1), 1337);
 
-    send_metrics(&mut c);
+    send_metrics(c);
     c.set_protocol_logging_enabled(false);
 
     println!("Testing completed");
