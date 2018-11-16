@@ -79,8 +79,12 @@ pub enum QueryConstraint {
 }
 
 impl QueryConstraint {
+    // The general strategy with this is to pre-allocate the memory required to store all elements
+    // in the constraint tree. This means that we can insert points to indices in the array which
+    // will contain the correct data. This also means that the array lifetime should live as long
+    // as the struct passed down to the C layer.
     pub(crate) fn to_worker_sdk(&self) -> (Worker_Constraint, Box<[Worker_Constraint]>) {
-        // First descend the tree and count how many constraints we need in the Vec. This will always return 1 more than needed (top level).
+        // First descend the tree and count how many constraints we need in the Vec.
         let size = self.constraint_len_recursive();
 
         // Allocate the vector required to store this data. Use a dummy placeholder for the data.
@@ -148,8 +152,10 @@ impl QueryConstraint {
                 let mut num_constraints_filled = constraints.len();
                 let mut next_index = current_index;
                 for constraint in constraints {
-                    let (worker_constraint, elements_filled) =
-                        constraint.to_worker_sdk_recursive(underlying_data, current_index + num_constraints_filled);
+                    let (worker_constraint, elements_filled) = constraint.to_worker_sdk_recursive(
+                        underlying_data,
+                        current_index + num_constraints_filled,
+                    );
                     num_constraints_filled += elements_filled;
 
                     underlying_data[next_index] = worker_constraint;
@@ -173,8 +179,10 @@ impl QueryConstraint {
                 let mut num_constraints_filled = constraints.len();
                 let mut next_index = current_index;
                 for constraint in constraints {
-                    let (worker_constraint, elements_filled) =
-                        constraint.to_worker_sdk_recursive(underlying_data, current_index + num_constraints_filled);
+                    let (worker_constraint, elements_filled) = constraint.to_worker_sdk_recursive(
+                        underlying_data,
+                        current_index + num_constraints_filled,
+                    );
                     num_constraints_filled += elements_filled;
 
                     underlying_data[next_index] = worker_constraint;
@@ -235,8 +243,8 @@ impl QueryConstraint {
 #[cfg(test)]
 mod test {
     use std::slice::from_raw_parts;
-    use worker::core::EntityId;
     use worker::core::query::*;
+    use worker::core::EntityId;
     use worker::internal::bindings::*;
 
     fn is_worker_query_valid(query: &EntityQuery) {
@@ -244,7 +252,10 @@ mod test {
 
         assert_eq!(query.result_type.to_u8(), worker_query.query.result_type);
         if let ResultType::Snapshot(ids) = &query.result_type {
-            assert_eq!(ids.len() as u32, worker_query.query.snapshot_result_type_component_id_count);
+            assert_eq!(
+                ids.len() as u32,
+                worker_query.query.snapshot_result_type_component_id_count
+            );
             // TODO: Check the ids.
         }
 
@@ -254,21 +265,32 @@ mod test {
     fn is_constraint_valid(constraint: &QueryConstraint, worker_constraint: &Worker_Constraint) {
         match constraint {
             QueryConstraint::EntityId(id) => {
-                assert_eq!(Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_ENTITY_ID as u8, worker_constraint.constraint_type);
+                assert_eq!(
+                    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_ENTITY_ID as u8,
+                    worker_constraint.constraint_type
+                );
                 unsafe {
-                    let bindgen_constraint = worker_constraint.__bindgen_anon_1.entity_id_constraint;
+                    let bindgen_constraint =
+                        worker_constraint.__bindgen_anon_1.entity_id_constraint;
                     assert_eq!(id.id, bindgen_constraint.entity_id);
                 }
             }
             QueryConstraint::Component(component_id) => {
-                assert_eq!(Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_COMPONENT as u8, worker_constraint.constraint_type);
+                assert_eq!(
+                    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_COMPONENT as u8,
+                    worker_constraint.constraint_type
+                );
                 unsafe {
-                    let bindgen_constraint = worker_constraint.__bindgen_anon_1.component_constraint;
+                    let bindgen_constraint =
+                        worker_constraint.__bindgen_anon_1.component_constraint;
                     assert_eq!(*component_id, bindgen_constraint.component_id);
                 }
             }
             QueryConstraint::Sphere(x, y, z, r) => {
-                assert_eq!(Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_SPHERE as u8, worker_constraint.constraint_type);
+                assert_eq!(
+                    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_SPHERE as u8,
+                    worker_constraint.constraint_type
+                );
                 unsafe {
                     let bindgen_constraint = worker_constraint.__bindgen_anon_1.sphere_constraint;
                     assert_eq!(*x, bindgen_constraint.x);
@@ -278,36 +300,60 @@ mod test {
                 }
             }
             QueryConstraint::And(other_constraints) => {
-                assert_eq!(Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_AND as u8, worker_constraint.constraint_type);
+                assert_eq!(
+                    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_AND as u8,
+                    worker_constraint.constraint_type
+                );
                 unsafe {
                     let bindgen_constraint = worker_constraint.__bindgen_anon_1.and_constraint;
                     assert_ne!(::std::ptr::null_mut(), bindgen_constraint.constraints);
-                    assert_eq!(other_constraints.len() as u32, bindgen_constraint.constraint_count);
-                    let data = from_raw_parts(bindgen_constraint.constraints, bindgen_constraint.constraint_count as usize);
+                    assert_eq!(
+                        other_constraints.len() as u32,
+                        bindgen_constraint.constraint_count
+                    );
+                    let data = from_raw_parts(
+                        bindgen_constraint.constraints,
+                        bindgen_constraint.constraint_count as usize,
+                    );
                     for i in 0..other_constraints.len() {
                         is_constraint_valid(&other_constraints[i], &data[i]);
                     }
                 }
             }
             QueryConstraint::Or(other_constraints) => {
-                assert_eq!(Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_OR as u8, worker_constraint.constraint_type);
+                assert_eq!(
+                    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_OR as u8,
+                    worker_constraint.constraint_type
+                );
                 unsafe {
                     let bindgen_constraint = worker_constraint.__bindgen_anon_1.or_constraint;
                     assert_ne!(::std::ptr::null_mut(), bindgen_constraint.constraints);
-                    assert_eq!(other_constraints.len() as u32, bindgen_constraint.constraint_count);
-                    let data = from_raw_parts(bindgen_constraint.constraints, bindgen_constraint.constraint_count as usize);
+                    assert_eq!(
+                        other_constraints.len() as u32,
+                        bindgen_constraint.constraint_count
+                    );
+                    let data = from_raw_parts(
+                        bindgen_constraint.constraints,
+                        bindgen_constraint.constraint_count as usize,
+                    );
                     for i in 0..other_constraints.len() {
                         is_constraint_valid(&other_constraints[i], &data[i]);
                     }
                 }
             }
             QueryConstraint::Not(other_constraint) => {
-                assert_eq!(Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_NOT as u8, worker_constraint.constraint_type);
+                assert_eq!(
+                    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_NOT as u8,
+                    worker_constraint.constraint_type
+                );
                 unsafe {
                     let bindgen_constraint = worker_constraint.__bindgen_anon_1.not_constraint;
                     assert_ne!(::std::ptr::null_mut(), bindgen_constraint.constraint);
 
-                    is_constraint_valid(other_constraint, bindgen_constraint.constraint.as_ref().unwrap());
+                    is_constraint_valid(
+                        other_constraint,
+                        bindgen_constraint.constraint.as_ref().unwrap(),
+                    );
                 }
             }
         }
@@ -317,14 +363,14 @@ mod test {
     fn query_result_types_conversion() {
         let query = EntityQuery {
             constraint: QueryConstraint::Component(1),
-            result_type: ResultType::Count
+            result_type: ResultType::Count,
         };
 
         is_worker_query_valid(&query);
 
         let query = EntityQuery {
             constraint: QueryConstraint::Component(1),
-            result_type: ResultType::Snapshot(vec![0,1,2])
+            result_type: ResultType::Snapshot(vec![0, 1, 2]),
         };
 
         is_worker_query_valid(&query);
@@ -334,21 +380,21 @@ mod test {
     fn exhaustive_simple_query_conversion() {
         let query = EntityQuery {
             constraint: QueryConstraint::Component(1),
-            result_type: ResultType::Count
+            result_type: ResultType::Count,
         };
 
         is_worker_query_valid(&query);
 
         let query = EntityQuery {
             constraint: QueryConstraint::EntityId(EntityId::new(10)),
-            result_type: ResultType::Count
+            result_type: ResultType::Count,
         };
 
         is_worker_query_valid(&query);
 
         let query = EntityQuery {
             constraint: QueryConstraint::Sphere(1.0, 1.0, 1.0, 1.0),
-            result_type: ResultType::Count
+            result_type: ResultType::Count,
         };
 
         is_worker_query_valid(&query);
@@ -362,21 +408,23 @@ mod test {
 
         let query = EntityQuery {
             constraint: QueryConstraint::And(constraints.clone()),
-            result_type: ResultType::Count
+            result_type: ResultType::Count,
         };
 
         is_worker_query_valid(&query);
 
         let query = EntityQuery {
             constraint: QueryConstraint::Or(constraints),
-            result_type: ResultType::Count
+            result_type: ResultType::Count,
         };
 
         is_worker_query_valid(&query);
 
         let query = EntityQuery {
-            constraint: QueryConstraint::Not(Box::new(QueryConstraint::EntityId(EntityId::new(10)))),
-            result_type: ResultType::Count
+            constraint: QueryConstraint::Not(Box::new(QueryConstraint::EntityId(EntityId::new(
+                10,
+            )))),
+            result_type: ResultType::Count,
         };
 
         is_worker_query_valid(&query);
@@ -391,11 +439,14 @@ mod test {
         let and = QueryConstraint::And(constraints.clone());
         let or = QueryConstraint::Or(vec![and, QueryConstraint::Component(5)]);
 
-        let and = QueryConstraint::And(vec![or, QueryConstraint::Not(Box::new(QueryConstraint::Component(15)))]);
+        let and = QueryConstraint::And(vec![
+            or,
+            QueryConstraint::Not(Box::new(QueryConstraint::Component(15))),
+        ]);
 
         let query = EntityQuery {
             constraint: and,
-            result_type: ResultType::Count
+            result_type: ResultType::Count,
         };
 
         is_worker_query_valid(&query);
