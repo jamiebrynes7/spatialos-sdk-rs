@@ -1,3 +1,4 @@
+use worker::core::query::EntityQuery;
 use worker::core::EntityId;
 
 use worker::internal::bindings::{
@@ -46,4 +47,4 @@ pub struct CreateEntityRequest {}
 
 pub struct DeleteEntityRequest(pub EntityId);
 
-pub struct EntityQueryRequest {}
+pub struct EntityQueryRequest(pub EntityQuery);
