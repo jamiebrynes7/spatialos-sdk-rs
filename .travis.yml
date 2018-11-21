@@ -1,20 +1,15 @@
 env:
   global:
-    - secure: "aSGJ+58czI0wgY+tMyVMKpWjcYS8GbjmJp6VMoCoTdLl1azgA4zqp9WE39i2aFnzTrpm242+yIv/N8h9QbrOD0BAFNrJ0MD0LVH2GLGBD+IT7Rhc0RvDyq2ewNKNHU0DdOxdtRBv2neuEQj8qeDcVaqM7Q3eHa2zlLfYqypD6oo9WwQxxrS19xLdQpEm7MQ2mZ7hzgWkUmoH9sBMtpYlCHuFVMeFHVps5ZuAt9vhVLwzxnLn+p3iPDyuKIBK//B7N1z2Fbthk6NsZ2qrXQsuEF2waFYOCs+3KLSbfLV1VFB7BVY5LAUHCLP2AIV5xX5hrcXaGAunI49i/bi+gJTrcgjfbos2w/9AlwlRky3ZFu8qaesnT41xkCABTs76nBbg52sHlMYC+qx0mlbzeUwQgQRYC7LuscinXLthyiIDJMMfSBVBQCnTepdW0fFBUiqpW37NKY8jvgyj+KRnE8K1DDlMYR4QS7yKagkHxZcsKVuGlPtJ2XVoyijUf1OW9XavytbuiSPODHEUiNXWhuZtZHBRahDDc/bj5uTCZELsbJO2Pk6MbzJf8hIT67smxQ/37s5+yfVasug7XDC9lucvNoJAsh0v0YvmEn1IlidXD4trENGZYj7/7d08sPJDvCrUDzgvZHZ8CRsD9UHqB9sFOP6wCSKhTQ1It0Vgypq1C2k="
-
+    secure: w+30LNDNrKGZUrO7tlevymcPwcHejDYqA2Ytq9JUiXZdisB1yDa5nfCb3zWga1X8TL83z9o1sdHklgXsOCUYm6Adr1a+w8FhfZ69g861zkJBZJCDeKYtng74mpS/d7O+E5lF9Fb8SnCpnO6rdLwNCf7hq5Kap5pEmOrbjKYpDpitcTtDFdToTHasP5OTANxVIWy66j2qUtF6R6x4oP8BUqORTfn8mwiRxhCJCSEMnmq+nJ/23Tul4kmCw5VXZZ7O697Bw0R1rUO2PzK6gYEy2M7hBcPjcgg3Yyr4jLonEld+ULNL8/Qj16hSbpt7ARHG3GAgkly+AzrVgI5CKUEzGNCYG5RTedx9fDBefWajA7nMMQGKe6WskJOkOolu0mTngUUtk8xRsks7mIZGp8vXdscOxGeUfYxJ72qSJw9nhOIU7VVsLiEcPOyCO9Iv8+O3P9Y2y0oTXoREJc54nvJG8bnmBOxz5CYE9sU1P16wB/uHkMZoE+CFMv9l1MJZaGN9DmK50seZGhzrhpZA8Sl6siCUlLt9BR0ZZW0kJWqLVznIRkDLgFWu2ZBEcF/IDVIbrE5iuqItUIPUJDNMOTRiii+fX9LTaubJUAwzGi4ecZCbqpmSSidKOoR5hz0bX9ZwSyzVQJyIbzNLDyQJGQG0UbcMv1mxVAH2boCDuJ76So8=
 os:
-  - windows
-  - osx
-  - linux
-
+- windows
+- osx
+- linux
 language: rust
-
 before_install:
-  - set -e
-
+- set -e
 install:
-  - ./ci/install.sh
-
+- "./ci/install.sh"
 script:
-  - ./ci/lint.sh
-  - ./ci/build.sh
+- "./ci/lint.sh"
+- "./ci/build.sh"

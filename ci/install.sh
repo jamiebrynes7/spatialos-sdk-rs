@@ -5,6 +5,8 @@ if [[ -n "${DEBUG-}" ]]; then
   set -x
 fi
 
+ARCHIVER_RELEASE="3.1.0"
+
 function isLinux() {
   [[ "$(uname -s)" == "Linux" ]];
 }
@@ -17,40 +19,37 @@ function isWindows() {
   ! ( isLinux || isMacOS );
 }
 
-echo "Downloading Spatial CLI"
+rm -rf "./tmp"
+mkdir -p "./tmp"
 
-if isWindows; then
-    DOWNLOAD_URL="https://console.improbable.io/toolbelt/download/latest/win"
+echo "Downloading archiver."
+if isLinux; then
+    ARCHIVER_PLATFORM="arc_linux_amd64"
 elif isMacOS; then
-    DOWNLOAD_URL="https://console.improbable.io/toolbelt/download/latest/mac"
-elif isLinux; then
-    DOWNLOAD_URL="https://console.improbable.io/toolbelt/download/latest/linux"
-else
-    echo "Unknown CI platform."
+    ARCHIVER_PLATFORM="arc_mac_amd64"
+elif isWindows; then
+    ARCHIVER_PLATFORM="arc_windows_amd64.exe"
+else 
+    echo "Unsupported platform"
     exit 1
 fi
 
-mkdir -p ~/.spatial
-curl -sSLf -o ~/.spatial/spatial "${DOWNLOAD_URL}"
-chmod +x ~/.spatial/spatial
+URL="https://github.com/mholt/archiver/releases/download/v${ARCHIVER_RELEASE}/${ARCHIVER_PLATFORM}"
 
-export PATH=${PATH}:~/.spatial
+curl -sSLf -o ./tmp/archiver "${URL}"
+chmod +x ./tmp/archiver
 
-echo "Install Spatial OAuth"
+echo "Unpacking SpatialOS dependencies"
 
-if isWindows; then
-    OAUTH_LOCATION="${APPDATA}/Local/.improbable/oauth2"
-else
-    OAUTH_LOCATION="~/.improbable/oauth2"
-fi
+curl -c ./tmp/cookie -s -L "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
+curl -Lb ./tmp/cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./tmp/cookie`&id=${FILE_ID}" -o "./tmp/dependencies.tar"
 
-mkdir -p "${OAUTH_LOCATION}"
-echo "$SPATIAL_OAUTH" > "${OAUTH_LOCATION}/oauth2_refresh_token"
+DEPENDENCIES_TARGET_DIR="spatialos-sdk/dependencies"
+rm -rf "${DEPENDENCIES_TARGET_DIR}"
+mkdir -p "${DEPENDENCIES_TARGET_DIR}"
 
-spatial auth login
+./tmp/archiver unarchive "./tmp/dependencies.tar" "${DEPENDENCIES_TARGET_DIR}"
 
-spatial version
-
-echo "Installing cargo fmt"
+rm -rf "./tmp"
 
 rustup component add rustfmt-preview
