@@ -321,7 +321,25 @@ impl Connection for WorkerConnection {
     }
 
     fn get_worker_flag(&self, name: &str) -> Option<String> {
-        unimplemented!()
+        let flag_name = CString::new(name).unwrap();
+
+        extern "C" fn worker_flag_handler(user_data: *mut ::std::os::raw::c_void, value: *const ::std::os::raw::c_char) {
+            unsafe {
+                if value.is_null() {
+                    return;
+                }
+                let mut data :&mut Option<String> = &mut *(user_data as *mut Option<String>);
+                let cstr =  CStr::from_ptr(value).to_string_lossy().to_string();
+                *data = Some(cstr);
+            }
+        };
+
+        let mut data : Option<String> = None;
+        unsafe {
+            Worker_Connection_GetFlag(self.connection_ptr, flag_name.as_ptr(), (&mut data as *mut Option<String>) as *mut ::std::os::raw::c_void, Some(worker_flag_handler));
+        }
+
+        data
     }
 
     fn get_op_list(&mut self, timeout_millis: u32) -> OpList {

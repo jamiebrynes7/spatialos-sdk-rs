@@ -20,24 +20,29 @@ fn main() {
 
     let worker_id = get_worker_id();
 
+
     let mut worker_connection = match get_connection_block(&connection_parameters, &worker_id) {
         Ok(c) => c,
         Err(e) => panic!("Failed to connect with block: \n{}", e),
     };
 
+    /*
+    let mut worker_connection = match get_connection_poll(&connection_parameters, &worker_id) {
+        Ok(c) => {
+            println!("Connected successful with poll.");
+            c
+        },
+        Err(e) => panic!("Failed to connect with poll: \n{}", e),
+    };
+    */
+
     println!("Connected as: {}", worker_connection.get_worker_id());
     print_worker_attributes(&worker_connection);
+    check_for_flag(&worker_connection, "my-flag");
 
     worker_connection.send_log_message(LogLevel::Info, "main", "Connected successfully!", None);
 
     logic_loop(worker_connection);
-
-    /*
-    match get_connection_poll(&connection_parameters) {
-        Ok(_) => println!("Connected successful with poll."),
-        Err(e) => println!("Failed to connect with poll: \n{}", e),
-    }
-    */
 }
 
 fn logic_loop(mut c: WorkerConnection) {
@@ -79,6 +84,14 @@ fn get_worker_id() -> String {
     worker_id
 }
 
+fn check_for_flag(connection: &WorkerConnection, flag_name: &str) {
+    let flag = connection.get_worker_flag(flag_name);
+    match flag {
+        Some(f) => println!("Found flag value: {}", f),
+        None => println!("Could not find flag value")
+    }
+}
+
 fn get_connection_block(
     params: &parameters::ReceptionistConnectionParameters,
     worker_id: &str,
@@ -89,11 +102,12 @@ fn get_connection_block(
 
 fn get_connection_poll(
     params: &parameters::ReceptionistConnectionParameters,
+    worker_id: &str,
 ) -> Result<WorkerConnection, String> {
     const NUM_ATTEMPTS: u8 = 3;
     const TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 1000;
 
-    let mut future = WorkerConnection::connect_receptionist_async("test-worker", params);
+    let mut future = WorkerConnection::connect_receptionist_async(worker_id, params);
 
     let mut res: Option<WorkerConnection> = None;
     let mut err: Option<String> = None;
