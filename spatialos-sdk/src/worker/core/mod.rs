@@ -109,8 +109,8 @@ impl From<u8> for LogLevel {
 }
 
 pub struct InterestOverride {
-    component_id: u32,
-    is_interested: bool,
+    pub component_id: u32,
+    pub is_interested: bool,
 }
 
 impl InterestOverride {
