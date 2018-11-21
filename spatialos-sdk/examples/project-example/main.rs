@@ -1,14 +1,16 @@
 extern crate spatialos_sdk;
 extern crate uuid;
 
-use spatialos_sdk::worker::core::commands::{DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest};
+use spatialos_sdk::worker::core::commands::{
+    DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
+};
 use spatialos_sdk::worker::core::connection::{Connection, WorkerConnection};
 use spatialos_sdk::worker::core::parameters;
 use spatialos_sdk::worker::core::query::{EntityQuery, QueryConstraint, ResultType};
-use spatialos_sdk::worker::core::{EntityId, LogLevel, InterestOverride};
+use spatialos_sdk::worker::core::{EntityId, InterestOverride, LogLevel};
 
-use uuid::Uuid;
 use spatialos_sdk::worker::core::metrics::*;
+use uuid::Uuid;
 
 fn main() {
     println!("Entered program");
@@ -20,7 +22,6 @@ fn main() {
     connection_parameters.connection_params.worker_type = "RustWorker".to_owned();
 
     let worker_id = get_worker_id();
-
 
     let mut worker_connection = match get_connection_block(&connection_parameters, &worker_id) {
         Ok(c) => c,
@@ -56,12 +57,12 @@ fn exercise_connection_code_paths(mut c: WorkerConnection) {
     let interested = vec![
         InterestOverride {
             is_interested: true,
-            component_id: 1
+            component_id: 1,
         },
         InterestOverride {
             is_interested: false,
-            component_id: 100
-        }
+            component_id: 100,
+        },
     ];
     c.send_component_interest(EntityId::new(1), &interested);
     c.send_authority_loss_imminent_acknowledgement(EntityId::new(1), 1337);
@@ -92,7 +93,7 @@ fn check_for_flag(connection: &WorkerConnection, flag_name: &str) {
     let flag = connection.get_worker_flag(flag_name);
     match flag {
         Some(f) => println!("Found flag value: {}", f),
-        None => println!("Could not find flag value")
+        None => println!("Could not find flag value"),
     }
 }
 
@@ -168,20 +169,21 @@ fn send_metrics(c: &mut WorkerConnection) {
         gauge_metrics: vec![
             GaugeMetric {
                 key: "some metric".to_owned(),
-                value: 0.15
+                value: 0.15,
             },
             GaugeMetric {
                 key: "another metric".to_owned(),
-                value: 0.2
-            }
+                value: 0.2,
+            },
         ],
-        histogram_metrics: vec![
-            HistogramMetric {
-                key: "yet another metric".to_owned(),
-                sum: 2.0,
-                buckets: vec![HistogramMetricBucket {upper_bound: 6.7, samples: 2}]
-            }
-        ]
+        histogram_metrics: vec![HistogramMetric {
+            key: "yet another metric".to_owned(),
+            sum: 2.0,
+            buckets: vec![HistogramMetricBucket {
+                upper_bound: 6.7,
+                samples: 2,
+            }],
+        }],
     };
 
     c.send_metrics(&m);

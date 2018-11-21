@@ -85,7 +85,7 @@ pub trait Connection {
 
 pub struct WorkerConnection {
     connection_ptr: *mut Worker_Connection,
-    worker_id: String
+    worker_id: String,
 }
 
 impl WorkerConnection {
@@ -96,7 +96,7 @@ impl WorkerConnection {
 
             WorkerConnection {
                 connection_ptr,
-                worker_id: cstr.to_string_lossy().to_string()
+                worker_id: cstr.to_string_lossy().to_string(),
             }
         }
     }
@@ -276,18 +276,28 @@ impl Connection for WorkerConnection {
             .collect::<Vec<Worker_InterestOverride>>();
 
         unsafe {
-            Worker_Connection_SendComponentInterest(self.connection_ptr,
-                                                    entity_id.id,
-                                                    worker_sdk_overrides.as_ptr(),
-                                                    worker_sdk_overrides.len() as u32);
+            Worker_Connection_SendComponentInterest(
+                self.connection_ptr,
+                entity_id.id,
+                worker_sdk_overrides.as_ptr(),
+                worker_sdk_overrides.len() as u32,
+            );
         }
     }
 
-    fn send_authority_loss_imminent_acknowledgement(&mut self, entity_id: EntityId, component_id: u32) {
+    fn send_authority_loss_imminent_acknowledgement(
+        &mut self,
+        entity_id: EntityId,
+        component_id: u32,
+    ) {
         assert!(!self.connection_ptr.is_null());
 
         unsafe {
-            Worker_Connection_SendAuthorityLossImminentAcknowledgement(self.connection_ptr, entity_id.id, component_id);
+            Worker_Connection_SendAuthorityLossImminentAcknowledgement(
+                self.connection_ptr,
+                entity_id.id,
+                component_id,
+            );
         }
     }
 
@@ -312,10 +322,12 @@ impl Connection for WorkerConnection {
         assert!(!self.connection_ptr.is_null());
         unsafe {
             let sdk_attr = Worker_Connection_GetWorkerAttributes(self.connection_ptr);
-            let attributes = ::std::slice::from_raw_parts((*sdk_attr).attributes, (*sdk_attr).attribute_count as usize)
-                .iter()
-                .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
-                .collect();
+            let attributes = ::std::slice::from_raw_parts(
+                (*sdk_attr).attributes,
+                (*sdk_attr).attribute_count as usize,
+            ).iter()
+            .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
+            .collect();
             attributes
         }
     }
@@ -323,20 +335,28 @@ impl Connection for WorkerConnection {
     fn get_worker_flag(&self, name: &str) -> Option<String> {
         let flag_name = CString::new(name).unwrap();
 
-        extern "C" fn worker_flag_handler(user_data: *mut ::std::os::raw::c_void, value: *const ::std::os::raw::c_char) {
+        extern "C" fn worker_flag_handler(
+            user_data: *mut ::std::os::raw::c_void,
+            value: *const ::std::os::raw::c_char,
+        ) {
             unsafe {
                 if value.is_null() {
                     return;
                 }
-                let mut data :&mut Option<String> = &mut *(user_data as *mut Option<String>);
-                let cstr =  CStr::from_ptr(value).to_string_lossy().to_string();
+                let mut data: &mut Option<String> = &mut *(user_data as *mut Option<String>);
+                let cstr = CStr::from_ptr(value).to_string_lossy().to_string();
                 *data = Some(cstr);
             }
         };
 
-        let mut data : Option<String> = None;
+        let mut data: Option<String> = None;
         unsafe {
-            Worker_Connection_GetFlag(self.connection_ptr, flag_name.as_ptr(), (&mut data as *mut Option<String>) as *mut ::std::os::raw::c_void, Some(worker_flag_handler));
+            Worker_Connection_GetFlag(
+                self.connection_ptr,
+                flag_name.as_ptr(),
+                (&mut data as *mut Option<String>) as *mut ::std::os::raw::c_void,
+                Some(worker_flag_handler),
+            );
         }
 
         data
