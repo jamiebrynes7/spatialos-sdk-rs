@@ -19,6 +19,10 @@ function isWindows() {
   ! ( isLinux || isMacOS );
 }
 
+if isLinux; then 
+    sudo apt-get install -y gcc 
+fi
+
 rm -rf "./tmp"
 mkdir -p "./tmp"
 
