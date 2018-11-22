@@ -1,11 +1,10 @@
 use std::ffi::{CStr, CString};
 use std::ptr;
-
 use worker::core::commands::*;
 use worker::core::component::ComponentUpdate;
 use worker::core::metrics::Metrics;
 use worker::core::op::{DisconnectOp, OpList, WorkerOp};
-use worker::core::parameters::{CommandParameters, ReceptionistConnectionParameters};
+use worker::core::parameters::{CommandParameters, ConnectionParameters};
 use worker::core::{EntityId, InterestOverride, LogLevel, RequestId};
 use worker::internal::bindings::*;
 
@@ -103,17 +102,18 @@ impl WorkerConnection {
 
     pub fn connect_receptionist_async(
         worker_id: &str,
-        params: &ReceptionistConnectionParameters,
+        hostname: &str,
+        port: u16,
+        params: &ConnectionParameters,
     ) -> WorkerConnectionFuture {
-        let hostname_cstr =
-            CString::new(params.hostname.clone()).expect("Received 0 byte in supplied hostname.");
+        let hostname_cstr = CString::new(hostname).expect("Received 0 byte in supplied hostname.");
         let worker_id_cstr =
             CString::new(worker_id).expect("Received 0 byte in supplied Worker ID");
-        let conn_params = params.connection_params.to_worker_sdk();
+        let conn_params = params.to_worker_sdk();
         let future_ptr = unsafe {
             Worker_ConnectAsync(
                 hostname_cstr.as_ptr(),
-                params.port,
+                port,
                 worker_id_cstr.as_ptr(),
                 &conn_params.native_struct,
             )

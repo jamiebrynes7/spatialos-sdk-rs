@@ -5,32 +5,6 @@ use worker::core::vtable;
 use worker::internal::bindings::*;
 use worker::internal::utils::WrappedNativeStructWithString;
 
-pub enum ConnectionType {
-    TCP,
-    RakNet,
-}
-
-impl ConnectionType {
-    fn to_u8(&self) -> u8 {
-        match self {
-            ConnectionType::TCP => {
-                Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8
-            }
-            ConnectionType::RakNet => {
-                Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8
-            }
-        }
-    }
-}
-
-pub struct ReceptionistConnectionParameters {
-    pub hostname: String,
-    pub port: u16,
-    pub connection_params: ConnectionParameters,
-}
-
-pub struct LocatorConnectionParameters {}
-
 pub struct ConnectionParameters {
     pub worker_type: String,
     pub network: NetworkParameters,
@@ -44,6 +18,46 @@ pub struct ConnectionParameters {
 }
 
 impl ConnectionParameters {
+    pub fn new(worker_type: &str) -> Self {
+        let mut params = ConnectionParameters::default();
+        params.worker_type = worker_type.to_owned();
+        params
+    }
+
+    pub fn with_protocol_logging(mut self, log_prefix: &str) -> Self {
+        self.enable_protocol_logging_at_startup = true;
+        self.protocol_logging.log_prefix = log_prefix.to_owned();
+        self
+    }
+
+    pub fn using_tcp(mut self) -> Self {
+        self.using_tcp_with_params(TcpNetworkParameters::default())
+    }
+
+    pub fn using_tcp_with_params(mut self, params: TcpNetworkParameters) -> Self {
+        self.network.protocol_params = ProtocolType::Tcp(params);
+        self
+    }
+
+    pub fn using_raknet(mut self) -> Self {
+        self.using_raknet_with_params(RakNetNetworkParameters::default())
+    }
+
+    pub fn using_raknet_with_params(mut self, params: RakNetNetworkParameters) -> Self {
+        self.network.protocol_params = ProtocolType::RakNet(params);
+        self
+    }
+
+    pub fn using_external_ip(mut self) -> Self {
+        self.network.use_external_ip = true;
+        self
+    }
+
+    pub fn with_connection_timeout(mut self, timeout_millis: u64) -> Self {
+        self.network.connection_timeout_millis = timeout_millis;
+        self
+    }
+
     pub fn default() -> Self {
         ConnectionParameters {
             worker_type: "".to_owned(),
@@ -86,11 +100,45 @@ impl ConnectionParameters {
     }
 }
 
+pub enum ProtocolType {
+    Tcp(TcpNetworkParameters),
+    RakNet(RakNetNetworkParameters),
+}
+
+impl ProtocolType {
+    fn to_worker_sdk(
+        &self,
+    ) -> (
+        u8,
+        Worker_RakNetNetworkParameters,
+        Worker_TcpNetworkParameters,
+    ) {
+        match self {
+            ProtocolType::Tcp(params) => {
+                let tcp_params = params.to_worker_sdk();
+                let raknet_params = RakNetNetworkParameters::default().to_worker_sdk();
+                (
+                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8,
+                    raknet_params,
+                    tcp_params,
+                )
+            }
+            ProtocolType::RakNet(params) => {
+                let tcp_params = TcpNetworkParameters::default().to_worker_sdk();
+                let raknet_params = params.to_worker_sdk();
+                (
+                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8,
+                    raknet_params,
+                    tcp_params,
+                )
+            }
+        }
+    }
+}
+
 pub struct NetworkParameters {
     pub use_external_ip: bool,
-    pub connection_type: ConnectionType,
-    pub raknet: RakNetNetworkParameters,
-    pub tcp: TcpNetworkParameters,
+    pub protocol_params: ProtocolType,
     pub connection_timeout_millis: u64,
     pub default_command_timeout_millis: u32,
 }
@@ -99,20 +147,19 @@ impl NetworkParameters {
     pub fn default() -> Self {
         NetworkParameters {
             use_external_ip: false,
-            connection_type: ConnectionType::TCP,
-            raknet: RakNetNetworkParameters::default(),
-            tcp: TcpNetworkParameters::default(),
+            protocol_params: ProtocolType::Tcp(TcpNetworkParameters::default()),
             connection_timeout_millis: WORKER_DEFAULTS_CONNECTION_TIMEOUT_MILLIS as u64,
             default_command_timeout_millis: WORKER_DEFAULTS_DEFAULT_COMMAND_TIMEOUT_MILLIS,
         }
     }
 
     pub(crate) fn to_worker_sdk(&self) -> Worker_NetworkParameters {
+        let (protocol_type, raknet_params, tcp_params) = self.protocol_params.to_worker_sdk();
         Worker_NetworkParameters {
             use_external_ip: self.use_external_ip as u8,
-            connection_type: self.connection_type.to_u8(),
-            raknet: self.raknet.to_worker_sdk(),
-            tcp: self.tcp.to_worker_sdk(),
+            connection_type: protocol_type,
+            raknet: raknet_params,
+            tcp: tcp_params,
             connection_timeout_millis: self.connection_timeout_millis,
             default_command_timeout_millis: self.default_command_timeout_millis,
         }

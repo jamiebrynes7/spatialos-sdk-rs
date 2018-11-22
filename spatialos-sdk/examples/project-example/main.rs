@@ -12,18 +12,17 @@ use spatialos_sdk::worker::core::{EntityId, InterestOverride, LogLevel};
 use spatialos_sdk::worker::core::metrics::*;
 use uuid::Uuid;
 
+static HOST: &str = "127.0.0.1";
+static PORT: u16 = 7777;
+
 fn main() {
     println!("Entered program");
-    let mut connection_parameters = parameters::ReceptionistConnectionParameters {
-        hostname: "127.0.0.1".to_owned(),
-        port: 7777,
-        connection_params: parameters::ConnectionParameters::default(),
-    };
-    connection_parameters.connection_params.worker_type = "RustWorker".to_owned();
+
+    let connection_params = parameters::ConnectionParameters::new("RustWorker").using_tcp();
 
     let worker_id = get_worker_id();
 
-    let mut worker_connection = match get_connection_block(&connection_parameters, &worker_id) {
+    let mut worker_connection = match get_connection_block(&connection_params, &worker_id) {
         Ok(c) => c,
         Err(e) => panic!("Failed to connect with block: \n{}", e),
     };
@@ -98,21 +97,21 @@ fn check_for_flag(connection: &WorkerConnection, flag_name: &str) {
 }
 
 fn get_connection_block(
-    params: &parameters::ReceptionistConnectionParameters,
+    params: &parameters::ConnectionParameters,
     worker_id: &str,
 ) -> Result<WorkerConnection, String> {
-    let mut future = WorkerConnection::connect_receptionist_async(worker_id, params);
+    let mut future = WorkerConnection::connect_receptionist_async(worker_id, HOST, PORT, params);
     future.get()
 }
 
 fn get_connection_poll(
-    params: &parameters::ReceptionistConnectionParameters,
+    params: &parameters::ConnectionParameters,
     worker_id: &str,
 ) -> Result<WorkerConnection, String> {
     const NUM_ATTEMPTS: u8 = 3;
     const TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 1000;
 
-    let mut future = WorkerConnection::connect_receptionist_async(worker_id, params);
+    let mut future = WorkerConnection::connect_receptionist_async(worker_id, HOST, PORT, params);
 
     let mut res: Option<WorkerConnection> = None;
     let mut err: Option<String> = None;
