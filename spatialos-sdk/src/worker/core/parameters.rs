@@ -106,17 +106,31 @@ pub enum ProtocolType {
 }
 
 impl ProtocolType {
-    fn to_worker_sdk(&self) -> (u8, Worker_RakNetNetworkParameters, Worker_TcpNetworkParameters) {
+    fn to_worker_sdk(
+        &self,
+    ) -> (
+        u8,
+        Worker_RakNetNetworkParameters,
+        Worker_TcpNetworkParameters,
+    ) {
         match self {
             ProtocolType::Tcp(params) => {
                 let tcp_params = params.to_worker_sdk();
                 let raknet_params = RakNetNetworkParameters::default().to_worker_sdk();
-                (Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8, raknet_params, tcp_params)
+                (
+                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8,
+                    raknet_params,
+                    tcp_params,
+                )
             }
             ProtocolType::RakNet(params) => {
                 let tcp_params = TcpNetworkParameters::default().to_worker_sdk();
                 let raknet_params = params.to_worker_sdk();
-                (Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8, raknet_params, tcp_params)
+                (
+                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8,
+                    raknet_params,
+                    tcp_params,
+                )
             }
         }
     }

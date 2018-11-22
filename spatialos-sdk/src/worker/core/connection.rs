@@ -1,11 +1,11 @@
 use std::ffi::{CStr, CString};
 use std::ptr;
-use worker::core::{EntityId, InterestOverride, LogLevel, RequestId};
 use worker::core::commands::*;
 use worker::core::component::ComponentUpdate;
 use worker::core::metrics::Metrics;
 use worker::core::op::{DisconnectOp, OpList, WorkerOp};
 use worker::core::parameters::{CommandParameters, ConnectionParameters};
+use worker::core::{EntityId, InterestOverride, LogLevel, RequestId};
 use worker::internal::bindings::*;
 
 /// Connection trait to allow for mocking the connection.
@@ -106,8 +106,7 @@ impl WorkerConnection {
         port: u16,
         params: &ConnectionParameters,
     ) -> WorkerConnectionFuture {
-        let hostname_cstr =
-            CString::new(hostname).expect("Received 0 byte in supplied hostname.");
+        let hostname_cstr = CString::new(hostname).expect("Received 0 byte in supplied hostname.");
         let worker_id_cstr =
             CString::new(worker_id).expect("Received 0 byte in supplied Worker ID");
         let conn_params = params.to_worker_sdk();
