@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::ptr;
 
 use worker::core::commands::*;
@@ -18,7 +18,7 @@ pub trait Connection {
         message: &str,
         entity_id: Option<EntityId>,
     );
-    fn send_metrics(&mut self, metrics: Metrics);
+    fn send_metrics(&mut self, metrics: &Metrics);
 
     fn send_reserve_entity_ids_request(
         &mut self,
@@ -76,7 +76,7 @@ pub trait Connection {
 
     fn set_protocol_logging_enabled(&mut self, enabled: bool);
     fn is_connected(&self) -> bool;
-    fn get_worker_id(&self) -> String;
+    fn get_worker_id(&self) -> &str;
     fn get_worker_attributes(&self) -> Vec<String>;
     fn get_worker_flag(&self, name: &str) -> Option<String>;
 
@@ -85,9 +85,22 @@ pub trait Connection {
 
 pub struct WorkerConnection {
     connection_ptr: *mut Worker_Connection,
+    worker_id: String,
 }
 
 impl WorkerConnection {
+    pub(crate) fn new(connection_ptr: *mut Worker_Connection) -> Self {
+        unsafe {
+            let worker_id = Worker_Connection_GetWorkerId(connection_ptr);
+            let cstr = CStr::from_ptr(worker_id);
+
+            WorkerConnection {
+                connection_ptr,
+                worker_id: cstr.to_string_lossy().to_string(),
+            }
+        }
+    }
+
     pub fn connect_receptionist_async(
         worker_id: &str,
         params: &ReceptionistConnectionParameters,
@@ -148,8 +161,10 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn send_metrics(&mut self, metrics: Metrics) {
-        unimplemented!()
+    fn send_metrics(&mut self, metrics: &Metrics) {
+        assert!(!self.connection_ptr.is_null());
+        let worker_metrics = metrics.to_worker_sdk();
+        unsafe { Worker_Connection_SendMetrics(self.connection_ptr, &worker_metrics.metrics) }
     }
 
     fn send_reserve_entity_ids_request(
@@ -254,7 +269,20 @@ impl Connection for WorkerConnection {
         entity_id: EntityId,
         interest_overrides: &Vec<InterestOverride>,
     ) {
-        unimplemented!()
+        assert!(!self.connection_ptr.is_null());
+        let worker_sdk_overrides = interest_overrides
+            .iter()
+            .map(|x| x.to_woker_sdk())
+            .collect::<Vec<Worker_InterestOverride>>();
+
+        unsafe {
+            Worker_Connection_SendComponentInterest(
+                self.connection_ptr,
+                entity_id.id,
+                worker_sdk_overrides.as_ptr(),
+                worker_sdk_overrides.len() as u32,
+            );
+        }
     }
 
     fn send_authority_loss_imminent_acknowledgement(
@@ -262,11 +290,23 @@ impl Connection for WorkerConnection {
         entity_id: EntityId,
         component_id: u32,
     ) {
-        unimplemented!()
+        assert!(!self.connection_ptr.is_null());
+
+        unsafe {
+            Worker_Connection_SendAuthorityLossImminentAcknowledgement(
+                self.connection_ptr,
+                entity_id.id,
+                component_id,
+            );
+        }
     }
 
     fn set_protocol_logging_enabled(&mut self, enabled: bool) {
-        unimplemented!()
+        assert!(!self.connection_ptr.is_null());
+
+        unsafe {
+            Worker_Connection_SetProtocolLoggingEnabled(self.connection_ptr, enabled as u8);
+        }
     }
 
     fn is_connected(&self) -> bool {
@@ -274,16 +314,52 @@ impl Connection for WorkerConnection {
         (unsafe { Worker_Connection_IsConnected(self.connection_ptr) } != 0)
     }
 
-    fn get_worker_id(&self) -> String {
-        unimplemented!()
+    fn get_worker_id(&self) -> &str {
+        &self.worker_id
     }
 
     fn get_worker_attributes(&self) -> Vec<String> {
-        unimplemented!()
+        assert!(!self.connection_ptr.is_null());
+        unsafe {
+            let sdk_attr = Worker_Connection_GetWorkerAttributes(self.connection_ptr);
+            let attributes = ::std::slice::from_raw_parts(
+                (*sdk_attr).attributes,
+                (*sdk_attr).attribute_count as usize,
+            ).iter()
+            .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
+            .collect();
+            attributes
+        }
     }
 
     fn get_worker_flag(&self, name: &str) -> Option<String> {
-        unimplemented!()
+        let flag_name = CString::new(name).unwrap();
+
+        extern "C" fn worker_flag_handler(
+            user_data: *mut ::std::os::raw::c_void,
+            value: *const ::std::os::raw::c_char,
+        ) {
+            unsafe {
+                if value.is_null() {
+                    return;
+                }
+                let mut data: &mut Option<String> = &mut *(user_data as *mut Option<String>);
+                let cstr = CStr::from_ptr(value).to_string_lossy().to_string();
+                *data = Some(cstr);
+            }
+        };
+
+        let mut data: Option<String> = None;
+        unsafe {
+            Worker_Connection_GetFlag(
+                self.connection_ptr,
+                flag_name.as_ptr(),
+                (&mut data as *mut Option<String>) as *mut ::std::os::raw::c_void,
+                Some(worker_flag_handler),
+            );
+        }
+
+        data
     }
 
     fn get_op_list(&mut self, timeout_millis: u32) -> OpList {
@@ -325,7 +401,7 @@ impl WorkerConnectionFuture {
         assert!(!connection_ptr.is_null());
 
         self.was_consumed = true;
-        let mut worker_connection = WorkerConnection { connection_ptr };
+        let mut worker_connection = WorkerConnection::new(connection_ptr);
 
         if worker_connection.is_connected() {
             Ok(worker_connection)
@@ -355,7 +431,7 @@ impl WorkerConnectionFuture {
             None
         } else {
             // Connection future has returned - either a valid connection or a failed connection.
-            let mut worker_connection = WorkerConnection { connection_ptr };
+            let mut worker_connection = WorkerConnection::new(connection_ptr);
             self.was_consumed = true;
             match worker_connection.is_connected() {
                 true => Some(Ok(worker_connection)),

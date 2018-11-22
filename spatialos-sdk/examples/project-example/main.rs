@@ -1,12 +1,15 @@
 extern crate spatialos_sdk;
 extern crate uuid;
 
-use spatialos_sdk::worker::core::commands::{EntityQueryRequest, ReserveEntityIdsRequest};
+use spatialos_sdk::worker::core::commands::{
+    DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
+};
 use spatialos_sdk::worker::core::connection::{Connection, WorkerConnection};
 use spatialos_sdk::worker::core::parameters;
 use spatialos_sdk::worker::core::query::{EntityQuery, QueryConstraint, ResultType};
-use spatialos_sdk::worker::core::LogLevel;
+use spatialos_sdk::worker::core::{EntityId, InterestOverride, LogLevel};
 
+use spatialos_sdk::worker::core::metrics::*;
 use uuid::Uuid;
 
 fn main() {
@@ -25,38 +28,56 @@ fn main() {
         Err(e) => panic!("Failed to connect with block: \n{}", e),
     };
 
-    worker_connection.send_log_message(LogLevel::Info, "main", "Connected successfully!", None);
-
-    logic_loop(worker_connection);
-
     /*
-    match get_connection_poll(&connection_parameters) {
-        Ok(_) => println!("Connected successful with poll."),
-        Err(e) => println!("Failed to connect with poll: \n{}", e),
-    }
+    let mut worker_connection = match get_connection_poll(&connection_parameters, &worker_id) {
+        Ok(c) => {
+            println!("Connected successful with poll.");
+            c
+        },
+        Err(e) => panic!("Failed to connect with poll: \n{}", e),
+    };
     */
+
+    println!("Connected as: {}", worker_connection.get_worker_id());
+
+    exercise_connection_code_paths(worker_connection);
 }
 
-fn logic_loop(mut c: WorkerConnection) {
-    let mut counter = 0;
+fn exercise_connection_code_paths(mut c: WorkerConnection) {
+    c.send_log_message(LogLevel::Info, "main", "Connected successfully!", None);
+    print_worker_attributes(&c);
+    check_for_flag(&c, "my-flag");
 
-    loop {
-        let ops = c.get_op_list(0);
-        c.send_log_message(
-            LogLevel::Info,
-            "loop",
-            &format!("Received {} ops", ops.ops.len()),
-            None,
-        );
-        ::std::thread::sleep(::std::time::Duration::from_millis(500));
+    let _ = c.get_op_list(0);
+    c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
+    c.send_delete_entity_request(DeleteEntityRequest(EntityId::new(1)), None);
+    // TODO: Send create entity command
+    send_query(&mut c);
 
-        if counter % 20 == 0 {
-            println!("Sending reserve entity ids request");
-            c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
-            println!("Sending query");
-            send_query(&mut c);
-        }
-        counter += 1;
+    let interested = vec![
+        InterestOverride {
+            is_interested: true,
+            component_id: 1,
+        },
+        InterestOverride {
+            is_interested: false,
+            component_id: 100,
+        },
+    ];
+    c.send_component_interest(EntityId::new(1), &interested);
+    c.send_authority_loss_imminent_acknowledgement(EntityId::new(1), 1337);
+
+    send_metrics(&mut c);
+    c.set_protocol_logging_enabled(false);
+
+    println!("Testing completed");
+}
+
+fn print_worker_attributes(connection: &WorkerConnection) {
+    let attrs = connection.get_worker_attributes();
+    println!("The worker has the following attributes: ");
+    for attr in attrs {
+        println!("{}", attr)
     }
 }
 
@@ -66,6 +87,14 @@ fn get_worker_id() -> String {
     worker_id.push_str(&worker_uuid.to_string());
 
     worker_id
+}
+
+fn check_for_flag(connection: &WorkerConnection, flag_name: &str) {
+    let flag = connection.get_worker_flag(flag_name);
+    match flag {
+        Some(f) => println!("Found flag value: {}", f),
+        None => println!("Could not find flag value"),
+    }
 }
 
 fn get_connection_block(
@@ -78,11 +107,12 @@ fn get_connection_block(
 
 fn get_connection_poll(
     params: &parameters::ReceptionistConnectionParameters,
+    worker_id: &str,
 ) -> Result<WorkerConnection, String> {
     const NUM_ATTEMPTS: u8 = 3;
     const TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 1000;
 
-    let mut future = WorkerConnection::connect_receptionist_async("test-worker", params);
+    let mut future = WorkerConnection::connect_receptionist_async(worker_id, params);
 
     let mut res: Option<WorkerConnection> = None;
     let mut err: Option<String> = None;
@@ -131,4 +161,30 @@ fn send_query(c: &mut WorkerConnection) {
     };
 
     c.send_entity_query_request(EntityQueryRequest(query), None);
+}
+
+fn send_metrics(c: &mut WorkerConnection) {
+    let m = Metrics {
+        load: Some(0.2),
+        gauge_metrics: vec![
+            GaugeMetric {
+                key: "some metric".to_owned(),
+                value: 0.15,
+            },
+            GaugeMetric {
+                key: "another metric".to_owned(),
+                value: 0.2,
+            },
+        ],
+        histogram_metrics: vec![HistogramMetric {
+            key: "yet another metric".to_owned(),
+            sum: 2.0,
+            buckets: vec![HistogramMetricBucket {
+                upper_bound: 6.7,
+                samples: 2,
+            }],
+        }],
+    };
+
+    c.send_metrics(&m);
 }
