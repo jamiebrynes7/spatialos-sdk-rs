@@ -106,15 +106,17 @@ pub enum ProtocolType {
 }
 
 impl ProtocolType {
-    fn to_worker_sdk(&self) -> (u8, Option<Worker_RakNetNetworkParameters>, Option<Worker_TcpNetworkParameters>) {
+    fn to_worker_sdk(&self) -> (u8, Worker_RakNetNetworkParameters, Worker_TcpNetworkParameters) {
         match self {
             ProtocolType::Tcp(params) => {
-                let worker_params = params.to_worker_sdk();
-                (Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8, None, Some(worker_params))
+                let tcp_params = params.to_worker_sdk();
+                let raknet_params = RakNetNetworkParameters::default().to_worker_sdk();
+                (Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8, raknet_params, tcp_params)
             }
             ProtocolType::RakNet(params) => {
-                let worker_params = params.to_worker_sdk();
-                (Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8, Some(worker_params), None)
+                let tcp_params = TcpNetworkParameters::default().to_worker_sdk();
+                let raknet_params = params.to_worker_sdk();
+                (Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8, raknet_params, tcp_params)
             }
         }
     }
@@ -142,14 +144,8 @@ impl NetworkParameters {
         Worker_NetworkParameters {
             use_external_ip: self.use_external_ip as u8,
             connection_type: protocol_type,
-            raknet: match raknet_params {
-                Some(p) => p,
-                None => RakNetNetworkParameters::default().to_worker_sdk(),
-            },
-            tcp: match tcp_params {
-                Some(p) => p,
-                None => TcpNetworkParameters::default().to_worker_sdk()
-            },
+            raknet: raknet_params,
+            tcp: tcp_params,
             connection_timeout_millis: self.connection_timeout_millis,
             default_command_timeout_millis: self.default_command_timeout_millis,
         }
