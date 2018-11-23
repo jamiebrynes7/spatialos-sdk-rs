@@ -1,8 +1,10 @@
 use spatialos_sdk_sys::worker::*;
 use std::ffi::{CStr, CString};
 use std::ptr;
+
 use worker::commands::*;
 use worker::component::ComponentUpdate;
+use worker::locator::*;
 use worker::metrics::Metrics;
 use worker::op::{DisconnectOp, OpList, WorkerOp};
 use worker::parameters::{CommandParameters, ConnectionParameters};
@@ -120,6 +122,45 @@ impl WorkerConnection {
         };
         assert!(!future_ptr.is_null());
         WorkerConnectionFuture::new(future_ptr)
+    }
+
+    pub fn connect_locator_async(
+        locator: &Locator,
+        deployment_name: &str,
+        params: &ConnectionParameters,
+        callback: &mut QueueStatusCallback,
+    ) -> WorkerConnectionFuture {
+        let deployment_name_cstr = CString::new(deployment_name).unwrap();
+        let connection_params = params.to_worker_sdk();
+        extern "C" fn queue_status_callback_handler(
+            user_data: *mut ::std::os::raw::c_void,
+            queue_status: *const Worker_QueueStatus,
+        ) -> u8 {
+            unsafe {
+                let callback: QueueStatusCallback = *(user_data as *mut QueueStatusCallback);
+                if (*queue_status).error.is_null() {
+                    return callback(Ok((*queue_status).position_in_queue)) as u8;
+                }
+                let str = CStr::from_ptr((*queue_status).error);
+                callback(Err(str.to_string_lossy().to_string())) as u8
+            }
+        }
+        let worker_callback =
+            ((callback as *mut QueueStatusCallback) as *mut ::std::os::raw::c_void);
+        unsafe {
+            let ptr = Worker_Locator_ConnectAsync(
+                locator.locator,
+                deployment_name_cstr.as_ptr(),
+                &connection_params.native_struct,
+                worker_callback,
+                Some(queue_status_callback_handler),
+            );
+
+            WorkerConnectionFuture {
+                future_ptr: ptr,
+                was_consumed: false,
+            }
+        }
     }
 
     pub fn get_disconnect_reason(&self, op_list: &OpList) -> Option<String> {
