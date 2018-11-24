@@ -2,8 +2,8 @@ use std::path::Path;
 
 use std::ffi::CStr;
 use std::ffi::CString;
-use worker::core::entity_snapshot::EntitySnapshot;
-use worker::core::parameters::SnapshotParameters;
+use worker::entity_snapshot::EntitySnapshot;
+use worker::parameters::SnapshotParameters;
 use worker::internal::bindings::*;
 
 pub struct SnapshotOutputStream {

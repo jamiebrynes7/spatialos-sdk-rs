@@ -3,11 +3,11 @@
 use std::collections::HashMap;
 use std::slice;
 
-use worker::core::commands::*;
-use worker::core::component::*;
-use worker::core::entity_snapshot::EntitySnapshot;
-use worker::core::metrics::Metrics;
-use worker::core::{Authority, EntityId, LogLevel, RequestId};
+use worker::commands::*;
+use worker::component::*;
+use worker::entity_snapshot::EntitySnapshot;
+use worker::metrics::Metrics;
+use worker::{Authority, EntityId, LogLevel, RequestId};
 
 use worker::internal::bindings::*;
 use worker::internal::utils::*;

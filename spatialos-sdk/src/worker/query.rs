@@ -1,7 +1,7 @@
 use std::mem::forget;
 use std::ptr;
 
-use worker::core::EntityId;
+use worker::EntityId;
 
 use worker::internal::bindings::*;
 
@@ -243,8 +243,8 @@ impl QueryConstraint {
 #[cfg(test)]
 mod test {
     use std::slice::from_raw_parts;
-    use worker::core::query::*;
-    use worker::core::EntityId;
+    use worker::query::*;
+    use worker::EntityId;
     use worker::internal::bindings::*;
 
     fn is_worker_query_valid(query: &EntityQuery) {

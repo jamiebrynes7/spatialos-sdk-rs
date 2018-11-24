@@ -1,5 +1,5 @@
-use worker::core::query::EntityQuery;
-use worker::core::EntityId;
+use worker::query::EntityQuery;
+use worker::EntityId;
 
 use worker::internal::bindings::{
     Schema_CommandRequest, Schema_CommandResponse, Worker_CommandRequest, Worker_CommandResponse,

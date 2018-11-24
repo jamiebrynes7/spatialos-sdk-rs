@@ -1,7 +1,7 @@
 use std::ffi::CString;
 use std::ptr;
 
-use worker::core::vtable;
+use worker::vtable;
 use worker::internal::bindings::*;
 use worker::internal::utils::WrappedNativeStructWithString;
 
