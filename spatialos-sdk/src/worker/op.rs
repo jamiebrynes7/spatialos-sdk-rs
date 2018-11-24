@@ -9,7 +9,7 @@ use worker::entity_snapshot::EntitySnapshot;
 use worker::metrics::Metrics;
 use worker::{Authority, EntityId, LogLevel, RequestId};
 
-use worker::internal::bindings::*;
+use spatialos_sdk_sys::worker::*;
 use worker::internal::utils::*;
 use worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 

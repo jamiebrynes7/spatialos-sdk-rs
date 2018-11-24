@@ -4,7 +4,7 @@ use std::ffi::CStr;
 use std::ffi::CString;
 use worker::entity_snapshot::EntitySnapshot;
 use worker::parameters::SnapshotParameters;
-use worker::internal::bindings::*;
+use spatialos_sdk_sys::worker::*;
 
 pub struct SnapshotOutputStream {
     internal_ptr: *mut Worker_SnapshotOutputStream,

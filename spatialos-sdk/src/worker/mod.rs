@@ -12,7 +12,7 @@ pub mod snapshot;
 pub mod vtable;
 
 use std::marker::PhantomData;
-use worker::internal::bindings::Worker_InterestOverride;
+use spatialos_sdk_sys::worker::Worker_InterestOverride;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct EntityId {

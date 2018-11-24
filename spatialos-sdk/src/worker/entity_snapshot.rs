@@ -1,4 +1,4 @@
-use worker::internal::bindings::Worker_Entity;
+use spatialos_sdk_sys::worker::Worker_Entity;
 
 // TODO: Finish
 pub struct EntitySnapshot {}

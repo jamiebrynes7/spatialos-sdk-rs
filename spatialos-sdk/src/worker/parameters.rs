@@ -2,7 +2,7 @@ use std::ffi::CString;
 use std::ptr;
 
 use worker::vtable;
-use worker::internal::bindings::*;
+use spatialos_sdk_sys::worker::*;
 use worker::internal::utils::WrappedNativeStructWithString;
 
 pub struct ConnectionParameters {

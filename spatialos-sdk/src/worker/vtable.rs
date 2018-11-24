@@ -1,5 +1,5 @@
 use std::ptr;
-use worker::internal::bindings::*;
+use spatialos_sdk_sys::worker::*;
 
 pub const PASSTHROUGH_VTABLE: Worker_ComponentVtable = Worker_ComponentVtable {
     component_id: 0,

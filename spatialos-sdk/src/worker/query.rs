@@ -3,7 +3,7 @@ use std::ptr;
 
 use worker::EntityId;
 
-use worker::internal::bindings::*;
+use spatialos_sdk_sys::worker::*;
 
 pub enum ResultType {
     Count,
@@ -245,7 +245,7 @@ mod test {
     use std::slice::from_raw_parts;
     use worker::query::*;
     use worker::EntityId;
-    use worker::internal::bindings::*;
+    use spatialos_sdk_sys::worker::*;
 
     fn is_worker_query_valid(query: &EntityQuery) {
         let worker_query = query.to_worker_sdk();

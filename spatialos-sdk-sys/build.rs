@@ -2,7 +2,7 @@
 extern crate lazy_static;
 
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 #[cfg(windows)]
 lazy_static! {
@@ -33,11 +33,11 @@ lazy_static! {
 }
 
 #[cfg(target_os = "linux")]
-static PACKAGE_DIR: &str = "dependencies/linux/lib";
+static PACKAGE_DIR: &str = "../dependencies/linux/lib";
 #[cfg(target_os = "macos")]
-static PACKAGE_DIR: &str = "dependencies/macos/lib";
+static PACKAGE_DIR: &str = "../dependencies/macos/lib";
 #[cfg(target_os = "windows")]
-static PACKAGE_DIR: &str = "dependencies/win/lib";
+static PACKAGE_DIR: &str = "../dependencies/win/lib";
 
 fn main() {
     let cargo_dir = env::var("CARGO_MANIFEST_DIR").unwrap();

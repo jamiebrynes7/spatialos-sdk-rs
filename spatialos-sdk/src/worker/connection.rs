@@ -6,7 +6,7 @@ use worker::metrics::Metrics;
 use worker::op::{DisconnectOp, OpList, WorkerOp};
 use worker::parameters::{CommandParameters, ConnectionParameters};
 use worker::{EntityId, InterestOverride, LogLevel, RequestId};
-use worker::internal::bindings::*;
+use spatialos_sdk_sys::worker::*;
 
 /// Connection trait to allow for mocking the connection.
 pub trait Connection {
