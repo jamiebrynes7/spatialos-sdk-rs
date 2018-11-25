@@ -1,0 +1,9 @@
+[package]
+name = "spatialos-sdk-code-generator"
+version = "0.1.0"
+authors = ["David Avedissian <git@dga.me.uk>"]
+
+[dependencies]
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
