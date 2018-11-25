@@ -12,7 +12,7 @@ impl Locator {
     pub fn new(hostname: &str, params: &LocatorParameters) -> Self {
         unsafe {
             let hostname = CString::new(hostname).unwrap();
-            let worker_params = params.to_worker_sdk();
+            let (worker_params, underlying_data) = params.to_worker_sdk();
             let ptr = Worker_Locator_Create(hostname.as_ptr(), &worker_params);
             assert!(!ptr.is_null());
             Locator { locator: ptr }
@@ -47,18 +47,19 @@ pub struct LocatorParameters {
 }
 
 impl LocatorParameters {
-    fn to_worker_sdk(&self) -> Worker_LocatorParameters {
+    fn to_worker_sdk(&self) -> (Worker_LocatorParameters, Vec<CString>) {
         let project_name_cstr = CString::new(self.project_name.as_str()).unwrap();
-        let (credentials_type, login_token_credentials, steam_credentials, underlying_data) =
+        let (credentials_type, login_token_credentials, steam_credentials, mut underlying_data) =
             self.credentials.to_worker_sdk();
-        Worker_LocatorParameters {
-            project_name: project_name_cstr.as_ptr(),
+        underlying_data.push(project_name_cstr);
+        (Worker_LocatorParameters {
+            project_name: underlying_data[underlying_data.len() - 1].as_ptr(),
             credentials_type,
             login_token: login_token_credentials,
             steam: steam_credentials,
             logging: self.logging.to_worker_sdk(),
             enable_logging: self.enable_logging as u8,
-        }
+        }, underlying_data)
     }
 }
 
@@ -180,6 +181,8 @@ impl DeploymentListFuture {
                     .iter()
                     .map(|deployment| Deployment::from_worker_sdk(deployment))
                     .collect::<Vec<Deployment>>();
+
+            *data = Ok(deployments);
         }
     }
 }
@@ -199,9 +202,12 @@ pub(crate) extern "C" fn queue_status_callback_handler(
     queue_status: *const Worker_QueueStatus
 ) -> u8 {
     unsafe {
+        let status = *queue_status;
         let callback = *(user_data as *mut QueueStatusCallback);
-        if (*queue_status).error.is_null() {
-            return callback(Ok((*queue_status).position_in_queue)) as u8;
+        if status.error.is_null() {
+            let thing = Ok(status.position_in_queue);
+            println!("About to crash!");
+            return callback(thing) as u8;
         }
         let str = CStr::from_ptr((*queue_status).error);
         callback(Err(str.to_string_lossy().to_string())) as u8

@@ -142,7 +142,6 @@ impl WorkerConnection {
                 worker_callback,
                 Some(queue_status_callback_handler),
             );
-
             WorkerConnectionFuture {
                 future_ptr: ptr,
                 was_consumed: false,
@@ -423,7 +422,7 @@ impl WorkerConnectionFuture {
         if self.was_consumed {
             return Err("WorkerConnectionFuture has already been consumed.".to_owned());
         }
-
+        
         assert!(!self.future_ptr.is_null());
         let connection_ptr = unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ptr::null()) };
         assert!(!connection_ptr.is_null());
