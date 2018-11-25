@@ -4,6 +4,7 @@ use std::ptr;
 use spatialos_sdk_sys::worker::*;
 use worker::internal::utils::WrappedNativeStructWithString;
 use worker::component::ComponentDatabase;
+use worker::vtable;
 
 pub struct ConnectionParameters {
     pub worker_type: String,

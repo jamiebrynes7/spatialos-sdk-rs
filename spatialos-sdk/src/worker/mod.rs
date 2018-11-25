@@ -14,7 +14,6 @@ pub mod vtable;
 // Re-export symbols.
 pub use self::component::*;
 
-use std::marker::PhantomData;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::marker::PhantomData;
 
