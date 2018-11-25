@@ -9,7 +9,7 @@ This is still heavily WIP and should be treated as such. Progress can be seen in
 ## Setup 
 
 1. Clone this repository.
-2. Run `cargo run --bin download_sdk -- -d /dependencies -s 13.3.1` to download the C API dependencies.
+2. Run `cargo run --bin download_sdk -- -d dependencies -s 13.3.1` to download the C API dependencies.
 3. Run `cargo build` 
 
 If these steps complete successfully, the `spatialos-sdk` crate has been built and linked successfully and can be used in user code.

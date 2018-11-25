@@ -44,7 +44,7 @@ echo "Unpacking SpatialOS dependencies"
 curl -c ./tmp/cookie -s -L "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
 curl -Lb ./tmp/cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./tmp/cookie`&id=${FILE_ID}" -o "./tmp/dependencies.tar"
 
-DEPENDENCIES_TARGET_DIR="spatialos-sdk/dependencies"
+DEPENDENCIES_TARGET_DIR="dependencies"
 rm -rf "${DEPENDENCIES_TARGET_DIR}"
 mkdir -p "${DEPENDENCIES_TARGET_DIR}"
 
