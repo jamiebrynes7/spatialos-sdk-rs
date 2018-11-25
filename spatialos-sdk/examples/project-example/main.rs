@@ -1,15 +1,15 @@
 extern crate spatialos_sdk;
 extern crate uuid;
 
-use spatialos_sdk::worker::core::commands::{
+use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
-use spatialos_sdk::worker::core::connection::{Connection, WorkerConnection};
-use spatialos_sdk::worker::core::parameters;
-use spatialos_sdk::worker::core::query::{EntityQuery, QueryConstraint, ResultType};
-use spatialos_sdk::worker::core::{EntityId, InterestOverride, LogLevel};
+use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
+use spatialos_sdk::worker::parameters;
+use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
+use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 
-use spatialos_sdk::worker::core::metrics::*;
+use spatialos_sdk::worker::metrics::*;
 use uuid::Uuid;
 
 static HOST: &str = "127.0.0.1";

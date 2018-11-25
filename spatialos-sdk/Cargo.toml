@@ -2,12 +2,9 @@
 name = "spatialos-sdk"
 version = "0.0.0"
 authors = ["Jamie Brynes <jamiebrynes7@gmail.com>"]
-build = "build.rs"
 
 [dependencies]
-
-[build-dependencies]
-lazy_static = "1.1.0"
+spatialos-sdk-sys = { path = "../spatialos-sdk-sys"} 
 
 [dev-dependencies]
 uuid = { version = "0.7", features = ["v4"] }

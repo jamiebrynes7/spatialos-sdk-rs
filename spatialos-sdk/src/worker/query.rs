@@ -1,9 +1,9 @@
 use std::mem::forget;
 use std::ptr;
 
-use worker::core::EntityId;
+use worker::EntityId;
 
-use worker::internal::bindings::*;
+use spatialos_sdk_sys::worker::*;
 
 pub enum ResultType {
     Count,
@@ -242,10 +242,10 @@ impl QueryConstraint {
 
 #[cfg(test)]
 mod test {
+    use spatialos_sdk_sys::worker::*;
     use std::slice::from_raw_parts;
-    use worker::core::query::*;
-    use worker::core::EntityId;
-    use worker::internal::bindings::*;
+    use worker::query::*;
+    use worker::EntityId;
 
     fn is_worker_query_valid(query: &EntityQuery) {
         let worker_query = query.to_worker_sdk();

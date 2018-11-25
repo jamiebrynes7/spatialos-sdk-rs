@@ -2,5 +2,6 @@
 
 members = [
     "spatialos-sdk",
+    "spatialos-sdk-sys",
     "spatialos-sdk-tools"
 ]

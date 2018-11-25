@@ -9,7 +9,7 @@ This is still heavily WIP and should be treated as such. Progress can be seen in
 ## Setup 
 
 1. Clone this repository.
-2. Run `cargo run --bin download_sdk -- -d ./spatialos-sdk/dependencies -s 13.3.1` to download the C API dependencies.
+2. Run `cargo run --bin download_sdk -- -d dependencies -s 13.3.1` to download the C API dependencies.
 3. Run `cargo build` 
 
 If these steps complete successfully, the `spatialos-sdk` crate has been built and linked successfully and can be used in user code.
@@ -21,6 +21,6 @@ To run the example project, you will need to:
 1. Build a release version of the RustWorker - `cargo build --example project-example --release`.
 2. Build the schema descriptor for Spatial - `./spatialos-sdk/examples/project-example/setup.sh`
 3. In two terminals:
-   - Navigate to the `spatial-os` directory and start spatial: `cd ./spatial-sdk/examples/project-example/spatial-os/ && spatial local launch`
+   - Navigate to the `spatial-os` directory and start spatial: `cd spatialos-sdk/examples/project-example/spatialos/ && spatial local launch`
    - Run the example project worker - `cargo run --example project-example`
 

@@ -1,7 +1,7 @@
 use std::ffi::CString;
 use std::slice;
 
-use worker::internal::bindings::{
+use spatialos_sdk_sys::worker::{
     Worker_GaugeMetric, Worker_HistogramMetric, Worker_HistogramMetricBucket, Worker_Metrics,
 };
 use worker::internal::utils::cstr_to_string;

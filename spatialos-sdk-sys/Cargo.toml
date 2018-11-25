@@ -1,0 +1,11 @@
+[package]
+name = "spatialos-sdk-sys"
+version = "13.3.1"
+authors = ["David Avedissian <git@dga.me.uk>"]
+links = "worker"
+build = "build.rs"
+
+[dependencies]
+
+[build-dependencies]
+lazy_static = "1.1.0"

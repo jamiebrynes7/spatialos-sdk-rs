@@ -1,8 +1,0 @@
-{
-  "configurationVersion": "0.1",
-  "projectName": "xxx",
-  "schemaDescriptor": "./schema/bin/schema.descriptor",
-  "serverWorkers": [
-    "../worker_config.json"
-  ]
-}

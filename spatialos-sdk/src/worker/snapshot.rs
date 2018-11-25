@@ -1,10 +1,10 @@
 use std::path::Path;
 
+use spatialos_sdk_sys::worker::*;
 use std::ffi::CStr;
 use std::ffi::CString;
-use worker::core::entity_snapshot::EntitySnapshot;
-use worker::core::parameters::SnapshotParameters;
-use worker::internal::bindings::*;
+use worker::entity_snapshot::EntitySnapshot;
+use worker::parameters::SnapshotParameters;
 
 pub struct SnapshotOutputStream {
     internal_ptr: *mut Worker_SnapshotOutputStream,

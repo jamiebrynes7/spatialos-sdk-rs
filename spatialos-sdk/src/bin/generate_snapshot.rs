@@ -3,8 +3,8 @@ extern crate spatialos_sdk;
 use std::env;
 use std::path::PathBuf;
 
-use spatialos_sdk::worker::core::parameters::SnapshotParameters;
-use spatialos_sdk::worker::core::snapshot::*;
+use spatialos_sdk::worker::parameters::SnapshotParameters;
+use spatialos_sdk::worker::snapshot::*;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
