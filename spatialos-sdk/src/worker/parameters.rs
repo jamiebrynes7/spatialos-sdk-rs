@@ -1,9 +1,9 @@
 use std::ffi::CString;
 use std::ptr;
 
-use worker::vtable;
 use spatialos_sdk_sys::worker::*;
 use worker::internal::utils::WrappedNativeStructWithString;
+use worker::vtable;
 
 pub struct ConnectionParameters {
     pub worker_type: String,

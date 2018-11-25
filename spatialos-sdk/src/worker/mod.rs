@@ -11,8 +11,8 @@ pub mod query;
 pub mod snapshot;
 pub mod vtable;
 
-use std::marker::PhantomData;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
+use std::marker::PhantomData;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct EntityId {
