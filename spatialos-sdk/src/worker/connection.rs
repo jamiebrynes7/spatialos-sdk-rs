@@ -132,19 +132,6 @@ impl WorkerConnection {
     ) -> WorkerConnectionFuture {
         let deployment_name_cstr = CString::new(deployment_name).unwrap();
         let connection_params = params.to_worker_sdk();
-        extern "C" fn queue_status_callback_handler(
-            user_data: *mut ::std::os::raw::c_void,
-            queue_status: *const Worker_QueueStatus,
-        ) -> u8 {
-            unsafe {
-                let callback: QueueStatusCallback = *(user_data as *mut QueueStatusCallback);
-                if (*queue_status).error.is_null() {
-                    return callback(Ok((*queue_status).position_in_queue)) as u8;
-                }
-                let str = CStr::from_ptr((*queue_status).error);
-                callback(Err(str.to_string_lossy().to_string())) as u8
-            }
-        }
         let worker_callback =
             ((callback as *mut QueueStatusCallback) as *mut ::std::os::raw::c_void);
         unsafe {

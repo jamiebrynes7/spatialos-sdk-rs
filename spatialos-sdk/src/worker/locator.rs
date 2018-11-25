@@ -193,3 +193,17 @@ impl Drop for DeploymentListFuture {
 }
 
 pub type QueueStatusCallback = fn(Result<u32, String>) -> bool;
+
+pub(crate) extern "C" fn queue_status_callback_handler(
+    user_data: *mut ::std::os::raw::c_void,
+    queue_status: *const Worker_QueueStatus
+) -> u8 {
+    unsafe {
+        let callback = *(user_data as *mut QueueStatusCallback);
+        if (*queue_status).error.is_null() {
+            return callback(Ok((*queue_status).position_in_queue)) as u8;
+        }
+        let str = CStr::from_ptr((*queue_status).error);
+        callback(Err(str.to_string_lossy().to_string())) as u8
+    }
+}
