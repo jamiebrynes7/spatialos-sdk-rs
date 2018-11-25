@@ -22,7 +22,7 @@ impl Locator {
     pub fn get_deployment_list_async(&self) -> DeploymentListFuture {
         unsafe {
             let future_ptr = Worker_Locator_GetDeploymentListAsync(self.locator);
-            assert!(future_ptr.is_null());
+            assert!(!future_ptr.is_null());
             DeploymentListFuture {
                 future: future_ptr,
                 was_consumed: false,
