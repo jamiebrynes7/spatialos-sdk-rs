@@ -8,3 +8,4 @@ spatialos-sdk-sys = { path = "../spatialos-sdk-sys"}
 
 [dev-dependencies]
 uuid = { version = "0.7", features = ["v4"] }
+clap = "2.32.0"
