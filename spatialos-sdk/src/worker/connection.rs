@@ -128,7 +128,7 @@ impl WorkerConnection {
         locator: &Locator,
         deployment_name: &str,
         params: &ConnectionParameters,
-        callback: &mut QueueStatusCallback,
+        mut callback: QueueStatusCallback,
     ) -> WorkerConnectionFuture {
         let deployment_name_cstr = CString::new(deployment_name).unwrap();
         let connection_params = params.to_worker_sdk();
