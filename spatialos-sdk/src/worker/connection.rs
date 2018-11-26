@@ -133,7 +133,7 @@ impl WorkerConnection {
         let deployment_name_cstr = CString::new(deployment_name).unwrap();
         let connection_params = params.to_worker_sdk();
         let worker_callback =
-            ((callback as *mut QueueStatusCallback) as *mut ::std::os::raw::c_void);
+            ((&mut callback as *mut QueueStatusCallback) as *mut ::std::os::raw::c_void);
         unsafe {
             let ptr = Worker_Locator_ConnectAsync(
                 locator.locator,

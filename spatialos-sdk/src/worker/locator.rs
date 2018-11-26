@@ -205,11 +205,9 @@ pub(crate) extern "C" fn queue_status_callback_handler(
         let status = *queue_status;
         let callback = *(user_data as *mut QueueStatusCallback);
         if status.error.is_null() {
-            let thing = Ok(status.position_in_queue);
-            println!("About to crash!");
-            return callback(thing) as u8;
+            return callback(Ok(status.position_in_queue)) as u8;
         }
-        let str = CStr::from_ptr((*queue_status).error);
+        let str = CStr::from_ptr(status.error);
         callback(Err(str.to_string_lossy().to_string())) as u8
     }
 }
