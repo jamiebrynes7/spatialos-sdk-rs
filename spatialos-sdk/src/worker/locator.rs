@@ -1,7 +1,8 @@
+use spatialos_sdk_sys::worker::*;
+
 use std::ffi::{CStr, CString};
 
-use worker::core::parameters::ProtocolLoggingParameters;
-use worker::internal::bindings::*;
+use worker::parameters::ProtocolLoggingParameters;
 use worker::internal::utils::cstr_to_string;
 
 pub struct Locator {
