@@ -42,7 +42,7 @@ static PACKAGE_DIR: &str = "win/lib";
 fn main() {
     let lib_dir = match env::var("SPATIAL_LIB_DIR") {
         Ok(s) => s,
-        Err(_) => panic!("SPATIAL_LIB_DIR environment variable not set.")
+        Err(_) => panic!("SPATIAL_LIB_DIR environment variable not set."),
     };
 
     let package_dir = Path::new(&lib_dir).join(PACKAGE_DIR);
