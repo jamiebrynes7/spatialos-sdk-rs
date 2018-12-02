@@ -17,4 +17,4 @@ install:
 - "./ci/install.sh"
 script:
 - "./ci/lint.sh"
-- "./ci/build.sh"
+- "./ci/build-test.sh"
