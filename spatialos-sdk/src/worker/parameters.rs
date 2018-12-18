@@ -18,15 +18,15 @@ pub struct ConnectionParameters {
 }
 
 impl ConnectionParameters {
-    pub fn new(worker_type: &str) -> Self {
+    pub fn new<T: Into<String>>(worker_type: T) -> Self {
         let mut params = ConnectionParameters::default();
-        params.worker_type = worker_type.to_owned();
+        params.worker_type = worker_type.into();
         params
     }
 
-    pub fn with_protocol_logging(mut self, log_prefix: &str) -> Self {
+    pub fn with_protocol_logging<T: Into<String>>(mut self, log_prefix: T) -> Self {
         self.enable_protocol_logging_at_startup = true;
-        self.protocol_logging.log_prefix = log_prefix.to_owned();
+        self.protocol_logging.log_prefix = log_prefix.into();
         self
     }
 

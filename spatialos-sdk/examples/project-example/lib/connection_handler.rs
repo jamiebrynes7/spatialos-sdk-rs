@@ -2,11 +2,11 @@ extern crate uuid;
 use self::uuid::Uuid;
 
 use spatialos_sdk::worker::connection::WorkerConnection;
-use spatialos_sdk::worker::locator::Locator;
 use spatialos_sdk::worker::connection::WorkerConnectionFuture;
+use spatialos_sdk::worker::locator::Locator;
 
-use lib::argument_parsing::WorkerConfiguration;
 use lib::argument_parsing::ConnectionType;
+use lib::argument_parsing::WorkerConfiguration;
 
 static LOCATOR_HOSTNAME: &str = "locator.improbable.io";
 
@@ -17,19 +17,27 @@ pub fn get_connection(configuration: WorkerConfiguration) -> Result<WorkerConnec
     let worker_id = get_worker_id();
 
     let mut future = match configuration.connection_type {
-        ConnectionType::Receptionist(host, port) => {
-            WorkerConnection::connect_receptionist_async(&worker_id, &host, port, &configuration.connection_params)
-        }
+        ConnectionType::Receptionist(host, port) => WorkerConnection::connect_receptionist_async(
+            &worker_id,
+            &host,
+            port,
+            &configuration.connection_params,
+        ),
         ConnectionType::Locator(params) => {
             let locator = Locator::new(LOCATOR_HOSTNAME, &params);
             let deployment = get_deployment(&locator);
-            WorkerConnection::connect_locator_async(&locator, &deployment, &configuration.connection_params, queue_status_callback)
+            WorkerConnection::connect_locator_async(
+                &locator,
+                &deployment,
+                &configuration.connection_params,
+                queue_status_callback,
+            )
         }
     };
 
     match configuration.connect_with_poll {
         true => get_connection_poll(&mut future),
-        false => future.get()
+        false => future.get(),
     }
 }
 
@@ -54,14 +62,12 @@ fn get_deployment(locator: &Locator) -> String {
             }
 
             deployments[0].deployment_name.clone()
-        },
-        Err(e) => panic!("{}", e)
+        }
+        Err(e) => panic!("{}", e),
     }
 }
 
-fn get_connection_poll(
-    future: &mut WorkerConnectionFuture
-) -> Result<WorkerConnection, String> {
+fn get_connection_poll(future: &mut WorkerConnectionFuture) -> Result<WorkerConnection, String> {
     let mut res: Option<WorkerConnection> = None;
     let mut err: Option<String> = None;
     for _ in 0..POLL_NUM_ATTEMPTS {

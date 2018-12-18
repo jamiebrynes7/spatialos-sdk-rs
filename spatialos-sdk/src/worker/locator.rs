@@ -2,15 +2,15 @@ use spatialos_sdk_sys::worker::*;
 
 use std::ffi::{CStr, CString};
 
-use worker::parameters::ProtocolLoggingParameters;
 use worker::internal::utils::cstr_to_string;
+use worker::parameters::ProtocolLoggingParameters;
 
 pub struct Locator {
     pub(crate) locator: *mut Worker_Locator,
 }
 
 impl Locator {
-    pub fn new(hostname: &str, params: &LocatorParameters) -> Self {
+    pub fn new<T: Into<Vec<u8>>>(hostname: T, params: &LocatorParameters) -> Self {
         unsafe {
             let hostname = CString::new(hostname).unwrap();
             let (worker_params, underlying_data) = params.to_worker_sdk();
@@ -53,14 +53,36 @@ impl LocatorParameters {
         let (credentials_type, login_token_credentials, steam_credentials, mut underlying_data) =
             self.credentials.to_worker_sdk();
         underlying_data.push(project_name_cstr);
-        (Worker_LocatorParameters {
-            project_name: underlying_data[underlying_data.len() - 1].as_ptr(),
-            credentials_type,
-            login_token: login_token_credentials,
-            steam: steam_credentials,
-            logging: self.logging.to_worker_sdk(),
-            enable_logging: self.enable_logging as u8,
-        }, underlying_data)
+        (
+            Worker_LocatorParameters {
+                project_name: underlying_data[underlying_data.len() - 1].as_ptr(),
+                credentials_type,
+                login_token: login_token_credentials,
+                steam: steam_credentials,
+                logging: self.logging.to_worker_sdk(),
+                enable_logging: self.enable_logging as u8,
+            },
+            underlying_data,
+        )
+    }
+
+    pub fn new<T: Into<String>>(project_name: T, credentials: LocatorCredentials) -> Self {
+        LocatorParameters {
+            project_name: project_name.into(),
+            credentials,
+            logging: ProtocolLoggingParameters::default(),
+            enable_logging: false,
+        }
+    }
+
+    pub fn with_logging(mut self) -> Self {
+        self.enable_logging = true;
+        self
+    }
+
+    pub fn with_logging_parameters(mut self, params: ProtocolLoggingParameters) -> Self {
+        self.logging = params;
+        self.with_logging()
     }
 }
 
@@ -200,7 +222,7 @@ pub type QueueStatusCallback = fn(Result<u32, String>) -> bool;
 
 pub(crate) extern "C" fn queue_status_callback_handler(
     user_data: *mut ::std::os::raw::c_void,
-    queue_status: *const Worker_QueueStatus
+    queue_status: *const Worker_QueueStatus,
 ) -> u8 {
     unsafe {
         let status = *queue_status;

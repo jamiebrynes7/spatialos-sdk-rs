@@ -1,16 +1,15 @@
 extern crate spatialos_sdk;
 
-
 mod lib;
-use lib::{get_worker_configuration, get_connection};
+use lib::{get_connection, get_worker_configuration};
 
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
 use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
+use spatialos_sdk::worker::metrics::*;
 use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
-use spatialos_sdk::worker::metrics::*;
 
 fn main() {
     println!("Entered program");
@@ -18,7 +17,7 @@ fn main() {
     let config = get_worker_configuration();
     let worker_connection = match get_connection(config) {
         Ok(c) => c,
-        Err(e) => panic!("{}", e)
+        Err(e) => panic!("{}", e),
     };
 
     println!("Connected as: {}", worker_connection.get_worker_id());
@@ -63,8 +62,6 @@ fn print_worker_attributes(connection: &WorkerConnection) {
         println!("{}", attr)
     }
 }
-
-
 
 fn check_for_flag(connection: &WorkerConnection, flag_name: &str) {
     let flag = connection.get_worker_flag(flag_name);
