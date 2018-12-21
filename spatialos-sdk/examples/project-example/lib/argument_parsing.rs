@@ -40,7 +40,7 @@ pub fn get_worker_configuration() -> WorkerConfiguration {
         .short("w")
         .value_name("WORKER_TYPE")
         .required(true)
-        .help("The worker type to use when connecting. Either: RustClient or RustServer.");
+        .help("The worker type to use when connecting. Either: RustClient or RustWorker.");
 
     let matches = App::new("SpatialOS Rust SDK Example Worker")
         .author("Jamie Brynes <jamiebrynes7@gmail.com>")
