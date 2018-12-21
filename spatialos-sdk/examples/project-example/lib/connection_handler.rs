@@ -14,7 +14,7 @@ static POLL_NUM_ATTEMPTS: u32 = 5;
 static POLL_TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 3000;
 
 pub fn get_connection(configuration: WorkerConfiguration) -> Result<WorkerConnection, String> {
-    let worker_id = get_worker_id();
+    let worker_id = get_worker_id(&configuration);
 
     let mut future = match configuration.connection_type {
         ConnectionType::Receptionist(host, port) => WorkerConnection::connect_receptionist_async(
@@ -41,11 +41,13 @@ pub fn get_connection(configuration: WorkerConfiguration) -> Result<WorkerConnec
     }
 }
 
-fn get_worker_id() -> String {
+fn get_worker_id(config: &WorkerConfiguration) -> String {
     let worker_uuid = Uuid::new_v4();
-    let mut worker_id = String::from("RustWorker-");
-    worker_id.push_str(&worker_uuid.to_string());
-    worker_id
+    format!(
+        "{}-{}",
+        config.connection_params.worker_type,
+        worker_uuid.to_string()
+    )
 }
 
 fn queue_status_callback(_queue_status: Result<u32, String>) -> bool {
