@@ -82,8 +82,6 @@ pub fn get_worker_configuration() -> WorkerConfiguration {
         )
         .get_matches();
 
-    let mut params = ConnectionParameters::new("").using_tcp();
-
     if let Some(sub_matches) = matches.subcommand_matches(LOCATOR_SUBCOMMAND) {
         let locator_params = LocatorParameters::new(
             sub_matches
@@ -98,10 +96,9 @@ pub fn get_worker_configuration() -> WorkerConfiguration {
             ),
         );
 
-        let worker_type = get_worker_type(sub_matches);
-
-        params.worker_type = worker_type.to_owned();
-        params = params.using_external_ip();
+        let params = ConnectionParameters::new(get_worker_type(sub_matches))
+            .using_tcp()
+            .using_external_ip();
 
         return WorkerConfiguration {
             connection_params: params,
@@ -111,12 +108,11 @@ pub fn get_worker_configuration() -> WorkerConfiguration {
     }
 
     if let Some(sub_matches) = matches.subcommand_matches(RECEPTIONIST_SUBCOMMAND) {
-        if sub_matches.is_present(EXTERNAL_IP_ARG) {
-            params = params.using_external_ip();
-        }
+        let mut params = ConnectionParameters::new(get_worker_type(sub_matches)).using_tcp();
 
-        let worker_type = get_worker_type(sub_matches);
-        params.worker_type = worker_type.to_owned();
+        if sub_matches.is_present(EXTERNAL_IP_ARG) {
+            params.network.use_external_ip = true;
+        }
 
         return WorkerConfiguration {
             connection_params: params,
