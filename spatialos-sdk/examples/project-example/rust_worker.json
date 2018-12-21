@@ -2,7 +2,7 @@
   "workerType": "RustWorker",
   "attributeSet": {
     "attributes": [
-      "rusty"
+      "rusty-worker"
     ]
   },
   "entity_interest": {
@@ -17,7 +17,7 @@
   "launchConfiguration": {
     "cloudDeployment": {
       "linux": {
-        "localBuildDirectory": "../../target/release/examples/",
+        "localBuildDirectory": "../../../target/release/examples/",
         "command": "project-example",
         "arguments": [
           "${IMPROBABLE_RECEPTIONIST_HOST}",

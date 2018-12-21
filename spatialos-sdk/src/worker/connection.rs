@@ -1,8 +1,10 @@
 use spatialos_sdk_sys::worker::*;
 use std::ffi::{CStr, CString};
 use std::ptr;
+
 use worker::commands::*;
 use worker::component::ComponentUpdate;
+use worker::locator::*;
 use worker::metrics::Metrics;
 use worker::op::{DisconnectOp, OpList, WorkerOp};
 use worker::parameters::{CommandParameters, ConnectionParameters};
@@ -10,11 +12,11 @@ use worker::{EntityId, InterestOverride, LogLevel, RequestId};
 
 /// Connection trait to allow for mocking the connection.
 pub trait Connection {
-    fn send_log_message(
+    fn send_log_message<T: Into<Vec<u8>>, U: Into<Vec<u8>>>(
         &mut self,
         level: LogLevel,
-        logger_name: &str,
-        message: &str,
+        logger_name: T,
+        message: U,
         entity_id: Option<EntityId>,
     );
     fn send_metrics(&mut self, metrics: &Metrics);
@@ -77,7 +79,7 @@ pub trait Connection {
     fn is_connected(&self) -> bool;
     fn get_worker_id(&self) -> &str;
     fn get_worker_attributes(&self) -> Vec<String>;
-    fn get_worker_flag(&self, name: &str) -> Option<String>;
+    fn get_worker_flag<T: Into<Vec<u8>>>(&self, name: T) -> Option<String>;
 
     fn get_op_list(&mut self, timeout_millis: u32) -> OpList;
 }
@@ -122,6 +124,34 @@ impl WorkerConnection {
         WorkerConnectionFuture::new(future_ptr)
     }
 
+    pub fn connect_locator_async(
+        locator: &Locator,
+        deployment_name: &str,
+        params: &ConnectionParameters,
+        mut callback: QueueStatusCallback,
+    ) -> WorkerConnectionFuture {
+        let deployment_name_cstr = CString::new(deployment_name).unwrap();
+        let connection_params = params.to_worker_sdk();
+
+        let callback = Box::new(callback);
+        let callback_ptr = Box::into_raw(callback) as *mut ::std::os::raw::c_void;
+
+        unsafe {
+            let ptr = Worker_Locator_ConnectAsync(
+                locator.locator,
+                deployment_name_cstr.as_ptr(),
+                &connection_params.native_struct,
+                callback_ptr,
+                Some(queue_status_callback_handler),
+            );
+            WorkerConnectionFuture {
+                future_ptr: ptr,
+                was_consumed: false,
+                queue_status_callback: Some(callback_ptr),
+            }
+        }
+    }
+
     pub fn get_disconnect_reason(&self, op_list: &OpList) -> Option<String> {
         op_list
             .ops
@@ -129,16 +159,17 @@ impl WorkerConnection {
             .filter_map(|op| match op {
                 WorkerOp::Disconnect(op) => Some(op.reason.clone()),
                 _ => None,
-            }).next()
+            })
+            .next()
     }
 }
 
 impl Connection for WorkerConnection {
-    fn send_log_message(
+    fn send_log_message<T: Into<Vec<u8>>, U: Into<Vec<u8>>>(
         &mut self,
         level: LogLevel,
-        logger_name: &str,
-        message: &str,
+        logger_name: T,
+        message: U,
         entity_id: Option<EntityId>,
     ) {
         assert!(!self.connection_ptr.is_null());
@@ -322,17 +353,17 @@ impl Connection for WorkerConnection {
         assert!(!self.connection_ptr.is_null());
         unsafe {
             let sdk_attr = Worker_Connection_GetWorkerAttributes(self.connection_ptr);
-            let attributes = ::std::slice::from_raw_parts(
+            ::std::slice::from_raw_parts(
                 (*sdk_attr).attributes,
                 (*sdk_attr).attribute_count as usize,
-            ).iter()
+            )
+            .iter()
             .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
-            .collect();
-            attributes
+            .collect()
         }
     }
 
-    fn get_worker_flag(&self, name: &str) -> Option<String> {
+    fn get_worker_flag<T: Into<Vec<u8>>>(&self, name: T) -> Option<String> {
         let flag_name = CString::new(name).unwrap();
 
         extern "C" fn worker_flag_handler(
@@ -344,8 +375,8 @@ impl Connection for WorkerConnection {
                     return;
                 }
                 let mut data: &mut Option<String> = &mut *(user_data as *mut Option<String>);
-                let cstr = CStr::from_ptr(value).to_string_lossy().to_string();
-                *data = Some(cstr);
+                let str = CStr::from_ptr(value).to_string_lossy().to_string();
+                *data = Some(str);
             }
         };
 
@@ -381,6 +412,7 @@ impl Drop for WorkerConnection {
 pub struct WorkerConnectionFuture {
     future_ptr: *mut Worker_ConnectionFuture,
     was_consumed: bool,
+    queue_status_callback: Option<*mut ::std::os::raw::c_void>,
 }
 
 impl WorkerConnectionFuture {
@@ -388,6 +420,7 @@ impl WorkerConnectionFuture {
         WorkerConnectionFuture {
             future_ptr: ptr,
             was_consumed: false,
+            queue_status_callback: None,
         }
     }
 
@@ -452,6 +485,16 @@ impl WorkerConnectionFuture {
 impl Drop for WorkerConnectionFuture {
     fn drop(&mut self) {
         assert!(!self.future_ptr.is_null());
-        unsafe { Worker_ConnectionFuture_Destroy(self.future_ptr) };
+        unsafe {
+            Worker_ConnectionFuture_Destroy(self.future_ptr);
+
+            match self.queue_status_callback {
+                Some(ptr) => {
+                    // Drop the callback
+                    let callback = Box::from_raw(ptr as *mut QueueStatusCallback);
+                }
+                None => {}
+            }
+        };
     }
 }

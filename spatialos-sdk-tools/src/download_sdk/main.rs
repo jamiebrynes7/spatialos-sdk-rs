@@ -23,31 +23,36 @@ fn main() {
         "c-static-x86_64-msvc_md-win32",
         &sdk_version,
         &format!("{}/win", &download_dir),
-    ).expect("Could not download package");
+    )
+    .expect("Could not download package");
     download_and_unpack(
         SpatialPackageSource::WorkerSdk,
         "c-static-x86_64-clang_libcpp-macos",
         &sdk_version,
         &format!("{}/macos", &download_dir),
-    ).expect("Could not download package");
+    )
+    .expect("Could not download package");
     download_and_unpack(
         SpatialPackageSource::WorkerSdk,
         "c-static-x86_64-gcc_libstdcpp_pic-linux",
         &sdk_version,
         &format!("{}/linux", &download_dir),
-    ).expect("Could not download package");
+    )
+    .expect("Could not download package");
     download_and_unpack(
         SpatialPackageSource::Schema,
         "standard_library",
         &sdk_version,
         &format!("{}/std-lib", &download_dir),
-    ).expect("Could not download package");
+    )
+    .expect("Could not download package");
     download_and_unpack(
         SpatialPackageSource::Tools,
         format!("schema_compiler-x86_64-{}", DEV_PLATFORM).as_ref(),
         &sdk_version,
         &format!("{}/schema-compiler", &download_dir),
-    ).expect("Could not download package");
+    )
+    .expect("Could not download package");
 }
 
 enum SpatialPackageSource {
@@ -80,7 +85,8 @@ fn get_configuration() -> (String, String) {
                 .help("Download directory location. Relative to the current working directory.")
                 .takes_value(true)
                 .required(true),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("sdk_version")
                 .short("s")
                 .long("sdk-version")
@@ -88,7 +94,8 @@ fn get_configuration() -> (String, String) {
                 .help("SDK version to download")
                 .takes_value(true)
                 .required(true),
-        ).get_matches();
+        )
+        .get_matches();
 
     let download_dir = matches.value_of("download_location").unwrap().to_string();
     let sdk_version = matches.value_of("sdk_version").unwrap().to_string();
