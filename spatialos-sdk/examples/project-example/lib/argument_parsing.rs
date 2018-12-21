@@ -3,7 +3,7 @@ extern crate clap;
 use self::clap::{App, Arg, ArgMatches, SubCommand};
 
 use spatialos_sdk::worker::locator::{LocatorCredentials, LocatorParameters};
-use spatialos_sdk::worker::parameters::{ConnectionParameters, ProtocolLoggingParameters};
+use spatialos_sdk::worker::parameters::{ConnectionParameters};
 
 static RECEPTIONIST_HOST: &str = "127.0.0.1";
 static RECEPTIONIST_PORT: u16 = 7777;
@@ -29,7 +29,7 @@ pub struct WorkerConfiguration {
 }
 
 // Gets the configuration of the worker.
-pub fn get_worker_configuration() -> WorkerConfiguration {
+pub fn get_worker_configuration() -> Result<WorkerConfiguration, String> {
     let polling_connection_arg = Arg::with_name(CONNECT_POLL_ARG)
         .long(CONNECT_POLL_ARG)
         .short("p")
@@ -96,38 +96,38 @@ pub fn get_worker_configuration() -> WorkerConfiguration {
             ),
         );
 
-        let params = ConnectionParameters::new(get_worker_type(sub_matches))
+        let params = ConnectionParameters::new(get_worker_type(sub_matches)?)
             .using_tcp()
             .using_external_ip();
 
-        return WorkerConfiguration {
+        return Ok(WorkerConfiguration {
             connection_params: params,
             connect_with_poll: sub_matches.is_present(CONNECT_POLL_ARG),
             connection_type: ConnectionType::Locator(locator_params),
-        };
+        });
     }
 
     if let Some(sub_matches) = matches.subcommand_matches(RECEPTIONIST_SUBCOMMAND) {
-        let mut params = ConnectionParameters::new(get_worker_type(sub_matches)).using_tcp();
+        let mut params = ConnectionParameters::new(get_worker_type(sub_matches)?).using_tcp();
 
         if sub_matches.is_present(EXTERNAL_IP_ARG) {
             params.network.use_external_ip = true;
         }
 
-        return WorkerConfiguration {
+        return Ok(WorkerConfiguration {
             connection_params: params,
             connect_with_poll: sub_matches.is_present(CONNECT_POLL_ARG),
             connection_type: ConnectionType::Receptionist(
                 RECEPTIONIST_HOST.to_string(),
                 RECEPTIONIST_PORT,
             ),
-        };
+        });
     }
 
-    panic!("Please select one of the subcommands.")
+    Err("Please select one of the subcommands".to_owned())
 }
 
-fn get_worker_type<'a>(matches: &'a ArgMatches) -> &'a str {
+fn get_worker_type<'a>(matches: &'a ArgMatches) -> Result<&'a str, String> {
     let worker_type = matches
         .value_of(WORKER_TYPE_ARG)
         .expect("No worker type found.");
@@ -135,8 +135,8 @@ fn get_worker_type<'a>(matches: &'a ArgMatches) -> &'a str {
     match worker_type {
         "RustClient" => {}
         "RustWorker" => {}
-        _ => panic!("Unknown worker type: {}", worker_type),
+        _ => return Err(format!("Unknown worker type: {}", worker_type)),
     };
 
-    worker_type
+    Ok(worker_type)
 }

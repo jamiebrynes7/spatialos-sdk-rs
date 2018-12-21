@@ -14,7 +14,10 @@ use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 fn main() {
     println!("Entered program");
 
-    let config = get_worker_configuration();
+    let config = match get_worker_configuration() {
+        Ok(c) => c,
+        Err(e) => panic!("{}", e),
+    };
     let worker_connection = match get_connection(config) {
         Ok(c) => c,
         Err(e) => panic!("{}", e),

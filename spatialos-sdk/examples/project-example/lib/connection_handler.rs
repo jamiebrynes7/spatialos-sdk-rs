@@ -48,7 +48,7 @@ fn get_worker_id() -> String {
     worker_id
 }
 
-fn queue_status_callback(queue_status: Result<u32, String>) -> bool {
+fn queue_status_callback(_queue_status: Result<u32, String>) -> bool {
     true
 }
 
