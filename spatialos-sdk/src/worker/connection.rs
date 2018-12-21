@@ -159,7 +159,8 @@ impl WorkerConnection {
             .filter_map(|op| match op {
                 WorkerOp::Disconnect(op) => Some(op.reason.clone()),
                 _ => None,
-            }).next()
+            })
+            .next()
     }
 }
 
@@ -355,7 +356,8 @@ impl Connection for WorkerConnection {
             ::std::slice::from_raw_parts(
                 (*sdk_attr).attributes,
                 (*sdk_attr).attribute_count as usize,
-            ).iter()
+            )
+            .iter()
             .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
             .collect()
         }

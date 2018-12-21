@@ -56,7 +56,8 @@ pub fn get_worker_configuration() -> WorkerConfiguration {
                         .short("e")
                         .help("Connect using external IP"),
                 ),
-        ).subcommand(
+        )
+        .subcommand(
             SubCommand::with_name(LOCATOR_SUBCOMMAND)
                 .about("Connect via locator.")
                 .arg(&polling_connection_arg)
@@ -68,7 +69,8 @@ pub fn get_worker_configuration() -> WorkerConfiguration {
                         .value_name("LOCATOR_TOKEN")
                         .help("Locator login token.")
                         .required(true),
-                ).arg(
+                )
+                .arg(
                     Arg::with_name(PROJECT_NAME_ARG)
                         .long(PROJECT_NAME_ARG)
                         .short("n")
@@ -77,7 +79,8 @@ pub fn get_worker_configuration() -> WorkerConfiguration {
                         .help("The SpatialOS project to use in the Locator flow.")
                         .required(true),
                 ),
-        ).get_matches();
+        )
+        .get_matches();
 
     let mut params = ConnectionParameters::new("").using_tcp();
 
@@ -95,7 +98,7 @@ pub fn get_worker_configuration() -> WorkerConfiguration {
             ),
         );
 
-        let worker_type= get_worker_type(sub_matches);
+        let worker_type = get_worker_type(sub_matches);
 
         params.worker_type = worker_type.to_owned();
         params = params.using_external_ip();
@@ -112,7 +115,7 @@ pub fn get_worker_configuration() -> WorkerConfiguration {
             params = params.using_external_ip();
         }
 
-        let worker_type= get_worker_type(sub_matches);
+        let worker_type = get_worker_type(sub_matches);
         params.worker_type = worker_type.to_owned();
 
         return WorkerConfiguration {
@@ -134,9 +137,9 @@ fn get_worker_type<'a>(matches: &'a ArgMatches) -> &'a str {
         .expect("No worker type found.");
 
     match worker_type {
-        "RustClient" => {},
-        "RustWorker" => {},
-        _ => panic!("Unknown worker type: {}", worker_type)
+        "RustClient" => {}
+        "RustWorker" => {}
+        _ => panic!("Unknown worker type: {}", worker_type),
     };
 
     worker_type
