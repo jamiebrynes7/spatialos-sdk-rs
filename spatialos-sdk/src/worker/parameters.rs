@@ -2,8 +2,8 @@ use std::ffi::CString;
 use std::ptr;
 
 use spatialos_sdk_sys::worker::*;
-use worker::internal::utils::WrappedNativeStructWithString;
-use worker::vtable;
+use crate::worker::internal::utils::WrappedNativeStructWithString;
+use crate::worker::vtable;
 
 pub struct ConnectionParameters {
     pub worker_type: String,
@@ -30,7 +30,7 @@ impl ConnectionParameters {
         self
     }
 
-    pub fn using_tcp(mut self) -> Self {
+    pub fn using_tcp(self) -> Self {
         self.using_tcp_with_params(TcpNetworkParameters::default())
     }
 
@@ -39,7 +39,7 @@ impl ConnectionParameters {
         self
     }
 
-    pub fn using_raknet(mut self) -> Self {
+    pub fn using_raknet(self) -> Self {
         self.using_raknet_with_params(RakNetNetworkParameters::default())
     }
 

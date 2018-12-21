@@ -2,8 +2,8 @@ use spatialos_sdk_sys::worker::*;
 
 use std::ffi::{CStr, CString};
 
-use worker::internal::utils::cstr_to_string;
-use worker::parameters::ProtocolLoggingParameters;
+use crate::worker::internal::utils::cstr_to_string;
+use crate::worker::parameters::ProtocolLoggingParameters;
 
 pub struct Locator {
     pub(crate) locator: *mut Worker_Locator,
@@ -13,7 +13,7 @@ impl Locator {
     pub fn new<T: Into<Vec<u8>>>(hostname: T, params: &LocatorParameters) -> Self {
         unsafe {
             let hostname = CString::new(hostname).unwrap();
-            let (worker_params, underlying_data) = params.to_worker_sdk();
+            let (worker_params, _underlying_data) = params.to_worker_sdk();
             let ptr = Worker_Locator_Create(hostname.as_ptr(), &worker_params);
             assert!(!ptr.is_null());
             Locator { locator: ptr }
@@ -190,8 +190,8 @@ impl DeploymentListFuture {
     ) {
         assert!(!deployment_list.is_null());
         unsafe {
-            let list = (*deployment_list);
-            let mut data = &mut *(user_data as *mut Result<Vec<Deployment>, String>);
+            let list = *deployment_list;
+            let data = &mut *(user_data as *mut Result<Vec<Deployment>, String>);
             let err_ptr = list.error;
             if !err_ptr.is_null() {
                 let err = cstr_to_string(err_ptr);

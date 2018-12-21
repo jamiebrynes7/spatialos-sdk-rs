@@ -3,8 +3,8 @@ use std::path::Path;
 use spatialos_sdk_sys::worker::*;
 use std::ffi::CStr;
 use std::ffi::CString;
-use worker::entity_snapshot::EntitySnapshot;
-use worker::parameters::SnapshotParameters;
+use crate::worker::entity_snapshot::EntitySnapshot;
+use crate::worker::parameters::SnapshotParameters;
 
 pub struct SnapshotOutputStream {
     internal_ptr: *mut Worker_SnapshotOutputStream,

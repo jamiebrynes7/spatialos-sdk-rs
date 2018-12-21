@@ -1,7 +1,7 @@
 extern crate spatialos_sdk;
 
 mod lib;
-use lib::{get_connection, get_worker_configuration};
+use crate::lib::{get_connection, get_worker_configuration};
 
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,

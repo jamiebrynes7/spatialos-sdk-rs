@@ -1,7 +1,7 @@
 use std::mem::forget;
 use std::ptr;
 
-use worker::EntityId;
+use crate::worker::EntityId;
 
 use spatialos_sdk_sys::worker::*;
 
@@ -94,7 +94,7 @@ impl QueryConstraint {
                 entity_id_constraint: Worker_EntityIdConstraint { entity_id: 0 },
             },
         };
-        let mut underlying_data = vec![dummy_constraint; size as usize];
+        let underlying_data = vec![dummy_constraint; size as usize];
         let mut data = underlying_data.into_boxed_slice();
 
         // Now go down the tree again, this time creating pointers to the correct vector element.
@@ -244,8 +244,8 @@ impl QueryConstraint {
 mod test {
     use spatialos_sdk_sys::worker::*;
     use std::slice::from_raw_parts;
-    use worker::query::*;
-    use worker::EntityId;
+    use crate::worker::query::*;
+    use crate::worker::EntityId;
 
     fn is_worker_query_valid(query: &EntityQuery) {
         let worker_query = query.to_worker_sdk();

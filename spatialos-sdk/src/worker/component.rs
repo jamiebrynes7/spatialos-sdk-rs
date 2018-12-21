@@ -2,7 +2,7 @@ use spatialos_sdk_sys::worker::{
     Schema_ComponentData, Schema_ComponentUpdate, Worker_ComponentData, Worker_ComponentUpdate,
 };
 
-use worker::internal::worker_sdk_conversion::WorkerSdkConversion;
+use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 
 // TODO: Wrap Schema_ComponentData
 pub struct ComponentData {
