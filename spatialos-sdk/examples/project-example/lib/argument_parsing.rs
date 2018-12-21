@@ -3,7 +3,7 @@ extern crate clap;
 use self::clap::{App, Arg, ArgMatches, SubCommand};
 
 use spatialos_sdk::worker::locator::{LocatorCredentials, LocatorParameters};
-use spatialos_sdk::worker::parameters::{ConnectionParameters};
+use spatialos_sdk::worker::parameters::ConnectionParameters;
 
 static RECEPTIONIST_HOST: &str = "127.0.0.1";
 static RECEPTIONIST_PORT: u16 = 7777;
