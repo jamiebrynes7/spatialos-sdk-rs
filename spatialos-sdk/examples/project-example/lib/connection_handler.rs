@@ -25,7 +25,7 @@ pub fn get_connection(configuration: WorkerConfiguration) -> Result<WorkerConnec
         ),
         ConnectionType::Locator(params) => {
             let locator = Locator::new(LOCATOR_HOSTNAME, &params);
-            let deployment = get_deployment(&locator);
+            let deployment = get_deployment(&locator)?;
             WorkerConnection::connect_locator_async(
                 &locator,
                 &deployment,
@@ -52,19 +52,15 @@ fn queue_status_callback(_queue_status: Result<u32, String>) -> bool {
     true
 }
 
-fn get_deployment(locator: &Locator) -> String {
+fn get_deployment(locator: &Locator) -> Result<String, String> {
     let mut deployment_list_future = locator.get_deployment_list_async();
-    let deployment_list = deployment_list_future.get();
-    match deployment_list {
-        Ok(deployments) => {
-            if deployments.len() == 0 {
-                panic!("No deployments could be found!");
-            }
+    let deployment_list = deployment_list_future.get()?;
 
-            deployments[0].deployment_name.clone()
-        }
-        Err(e) => panic!("{}", e),
+    if deployment_list.len() == 0 {
+        return Err("No deployments could be found!".to_owned());
     }
+
+    Ok(deployment_list[0].deployment_name.clone())
 }
 
 fn get_connection_poll(future: &mut WorkerConnectionFuture) -> Result<WorkerConnection, String> {
