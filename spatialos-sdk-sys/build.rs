@@ -33,15 +33,19 @@ lazy_static! {
 }
 
 #[cfg(target_os = "linux")]
-static PACKAGE_DIR: &str = "../dependencies/linux/lib";
+static PACKAGE_DIR: &str = "linux/lib";
 #[cfg(target_os = "macos")]
-static PACKAGE_DIR: &str = "../dependencies/macos/lib";
+static PACKAGE_DIR: &str = "macos/lib";
 #[cfg(target_os = "windows")]
-static PACKAGE_DIR: &str = "../dependencies/win/lib";
+static PACKAGE_DIR: &str = "win/lib";
 
 fn main() {
-    let cargo_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let package_dir = Path::new(&cargo_dir).join(PACKAGE_DIR);
+    let lib_dir = match env::var("SPATIAL_LIB_DIR") {
+        Ok(s) => s,
+        Err(_) => panic!("SPATIAL_LIB_DIR environment variable not set."),
+    };
+
+    let package_dir = Path::new(&lib_dir).join(PACKAGE_DIR);
 
     println!("cargo:rustc-link-search={}", package_dir.to_str().unwrap());
 
