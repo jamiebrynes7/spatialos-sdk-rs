@@ -2,7 +2,7 @@
   "workerType": "RustWorker",
   "attributeSet": {
     "attributes": [
-      "rusty"
+      "rusty-worker"
     ]
   },
   "entity_interest": {
