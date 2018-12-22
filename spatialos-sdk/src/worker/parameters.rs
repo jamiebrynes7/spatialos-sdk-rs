@@ -2,9 +2,9 @@ use std::ffi::CString;
 use std::ptr;
 
 use spatialos_sdk_sys::worker::*;
-use worker::internal::utils::WrappedNativeStructWithString;
-use worker::component::ComponentDatabase;
-use worker::vtable;
+use crate::worker::internal::utils::WrappedNativeStructWithString;
+use crate::worker::vtable;
+use crate::worker::component::ComponentDatabase;
 
 pub struct ConnectionParameters {
     pub worker_type: String,
@@ -20,19 +20,19 @@ pub struct ConnectionParameters {
 }
 
 impl ConnectionParameters {
-    pub fn new(worker_type: &str, components: ComponentDatabase) -> Self {
+    pub fn new<T: Into<String>>(worker_type: T, components: ComponentDatabase) -> Self {
         let mut params = ConnectionParameters::default(components);
-        params.worker_type = worker_type.to_owned();
+        params.worker_type = worker_type.into();
         params
     }
 
-    pub fn with_protocol_logging(mut self, log_prefix: &str) -> Self {
+    pub fn with_protocol_logging<T: Into<String>>(mut self, log_prefix: T) -> Self {
         self.enable_protocol_logging_at_startup = true;
-        self.protocol_logging.log_prefix = log_prefix.to_owned();
+        self.protocol_logging.log_prefix = log_prefix.into();
         self
     }
 
-    pub fn using_tcp(mut self) -> Self {
+    pub fn using_tcp(self) -> Self {
         self.using_tcp_with_params(TcpNetworkParameters::default())
     }
 
@@ -41,7 +41,7 @@ impl ConnectionParameters {
         self
     }
 
-    pub fn using_raknet(mut self) -> Self {
+    pub fn using_raknet(self) -> Self {
         self.using_raknet_with_params(RakNetNetworkParameters::default())
     }
 
@@ -277,6 +277,12 @@ impl CommandParameters {
     const DEFAULT: CommandParameters = CommandParameters {
         allow_short_circuit: false,
     };
+
+    pub fn new(should_short_circuit: bool) -> CommandParameters {
+        CommandParameters {
+            allow_short_circuit: should_short_circuit,
+        }
+    }
 
     pub(crate) fn to_worker_sdk(&self) -> Worker_CommandParameters {
         Worker_CommandParameters {

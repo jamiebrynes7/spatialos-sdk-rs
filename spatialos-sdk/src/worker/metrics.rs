@@ -1,11 +1,11 @@
 use std::ffi::CString;
 use std::slice;
 
+use crate::worker::internal::utils::cstr_to_string;
+use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 use spatialos_sdk_sys::worker::{
     Worker_GaugeMetric, Worker_HistogramMetric, Worker_HistogramMetricBucket, Worker_Metrics,
 };
-use worker::internal::utils::cstr_to_string;
-use worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 
 #[derive(Debug)]
 pub struct Metrics {
@@ -52,20 +52,20 @@ impl Metrics {
                 histogram_metric_count: histogram_metrics.len() as u32,
                 histogram_metrics: histogram_metrics.as_ptr(),
             },
-            gauge_metrics,
-            histogram_metrics,
-            histogram_metrics_buckets,
-            keys,
+            _gauge_metrics: gauge_metrics,
+            _histogram_metrics: histogram_metrics,
+            _histogram_metrics_buckets: histogram_metrics_buckets,
+            _keys: keys,
         }
     }
 }
 
 pub(crate) struct WrappedWorkerMetrics {
     pub metrics: Worker_Metrics,
-    gauge_metrics: Vec<Worker_GaugeMetric>,
-    histogram_metrics: Vec<Worker_HistogramMetric>,
-    histogram_metrics_buckets: Vec<Worker_HistogramMetricBucket>,
-    keys: Vec<CString>,
+    _gauge_metrics: Vec<Worker_GaugeMetric>,
+    _histogram_metrics: Vec<Worker_HistogramMetric>,
+    _histogram_metrics_buckets: Vec<Worker_HistogramMetricBucket>,
+    _keys: Vec<CString>,
 }
 
 unsafe impl WorkerSdkConversion<Worker_Metrics> for Metrics {
@@ -79,7 +79,8 @@ unsafe impl WorkerSdkConversion<Worker_Metrics> for Metrics {
         let histogram_metrics = slice::from_raw_parts(
             metrics.histogram_metrics,
             metrics.histogram_metric_count as usize,
-        ).iter()
+        )
+        .iter()
         .map(|m| HistogramMetric::from_worker_sdk(m))
         .collect();
 
@@ -145,7 +146,8 @@ impl HistogramMetric {
             .map(|b| Worker_HistogramMetricBucket {
                 upper_bound: b.upper_bound,
                 samples: b.samples,
-            }).for_each(|b| buckets.push(b));
+            })
+            .for_each(|b| buckets.push(b));
 
         Worker_HistogramMetric {
             key: keys.last().unwrap().as_ptr(),
@@ -161,11 +163,13 @@ unsafe impl WorkerSdkConversion<Worker_HistogramMetric> for HistogramMetric {
         let buckets = slice::from_raw_parts(
             histogram_metric.buckets,
             histogram_metric.bucket_count as usize,
-        ).iter()
+        )
+        .iter()
         .map(|bucket| HistogramMetricBucket {
             upper_bound: bucket.upper_bound,
             samples: bucket.samples,
-        }).collect();
+        })
+        .collect();
 
         HistogramMetric {
             key: cstr_to_string(histogram_metric.key),

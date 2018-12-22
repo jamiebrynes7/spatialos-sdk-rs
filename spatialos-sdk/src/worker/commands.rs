@@ -1,5 +1,5 @@
-use worker::query::EntityQuery;
-use worker::EntityId;
+use crate::worker::query::EntityQuery;
+use crate::worker::EntityId;
 
 #[derive(Debug)]
 pub struct IncomingCommandRequest {}

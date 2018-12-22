@@ -1,4 +1,4 @@
-use worker::internal::schema;
+use crate::worker::internal::schema;
 use spatialos_sdk_sys::worker;
 use std::collections::HashMap;
 use std::os::raw;
@@ -304,7 +304,8 @@ use spatialos_sdk_sys::worker::{
     Schema_CommandRequest, Schema_CommandResponse, Worker_CommandRequest, Worker_CommandResponse,
     Worker_ComponentDataHandle, Worker_ComponentUpdateHandle, Worker_CommandRequestHandle, Worker_CommandResponseHandle
 };
-use worker::internal::worker_sdk_conversion::WorkerSdkConversion;
+
+use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 
 // TODO: Wrap Schema_ComponentData
 #[derive(Debug)]

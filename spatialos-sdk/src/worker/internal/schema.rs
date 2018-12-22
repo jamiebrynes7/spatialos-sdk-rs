@@ -1,6 +1,6 @@
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
-use worker::component::ComponentId;
+use crate::worker::component::ComponentId;
 
 pub type FieldId = u32;
 

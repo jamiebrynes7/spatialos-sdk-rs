@@ -3,6 +3,9 @@
   "projectName": "xxx",
   "schemaDescriptor": "./schema/bin/schema.descriptor",
   "serverWorkers": [
-    "../worker_config.json"
+    "../rust_worker.json"
+  ],
+  "clientWorkers": [
+    "../rust_client.json"
   ]
 }

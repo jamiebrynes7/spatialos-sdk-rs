@@ -1,21 +1,16 @@
 extern crate spatialos_sdk;
-extern crate uuid;
+
+mod lib;
+use crate::lib::{get_connection, get_worker_configuration};
 
 use spatialos_sdk::worker::commands::{ReserveEntityIdsRequest, DeleteEntityRequest, EntityQueryRequest};
 use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
-use spatialos_sdk::worker::parameters;
 use spatialos_sdk::worker::metrics::*;
 use spatialos_sdk::worker::query::*;
-use spatialos_sdk::worker::{EntityId, InterestOverride};
-use spatialos_sdk::worker::LogLevel;
+use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 use spatialos_sdk::worker::op::WorkerOp;
 use spatialos_sdk::worker::component::{self, ComponentDatabase};
 use spatialos_sdk::worker::ComponentMetaclass;
-
-use uuid::Uuid;
-
-static HOST: &str = "127.0.0.1";
-static PORT: u16 = 7777;
 
 mod generated_code;
 
@@ -23,24 +18,14 @@ fn main() {
     println!("Entered program");
 
     let components = ComponentDatabase::new().add_component::<generated_code::Example, generated_code::Example>();
-    let connection_params = parameters::ConnectionParameters::new("RustWorker", components).using_tcp();
-
-    let worker_id = get_worker_id();
-
-    let mut worker_connection = match get_connection_block(&connection_params, &worker_id) {
+    let config = match get_worker_configuration(components) {
         Ok(c) => c,
-        Err(e) => panic!("Failed to connect with block: \n{}", e),
+        Err(e) => panic!("{}", e),
     };
-
-    /*
-    let mut worker_connection = match get_connection_poll(&connection_parameters, &worker_id) {
-        Ok(c) => {
-            println!("Connected successful with poll.");
-            c
-        },
-        Err(e) => panic!("Failed to connect with poll: \n{}", e),
+    let mut worker_connection = match get_connection(config) {
+        Ok(c) => c,
+        Err(e) => panic!("{}", e),
     };
-    */
 
     println!("Connected as: {}", worker_connection.get_worker_id());
 
@@ -53,12 +38,14 @@ fn logic_loop(c: &mut WorkerConnection) {
 
     loop {
         let ops = c.get_op_list(0);
+        /*
         c.send_log_message(
             LogLevel::Info,
             "loop",
             &format!("Received {} ops", ops.ops.len()),
             None,
         );
+        */
 
         // Process ops.
         for op in &ops.ops {
@@ -129,64 +116,11 @@ fn print_worker_attributes(connection: &WorkerConnection) {
     }
 }
 
-fn get_worker_id() -> String {
-    let worker_uuid = Uuid::new_v4();
-    let mut worker_id = String::from("RustWorker-");
-    worker_id.push_str(&worker_uuid.to_string());
-
-    worker_id
-}
-
 fn check_for_flag(connection: &WorkerConnection, flag_name: &str) {
     let flag = connection.get_worker_flag(flag_name);
     match flag {
         Some(f) => println!("Found flag value: {}", f),
         None => println!("Could not find flag value"),
-    }
-}
-
-fn get_connection_block(
-    params: &parameters::ConnectionParameters,
-    worker_id: &str,
-) -> Result<WorkerConnection, String> {
-    let mut future = WorkerConnection::connect_receptionist_async(worker_id, HOST, PORT, params);
-    future.get()
-}
-
-fn get_connection_poll(
-    params: &parameters::ConnectionParameters,
-    worker_id: &str,
-) -> Result<WorkerConnection, String> {
-    const NUM_ATTEMPTS: u8 = 3;
-    const TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 1000;
-
-    let mut future = WorkerConnection::connect_receptionist_async(worker_id, HOST, PORT, params);
-
-    let mut res: Option<WorkerConnection> = None;
-    let mut err: Option<String> = None;
-    for _ in 0..NUM_ATTEMPTS {
-        println!("Attempting to poll");
-        match future.poll(100) {
-            Some(r) => {
-                match r {
-                    Ok(c) => res = Some(c),
-                    Err(e) => err = Some(e),
-                };
-                break;
-            }
-            None => {}
-        };
-        ::std::thread::sleep(::std::time::Duration::from_millis(
-            TIME_BETWEEN_ATTEMPTS_MILLIS,
-        ));
-    }
-
-    match err {
-        Some(e) => Err(e),
-        None => match res {
-            Some(c) => Ok(c),
-            None => Err("Max connection attempts failed.".to_owned()),
-        },
     }
 }
 

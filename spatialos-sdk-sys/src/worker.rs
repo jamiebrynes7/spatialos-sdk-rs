@@ -897,38 +897,6 @@ pub struct max_align_t {
     pub __bindgen_padding_0: u64,
     pub __clang_max_align_nonce2: f64,
 }
-#[test]
-fn bindgen_test_layout_max_align_t() {
-    assert_eq!(
-        ::std::mem::size_of::<max_align_t>(),
-        32usize,
-        concat!("Size of: ", stringify!(max_align_t))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<max_align_t>())).__clang_max_align_nonce1 as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(max_align_t),
-            "::",
-            stringify!(__clang_max_align_nonce1)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<max_align_t>())).__clang_max_align_nonce2 as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(max_align_t),
-            "::",
-            stringify!(__clang_max_align_nonce2)
-        )
-    );
-}
 pub type Worker_EntityId = i64;
 pub type Worker_ComponentId = u32;
 pub type Worker_RequestId = u32;
@@ -1007,59 +975,6 @@ pub struct Worker_LogMessage {
     /// The ID of the entity this message relates to, or NULL for none.
     pub entity_id: *const Worker_EntityId,
 }
-#[test]
-fn bindgen_test_layout_Worker_LogMessage() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_LogMessage>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_LogMessage))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_LogMessage>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_LogMessage))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_LogMessage>())).level as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LogMessage),
-            "::",
-            stringify!(level)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_LogMessage>())).logger_name as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LogMessage),
-            "::",
-            stringify!(logger_name)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_LogMessage>())).message as *const _ as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LogMessage),
-            "::",
-            stringify!(message)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_LogMessage>())).entity_id as *const _ as usize },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LogMessage),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-}
 /// Parameters for a gauge metric.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1067,82 +982,11 @@ pub struct Worker_GaugeMetric {
     pub key: *const ::std::os::raw::c_char,
     pub value: f64,
 }
-#[test]
-fn bindgen_test_layout_Worker_GaugeMetric() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_GaugeMetric>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_GaugeMetric))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_GaugeMetric>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_GaugeMetric))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_GaugeMetric>())).key as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_GaugeMetric),
-            "::",
-            stringify!(key)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_GaugeMetric>())).value as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_GaugeMetric),
-            "::",
-            stringify!(value)
-        )
-    );
-}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Worker_HistogramMetricBucket {
     pub upper_bound: f64,
     pub samples: u32,
-}
-#[test]
-fn bindgen_test_layout_Worker_HistogramMetricBucket() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_HistogramMetricBucket>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_HistogramMetricBucket))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_HistogramMetricBucket>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_HistogramMetricBucket))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_HistogramMetricBucket>())).upper_bound as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_HistogramMetricBucket),
-            "::",
-            stringify!(upper_bound)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_HistogramMetricBucket>())).samples as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_HistogramMetricBucket),
-            "::",
-            stringify!(samples)
-        )
-    );
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1151,61 +995,6 @@ pub struct Worker_HistogramMetric {
     pub sum: f64,
     pub bucket_count: u32,
     pub buckets: *const Worker_HistogramMetricBucket,
-}
-#[test]
-fn bindgen_test_layout_Worker_HistogramMetric() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_HistogramMetric>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_HistogramMetric))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_HistogramMetric>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_HistogramMetric))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_HistogramMetric>())).key as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_HistogramMetric),
-            "::",
-            stringify!(key)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_HistogramMetric>())).sum as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_HistogramMetric),
-            "::",
-            stringify!(sum)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_HistogramMetric>())).bucket_count as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_HistogramMetric),
-            "::",
-            stringify!(bucket_count)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_HistogramMetric>())).buckets as *const _ as usize },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_HistogramMetric),
-            "::",
-            stringify!(buckets)
-        )
-    );
 }
 /// Parameters for sending metrics to SpatialOS.
 #[repr(C)]
@@ -1221,75 +1010,6 @@ pub struct Worker_Metrics {
     pub histogram_metric_count: u32,
     /// Array of histogram metrics.
     pub histogram_metrics: *const Worker_HistogramMetric,
-}
-#[test]
-fn bindgen_test_layout_Worker_Metrics() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_Metrics>(),
-        40usize,
-        concat!("Size of: ", stringify!(Worker_Metrics))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_Metrics>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_Metrics))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_Metrics>())).load as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Metrics),
-            "::",
-            stringify!(load)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Metrics>())).gauge_metric_count as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Metrics),
-            "::",
-            stringify!(gauge_metric_count)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_Metrics>())).gauge_metrics as *const _ as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Metrics),
-            "::",
-            stringify!(gauge_metrics)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Metrics>())).histogram_metric_count as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Metrics),
-            "::",
-            stringify!(histogram_metric_count)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Metrics>())).histogram_metrics as *const _ as usize
-        },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Metrics),
-            "::",
-            stringify!(histogram_metrics)
-        )
-    );
 }
 pub type Worker_CommandRequestHandle = ::std::os::raw::c_void;
 pub type Worker_CommandResponseHandle = ::std::os::raw::c_void;
@@ -1439,251 +1159,6 @@ pub struct Worker_ComponentVtable {
     pub component_update_deserialize: Worker_ComponentUpdateDeserialize,
     pub component_update_serialize: Worker_ComponentUpdateSerialize,
 }
-#[test]
-fn bindgen_test_layout_Worker_ComponentVtable() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_ComponentVtable>(),
-        144usize,
-        concat!("Size of: ", stringify!(Worker_ComponentVtable))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_ComponentVtable>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_ComponentVtable))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).component_id as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(component_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).user_data as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(user_data)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).command_request_free as *const _
-                as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(command_request_free)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).command_request_copy as *const _
-                as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(command_request_copy)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).command_request_deserialize
-                as *const _ as usize
-        },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(command_request_deserialize)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).command_request_serialize as *const _
-                as usize
-        },
-        40usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(command_request_serialize)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).command_response_free as *const _
-                as usize
-        },
-        48usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(command_response_free)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).command_response_copy as *const _
-                as usize
-        },
-        56usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(command_response_copy)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).command_response_deserialize
-                as *const _ as usize
-        },
-        64usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(command_response_deserialize)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).command_response_serialize
-                as *const _ as usize
-        },
-        72usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(command_response_serialize)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).component_data_free as *const _
-                as usize
-        },
-        80usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(component_data_free)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).component_data_copy as *const _
-                as usize
-        },
-        88usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(component_data_copy)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).component_data_deserialize
-                as *const _ as usize
-        },
-        96usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(component_data_deserialize)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).component_data_serialize as *const _
-                as usize
-        },
-        104usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(component_data_serialize)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).component_update_free as *const _
-                as usize
-        },
-        112usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(component_update_free)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).component_update_copy as *const _
-                as usize
-        },
-        120usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(component_update_copy)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).component_update_deserialize
-                as *const _ as usize
-        },
-        128usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(component_update_deserialize)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentVtable>())).component_update_serialize
-                as *const _ as usize
-        },
-        136usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentVtable),
-            "::",
-            stringify!(component_update_serialize)
-        )
-    );
-}
 /// An object used to represent a command request by either raw schema data or some user-defined
 /// handle type.
 #[repr(C)]
@@ -1693,65 +1168,6 @@ pub struct Worker_CommandRequest {
     pub component_id: Worker_ComponentId,
     pub schema_type: *mut Schema_CommandRequest,
     pub user_handle: *mut Worker_CommandRequestHandle,
-}
-#[test]
-fn bindgen_test_layout_Worker_CommandRequest() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_CommandRequest>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_CommandRequest))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_CommandRequest>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_CommandRequest))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_CommandRequest>())).reserved as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandRequest),
-            "::",
-            stringify!(reserved)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandRequest>())).component_id as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandRequest),
-            "::",
-            stringify!(component_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandRequest>())).schema_type as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandRequest),
-            "::",
-            stringify!(schema_type)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandRequest>())).user_handle as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandRequest),
-            "::",
-            stringify!(user_handle)
-        )
-    );
 }
 /// An object used to represent a command response by either raw schema data or some user-defined
 /// handle type.
@@ -1763,65 +1179,6 @@ pub struct Worker_CommandResponse {
     pub schema_type: *mut Schema_CommandResponse,
     pub user_handle: *mut Worker_CommandResponseHandle,
 }
-#[test]
-fn bindgen_test_layout_Worker_CommandResponse() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_CommandResponse>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_CommandResponse))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_CommandResponse>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_CommandResponse))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_CommandResponse>())).reserved as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandResponse),
-            "::",
-            stringify!(reserved)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandResponse>())).component_id as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandResponse),
-            "::",
-            stringify!(component_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandResponse>())).schema_type as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandResponse),
-            "::",
-            stringify!(schema_type)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandResponse>())).user_handle as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandResponse),
-            "::",
-            stringify!(user_handle)
-        )
-    );
-}
 /// An object used to represent a component data snapshot by either raw schema data or some
 /// user-defined handle type.
 #[repr(C)]
@@ -1832,65 +1189,6 @@ pub struct Worker_ComponentData {
     pub schema_type: *mut Schema_ComponentData,
     pub user_handle: *mut Worker_ComponentDataHandle,
 }
-#[test]
-fn bindgen_test_layout_Worker_ComponentData() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_ComponentData>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_ComponentData))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_ComponentData>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_ComponentData))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_ComponentData>())).reserved as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentData),
-            "::",
-            stringify!(reserved)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentData>())).component_id as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentData),
-            "::",
-            stringify!(component_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentData>())).schema_type as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentData),
-            "::",
-            stringify!(schema_type)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentData>())).user_handle as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentData),
-            "::",
-            stringify!(user_handle)
-        )
-    );
-}
 /// An object used to represent a component update by either raw schema data or some user-defined
 /// handle type.
 #[repr(C)]
@@ -1900,65 +1198,6 @@ pub struct Worker_ComponentUpdate {
     pub component_id: Worker_ComponentId,
     pub schema_type: *mut Schema_ComponentUpdate,
     pub user_handle: *mut Worker_ComponentUpdateHandle,
-}
-#[test]
-fn bindgen_test_layout_Worker_ComponentUpdate() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_ComponentUpdate>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_ComponentUpdate))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_ComponentUpdate>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_ComponentUpdate))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_ComponentUpdate>())).reserved as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentUpdate),
-            "::",
-            stringify!(reserved)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentUpdate>())).component_id as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentUpdate),
-            "::",
-            stringify!(component_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentUpdate>())).schema_type as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentUpdate),
-            "::",
-            stringify!(schema_type)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentUpdate>())).user_handle as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentUpdate),
-            "::",
-            stringify!(user_handle)
-        )
-    );
 }
 extern "C" {
     /// Acquire a reference to extend the lifetime of a command request owned by the SDK.
@@ -2011,49 +1250,6 @@ pub struct Worker_Entity {
     /// Array of initial component data for the entity.
     pub components: *const Worker_ComponentData,
 }
-#[test]
-fn bindgen_test_layout_Worker_Entity() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_Entity>(),
-        24usize,
-        concat!("Size of: ", stringify!(Worker_Entity))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_Entity>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_Entity))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_Entity>())).entity_id as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Entity),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_Entity>())).component_count as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Entity),
-            "::",
-            stringify!(component_count)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_Entity>())).components as *const _ as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Entity),
-            "::",
-            stringify!(components)
-        )
-    );
-}
 pub const Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_ENTITY_ID: Worker_ConstraintType = 1;
 pub const Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_COMPONENT: Worker_ConstraintType = 2;
 pub const Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_SPHERE: Worker_ConstraintType = 3;
@@ -2066,60 +1262,10 @@ pub type Worker_ConstraintType = u32;
 pub struct Worker_EntityIdConstraint {
     pub entity_id: Worker_EntityId,
 }
-#[test]
-fn bindgen_test_layout_Worker_EntityIdConstraint() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_EntityIdConstraint>(),
-        8usize,
-        concat!("Size of: ", stringify!(Worker_EntityIdConstraint))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_EntityIdConstraint>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_EntityIdConstraint))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_EntityIdConstraint>())).entity_id as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_EntityIdConstraint),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Worker_ComponentConstraint {
     pub component_id: Worker_ComponentId,
-}
-#[test]
-fn bindgen_test_layout_Worker_ComponentConstraint() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_ComponentConstraint>(),
-        4usize,
-        concat!("Size of: ", stringify!(Worker_ComponentConstraint))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_ComponentConstraint>(),
-        4usize,
-        concat!("Alignment of ", stringify!(Worker_ComponentConstraint))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentConstraint>())).component_id as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentConstraint),
-            "::",
-            stringify!(component_id)
-        )
-    );
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2129,101 +1275,11 @@ pub struct Worker_SphereConstraint {
     pub z: f64,
     pub radius: f64,
 }
-#[test]
-fn bindgen_test_layout_Worker_SphereConstraint() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_SphereConstraint>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_SphereConstraint))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_SphereConstraint>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_SphereConstraint))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_SphereConstraint>())).x as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_SphereConstraint),
-            "::",
-            stringify!(x)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_SphereConstraint>())).y as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_SphereConstraint),
-            "::",
-            stringify!(y)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_SphereConstraint>())).z as *const _ as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_SphereConstraint),
-            "::",
-            stringify!(z)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_SphereConstraint>())).radius as *const _ as usize },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_SphereConstraint),
-            "::",
-            stringify!(radius)
-        )
-    );
-}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Worker_AndConstraint {
     pub constraint_count: u32,
     pub constraints: *mut Worker_Constraint,
-}
-#[test]
-fn bindgen_test_layout_Worker_AndConstraint() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_AndConstraint>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_AndConstraint))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_AndConstraint>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_AndConstraint))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_AndConstraint>())).constraint_count as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_AndConstraint),
-            "::",
-            stringify!(constraint_count)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_AndConstraint>())).constraints as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_AndConstraint),
-            "::",
-            stringify!(constraints)
-        )
-    );
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2231,68 +1287,10 @@ pub struct Worker_OrConstraint {
     pub constraint_count: u32,
     pub constraints: *mut Worker_Constraint,
 }
-#[test]
-fn bindgen_test_layout_Worker_OrConstraint() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_OrConstraint>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_OrConstraint))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_OrConstraint>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_OrConstraint))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_OrConstraint>())).constraint_count as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_OrConstraint),
-            "::",
-            stringify!(constraint_count)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_OrConstraint>())).constraints as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_OrConstraint),
-            "::",
-            stringify!(constraints)
-        )
-    );
-}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Worker_NotConstraint {
     pub constraint: *mut Worker_Constraint,
-}
-#[test]
-fn bindgen_test_layout_Worker_NotConstraint() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_NotConstraint>(),
-        8usize,
-        concat!("Size of: ", stringify!(Worker_NotConstraint))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_NotConstraint>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_NotConstraint))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_NotConstraint>())).constraint as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_NotConstraint),
-            "::",
-            stringify!(constraint)
-        )
-    );
 }
 /// A single query constraint.
 #[repr(C)]
@@ -2314,122 +1312,6 @@ pub union Worker_Constraint__bindgen_ty_1 {
     pub not_constraint: Worker_NotConstraint,
     _bindgen_union_align: [u64; 4usize],
 }
-#[test]
-fn bindgen_test_layout_Worker_Constraint__bindgen_ty_1() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_Constraint__bindgen_ty_1>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_Constraint__bindgen_ty_1))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_Constraint__bindgen_ty_1>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_Constraint__bindgen_ty_1))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Constraint__bindgen_ty_1>())).entity_id_constraint
-                as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Constraint__bindgen_ty_1),
-            "::",
-            stringify!(entity_id_constraint)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Constraint__bindgen_ty_1>())).component_constraint
-                as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Constraint__bindgen_ty_1),
-            "::",
-            stringify!(component_constraint)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Constraint__bindgen_ty_1>())).sphere_constraint
-                as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Constraint__bindgen_ty_1),
-            "::",
-            stringify!(sphere_constraint)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Constraint__bindgen_ty_1>())).and_constraint as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Constraint__bindgen_ty_1),
-            "::",
-            stringify!(and_constraint)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Constraint__bindgen_ty_1>())).or_constraint as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Constraint__bindgen_ty_1),
-            "::",
-            stringify!(or_constraint)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Constraint__bindgen_ty_1>())).not_constraint as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Constraint__bindgen_ty_1),
-            "::",
-            stringify!(not_constraint)
-        )
-    );
-}
-#[test]
-fn bindgen_test_layout_Worker_Constraint() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_Constraint>(),
-        40usize,
-        concat!("Size of: ", stringify!(Worker_Constraint))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_Constraint>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_Constraint))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Constraint>())).constraint_type as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Constraint),
-            "::",
-            stringify!(constraint_type)
-        )
-    );
-}
 pub const Worker_ResultType_WORKER_RESULT_TYPE_COUNT: Worker_ResultType = 1;
 pub const Worker_ResultType_WORKER_RESULT_TYPE_SNAPSHOT: Worker_ResultType = 2;
 pub type Worker_ResultType = u32;
@@ -2446,65 +1328,6 @@ pub struct Worker_EntityQuery {
     /// Pointer to component ID data for a snapshot result type. NULL means all component IDs.
     pub snapshot_result_type_component_ids: *const Worker_ComponentId,
 }
-#[test]
-fn bindgen_test_layout_Worker_EntityQuery() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_EntityQuery>(),
-        56usize,
-        concat!("Size of: ", stringify!(Worker_EntityQuery))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_EntityQuery>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_EntityQuery))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_EntityQuery>())).constraint as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_EntityQuery),
-            "::",
-            stringify!(constraint)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_EntityQuery>())).result_type as *const _ as usize },
-        40usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_EntityQuery),
-            "::",
-            stringify!(result_type)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_EntityQuery>())).snapshot_result_type_component_id_count
-                as *const _ as usize
-        },
-        44usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_EntityQuery),
-            "::",
-            stringify!(snapshot_result_type_component_id_count)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_EntityQuery>())).snapshot_result_type_component_ids
-                as *const _ as usize
-        },
-        48usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_EntityQuery),
-            "::",
-            stringify!(snapshot_result_type_component_ids)
-        )
-    );
-}
 /// An interest override for a particular (entity ID, component ID) pair.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2513,43 +1336,6 @@ pub struct Worker_InterestOverride {
     pub component_id: u32,
     /// Whether the worker is interested in this component.
     pub is_interested: u8,
-}
-#[test]
-fn bindgen_test_layout_Worker_InterestOverride() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_InterestOverride>(),
-        8usize,
-        concat!("Size of: ", stringify!(Worker_InterestOverride))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_InterestOverride>(),
-        4usize,
-        concat!("Alignment of ", stringify!(Worker_InterestOverride))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_InterestOverride>())).component_id as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_InterestOverride),
-            "::",
-            stringify!(component_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_InterestOverride>())).is_interested as *const _ as usize
-        },
-        4usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_InterestOverride),
-            "::",
-            stringify!(is_interested)
-        )
-    );
 }
 /// Worker attributes that are part of a worker's runtime configuration.
 #[repr(C)]
@@ -2560,72 +1346,12 @@ pub struct Worker_WorkerAttributes {
     /// Will be NULL if there are no attributes associated with the worker.
     pub attributes: *mut *const ::std::os::raw::c_char,
 }
-#[test]
-fn bindgen_test_layout_Worker_WorkerAttributes() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_WorkerAttributes>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_WorkerAttributes))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_WorkerAttributes>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_WorkerAttributes))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_WorkerAttributes>())).attribute_count as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_WorkerAttributes),
-            "::",
-            stringify!(attribute_count)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_WorkerAttributes>())).attributes as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_WorkerAttributes),
-            "::",
-            stringify!(attributes)
-        )
-    );
-}
 /// Data for a log message from the SDK.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Worker_DisconnectOp {
     /// The reason for the disconnect.
     pub reason: *const ::std::os::raw::c_char,
-}
-#[test]
-fn bindgen_test_layout_Worker_DisconnectOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_DisconnectOp>(),
-        8usize,
-        concat!("Size of: ", stringify!(Worker_DisconnectOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_DisconnectOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_DisconnectOp))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_DisconnectOp>())).reason as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_DisconnectOp),
-            "::",
-            stringify!(reason)
-        )
-    );
 }
 /// Data for a FlagUpdate operation.
 #[repr(C)]
@@ -2637,39 +1363,6 @@ pub struct Worker_FlagUpdateOp {
     /// A null value indicates that the flag has been deleted.
     pub value: *const ::std::os::raw::c_char,
 }
-#[test]
-fn bindgen_test_layout_Worker_FlagUpdateOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_FlagUpdateOp>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_FlagUpdateOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_FlagUpdateOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_FlagUpdateOp))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_FlagUpdateOp>())).name as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_FlagUpdateOp),
-            "::",
-            stringify!(name)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_FlagUpdateOp>())).value as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_FlagUpdateOp),
-            "::",
-            stringify!(value)
-        )
-    );
-}
 /// Data for a log message from the SDK.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2679,67 +1372,11 @@ pub struct Worker_LogMessageOp {
     /// The message.
     pub message: *const ::std::os::raw::c_char,
 }
-#[test]
-fn bindgen_test_layout_Worker_LogMessageOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_LogMessageOp>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_LogMessageOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_LogMessageOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_LogMessageOp))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_LogMessageOp>())).level as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LogMessageOp),
-            "::",
-            stringify!(level)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_LogMessageOp>())).message as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LogMessageOp),
-            "::",
-            stringify!(message)
-        )
-    );
-}
 /// Data for a set of built-in metrics reported by the SDK.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Worker_MetricsOp {
     pub metrics: Worker_Metrics,
-}
-#[test]
-fn bindgen_test_layout_Worker_MetricsOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_MetricsOp>(),
-        40usize,
-        concat!("Size of: ", stringify!(Worker_MetricsOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_MetricsOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_MetricsOp))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_MetricsOp>())).metrics as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_MetricsOp),
-            "::",
-            stringify!(metrics)
-        )
-    );
 }
 /// Data for a critical section boundary (enter or leave) operation.
 #[repr(C)]
@@ -2748,32 +1385,6 @@ pub struct Worker_CriticalSectionOp {
     /// Whether the protocol is entering a critical section (true) or leaving it (false).
     pub in_critical_section: u8,
 }
-#[test]
-fn bindgen_test_layout_Worker_CriticalSectionOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_CriticalSectionOp>(),
-        1usize,
-        concat!("Size of: ", stringify!(Worker_CriticalSectionOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_CriticalSectionOp>(),
-        1usize,
-        concat!("Alignment of ", stringify!(Worker_CriticalSectionOp))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CriticalSectionOp>())).in_critical_section as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CriticalSectionOp),
-            "::",
-            stringify!(in_critical_section)
-        )
-    );
-}
 /// Data for an AddEntity operation.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2781,58 +1392,12 @@ pub struct Worker_AddEntityOp {
     /// The ID of the entity that was added to the worker's view of the simulation.
     pub entity_id: Worker_EntityId,
 }
-#[test]
-fn bindgen_test_layout_Worker_AddEntityOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_AddEntityOp>(),
-        8usize,
-        concat!("Size of: ", stringify!(Worker_AddEntityOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_AddEntityOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_AddEntityOp))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_AddEntityOp>())).entity_id as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_AddEntityOp),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-}
 /// Data for a RemoveEntity operation.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Worker_RemoveEntityOp {
     /// The ID of the entity that was removed from the worker's view of the simulation.
     pub entity_id: Worker_EntityId,
-}
-#[test]
-fn bindgen_test_layout_Worker_RemoveEntityOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_RemoveEntityOp>(),
-        8usize,
-        concat!("Size of: ", stringify!(Worker_RemoveEntityOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_RemoveEntityOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_RemoveEntityOp))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_RemoveEntityOp>())).entity_id as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_RemoveEntityOp),
-            "::",
-            stringify!(entity_id)
-        )
-    );
 }
 /// Data for a ReserveEntityIdResponse operation.
 #[repr(C)]
@@ -2847,74 +1412,6 @@ pub struct Worker_ReserveEntityIdResponseOp {
     /// If successful, newly allocated entity id which is guaranteed to be unused in the current
     /// deployment.
     pub entity_id: Worker_EntityId,
-}
-#[test]
-fn bindgen_test_layout_Worker_ReserveEntityIdResponseOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_ReserveEntityIdResponseOp>(),
-        24usize,
-        concat!("Size of: ", stringify!(Worker_ReserveEntityIdResponseOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_ReserveEntityIdResponseOp>(),
-        8usize,
-        concat!(
-            "Alignment of ",
-            stringify!(Worker_ReserveEntityIdResponseOp)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ReserveEntityIdResponseOp>())).request_id as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ReserveEntityIdResponseOp),
-            "::",
-            stringify!(request_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ReserveEntityIdResponseOp>())).status_code as *const _
-                as usize
-        },
-        4usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ReserveEntityIdResponseOp),
-            "::",
-            stringify!(status_code)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ReserveEntityIdResponseOp>())).message as *const _
-                as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ReserveEntityIdResponseOp),
-            "::",
-            stringify!(message)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ReserveEntityIdResponseOp>())).entity_id as *const _
-                as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ReserveEntityIdResponseOp),
-            "::",
-            stringify!(entity_id)
-        )
-    );
 }
 /// Data for a ReserveEntityIdsResponse operation.
 #[repr(C)]
@@ -2932,87 +1429,6 @@ pub struct Worker_ReserveEntityIdsResponseOp {
     /// If successful, the number of IDs reserved in the contiguous range, otherwise 0.
     pub number_of_entity_ids: u32,
 }
-#[test]
-fn bindgen_test_layout_Worker_ReserveEntityIdsResponseOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_ReserveEntityIdsResponseOp>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_ReserveEntityIdsResponseOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_ReserveEntityIdsResponseOp>(),
-        8usize,
-        concat!(
-            "Alignment of ",
-            stringify!(Worker_ReserveEntityIdsResponseOp)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ReserveEntityIdsResponseOp>())).request_id as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ReserveEntityIdsResponseOp),
-            "::",
-            stringify!(request_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ReserveEntityIdsResponseOp>())).status_code as *const _
-                as usize
-        },
-        4usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ReserveEntityIdsResponseOp),
-            "::",
-            stringify!(status_code)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ReserveEntityIdsResponseOp>())).message as *const _
-                as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ReserveEntityIdsResponseOp),
-            "::",
-            stringify!(message)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ReserveEntityIdsResponseOp>())).first_entity_id
-                as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ReserveEntityIdsResponseOp),
-            "::",
-            stringify!(first_entity_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ReserveEntityIdsResponseOp>())).number_of_entity_ids
-                as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ReserveEntityIdsResponseOp),
-            "::",
-            stringify!(number_of_entity_ids)
-        )
-    );
-}
 /// Data for a CreateEntity operation.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3026,69 +1442,6 @@ pub struct Worker_CreateEntityResponseOp {
     /// If successful, the entity ID of the newly created entity.
     pub entity_id: Worker_EntityId,
 }
-#[test]
-fn bindgen_test_layout_Worker_CreateEntityResponseOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_CreateEntityResponseOp>(),
-        24usize,
-        concat!("Size of: ", stringify!(Worker_CreateEntityResponseOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_CreateEntityResponseOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_CreateEntityResponseOp))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CreateEntityResponseOp>())).request_id as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CreateEntityResponseOp),
-            "::",
-            stringify!(request_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CreateEntityResponseOp>())).status_code as *const _
-                as usize
-        },
-        4usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CreateEntityResponseOp),
-            "::",
-            stringify!(status_code)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CreateEntityResponseOp>())).message as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CreateEntityResponseOp),
-            "::",
-            stringify!(message)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CreateEntityResponseOp>())).entity_id as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CreateEntityResponseOp),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-}
 /// Data for a DeleteEntity operation.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3101,69 +1454,6 @@ pub struct Worker_DeleteEntityResponseOp {
     pub status_code: u8,
     /// The error message.
     pub message: *const ::std::os::raw::c_char,
-}
-#[test]
-fn bindgen_test_layout_Worker_DeleteEntityResponseOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_DeleteEntityResponseOp>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_DeleteEntityResponseOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_DeleteEntityResponseOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_DeleteEntityResponseOp))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_DeleteEntityResponseOp>())).request_id as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_DeleteEntityResponseOp),
-            "::",
-            stringify!(request_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_DeleteEntityResponseOp>())).entity_id as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_DeleteEntityResponseOp),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_DeleteEntityResponseOp>())).status_code as *const _
-                as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_DeleteEntityResponseOp),
-            "::",
-            stringify!(status_code)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_DeleteEntityResponseOp>())).message as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_DeleteEntityResponseOp),
-            "::",
-            stringify!(message)
-        )
-    );
 }
 /// A response indicating the result of an entity query request.
 #[repr(C)]
@@ -3183,81 +1473,6 @@ pub struct Worker_EntityQueryResponseOp {
     /// the vtable Free function when the OpList is destroyed.
     pub results: *const Worker_Entity,
 }
-#[test]
-fn bindgen_test_layout_Worker_EntityQueryResponseOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_EntityQueryResponseOp>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_EntityQueryResponseOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_EntityQueryResponseOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_EntityQueryResponseOp))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_EntityQueryResponseOp>())).request_id as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_EntityQueryResponseOp),
-            "::",
-            stringify!(request_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_EntityQueryResponseOp>())).status_code as *const _
-                as usize
-        },
-        4usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_EntityQueryResponseOp),
-            "::",
-            stringify!(status_code)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_EntityQueryResponseOp>())).message as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_EntityQueryResponseOp),
-            "::",
-            stringify!(message)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_EntityQueryResponseOp>())).result_count as *const _
-                as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_EntityQueryResponseOp),
-            "::",
-            stringify!(result_count)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_EntityQueryResponseOp>())).results as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_EntityQueryResponseOp),
-            "::",
-            stringify!(results)
-        )
-    );
-}
 /// Data for an AddComponent operation.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3268,39 +1483,6 @@ pub struct Worker_AddComponentOp {
     /// function and freed with the vtable Free function when the OpList is destroyed.
     pub data: Worker_ComponentData,
 }
-#[test]
-fn bindgen_test_layout_Worker_AddComponentOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_AddComponentOp>(),
-        40usize,
-        concat!("Size of: ", stringify!(Worker_AddComponentOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_AddComponentOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_AddComponentOp))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_AddComponentOp>())).entity_id as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_AddComponentOp),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_AddComponentOp>())).data as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_AddComponentOp),
-            "::",
-            stringify!(data)
-        )
-    );
-}
 /// Data for a RemoveComponent operation.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3309,43 +1491,6 @@ pub struct Worker_RemoveComponentOp {
     pub entity_id: Worker_EntityId,
     /// The ID of the component that was removed.
     pub component_id: Worker_ComponentId,
-}
-#[test]
-fn bindgen_test_layout_Worker_RemoveComponentOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_RemoveComponentOp>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_RemoveComponentOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_RemoveComponentOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_RemoveComponentOp))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_RemoveComponentOp>())).entity_id as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_RemoveComponentOp),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_RemoveComponentOp>())).component_id as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_RemoveComponentOp),
-            "::",
-            stringify!(component_id)
-        )
-    );
 }
 /// Data for an AuthorityChange operation.
 #[repr(C)]
@@ -3358,55 +1503,6 @@ pub struct Worker_AuthorityChangeOp {
     /// The authority state of the component, using the Worker_Authority enumeration.
     pub authority: u8,
 }
-#[test]
-fn bindgen_test_layout_Worker_AuthorityChangeOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_AuthorityChangeOp>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_AuthorityChangeOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_AuthorityChangeOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_AuthorityChangeOp))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_AuthorityChangeOp>())).entity_id as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_AuthorityChangeOp),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_AuthorityChangeOp>())).component_id as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_AuthorityChangeOp),
-            "::",
-            stringify!(component_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_AuthorityChangeOp>())).authority as *const _ as usize
-        },
-        12usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_AuthorityChangeOp),
-            "::",
-            stringify!(authority)
-        )
-    );
-}
 /// Data for a ComponentUpdate operation.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3416,41 +1512,6 @@ pub struct Worker_ComponentUpdateOp {
     /// The new component data for the updated entity. Deserialized with the corresponding vtable
     /// Deserialize function and freed with the vtable Free function when the OpList is destroyed.
     pub update: Worker_ComponentUpdate,
-}
-#[test]
-fn bindgen_test_layout_Worker_ComponentUpdateOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_ComponentUpdateOp>(),
-        40usize,
-        concat!("Size of: ", stringify!(Worker_ComponentUpdateOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_ComponentUpdateOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_ComponentUpdateOp))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ComponentUpdateOp>())).entity_id as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentUpdateOp),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_ComponentUpdateOp>())).update as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ComponentUpdateOp),
-            "::",
-            stringify!(update)
-        )
-    );
 }
 /// Data for a CommandRequest operation.
 #[repr(C)]
@@ -3470,91 +1531,6 @@ pub struct Worker_CommandRequestOp {
     /// freed with the vtable Free function when the OpList is destroyed.
     pub request: Worker_CommandRequest,
 }
-#[test]
-fn bindgen_test_layout_Worker_CommandRequestOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_CommandRequestOp>(),
-        80usize,
-        concat!("Size of: ", stringify!(Worker_CommandRequestOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_CommandRequestOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_CommandRequestOp))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandRequestOp>())).request_id as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandRequestOp),
-            "::",
-            stringify!(request_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandRequestOp>())).entity_id as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandRequestOp),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandRequestOp>())).timeout_millis as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandRequestOp),
-            "::",
-            stringify!(timeout_millis)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandRequestOp>())).caller_worker_id as *const _
-                as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandRequestOp),
-            "::",
-            stringify!(caller_worker_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandRequestOp>())).caller_attribute_set as *const _
-                as usize
-        },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandRequestOp),
-            "::",
-            stringify!(caller_attribute_set)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_CommandRequestOp>())).request as *const _ as usize },
-        48usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandRequestOp),
-            "::",
-            stringify!(request)
-        )
-    );
-}
 /// Data for a CommandResponse operation.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3572,91 +1548,6 @@ pub struct Worker_CommandResponseOp {
     pub response: Worker_CommandResponse,
     /// The command ID given to Worker_Connection_SendCommandRequest.
     pub command_id: u32,
-}
-#[test]
-fn bindgen_test_layout_Worker_CommandResponseOp() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_CommandResponseOp>(),
-        72usize,
-        concat!("Size of: ", stringify!(Worker_CommandResponseOp))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_CommandResponseOp>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_CommandResponseOp))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandResponseOp>())).request_id as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandResponseOp),
-            "::",
-            stringify!(request_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandResponseOp>())).entity_id as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandResponseOp),
-            "::",
-            stringify!(entity_id)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandResponseOp>())).status_code as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandResponseOp),
-            "::",
-            stringify!(status_code)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandResponseOp>())).message as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandResponseOp),
-            "::",
-            stringify!(message)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandResponseOp>())).response as *const _ as usize
-        },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandResponseOp),
-            "::",
-            stringify!(response)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandResponseOp>())).command_id as *const _ as usize
-        },
-        64usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandResponseOp),
-            "::",
-            stringify!(command_id)
-        )
-    );
 }
 pub const Worker_OpType_WORKER_OP_TYPE_DISCONNECT: Worker_OpType = 1;
 pub const Worker_OpType_WORKER_OP_TYPE_FLAG_UPDATE: Worker_OpType = 2;
@@ -3709,266 +1600,6 @@ pub union Worker_Op__bindgen_ty_1 {
     pub command_response: Worker_CommandResponseOp,
     _bindgen_union_align: [u64; 10usize],
 }
-#[test]
-fn bindgen_test_layout_Worker_Op__bindgen_ty_1() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_Op__bindgen_ty_1>(),
-        80usize,
-        concat!("Size of: ", stringify!(Worker_Op__bindgen_ty_1))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_Op__bindgen_ty_1>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_Op__bindgen_ty_1))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).disconnect as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(disconnect)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).flag_update as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(flag_update)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).log_message as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(log_message)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).metrics as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(metrics)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).critical_section as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(critical_section)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).add_entity as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(add_entity)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).remove_entity as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(remove_entity)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).reserve_entity_id_response
-                as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(reserve_entity_id_response)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).reserve_entity_ids_response
-                as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(reserve_entity_ids_response)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).create_entity_response as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(create_entity_response)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).delete_entity_response as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(delete_entity_response)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).entity_query_response as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(entity_query_response)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).add_component as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(add_component)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).remove_component as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(remove_component)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).authority_change as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(authority_change)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).component_update as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(component_update)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).command_request as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(command_request)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Op__bindgen_ty_1>())).command_response as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op__bindgen_ty_1),
-            "::",
-            stringify!(command_response)
-        )
-    );
-}
-#[test]
-fn bindgen_test_layout_Worker_Op() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_Op>(),
-        88usize,
-        concat!("Size of: ", stringify!(Worker_Op))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_Op>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_Op))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_Op>())).op_type as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Op),
-            "::",
-            stringify!(op_type)
-        )
-    );
-}
 /// An op list, usually returned by WorkerProtocol_Connection_GetOpList.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3976,71 +1607,12 @@ pub struct Worker_OpList {
     pub ops: *mut Worker_Op,
     pub op_count: u32,
 }
-#[test]
-fn bindgen_test_layout_Worker_OpList() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_OpList>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_OpList))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_OpList>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_OpList))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_OpList>())).ops as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_OpList),
-            "::",
-            stringify!(ops)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_OpList>())).op_count as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_OpList),
-            "::",
-            stringify!(op_count)
-        )
-    );
-}
 /// Parameters for configuring a RakNet connection. Used by Worker_NetworkParameters.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Worker_RakNetNetworkParameters {
     /// Time (in milliseconds) that RakNet should use for its heartbeat protocol.
     pub heartbeat_timeout_millis: u32,
-}
-#[test]
-fn bindgen_test_layout_Worker_RakNetNetworkParameters() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_RakNetNetworkParameters>(),
-        4usize,
-        concat!("Size of: ", stringify!(Worker_RakNetNetworkParameters))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_RakNetNetworkParameters>(),
-        4usize,
-        concat!("Alignment of ", stringify!(Worker_RakNetNetworkParameters))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_RakNetNetworkParameters>())).heartbeat_timeout_millis
-                as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_RakNetNetworkParameters),
-            "::",
-            stringify!(heartbeat_timeout_millis)
-        )
-    );
 }
 /// Parameters for configuring a TCP connection. Used by Worker_NetworkParameters.
 #[repr(C)]
@@ -4054,70 +1626,6 @@ pub struct Worker_TcpNetworkParameters {
     pub receive_buffer_size: u32,
     /// Whether to enable TCP_NODELAY.
     pub no_delay: u8,
-}
-#[test]
-fn bindgen_test_layout_Worker_TcpNetworkParameters() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_TcpNetworkParameters>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_TcpNetworkParameters))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_TcpNetworkParameters>(),
-        4usize,
-        concat!("Alignment of ", stringify!(Worker_TcpNetworkParameters))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_TcpNetworkParameters>())).multiplex_level as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_TcpNetworkParameters),
-            "::",
-            stringify!(multiplex_level)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_TcpNetworkParameters>())).send_buffer_size as *const _
-                as usize
-        },
-        4usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_TcpNetworkParameters),
-            "::",
-            stringify!(send_buffer_size)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_TcpNetworkParameters>())).receive_buffer_size as *const _
-                as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_TcpNetworkParameters),
-            "::",
-            stringify!(receive_buffer_size)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_TcpNetworkParameters>())).no_delay as *const _ as usize
-        },
-        12usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_TcpNetworkParameters),
-            "::",
-            stringify!(no_delay)
-        )
-    );
 }
 /// Use this flag to connect over TCP.
 pub const Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP:
@@ -4147,91 +1655,6 @@ pub struct Worker_NetworkParameters {
     /// Default timeout for worker commands if one is not specified when command is sent.
     pub default_command_timeout_millis: u32,
 }
-#[test]
-fn bindgen_test_layout_Worker_NetworkParameters() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_NetworkParameters>(),
-        40usize,
-        concat!("Size of: ", stringify!(Worker_NetworkParameters))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_NetworkParameters>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_NetworkParameters))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_NetworkParameters>())).use_external_ip as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_NetworkParameters),
-            "::",
-            stringify!(use_external_ip)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_NetworkParameters>())).connection_type as *const _
-                as usize
-        },
-        1usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_NetworkParameters),
-            "::",
-            stringify!(connection_type)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_NetworkParameters>())).raknet as *const _ as usize },
-        4usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_NetworkParameters),
-            "::",
-            stringify!(raknet)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_NetworkParameters>())).tcp as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_NetworkParameters),
-            "::",
-            stringify!(tcp)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_NetworkParameters>())).connection_timeout_millis
-                as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_NetworkParameters),
-            "::",
-            stringify!(connection_timeout_millis)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_NetworkParameters>())).default_command_timeout_millis
-                as *const _ as usize
-        },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_NetworkParameters),
-            "::",
-            stringify!(default_command_timeout_millis)
-        )
-    );
-}
 /// Tuning parameters for configuring protocol logging in the SDK. Used by
 /// Worker_ConnectionParameters.
 #[repr(C)]
@@ -4244,61 +1667,6 @@ pub struct Worker_ProtocolLoggingParameters {
     pub max_log_files: u32,
     /// Once the size of a log file reaches this size, a new log file is created.
     pub max_log_file_size_bytes: u32,
-}
-#[test]
-fn bindgen_test_layout_Worker_ProtocolLoggingParameters() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_ProtocolLoggingParameters>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_ProtocolLoggingParameters))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_ProtocolLoggingParameters>(),
-        8usize,
-        concat!(
-            "Alignment of ",
-            stringify!(Worker_ProtocolLoggingParameters)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ProtocolLoggingParameters>())).log_prefix as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ProtocolLoggingParameters),
-            "::",
-            stringify!(log_prefix)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ProtocolLoggingParameters>())).max_log_files as *const _
-                as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ProtocolLoggingParameters),
-            "::",
-            stringify!(max_log_files)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ProtocolLoggingParameters>())).max_log_file_size_bytes
-                as *const _ as usize
-        },
-        12usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ProtocolLoggingParameters),
-            "::",
-            stringify!(max_log_file_size_bytes)
-        )
-    );
 }
 /// Parameters for configuring thread affinity. Affinity masks are bit masks where
 /// having 1 in the nth least significant position means the thread will be permitted to run
@@ -4313,58 +1681,6 @@ pub struct Worker_ThreadAffinityParameters {
     pub send_threads_affinity_mask: u64,
     /// Affinity mask for short-lived threads.
     pub temporary_threads_affinity_mask: u64,
-}
-#[test]
-fn bindgen_test_layout_Worker_ThreadAffinityParameters() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_ThreadAffinityParameters>(),
-        24usize,
-        concat!("Size of: ", stringify!(Worker_ThreadAffinityParameters))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_ThreadAffinityParameters>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_ThreadAffinityParameters))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ThreadAffinityParameters>()))
-                .receive_threads_affinity_mask as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ThreadAffinityParameters),
-            "::",
-            stringify!(receive_threads_affinity_mask)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ThreadAffinityParameters>())).send_threads_affinity_mask
-                as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ThreadAffinityParameters),
-            "::",
-            stringify!(send_threads_affinity_mask)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ThreadAffinityParameters>()))
-                .temporary_threads_affinity_mask as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ThreadAffinityParameters),
-            "::",
-            stringify!(temporary_threads_affinity_mask)
-        )
-    );
 }
 /// Parameters for creating a Worker_Connection and connecting to SpatialOS.
 #[repr(C)]
@@ -4400,204 +1716,12 @@ pub struct Worker_ConnectionParameters {
     /// Default vtable used when a component is not registered. Only used if not NULL.
     pub default_component_vtable: *const Worker_ComponentVtable,
 }
-#[test]
-fn bindgen_test_layout_Worker_ConnectionParameters() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_ConnectionParameters>(),
-        136usize,
-        concat!("Size of: ", stringify!(Worker_ConnectionParameters))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_ConnectionParameters>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_ConnectionParameters))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>())).worker_type as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(worker_type)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>())).network as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(network)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>())).send_queue_capacity as *const _
-                as usize
-        },
-        48usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(send_queue_capacity)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>())).receive_queue_capacity
-                as *const _ as usize
-        },
-        52usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(receive_queue_capacity)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>())).log_message_queue_capacity
-                as *const _ as usize
-        },
-        56usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(log_message_queue_capacity)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>()))
-                .built_in_metrics_report_period_millis as *const _ as usize
-        },
-        60usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(built_in_metrics_report_period_millis)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>())).protocol_logging as *const _
-                as usize
-        },
-        64usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(protocol_logging)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>()))
-                .enable_protocol_logging_at_startup as *const _ as usize
-        },
-        80usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(enable_protocol_logging_at_startup)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>())).thread_affinity as *const _
-                as usize
-        },
-        88usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(thread_affinity)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>())).component_vtable_count
-                as *const _ as usize
-        },
-        112usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(component_vtable_count)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>())).component_vtables as *const _
-                as usize
-        },
-        120usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(component_vtables)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_ConnectionParameters>())).default_component_vtable
-                as *const _ as usize
-        },
-        128usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_ConnectionParameters),
-            "::",
-            stringify!(default_component_vtable)
-        )
-    );
-}
 /// Parameters for authenticating using a SpatialOS login token.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Worker_LoginTokenCredentials {
     /// The token would typically be provided on the command-line by the SpatialOS launcher.
     pub token: *const ::std::os::raw::c_char,
-}
-#[test]
-fn bindgen_test_layout_Worker_LoginTokenCredentials() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_LoginTokenCredentials>(),
-        8usize,
-        concat!("Size of: ", stringify!(Worker_LoginTokenCredentials))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_LoginTokenCredentials>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_LoginTokenCredentials))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_LoginTokenCredentials>())).token as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LoginTokenCredentials),
-            "::",
-            stringify!(token)
-        )
-    );
 }
 /// Parameters for authenticating using Steam credentials.
 #[repr(C)]
@@ -4610,41 +1734,6 @@ pub struct Worker_SteamCredentials {
     /// [A-Za-z0-9][A-Za-z0-9_]*
     pub deployment_tag: *const ::std::os::raw::c_char,
 }
-#[test]
-fn bindgen_test_layout_Worker_SteamCredentials() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_SteamCredentials>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_SteamCredentials))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_SteamCredentials>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_SteamCredentials))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_SteamCredentials>())).ticket as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_SteamCredentials),
-            "::",
-            stringify!(ticket)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_SteamCredentials>())).deployment_tag as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_SteamCredentials),
-            "::",
-            stringify!(deployment_tag)
-        )
-    );
-}
 /// Parameters for authenticating using a Player Identity Token and Login Token.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4655,51 +1744,6 @@ pub struct Worker_Alpha_PlayerIdentityCredentials {
     /// Uniquely identifies a user across deployments, and is provided by a game authentication
     /// server.
     pub login_token: *const ::std::os::raw::c_char,
-}
-#[test]
-fn bindgen_test_layout_Worker_Alpha_PlayerIdentityCredentials() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_Alpha_PlayerIdentityCredentials>(),
-        16usize,
-        concat!(
-            "Size of: ",
-            stringify!(Worker_Alpha_PlayerIdentityCredentials)
-        )
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_Alpha_PlayerIdentityCredentials>(),
-        8usize,
-        concat!(
-            "Alignment of ",
-            stringify!(Worker_Alpha_PlayerIdentityCredentials)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Alpha_PlayerIdentityCredentials>())).player_identity_token
-                as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Alpha_PlayerIdentityCredentials),
-            "::",
-            stringify!(player_identity_token)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Alpha_PlayerIdentityCredentials>())).login_token
-                as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Alpha_PlayerIdentityCredentials),
-            "::",
-            stringify!(login_token)
-        )
-    );
 }
 pub const Worker_LocatorCredentialsTypes_WORKER_LOCATOR_LOGIN_TOKEN_CREDENTIALS:
     Worker_LocatorCredentialsTypes = 1;
@@ -4725,90 +1769,6 @@ pub struct Worker_LocatorParameters {
     /// Whether to enable logging for the Locator flow.
     pub enable_logging: u8,
 }
-#[test]
-fn bindgen_test_layout_Worker_LocatorParameters() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_LocatorParameters>(),
-        64usize,
-        concat!("Size of: ", stringify!(Worker_LocatorParameters))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_LocatorParameters>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_LocatorParameters))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_LocatorParameters>())).project_name as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LocatorParameters),
-            "::",
-            stringify!(project_name)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_LocatorParameters>())).credentials_type as *const _
-                as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LocatorParameters),
-            "::",
-            stringify!(credentials_type)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_LocatorParameters>())).login_token as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LocatorParameters),
-            "::",
-            stringify!(login_token)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_LocatorParameters>())).steam as *const _ as usize },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LocatorParameters),
-            "::",
-            stringify!(steam)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_LocatorParameters>())).logging as *const _ as usize
-        },
-        40usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LocatorParameters),
-            "::",
-            stringify!(logging)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_LocatorParameters>())).enable_logging as *const _ as usize
-        },
-        56usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_LocatorParameters),
-            "::",
-            stringify!(enable_logging)
-        )
-    );
-}
 /// Parameters for authenticating and logging in to a SpatialOS deployment using player identity
 /// credentials.
 #[repr(C)]
@@ -4822,70 +1782,6 @@ pub struct Worker_Alpha_LocatorParameters {
     pub logging: Worker_ProtocolLoggingParameters,
     /// Whether to enable logging for the Locator flow.
     pub enable_logging: u8,
-}
-#[test]
-fn bindgen_test_layout_Worker_Alpha_LocatorParameters() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_Alpha_LocatorParameters>(),
-        48usize,
-        concat!("Size of: ", stringify!(Worker_Alpha_LocatorParameters))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_Alpha_LocatorParameters>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_Alpha_LocatorParameters))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Alpha_LocatorParameters>())).player_identity as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Alpha_LocatorParameters),
-            "::",
-            stringify!(player_identity)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Alpha_LocatorParameters>())).use_insecure_connection
-                as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Alpha_LocatorParameters),
-            "::",
-            stringify!(use_insecure_connection)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Alpha_LocatorParameters>())).logging as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Alpha_LocatorParameters),
-            "::",
-            stringify!(logging)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Alpha_LocatorParameters>())).enable_logging as *const _
-                as usize
-        },
-        40usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Alpha_LocatorParameters),
-            "::",
-            stringify!(enable_logging)
-        )
-    );
 }
 /// Details of a specific deployment obtained via Worker_Locator_GetDeploymentListAsync.
 #[repr(C)]
@@ -4902,75 +1798,6 @@ pub struct Worker_Deployment {
     /// Total user capacity of the deployment.
     pub users_capacity: u32,
 }
-#[test]
-fn bindgen_test_layout_Worker_Deployment() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_Deployment>(),
-        32usize,
-        concat!("Size of: ", stringify!(Worker_Deployment))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_Deployment>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_Deployment))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Deployment>())).deployment_name as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Deployment),
-            "::",
-            stringify!(deployment_name)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_Deployment>())).assembly_name as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Deployment),
-            "::",
-            stringify!(assembly_name)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_Deployment>())).description as *const _ as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Deployment),
-            "::",
-            stringify!(description)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Deployment>())).users_connected as *const _ as usize
-        },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Deployment),
-            "::",
-            stringify!(users_connected)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_Deployment>())).users_capacity as *const _ as usize
-        },
-        28usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_Deployment),
-            "::",
-            stringify!(users_capacity)
-        )
-    );
-}
 /// A deployment list obtained via Worker_Locator_GetDeploymentListAsync.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4982,53 +1809,6 @@ pub struct Worker_DeploymentList {
     /// Will be non-NULL if an error occurred.
     pub error: *const ::std::os::raw::c_char,
 }
-#[test]
-fn bindgen_test_layout_Worker_DeploymentList() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_DeploymentList>(),
-        24usize,
-        concat!("Size of: ", stringify!(Worker_DeploymentList))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_DeploymentList>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_DeploymentList))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_DeploymentList>())).deployment_count as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_DeploymentList),
-            "::",
-            stringify!(deployment_count)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_DeploymentList>())).deployments as *const _ as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_DeploymentList),
-            "::",
-            stringify!(deployments)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_DeploymentList>())).error as *const _ as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_DeploymentList),
-            "::",
-            stringify!(error)
-        )
-    );
-}
 /// A queue status update when connecting to a deployment via Worker_Locator_ConnectAsync.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -5038,41 +1818,6 @@ pub struct Worker_QueueStatus {
     /// Will be non-NULL if an error occurred.
     pub error: *const ::std::os::raw::c_char,
 }
-#[test]
-fn bindgen_test_layout_Worker_QueueStatus() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_QueueStatus>(),
-        16usize,
-        concat!("Size of: ", stringify!(Worker_QueueStatus))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_QueueStatus>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_QueueStatus))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_QueueStatus>())).position_in_queue as *const _ as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_QueueStatus),
-            "::",
-            stringify!(position_in_queue)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<Worker_QueueStatus>())).error as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_QueueStatus),
-            "::",
-            stringify!(error)
-        )
-    );
-}
 /// Command parameters. Used to modify the behaviour of a command request.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -5080,32 +1825,6 @@ pub struct Worker_CommandParameters {
     /// Allow command requests to bypass the bridge when this worker is authoritative over the target
     /// entity-component.
     pub allow_short_circuit: u8,
-}
-#[test]
-fn bindgen_test_layout_Worker_CommandParameters() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_CommandParameters>(),
-        1usize,
-        concat!("Size of: ", stringify!(Worker_CommandParameters))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_CommandParameters>(),
-        1usize,
-        concat!("Alignment of ", stringify!(Worker_CommandParameters))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_CommandParameters>())).allow_short_circuit as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_CommandParameters),
-            "::",
-            stringify!(allow_short_circuit)
-        )
-    );
 }
 /// Locator callback typedef.
 pub type Worker_DeploymentListCallback = ::std::option::Option<
@@ -5444,58 +2163,6 @@ pub struct Worker_SnapshotParameters {
     pub component_vtables: *const Worker_ComponentVtable,
     /// Default vtable used when a component is not registered. Only used if not NULL.
     pub default_component_vtable: *const Worker_ComponentVtable,
-}
-#[test]
-fn bindgen_test_layout_Worker_SnapshotParameters() {
-    assert_eq!(
-        ::std::mem::size_of::<Worker_SnapshotParameters>(),
-        24usize,
-        concat!("Size of: ", stringify!(Worker_SnapshotParameters))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<Worker_SnapshotParameters>(),
-        8usize,
-        concat!("Alignment of ", stringify!(Worker_SnapshotParameters))
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_SnapshotParameters>())).component_vtable_count as *const _
-                as usize
-        },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_SnapshotParameters),
-            "::",
-            stringify!(component_vtable_count)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_SnapshotParameters>())).component_vtables as *const _
-                as usize
-        },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_SnapshotParameters),
-            "::",
-            stringify!(component_vtables)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<Worker_SnapshotParameters>())).default_component_vtable
-                as *const _ as usize
-        },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(Worker_SnapshotParameters),
-            "::",
-            stringify!(default_component_vtable)
-        )
-    );
 }
 extern "C" {
     /// Opens a Worker_SnapshotInputStream. The caller must manage the memory of the

@@ -3,15 +3,15 @@
 use std::collections::HashMap;
 use std::slice;
 
-use worker::commands::*;
-use worker::component::*;
-use worker::entity_snapshot::EntitySnapshot;
-use worker::metrics::Metrics;
-use worker::{Authority, EntityId, LogLevel, RequestId};
+use crate::worker::commands::*;
+use crate::worker::component::{self, *};
+use crate::worker::entity_snapshot::EntitySnapshot;
+use crate::worker::metrics::Metrics;
+use crate::worker::{Authority, EntityId, LogLevel, RequestId};
 
+use crate::worker::internal::utils::*;
+use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 use spatialos_sdk_sys::worker::*;
-use worker::internal::utils::*;
-use worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 
 // TODO: Investigate tying lifetimes of ops to the OpList - there is potentially C-level data contained
 // inside them.
@@ -107,7 +107,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
             Worker_OpType_WORKER_OP_TYPE_METRICS => {
                 let op = erased_op.metrics;
                 let metrics_op = MetricsOp {
-                    metrics: unsafe { Metrics::from_worker_sdk(&op.metrics) },
+                    metrics: Metrics::from_worker_sdk(&op.metrics),
                 };
                 WorkerOp::Metrics(metrics_op)
             }
@@ -136,7 +136,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
                 let op = erased_op.add_component;
                 let add_component_op = AddComponentOp {
                     entity_id: EntityId::new(op.entity_id),
-                    component_data: ::worker::component::internal::ComponentData::from_worker_sdk(&op.data),
+                    component_data: component::internal::ComponentData::from_worker_sdk(&op.data),
                 };
                 WorkerOp::AddComponent(add_component_op)
             }
@@ -161,7 +161,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
                 let op = erased_op.component_update;
                 let component_update_op = ComponentUpdateOp {
                     entity_id: EntityId::new(op.entity_id),
-                    component_update: ::worker::component::internal::ComponentUpdate::from_worker_sdk(&op.update),
+                    component_update: component::internal::ComponentUpdate::from_worker_sdk(&op.update),
                 };
                 WorkerOp::ComponentUpdate(component_update_op)
             }
@@ -178,7 +178,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
                     timeout_millis: op.timeout_millis,
                     caller_worker_id: cstr_to_string(op.caller_worker_id),
                     caller_attribute_set: attribute_set,
-                    request: ::worker::component::internal::CommandRequest::from_worker_sdk(&op.request),
+                    request: component::internal::CommandRequest::from_worker_sdk(&op.request),
                 };
                 WorkerOp::CommandRequest(command_request_op)
             }
@@ -186,7 +186,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
                 let op = erased_op.command_response;
                 let status_code = match op.status_code as u32 {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
-                        StatusCode::Success(::worker::component::internal::CommandResponse::from_worker_sdk(&op.response))
+                        StatusCode::Success(component::internal::CommandResponse::from_worker_sdk(&op.response))
                     }
                     Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
                         StatusCode::Timeout(cstr_to_string(op.message))
@@ -447,7 +447,7 @@ pub struct EntityQueryResponseOp {
 #[derive(Debug)]
 pub struct AddComponentOp {
     pub entity_id: EntityId,
-    pub component_data: ::worker::component::internal::ComponentData,
+    pub component_data: component::internal::ComponentData,
 }
 
 #[derive(Debug)]
@@ -466,7 +466,7 @@ pub struct AuthorityChangeOp {
 #[derive(Debug)]
 pub struct ComponentUpdateOp {
     pub entity_id: EntityId,
-    pub component_update: ::worker::component::internal::ComponentUpdate,
+    pub component_update: component::internal::ComponentUpdate,
 }
 
 #[derive(Debug)]
@@ -476,12 +476,12 @@ pub struct CommandRequestOp {
     pub timeout_millis: u32,
     pub caller_worker_id: String,
     pub caller_attribute_set: Vec<String>,
-    pub request: ::worker::component::internal::CommandRequest,
+    pub request: component::internal::CommandRequest,
 }
 
 #[derive(Debug)]
 pub struct CommandResponseOp {
     pub request_id: RequestId<OutgoingCommandRequest>,
     pub entity_id: EntityId,
-    pub status_code: StatusCode<::worker::component::internal::CommandResponse>,
+    pub status_code: StatusCode<component::internal::CommandResponse>,
 }

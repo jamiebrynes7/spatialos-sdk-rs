@@ -5,9 +5,11 @@ authors = [
     "Jamie Brynes <jamiebrynes7@gmail.com>",
     "David Avedissian <git@dga.me.uk>"
 ]
+edition = "2018"
 
 [dependencies]
 spatialos-sdk-sys = { path = "../spatialos-sdk-sys"} 
 
 [dev-dependencies]
 uuid = { version = "0.7", features = ["v4"] }
+clap = "2.32.0"

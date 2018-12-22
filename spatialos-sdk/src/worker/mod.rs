@@ -4,6 +4,7 @@ pub mod commands;
 pub mod component;
 pub mod connection;
 pub mod entity_snapshot;
+pub mod locator;
 pub mod metrics;
 pub mod op;
 pub mod parameters;
@@ -95,7 +96,6 @@ impl LogLevel {
             LogLevel::Warn => 3,
             LogLevel::Error => 4,
             LogLevel::Fatal => 5,
-            _ => panic!("Unknown log level"),
         }
     }
 }
