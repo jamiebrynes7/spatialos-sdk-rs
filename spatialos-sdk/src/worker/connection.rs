@@ -6,7 +6,7 @@ use crate::worker::commands::*;
 use crate::worker::component::ComponentUpdate;
 use crate::worker::locator::*;
 use crate::worker::metrics::Metrics;
-use crate::worker::op::{DisconnectOp, OpList, WorkerOp};
+use crate::worker::op::{OpList, WorkerOp};
 use crate::worker::parameters::{CommandParameters, ConnectionParameters};
 use crate::worker::{EntityId, InterestOverride, LogLevel, RequestId};
 

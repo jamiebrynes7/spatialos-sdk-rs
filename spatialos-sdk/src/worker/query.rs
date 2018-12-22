@@ -1,4 +1,3 @@
-use std::mem::forget;
 use std::ptr;
 
 use crate::worker::EntityId;
@@ -27,7 +26,6 @@ pub struct EntityQuery {
 impl EntityQuery {
     pub(crate) fn to_worker_sdk(&self) -> WrappedEntityQuery {
         let (constraint, underlying_constraints) = self.constraint.to_worker_sdk();
-        // QueryConstraint::debug_crash(&constraint, &underlying_constraints);
         match &self.result_type {
             ResultType::Count => {
                 let worker_entity_query = Worker_EntityQuery {
@@ -39,8 +37,8 @@ impl EntityQuery {
 
                 WrappedEntityQuery {
                     query: worker_entity_query,
-                    ids: None,
-                    underlying_constraint_data: underlying_constraints,
+                    _ids: None,
+                    _underlying_constraint_data: underlying_constraints,
                 }
             }
             ResultType::Snapshot(ids) => {
@@ -53,8 +51,8 @@ impl EntityQuery {
 
                 WrappedEntityQuery {
                     query: worker_entity_query,
-                    ids: Some(ids.as_slice()),
-                    underlying_constraint_data: underlying_constraints,
+                    _ids: Some(ids.as_slice()),
+                    _underlying_constraint_data: underlying_constraints,
                 }
             }
         }
@@ -63,8 +61,8 @@ impl EntityQuery {
 
 pub(crate) struct WrappedEntityQuery<'a> {
     pub query: Worker_EntityQuery,
-    ids: Option<&'a [u32]>,
-    underlying_constraint_data: Box<[Worker_Constraint]>,
+    _ids: Option<&'a [u32]>,
+    _underlying_constraint_data: Box<[Worker_Constraint]>,
 }
 
 #[derive(Clone)]
@@ -219,7 +217,6 @@ impl QueryConstraint {
 
                 (constraint, 1 + elements_filled)
             }
-            _ => panic!("Unknown query constraint type"),
         }
     }
 

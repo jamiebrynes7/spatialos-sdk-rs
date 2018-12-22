@@ -93,7 +93,6 @@ impl LogLevel {
             LogLevel::Warn => 3,
             LogLevel::Error => 4,
             LogLevel::Fatal => 5,
-            _ => panic!("Unknown log level"),
         }
     }
 }

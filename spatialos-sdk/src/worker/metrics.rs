@@ -51,20 +51,20 @@ impl Metrics {
                 histogram_metric_count: histogram_metrics.len() as u32,
                 histogram_metrics: histogram_metrics.as_ptr(),
             },
-            gauge_metrics,
-            histogram_metrics,
-            histogram_metrics_buckets,
-            keys,
+            _gauge_metrics: gauge_metrics,
+            _histogram_metrics: histogram_metrics,
+            _histogram_metrics_buckets: histogram_metrics_buckets,
+            _keys: keys,
         }
     }
 }
 
 pub(crate) struct WrappedWorkerMetrics {
     pub metrics: Worker_Metrics,
-    gauge_metrics: Vec<Worker_GaugeMetric>,
-    histogram_metrics: Vec<Worker_HistogramMetric>,
-    histogram_metrics_buckets: Vec<Worker_HistogramMetricBucket>,
-    keys: Vec<CString>,
+    _gauge_metrics: Vec<Worker_GaugeMetric>,
+    _histogram_metrics: Vec<Worker_HistogramMetric>,
+    _histogram_metrics_buckets: Vec<Worker_HistogramMetricBucket>,
+    _keys: Vec<CString>,
 }
 
 unsafe impl WorkerSdkConversion<Worker_Metrics> for Metrics {

@@ -275,6 +275,12 @@ impl CommandParameters {
         allow_short_circuit: false,
     };
 
+    pub fn new(should_short_circuit: bool) -> CommandParameters {
+        CommandParameters {
+            allow_short_circuit: should_short_circuit
+        }
+    }
+
     pub(crate) fn to_worker_sdk(&self) -> Worker_CommandParameters {
         Worker_CommandParameters {
             allow_short_circuit: self.allow_short_circuit as u8,

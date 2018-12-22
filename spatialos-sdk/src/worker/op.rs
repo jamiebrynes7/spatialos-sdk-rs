@@ -105,7 +105,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
             Worker_OpType_WORKER_OP_TYPE_METRICS => {
                 let op = erased_op.metrics;
                 let metrics_op = MetricsOp {
-                    metrics: unsafe { Metrics::from_worker_sdk(&op.metrics) },
+                    metrics: Metrics::from_worker_sdk(&op.metrics),
                 };
                 WorkerOp::Metrics(metrics_op)
             }
