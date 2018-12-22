@@ -12,11 +12,11 @@ use crate::worker::{EntityId, InterestOverride, LogLevel, RequestId};
 
 /// Connection trait to allow for mocking the connection.
 pub trait Connection {
-    fn send_log_message<T: Into<Vec<u8>>, U: Into<Vec<u8>>>(
+    fn send_log_message(
         &mut self,
         level: LogLevel,
-        logger_name: T,
-        message: U,
+        logger_name: &str,
+        message: &str,
         entity_id: Option<EntityId>,
     );
     fn send_metrics(&mut self, metrics: &Metrics);
@@ -165,11 +165,11 @@ impl WorkerConnection {
 }
 
 impl Connection for WorkerConnection {
-    fn send_log_message<T: Into<Vec<u8>>, U: Into<Vec<u8>>>(
+    fn send_log_message(
         &mut self,
         level: LogLevel,
-        logger_name: T,
-        message: U,
+        logger_name: &str,
+        message: &str,
         entity_id: Option<EntityId>,
     ) {
         assert!(!self.connection_ptr.is_null());
