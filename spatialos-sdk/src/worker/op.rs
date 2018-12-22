@@ -3,15 +3,15 @@
 use std::collections::HashMap;
 use std::slice;
 
-use worker::commands::*;
-use worker::component::*;
-use worker::entity_snapshot::EntitySnapshot;
-use worker::metrics::Metrics;
-use worker::{Authority, EntityId, LogLevel, RequestId};
+use crate::worker::commands::*;
+use crate::worker::component::*;
+use crate::worker::entity_snapshot::EntitySnapshot;
+use crate::worker::metrics::Metrics;
+use crate::worker::{Authority, EntityId, LogLevel, RequestId};
 
+use crate::worker::internal::utils::*;
+use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 use spatialos_sdk_sys::worker::*;
-use worker::internal::utils::*;
-use worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 
 // TODO: Investigate tying lifetimes of ops to the OpList - there is potentially C-level data contained
 // inside them.
@@ -105,7 +105,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
             Worker_OpType_WORKER_OP_TYPE_METRICS => {
                 let op = erased_op.metrics;
                 let metrics_op = MetricsOp {
-                    metrics: unsafe { Metrics::from_worker_sdk(&op.metrics) },
+                    metrics: Metrics::from_worker_sdk(&op.metrics),
                 };
                 WorkerOp::Metrics(metrics_op)
             }

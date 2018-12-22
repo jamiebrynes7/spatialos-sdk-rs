@@ -5,8 +5,8 @@ use spatialos_sdk::worker::connection::WorkerConnection;
 use spatialos_sdk::worker::connection::WorkerConnectionFuture;
 use spatialos_sdk::worker::locator::Locator;
 
-use lib::argument_parsing::ConnectionType;
-use lib::argument_parsing::WorkerConfiguration;
+use crate::lib::argument_parsing::ConnectionType;
+use crate::lib::argument_parsing::WorkerConfiguration;
 
 static LOCATOR_HOSTNAME: &str = "locator.improbable.io";
 

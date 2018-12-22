@@ -2,13 +2,13 @@ use spatialos_sdk_sys::worker::*;
 use std::ffi::{CStr, CString};
 use std::ptr;
 
-use worker::commands::*;
-use worker::component::ComponentUpdate;
-use worker::locator::*;
-use worker::metrics::Metrics;
-use worker::op::{DisconnectOp, OpList, WorkerOp};
-use worker::parameters::{CommandParameters, ConnectionParameters};
-use worker::{EntityId, InterestOverride, LogLevel, RequestId};
+use crate::worker::commands::*;
+use crate::worker::component::ComponentUpdate;
+use crate::worker::locator::*;
+use crate::worker::metrics::Metrics;
+use crate::worker::op::{OpList, WorkerOp};
+use crate::worker::parameters::{CommandParameters, ConnectionParameters};
+use crate::worker::{EntityId, InterestOverride, LogLevel, RequestId};
 
 /// Connection trait to allow for mocking the connection.
 pub trait Connection {
@@ -128,7 +128,7 @@ impl WorkerConnection {
         locator: &Locator,
         deployment_name: &str,
         params: &ConnectionParameters,
-        mut callback: QueueStatusCallback,
+        callback: QueueStatusCallback,
     ) -> WorkerConnectionFuture {
         let deployment_name_cstr = CString::new(deployment_name).unwrap();
         let connection_params = params.to_worker_sdk();
@@ -219,8 +219,8 @@ impl Connection for WorkerConnection {
 
     fn send_create_entity_request(
         &mut self,
-        payload: CreateEntityRequest,
-        timeout_millis: Option<u32>,
+        _payload: CreateEntityRequest,
+        _timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest> {
         unimplemented!()
     }
@@ -267,31 +267,31 @@ impl Connection for WorkerConnection {
 
     fn send_command_request(
         &mut self,
-        entity_id: EntityId,
-        request: CommandRequest,
-        timeout_millis: Option<u32>,
-        command_parameters: CommandParameters,
+        _entity_id: EntityId,
+        _request: CommandRequest,
+        _timeout_millis: Option<u32>,
+        _command_parameters: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest> {
         unimplemented!()
     }
 
     fn send_command_response(
         &mut self,
-        request_id: RequestId<IncomingCommandRequest>,
-        response: CommandResponse,
+        _request_id: RequestId<IncomingCommandRequest>,
+        _response: CommandResponse,
     ) {
         unimplemented!()
     }
 
     fn send_command_failure(
         &mut self,
-        request_id: RequestId<IncomingCommandRequest>,
-        message: &str,
+        _request_id: RequestId<IncomingCommandRequest>,
+        _message: &str,
     ) {
         unimplemented!()
     }
 
-    fn send_component_update(&mut self, entity_id: EntityId, component_update: ComponentUpdate) {
+    fn send_component_update(&mut self, _entity_id: EntityId, _component_update: ComponentUpdate) {
         unimplemented!()
     }
 
@@ -374,7 +374,7 @@ impl Connection for WorkerConnection {
                 if value.is_null() {
                     return;
                 }
-                let mut data: &mut Option<String> = &mut *(user_data as *mut Option<String>);
+                let data: &mut Option<String> = &mut *(user_data as *mut Option<String>);
                 let str = CStr::from_ptr(value).to_string_lossy().to_string();
                 *data = Some(str);
             }
@@ -491,7 +491,7 @@ impl Drop for WorkerConnectionFuture {
             match self.queue_status_callback {
                 Some(ptr) => {
                     // Drop the callback
-                    let callback = Box::from_raw(ptr as *mut QueueStatusCallback);
+                    let _callback = Box::from_raw(ptr as *mut QueueStatusCallback);
                 }
                 None => {}
             }

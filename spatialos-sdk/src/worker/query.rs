@@ -1,7 +1,6 @@
-use std::mem::forget;
 use std::ptr;
 
-use worker::EntityId;
+use crate::worker::EntityId;
 
 use spatialos_sdk_sys::worker::*;
 
@@ -27,7 +26,6 @@ pub struct EntityQuery {
 impl EntityQuery {
     pub(crate) fn to_worker_sdk(&self) -> WrappedEntityQuery {
         let (constraint, underlying_constraints) = self.constraint.to_worker_sdk();
-        // QueryConstraint::debug_crash(&constraint, &underlying_constraints);
         match &self.result_type {
             ResultType::Count => {
                 let worker_entity_query = Worker_EntityQuery {
@@ -39,8 +37,8 @@ impl EntityQuery {
 
                 WrappedEntityQuery {
                     query: worker_entity_query,
-                    ids: None,
-                    underlying_constraint_data: underlying_constraints,
+                    _ids: None,
+                    _underlying_constraint_data: underlying_constraints,
                 }
             }
             ResultType::Snapshot(ids) => {
@@ -53,8 +51,8 @@ impl EntityQuery {
 
                 WrappedEntityQuery {
                     query: worker_entity_query,
-                    ids: Some(ids.as_slice()),
-                    underlying_constraint_data: underlying_constraints,
+                    _ids: Some(ids.as_slice()),
+                    _underlying_constraint_data: underlying_constraints,
                 }
             }
         }
@@ -63,8 +61,8 @@ impl EntityQuery {
 
 pub(crate) struct WrappedEntityQuery<'a> {
     pub query: Worker_EntityQuery,
-    ids: Option<&'a [u32]>,
-    underlying_constraint_data: Box<[Worker_Constraint]>,
+    _ids: Option<&'a [u32]>,
+    _underlying_constraint_data: Box<[Worker_Constraint]>,
 }
 
 #[derive(Clone)]
@@ -94,7 +92,7 @@ impl QueryConstraint {
                 entity_id_constraint: Worker_EntityIdConstraint { entity_id: 0 },
             },
         };
-        let mut underlying_data = vec![dummy_constraint; size as usize];
+        let underlying_data = vec![dummy_constraint; size as usize];
         let mut data = underlying_data.into_boxed_slice();
 
         // Now go down the tree again, this time creating pointers to the correct vector element.
@@ -219,7 +217,6 @@ impl QueryConstraint {
 
                 (constraint, 1 + elements_filled)
             }
-            _ => panic!("Unknown query constraint type"),
         }
     }
 
@@ -242,10 +239,10 @@ impl QueryConstraint {
 
 #[cfg(test)]
 mod test {
+    use crate::worker::query::*;
+    use crate::worker::EntityId;
     use spatialos_sdk_sys::worker::*;
     use std::slice::from_raw_parts;
-    use worker::query::*;
-    use worker::EntityId;
 
     fn is_worker_query_valid(query: &EntityQuery) {
         let worker_query = query.to_worker_sdk();

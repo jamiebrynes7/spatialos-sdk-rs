@@ -63,7 +63,7 @@ enum SpatialPackageSource {
 
 impl SpatialPackageSource {
     fn to_str(&self) -> &str {
-        use SpatialPackageSource::*;
+        use crate::SpatialPackageSource::*;
 
         match *self {
             WorkerSdk => "worker_sdk",
