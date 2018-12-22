@@ -1,10 +1,10 @@
 use crate::worker::query::EntityQuery;
 use crate::worker::EntityId;
 
+use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 use spatialos_sdk_sys::worker::{
     Schema_CommandRequest, Schema_CommandResponse, Worker_CommandRequest, Worker_CommandResponse,
 };
-use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 
 // TODO: Wrap Schema_CommandRequest
 pub struct CommandRequest {

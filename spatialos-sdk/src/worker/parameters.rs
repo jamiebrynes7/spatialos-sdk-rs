@@ -1,9 +1,9 @@
 use std::ffi::CString;
 use std::ptr;
 
-use spatialos_sdk_sys::worker::*;
 use crate::worker::internal::utils::WrappedNativeStructWithString;
 use crate::worker::vtable;
+use spatialos_sdk_sys::worker::*;
 
 pub struct ConnectionParameters {
     pub worker_type: String,
@@ -277,7 +277,7 @@ impl CommandParameters {
 
     pub fn new(should_short_circuit: bool) -> CommandParameters {
         CommandParameters {
-            allow_short_circuit: should_short_circuit
+            allow_short_circuit: should_short_circuit,
         }
     }
 

@@ -9,9 +9,9 @@ use crate::worker::entity_snapshot::EntitySnapshot;
 use crate::worker::metrics::Metrics;
 use crate::worker::{Authority, EntityId, LogLevel, RequestId};
 
-use spatialos_sdk_sys::worker::*;
 use crate::worker::internal::utils::*;
 use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
+use spatialos_sdk_sys::worker::*;
 
 // TODO: Investigate tying lifetimes of ops to the OpList - there is potentially C-level data contained
 // inside them.

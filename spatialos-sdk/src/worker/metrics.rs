@@ -1,11 +1,11 @@
 use std::ffi::CString;
 use std::slice;
 
+use crate::worker::internal::utils::cstr_to_string;
+use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 use spatialos_sdk_sys::worker::{
     Worker_GaugeMetric, Worker_HistogramMetric, Worker_HistogramMetricBucket, Worker_Metrics,
 };
-use crate::worker::internal::utils::cstr_to_string;
-use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
 
 pub struct Metrics {
     pub load: Option<f64>,

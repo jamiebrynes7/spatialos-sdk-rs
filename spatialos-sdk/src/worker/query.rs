@@ -239,10 +239,10 @@ impl QueryConstraint {
 
 #[cfg(test)]
 mod test {
-    use spatialos_sdk_sys::worker::*;
-    use std::slice::from_raw_parts;
     use crate::worker::query::*;
     use crate::worker::EntityId;
+    use spatialos_sdk_sys::worker::*;
+    use std::slice::from_raw_parts;
 
     fn is_worker_query_valid(query: &EntityQuery) {
         let worker_query = query.to_worker_sdk();
