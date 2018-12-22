@@ -8,3 +8,11 @@ serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
 t4rust-derive = { git = "https://github.com/ReSpeak/t4rust" }
+
+[lib]
+name = "spatialos_sdk_code_generator"
+path = "src/lib.rs"
+
+[[bin]]
+name = "generator"
+path = "src/bin.rs"

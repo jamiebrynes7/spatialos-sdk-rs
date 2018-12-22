@@ -64,6 +64,12 @@ impl ComponentDatabase {
     }
 }
 
+// A trait that's implemented by a type which can be serialized and deserialized into a schema object.
+pub trait TypeSerializer<T> {
+    fn serialize(input: &T, output: &mut schema::SchemaObject);
+    fn deserialize(input: &schema::SchemaObject) -> T;
+}
+
 // Client handles. An object which contains a refernce counted instance to T.
 struct ClientHandle<T> {
     data: Rc<T>,

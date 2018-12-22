@@ -66,7 +66,7 @@ pub enum ExampleCommandResponse {
 // TODO: #[derive(...)] this.
 impl ComponentVtable<Example> for Example {
     fn serialize_data(data: &ExampleData) -> schema::SchemaComponentData {
-        let mut serialized_data = schema::SchemaComponentData::new(Example::component_id());
+        let mut serialized_data = schema::SchemaComponentData::new(Self::component_id());
         let mut fields = serialized_data.fields_mut();
         fields.field::<f32>(0).add(data.x);
         serialized_data
@@ -78,7 +78,7 @@ impl ComponentVtable<Example> for Example {
     }
 
     fn serialize_update(update: &ExampleUpdate) -> schema::SchemaComponentUpdate {
-        let mut serialized_update = schema::SchemaComponentUpdate::new(Example::component_id());
+        let mut serialized_update = schema::SchemaComponentUpdate::new(Self::component_id());
         let mut fields = serialized_update.fields_mut();
         if let Some(field_value) = update.x { fields.field::<f32>(1).add(field_value); }
         serialized_update
@@ -93,7 +93,7 @@ impl ComponentVtable<Example> for Example {
         let command_index = match request {
             ExampleCommandRequest::TestCommand(_) => 1
         };
-        let mut serialized_request = schema::SchemaCommandRequest::new(Example::component_id(), command_index);
+        let mut serialized_request = schema::SchemaCommandRequest::new(Self::component_id(), command_index);
         let mut object = serialized_request.object_mut();
         match request {
             ExampleCommandRequest::TestCommand(data) => {
@@ -117,7 +117,7 @@ impl ComponentVtable<Example> for Example {
         let command_index = match response {
             ExampleCommandResponse::TestCommand(_) => 1
         };
-        let mut serialized_response = schema::SchemaCommandResponse::new(Example::component_id(), command_index);
+        let mut serialized_response = schema::SchemaCommandResponse::new(Self::component_id(), command_index);
         let mut object = serialized_response.object_mut();
         match response {
             ExampleCommandResponse::TestCommand(data) => {

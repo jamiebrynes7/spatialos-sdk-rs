@@ -1,6 +1,6 @@
 use std::collections::hash_map::HashMap;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Identifier {
     pub qualified_name: String,
@@ -8,27 +8,27 @@ pub struct Identifier {
     pub path: Vec<String>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct EnumReference {
     pub qualified_name: String
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct EnumValueDefinition {
     pub identifier: Identifier,
     pub value: u32
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct EnumDefinition {
     pub identifier: Identifier,
     pub value_definitions: Vec<EnumValueDefinition>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum PrimitiveType {
   Invalid = 0,
   Int32 = 1,
@@ -49,7 +49,7 @@ pub enum PrimitiveType {
   Bytes = 16,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ValueTypeReference {
     #[serde(rename = "primitive")]
     pub primitive_reference: Option<PrimitiveType>,
@@ -59,38 +59,38 @@ pub struct ValueTypeReference {
     pub type_reference: Option<TypeReference>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeReference {
     pub qualified_name: String
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FieldDefinition_SingularType {
     #[serde(rename = "type")]
     pub type_reference: ValueTypeReference
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct FieldDefinition_OptionType {
     pub inner_type: ValueTypeReference
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct FieldDefinition_ListType {
     pub inner_type: ValueTypeReference
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct FieldDefinition_MapType {
     pub key_type: ValueTypeReference,
     pub value_type: ValueTypeReference
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct FieldDefinition {
     pub identifier: Identifier,
@@ -102,14 +102,14 @@ pub struct FieldDefinition {
     pub map_type: Option<FieldDefinition_MapType>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeDefinition {
     pub identifier: Identifier,
     pub field_definitions: Vec<FieldDefinition>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ComponentEventDefinition {
     pub identifier: Identifier,
@@ -118,7 +118,7 @@ pub struct ComponentEventDefinition {
     pub type_reference: ValueTypeReference
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ComponentCommandDefinition {
     pub identifier: Identifier,
@@ -127,7 +127,7 @@ pub struct ComponentCommandDefinition {
     pub response_type: ValueTypeReference
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ComponentDefinition {
     pub identifier: Identifier,
@@ -137,7 +137,7 @@ pub struct ComponentDefinition {
     pub command_definitions: Vec<ComponentCommandDefinition>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SchemaBundleV1 {
     pub enum_definitions: Vec<EnumDefinition>,
@@ -145,7 +145,7 @@ pub struct SchemaBundleV1 {
     pub component_definitions: Vec<ComponentDefinition>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SourceReference {
     pub file_path: String,
@@ -153,13 +153,13 @@ pub struct SourceReference {
     pub column: u32
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SchemaSourceMapV1 {
     pub source_references: HashMap<String, SourceReference>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SchemaBundle {
     pub v1: Option<SchemaBundleV1>,

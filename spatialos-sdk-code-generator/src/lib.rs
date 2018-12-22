@@ -8,8 +8,8 @@ extern crate serde_json;
 extern crate t4rust_derive;
 
 #[allow(non_camel_case_types)]
-mod schema_bundle;
-mod generator;
+pub mod schema_bundle;
+pub mod generator;
 
 #[cfg(test)]
 mod tests {
