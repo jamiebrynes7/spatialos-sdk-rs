@@ -17,3 +17,9 @@ mkdir -p "spatialos/schema/bin"
     --load_all_schema_on_schema_path \
     ${DEPENDENCIES}/std-lib/improbable/*.schema \
     spatialos/schema/*.schema
+
+SCHEMA_BUNDLE="$(pwd)/spatialos/schema/bin/bundle.json"
+GENERATED_CODE="$(pwd)/generated_code.rs"
+pushd ../../..
+cargo run -p spatialos-sdk-code-generator $SCHEMA_BUNDLE $GENERATED_CODE
+popd
