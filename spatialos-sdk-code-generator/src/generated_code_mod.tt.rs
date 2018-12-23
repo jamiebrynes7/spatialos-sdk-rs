@@ -1,5 +1,6 @@
-use spatialos_sdk::worker::internal::schema::{self, SchemaField};
-use spatialos_sdk::worker::{ComponentMetaclass, ComponentUpdate, ComponentData, ComponentVtable, ComponentId};
+use spatialos_sdk::worker::internal::schema::{self, SchemaField, SchemaObject};
+use spatialos_sdk::worker::{ComponentMetaclass, ComponentUpdate, ComponentData, ComponentVtable, ComponentId, TypeSerializer};
+use std::collections::BTreeMap;
 
 use <#= self.root_module() #> as generated_code;
 
@@ -16,17 +17,19 @@ pub struct <#= type_def.identifier.name #> {<#
     <#= field.identifier.name #>: <#= self.generate_field_type(field) #>,<# } #>
 }
 impl TypeSerializer<<#= type_def.identifier.name #>> for <#= type_def.identifier.name #> {
-    fn serialize(input: &Self, output: &mut schema::SchemaObject) {<#
+    fn serialize(input: &Self, output: &mut schema::SchemaObject) -> Result<(), String> {<#
         for field in &type_def.field_definitions {
         #>
-        <#= self.serialize_field(field, "input", "output") #>;<# } #>
+        <#= self.serialize_field(field, &format!("&input.{}", field.identifier.name), "output") #>;<# } #>
+        Ok(())
     }
-    fn deserialize(input: &schema::SchemaObject) -> Self {
-        Self {<#
+    fn deserialize(input: &schema::SchemaObject) -> Result<Self, String> {
+        Ok(Self {<#
             for field in &type_def.field_definitions {
+                let field_expr = format!("input.field::<{}>({})", get_field_schema_type(field), field.field_id);
             #>
-            <#= field.identifier.name #>: <#= self.deserialize_field(field, "input") #>,<# } #>
-        }
+            <#= field.identifier.name #>: <#= self.deserialize_field(field, &field_expr) #>,<# } #>
+        })
     }
 }
 <# } #>
@@ -41,21 +44,23 @@ pub struct <#= component.identifier.name #> {<#
     <#= field.identifier.name #>: <#= self.generate_field_type(field) #>,<# } #>
 }
 impl TypeSerializer<<#= component.identifier.name #>> for <#= component.identifier.name #> {
-    fn serialize(input: &Self, output: &mut schema::SchemaObject) {<#
+    fn serialize(input: &Self, output: &mut schema::SchemaObject) -> Result<(), String> {<#
         for field in &data_type.field_definitions {
         #>
-        <#= self.serialize_field(field, "input", "output") #>;<# } #>
+        <#= self.serialize_field(field, &format!("&input.{}", field.identifier.name), "output") #>;<# } #>
+        Ok(())
     }
-    fn deserialize(input: &schema::SchemaObject) -> Self {
-        Self {<#
+    fn deserialize(input: &schema::SchemaObject) -> Result<Self, String> {
+        Ok(Self {<#
             for field in &data_type.field_definitions {
+                let field_expr = format!("input.field::<{}>({})", get_field_schema_type(field), field.field_id);
             #>
-            <#= field.identifier.name #>: <#= self.deserialize_field(field, "input") #>,<# } #>
-        }
+            <#= field.identifier.name #>: <#= self.deserialize_field(field, &field_expr) #>,<# } #>
+        })
     }
 }
-impl ComponentData<<#= component.identifier.name #>> for <#= generate_identifier(&component.identifier) #> {
-    fn merge(&mut self, update: <#= generate_identifier(&component.identifier) #>Update) {<# 
+impl ComponentData<<#= component.identifier.name #>> for <#= self.generate_identifier(&component.identifier) #> {
+    fn merge(&mut self, update: <#= self.generate_identifier(&component.identifier) #>Update) {<# 
         for field in &self.get_component_fields(&component) {
         #>
         if let Some(value) = update.<#= field.identifier.name #> { self.<#= field.identifier.name #> = Some(value); }<# } #>
@@ -69,21 +74,32 @@ pub struct <#= component.identifier.name #>Update {<#
     <#= field.identifier.name #>: Option<<#= self.generate_field_type(field) #>>,<# } #>
 }
 impl TypeSerializer<<#= component.identifier.name #>Update> for <#= component.identifier.name #>Update {
-    fn serialize(input: &Self, output: &mut schema::SchemaObject) {<#
+    fn serialize(input: &Self, output: &mut schema::SchemaObject) -> Result<(), String> {<#
         for field in &data_type.field_definitions {
         #>
-        <#= self.serialize_update_field(field, "input", "output") #>;<# } #>
+        if let Some(ref value) = input.<#= field.identifier.name #> {
+            <#= self.serialize_field(field, "value", "output") #>;
+        }<# } #>
+        Ok(())
     }
-    fn deserialize(input: &schema::SchemaObject) -> Self {
-        Self {<#
+    fn deserialize(input: &schema::SchemaObject) -> Result<Self, String> {
+        let mut output = Self {<#
             for field in &data_type.field_definitions {
             #>
-            <#= field.identifier.name #>: <#= self.deserialize_update_field(field, "input") #>,<# } #>
-        }
+            <#= field.identifier.name #>: None,<# } #>
+        };<#
+        for field in &data_type.field_definitions {
+        #>
+        let _field_<#= field.identifier.name #> = input.field::<<#= get_field_schema_type(field) #>>(<#= field.field_id #>);
+        if _field_<#= field.identifier.name #>.count() > 0 {
+            let field = &_field_<#= field.identifier.name #>;
+            output.<#= field.identifier.name #> = <#= self.deserialize_field(field, "field") #>;
+        }<# } #>
+        Ok(output)
     }
 }
-impl ComponentUpdate<<#= component.identifier.name #>> for  <#= generate_identifier(&component.identifier) #>Update {
-    fn merge(&mut self, update: <#= generate_identifier(&component.identifier) #>Update) {<#
+impl ComponentUpdate<<#= component.identifier.name #>> for <#= self.generate_identifier(&component.identifier) #>Update {
+    fn merge(&mut self, update: <#= self.generate_identifier(&component.identifier) #>Update) {<#
         for field in &self.get_component_fields(&component) {
         #>
         if let Some(value) = update.<#= field.identifier.name #> { self.<#= field.identifier.name #> = value; }<# } #>
@@ -91,10 +107,10 @@ impl ComponentUpdate<<#= component.identifier.name #>> for  <#= generate_identif
 }
 
 impl ComponentMetaclass for <#= component.identifier.name #> {
-    type Data = <#= generate_identifier(&component.identifier) #>;
-    type Update = <#= generate_identifier(&component.identifier) #>Update;
-    type CommandRequest = <#= generate_identifier(&component.identifier) #>CommandRequest;
-    type CommandResponse = <#= generate_identifier(&component.identifier) #>CommandResponse;
+    type Data = <#= self.generate_identifier(&component.identifier) #>;
+    type Update = <#= self.generate_identifier(&component.identifier) #>Update;
+    type CommandRequest = <#= self.generate_identifier(&component.identifier) #>CommandRequest;
+    type CommandResponse = <#= self.generate_identifier(&component.identifier) #>CommandResponse;
 }
 
 #[derive(Debug)]
@@ -112,83 +128,87 @@ pub enum <#= component.identifier.name #>CommandResponse {<#
 }
 
 impl ComponentVtable<<#= component.identifier.name #>> for <#= component.identifier.name #> {
-    fn serialize_data(data: &Self::Data) -> schema::SchemaComponentData {
+    fn serialize_data(data: &Self::Data) -> Result<schema::SchemaComponentData, String> {
         let mut serialized_data = schema::SchemaComponentData::new(Self::component_id());
-        TypeSerializer<Self::Data>::serialize(data, serialized_data.fields_mut());
-        serialized_data
+        TypeSerializer::<Self::Data>::serialize(data, serialized_data.fields_mut());
+        Ok(serialized_data)
     }
 
-    fn deserialize_data(data: &schema::SchemaComponentData) -> Option<Self::Data> {
-        TypeSerializer<Self::Data>::deserialize(data.fields())
+    fn deserialize_data(data: &schema::SchemaComponentData) -> Result<Self::Data, String> {
+        TypeSerializer::<Self::Data>::deserialize(data.fields())
     }
 
-    fn serialize_update(update: &Self::Update) -> schema::SchemaComponentUpdate {
+    fn serialize_update(update: &Self::Update) -> Result<schema::SchemaComponentUpdate, String> {
         let mut serialized_update = schema::SchemaComponentUpdate::new(Self::component_id());
-        TypeSerializer<Self::Update>::serialize(update, serialized_update.fields_mut());
-        serialized_update
+        TypeSerializer::<Self::Update>::serialize(update, serialized_update.fields_mut());
+        Ok(serialized_update)
     }
 
-    fn deserialize_update(update: &schema::SchemaComponentUpdate) -> Option<Self::Update> {
-        TypeSerializer<Self::Update>::deserialize(update.fields())
+    fn deserialize_update(update: &schema::SchemaComponentUpdate) -> Result<Self::Update, String> {
+        TypeSerializer::<Self::Update>::deserialize(update.fields())
     }
 
-    fn serialize_command_request(request: &Self::CommandRequest) -> schema::SchemaCommandRequest {
+    fn serialize_command_request(request: &Self::CommandRequest) -> Result<schema::SchemaCommandRequest, String> {
         let command_index = match request {<#
             for command in &component.command_definitions {
             #>
             <#= component.identifier.name #>CommandRequest::<#= command.identifier.name #>(_) => <#= command.command_index #>,<# } #>
+            _ => unreachable!()
         };
         let mut serialized_request = schema::SchemaCommandRequest::new(Self::component_id(), command_index);
         match request {<#
             for command in &component.command_definitions {
             #>
             <#= component.identifier.name #>CommandRequest::<#= command.identifier.name #>(ref data) => {
-                TypeSerializer<<#= self.generate_value_type_reference(&command.request_type) #>>::serialize(data, serialized_request.object_mut());
+                TypeSerializer::<<#= self.generate_value_type_reference(&command.request_type) #>>::serialize(data, serialized_request.object_mut());
             },<# } #>
+            _ => unreachable!()
         }
-        serialized_request
+        Ok(serialized_request)
     }
 
-    fn deserialize_command_request(request: &schema::SchemaCommandRequest) -> Option<Self::CommandRequest> {
+    fn deserialize_command_request(request: &schema::SchemaCommandRequest) -> Result<Self::CommandRequest, String> {
         match request.command_index() {<#
             for command in &component.command_definitions {
             #>
             <#= command.command_index #> => {
                 Some(<#= component.identifier.name #>CommandRequest::<#= command.identifier.name #>(
-                    TypeSerializer<<#= self.generate_value_type_reference(&command.request_type) #>>::deserialize(request.object());
+                    TypeSerializer::<<#= self.generate_value_type_reference(&command.request_type) #>>::deserialize(request.object());
                 ))
             },<# } #>
-            _ => None
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component <#= component.identifier.name #>.", request.command_index())
         }
     }
 
-    fn serialize_command_response(response: &Self::CommandResponse) -> schema::SchemaCommandResponse {
+    fn serialize_command_response(response: &Self::CommandResponse) -> Result<schema::SchemaCommandResponse, String> {
         let command_index = match response {<#
             for command in &component.command_definitions {
             #>
             <#= component.identifier.name #>CommandResponse::<#= command.identifier.name #>(_) => <#= command.command_index #>,<# } #>
+            _ => unreachable!()
         };
         let mut serialized_response = schema::SchemaCommandResponse::new(Self::component_id(), command_index);
         match response {<#
             for command in &component.command_definitions {
             #>
             <#= component.identifier.name #>CommandResponse::<#= command.identifier.name #>(ref data) => {
-                TypeSerializer<<#= self.generate_value_type_reference(&command.response_type) #>>::serialize(data, serialized_response.object_mut());
+                TypeSerializer::<<#= self.generate_value_type_reference(&command.response_type) #>>::serialize(data, serialized_response.object_mut());
             },<# } #>
+            _ => unreachable!()
         }
-        serialized_response
+        Ok(serialized_response)
     }
 
-    fn deserialize_command_response(response: &schema::SchemaCommandResponse) -> Option<Self::CommandResponse> {
+    fn deserialize_command_response(response: &schema::SchemaCommandResponse) -> Result<Self::CommandResponse, String> {
         match response.command_index() {<#
             for command in &component.command_definitions {
             #>
             <#= command.command_index #> => {
                 Some(<#= component.identifier.name #>CommandResponse::<#= command.identifier.name #>(
-                    TypeSerializer<<#= self.generate_value_type_reference(&command.response_type) #>>::deserialize(response.object());
+                    TypeSerializer::<<#= self.generate_value_type_reference(&command.response_type) #>>::deserialize(response.object());
                 ))
             },<# } #>
-            _ => None
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component <#= component.identifier.name #>.", request.command_index())
         }
     }
 }

@@ -28,17 +28,15 @@ pub trait ComponentData<M: ComponentMetaclass> {
 }
 
 pub trait ComponentVtable<M: ComponentMetaclass> {
-    fn serialize_data(update: &M::Data) -> schema::SchemaComponentData;
-    fn deserialize_data(update: &schema::SchemaComponentData) -> Option<M::Data>;
-    fn serialize_update(update: &M::Update) -> schema::SchemaComponentUpdate;
-    fn deserialize_update(update: &schema::SchemaComponentUpdate) -> Option<M::Update>;
-    fn serialize_command_request(request: &M::CommandRequest) -> schema::SchemaCommandRequest;
-    fn deserialize_command_request(response: &schema::SchemaCommandRequest) -> Option<M::CommandRequest>;
-    fn serialize_command_response(request: &M::CommandResponse) -> schema::SchemaCommandResponse;
-    fn deserialize_command_response(response: &schema::SchemaCommandResponse) -> Option<M::CommandResponse>;
+    fn serialize_data(update: &M::Data) -> Result<schema::SchemaComponentData, String>;
+    fn deserialize_data(update: &schema::SchemaComponentData) -> Result<M::Data, String>;
+    fn serialize_update(update: &M::Update) -> Result<schema::SchemaComponentUpdate, String>;
+    fn deserialize_update(update: &schema::SchemaComponentUpdate) -> Result<M::Update, String>;
+    fn serialize_command_request(request: &M::CommandRequest) -> Result<schema::SchemaCommandRequest, String>;
+    fn deserialize_command_request(response: &schema::SchemaCommandRequest) -> Result<M::CommandRequest, String>;
+    fn serialize_command_response(request: &M::CommandResponse) -> Result<schema::SchemaCommandResponse, String>;
+    fn deserialize_command_response(response: &schema::SchemaCommandResponse) -> Result<M::CommandResponse, String>;
 }
-
-// TODO: CommandRequestSerializer and CommandResponseSerializer
 
 // A data structure which represents all known component types.
 pub struct ComponentDatabase {
@@ -66,8 +64,8 @@ impl ComponentDatabase {
 
 // A trait that's implemented by a type which can be serialized and deserialized into a schema object.
 pub trait TypeSerializer<T> {
-    fn serialize(input: &T, output: &mut schema::SchemaObject);
-    fn deserialize(input: &schema::SchemaObject) -> T;
+    fn serialize(input: &T, output: &mut schema::SchemaObject) -> Result<(), String>;
+    fn deserialize(input: &schema::SchemaObject) -> Result<T, String>;
 }
 
 // Client handles. An object which contains a refernce counted instance to T.
@@ -177,7 +175,7 @@ unsafe extern "C" fn vtable_component_data_deserialize<M: ComponentMetaclass, V:
         internal: data
     };
     let deserialized_result = V::deserialize_data(&schema_data);
-    if let Some(deserialized_data) = deserialized_result {
+    if let Ok(deserialized_data) = deserialized_result {
         *handle_out = ClientHandle::<M::Data>::handle_allocate(deserialized_data);
         1
     } else {
@@ -190,8 +188,12 @@ unsafe extern "C" fn vtable_component_data_serialize<M: ComponentMetaclass, V: C
     handle: *mut raw::c_void,
     data: *mut *mut worker::Schema_ComponentData) {
     let client_handle_ptr: *mut ClientHandle<M::Data> = mem::transmute(handle);
-    let schema_data = V::serialize_data((*client_handle_ptr).data.borrow());
-    *data = schema_data.internal;
+    let schema_result = V::serialize_data((*client_handle_ptr).data.borrow());
+    if let Ok(schema_data) = schema_result {
+        *data = schema_data.internal;
+    } else {
+        *data = ptr::null_mut();
+    }
 }
 
 unsafe extern "C" fn vtable_component_update_free<M: ComponentMetaclass>(_: u32, _: *mut raw::c_void, handle: *mut raw::c_void) {
@@ -211,7 +213,7 @@ unsafe extern "C" fn vtable_component_update_deserialize<M: ComponentMetaclass, 
         internal: update
     };
     let deserialized_result = V::deserialize_update(&schema_update);
-    if let Some(deserialized_update) = deserialized_result {
+    if let Ok(deserialized_update) = deserialized_result {
         *handle_out = ClientHandle::<M::Update>::handle_allocate(deserialized_update);
         1
     } else {
@@ -224,8 +226,12 @@ unsafe extern "C" fn vtable_component_update_serialize<M: ComponentMetaclass, V:
     handle: *mut raw::c_void,
     update: *mut *mut worker::Schema_ComponentUpdate) {
     let client_handle_ptr: *mut ClientHandle<M::Update> = mem::transmute(handle);
-    let schema_update = V::serialize_update((*client_handle_ptr).data.borrow());
-    *update = schema_update.internal;
+    let schema_result = V::serialize_update((*client_handle_ptr).data.borrow());
+    if let Ok(schema_update) = schema_result {
+        *update = schema_update.internal;
+    } else {
+        *update = ptr::null_mut();
+    }
 }
 
 unsafe extern "C" fn vtable_command_request_free<M: ComponentMetaclass>(_: u32, _: *mut raw::c_void, handle: *mut raw::c_void) {
@@ -240,13 +246,12 @@ unsafe extern "C" fn vtable_command_request_deserialize<M: ComponentMetaclass, V
     _: u32, _: *mut raw::c_void,
     request: *mut worker::Schema_CommandRequest,
     handle_out: *mut *mut worker::Worker_CommandRequestHandle) -> u8 {
-
     let schema_request = schema::SchemaCommandRequest {
         component_id: M::component_id(),
         internal: request
     };
     let deserialized_result = V::deserialize_command_request(&schema_request);
-    if let Some(deserialized_request) = deserialized_result {
+    if let Ok(deserialized_request) = deserialized_result {
         *handle_out = ClientHandle::<M::CommandRequest>::handle_allocate(deserialized_request);
         1
     } else {
@@ -259,8 +264,12 @@ unsafe extern "C" fn vtable_command_request_serialize<M: ComponentMetaclass, V: 
     handle: *mut raw::c_void,
     request: *mut *mut worker::Schema_CommandRequest) {
     let client_handle_ptr: *mut ClientHandle<M::CommandRequest> = mem::transmute(handle);
-    let schema_request = V::serialize_command_request((*client_handle_ptr).data.borrow());
-    *request = schema_request.internal;
+    let schema_result = V::serialize_command_request((*client_handle_ptr).data.borrow());
+    if let Ok(schema_request) = schema_result {
+        *request = schema_request.internal;
+    } else {
+        *request = ptr::null_mut();
+    }
 }
 
 unsafe extern "C" fn vtable_command_response_free<M: ComponentMetaclass>(_: u32, _: *mut raw::c_void, handle: *mut raw::c_void) {
@@ -275,13 +284,12 @@ unsafe extern "C" fn vtable_command_response_deserialize<M: ComponentMetaclass, 
     _: u32, _: *mut raw::c_void,
     response: *mut worker::Schema_CommandResponse,
     handle_out: *mut *mut worker::Worker_CommandRequestHandle) -> u8 {
-
     let schema_response = schema::SchemaCommandResponse {
         component_id: M::component_id(),
         internal: response
     };
     let deserialized_result = V::deserialize_command_response(&schema_response);
-    if let Some(deserialized_response) = deserialized_result {
+    if let Ok(deserialized_response) = deserialized_result {
         *handle_out = ClientHandle::<M::CommandResponse>::handle_allocate(deserialized_response);
         1
     } else {
@@ -294,8 +302,12 @@ unsafe extern "C" fn vtable_command_response_serialize<M: ComponentMetaclass, V:
     handle: *mut raw::c_void,
     response: *mut *mut worker::Schema_CommandResponse) {
     let client_handle_ptr: *mut ClientHandle<M::CommandResponse> = mem::transmute(handle);
-    let schema_response = V::serialize_command_response((*client_handle_ptr).data.borrow());
-    *response = schema_response.internal;
+    let schema_result = V::serialize_command_response((*client_handle_ptr).data.borrow());
+    if let Ok(schema_response) = schema_result {
+        *response = schema_response.internal;
+    } else {
+        *response = ptr::null_mut();
+    }
 }
 
 pub mod internal {

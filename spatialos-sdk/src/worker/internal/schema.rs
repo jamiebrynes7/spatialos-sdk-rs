@@ -47,6 +47,18 @@ pub trait SchemaField<T> {
     fn add_list(&mut self, value: &[T]);
 }
 
+pub trait SchemaObjectField {
+    fn get(&self) -> Option<SchemaObject> {
+        if self.count() == 0 { None } else { Some(self.get_or_add()) }
+    }
+
+    fn get_or_add(&self) -> SchemaObject;
+    fn index(&self, index: usize) -> SchemaObject;
+    fn count(&self) -> usize;
+
+    fn add(&mut self) -> SchemaObject;
+}
+
 impl SchemaComponentUpdate {
     pub(crate) fn from_worker_sdk(component_id: ComponentId, component_update: *mut Schema_ComponentUpdate) -> SchemaComponentUpdate {
         SchemaComponentUpdate {
@@ -227,7 +239,6 @@ impl<'a> SchemaField<f32> for SchemaFieldContainer<'a, f32> {
     }
 }
 
-
 impl<'a> SchemaField<i32> for SchemaFieldContainer<'a, i32> {
     fn get_or_default(&self) -> i32 {
         unsafe { Schema_GetInt32(self.container.internal, self.field_id) }
@@ -246,6 +257,28 @@ impl<'a> SchemaField<i32> for SchemaFieldContainer<'a, i32> {
         unsafe {
             let ptr = value.as_ptr();
             Schema_AddInt32List(self.container.internal, self.field_id, ptr, value.len() as u32);
+        }
+    }
+}
+
+impl<'a> SchemaObjectField for SchemaFieldContainer<'a, SchemaObject> {
+    fn get_or_add(&self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_GetObject(self.container.internal, self.field_id) }
+        }
+    }
+    fn index(&self, index: usize) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_IndexObject(self.container.internal, self.field_id, index as u32) }
+        }
+    }
+    fn count(&self) -> usize {
+        unsafe { Schema_GetObjectCount(self.container.internal, self.field_id) as usize }
+    }
+
+    fn add(&mut self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_AddObject(self.container.internal, self.field_id) }
         }
     }
 }
