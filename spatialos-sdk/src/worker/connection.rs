@@ -66,7 +66,7 @@ pub trait Connection {
     fn send_component_interest(
         &mut self,
         entity_id: EntityId,
-        interest_overrides: &Vec<InterestOverride>,
+        interest_overrides: &[InterestOverride],
     );
 
     fn send_authority_loss_imminent_acknowledgement(
@@ -298,7 +298,7 @@ impl Connection for WorkerConnection {
     fn send_component_interest(
         &mut self,
         entity_id: EntityId,
-        interest_overrides: &Vec<InterestOverride>,
+        interest_overrides: &[InterestOverride],
     ) {
         assert!(!self.connection_ptr.is_null());
         let worker_sdk_overrides = interest_overrides
@@ -460,22 +460,20 @@ impl WorkerConnectionFuture {
             unsafe { Worker_ConnectionFuture_Get(self.future_ptr, &timeout_millis) };
 
         if connection_ptr.is_null() {
-            // The get operation timed out.
             None
         } else {
-            // Connection future has returned - either a valid connection or a failed connection.
             let mut worker_connection = WorkerConnection::new(connection_ptr);
             self.was_consumed = true;
-            match worker_connection.is_connected() {
-                true => Some(Ok(worker_connection)),
-                false => {
-                    let op_list = worker_connection.get_op_list(0); // Segfaults!
-                    let disconnect_reason = worker_connection.get_disconnect_reason(&op_list);
 
-                    match disconnect_reason {
-                        Some(v) => Some(Err(v)),
-                        None => Some(Err("No disconnect op found in ops list.".to_owned())),
-                    }
+            if worker_connection.is_connected() {
+                Some(Ok(worker_connection))
+            } else {
+                let op_list = worker_connection.get_op_list(0);
+                let disconnect_reason = worker_connection.get_disconnect_reason(&op_list);
+
+                match disconnect_reason {
+                    Some(v) => Some(Err(v)),
+                    None => Some(Err("No disconnect op found in ops list.".to_owned())),
                 }
             }
         }
@@ -488,12 +486,8 @@ impl Drop for WorkerConnectionFuture {
         unsafe {
             Worker_ConnectionFuture_Destroy(self.future_ptr);
 
-            match self.queue_status_callback {
-                Some(ptr) => {
-                    // Drop the callback
-                    let _callback = Box::from_raw(ptr as *mut QueueStatusCallback);
-                }
-                None => {}
+            if let Some(ptr) = self.queue_status_callback {
+                let _callback = Box::from_raw(ptr as *mut QueueStatusCallback);
             }
         };
     }

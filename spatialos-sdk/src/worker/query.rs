@@ -2,7 +2,17 @@ use std::ptr;
 
 use crate::worker::EntityId;
 
-use spatialos_sdk_sys::worker::*;
+use spatialos_sdk_sys::worker::{
+    Worker_AndConstraint, Worker_ComponentConstraint, Worker_Constraint,
+    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_AND,
+    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_COMPONENT,
+    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_ENTITY_ID,
+    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_NOT,
+    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_OR,
+    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_SPHERE, Worker_Constraint__bindgen_ty_1,
+    Worker_EntityIdConstraint, Worker_EntityQuery, Worker_NotConstraint, Worker_OrConstraint,
+    Worker_SphereConstraint,
+};
 
 pub enum ResultType {
     Count,
@@ -237,12 +247,22 @@ impl QueryConstraint {
     }
 }
 
+// Since we are not doing floating point operations, this should be okay.
+#[allow(clippy::float_cmp)]
 #[cfg(test)]
 mod test {
-    use crate::worker::query::*;
+    use crate::worker::query::{EntityQuery, QueryConstraint, ResultType};
     use crate::worker::EntityId;
-    use spatialos_sdk_sys::worker::*;
     use std::slice::from_raw_parts;
+
+    use spatialos_sdk_sys::worker::{
+        Worker_Constraint, Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_AND,
+        Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_COMPONENT,
+        Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_ENTITY_ID,
+        Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_NOT,
+        Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_OR,
+        Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_SPHERE,
+    };
 
     fn is_worker_query_valid(query: &EntityQuery) {
         let worker_query = query.to_worker_sdk();
