@@ -37,8 +37,7 @@ pub fn get_connection(configuration: WorkerConfiguration) -> Result<WorkerConnec
 
     if configuration.connect_with_poll {
         get_connection_poll(&mut future)
-    }
-    else {
+    } else {
         future.get()
     }
 }
