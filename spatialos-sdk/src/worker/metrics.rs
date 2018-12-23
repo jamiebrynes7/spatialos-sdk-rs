@@ -83,9 +83,10 @@ unsafe impl WorkerSdkConversion<Worker_Metrics> for Metrics {
         .map(|m| HistogramMetric::from_worker_sdk(m))
         .collect();
 
-        let load = match metrics.load.is_null() {
-            true => None,
-            false => Some(*metrics.load),
+        let load = if metrics.load.is_null() {
+            None
+        } else {
+            Some(*metrics.load)
         };
 
         Metrics {

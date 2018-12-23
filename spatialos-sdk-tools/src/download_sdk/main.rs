@@ -19,35 +19,35 @@ fn main() {
     let (download_dir, sdk_version) = get_configuration();
 
     download_and_unpack(
-        SpatialPackageSource::WorkerSdk,
+        &SpatialPackageSource::WorkerSdk,
         "c-static-x86_64-msvc_md-win32",
         &sdk_version,
         &format!("{}/win", &download_dir),
     )
     .expect("Could not download package");
     download_and_unpack(
-        SpatialPackageSource::WorkerSdk,
+        &SpatialPackageSource::WorkerSdk,
         "c-static-x86_64-clang_libcpp-macos",
         &sdk_version,
         &format!("{}/macos", &download_dir),
     )
     .expect("Could not download package");
     download_and_unpack(
-        SpatialPackageSource::WorkerSdk,
+        &SpatialPackageSource::WorkerSdk,
         "c-static-x86_64-gcc_libstdcpp_pic-linux",
         &sdk_version,
         &format!("{}/linux", &download_dir),
     )
     .expect("Could not download package");
     download_and_unpack(
-        SpatialPackageSource::Schema,
+        &SpatialPackageSource::Schema,
         "standard_library",
         &sdk_version,
         &format!("{}/std-lib", &download_dir),
     )
     .expect("Could not download package");
     download_and_unpack(
-        SpatialPackageSource::Tools,
+        &SpatialPackageSource::Tools,
         format!("schema_compiler-x86_64-{}", DEV_PLATFORM).as_ref(),
         &sdk_version,
         &format!("{}/schema-compiler", &download_dir),
@@ -112,7 +112,7 @@ fn get_configuration() -> (String, String) {
 ///
 /// * returns               - an error if the operation could not be completed, empty otherwise
 fn download_and_unpack(
-    package_source: SpatialPackageSource,
+    package_source: &SpatialPackageSource,
     package_name: &str,
     sdk_version: &str,
     target_directory: &str,
@@ -152,7 +152,7 @@ fn download_and_unpack(
 ///
 /// * package_source    - the package source, i.e - worker_sdk, tools, schema.
 fn download_package(
-    package_source: SpatialPackageSource,
+    package_source: &SpatialPackageSource,
     package_name: &str,
     sdk_version: &str,
     target_file: &str,

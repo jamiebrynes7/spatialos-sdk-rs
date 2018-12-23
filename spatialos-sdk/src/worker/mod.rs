@@ -25,11 +25,11 @@ impl EntityId {
         EntityId { id }
     }
 
-    pub fn is_valid(&self) -> bool {
+    pub fn is_valid(self) -> bool {
         self.id > 0
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn to_string(self) -> String {
         format!("EntityId: {}", self.id)
     }
 }
@@ -61,8 +61,8 @@ pub enum Authority {
 }
 
 impl Authority {
-    pub fn has_authority(&self) -> bool {
-        self != &Authority::NotAuthoritative
+    pub fn has_authority(self) -> bool {
+        self != Authority::NotAuthoritative
     }
 }
 
@@ -86,7 +86,7 @@ pub enum LogLevel {
 }
 
 impl LogLevel {
-    fn to_worker_sdk(&self) -> u8 {
+    fn to_worker_sdk(self) -> u8 {
         match self {
             LogLevel::Debug => 1,
             LogLevel::Info => 2,

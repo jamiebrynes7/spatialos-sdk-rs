@@ -77,7 +77,7 @@ pub enum WorkerOp {
 unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
     unsafe fn from_worker_sdk(op: &Worker_Op) -> Self {
         let erased_op = op.__bindgen_anon_1;
-        let op_type = op.op_type as u32;
+        let op_type = u32::from(op.op_type);
         match op_type {
             Worker_OpType_WORKER_OP_TYPE_DISCONNECT => {
                 let op = erased_op.disconnect;
@@ -182,7 +182,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
             }
             Worker_OpType_WORKER_OP_TYPE_COMMAND_RESPONSE => {
                 let op = erased_op.command_response;
-                let status_code = match op.status_code as u32 {
+                let status_code = match u32::from(op.status_code) {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                         StatusCode::Success(CommandResponse::from_worker_sdk(&op.response))
                     }
@@ -219,7 +219,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
             }
             Worker_OpType_WORKER_OP_TYPE_RESERVE_ENTITY_IDS_RESPONSE => {
                 let op = erased_op.reserve_entity_ids_response;
-                let status_code = match op.status_code as u32 {
+                let status_code = match u32::from(op.status_code) {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                         StatusCode::Success(EntityId::new(op.first_entity_id))
                     }
@@ -256,7 +256,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
             }
             Worker_OpType_WORKER_OP_TYPE_CREATE_ENTITY_RESPONSE => {
                 let op = erased_op.create_entity_response;
-                let status_code = match op.status_code as u32 {
+                let status_code = match u32::from(op.status_code) {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                         StatusCode::Success(EntityId::new(op.entity_id))
                     }
@@ -292,7 +292,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
             }
             Worker_OpType_WORKER_OP_TYPE_DELETE_ENTITY_RESPONSE => {
                 let op = erased_op.delete_entity_response;
-                let status_code = match op.status_code as u32 {
+                let status_code = match u32::from(op.status_code) {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => StatusCode::Success(()),
                     Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
                         StatusCode::Timeout(cstr_to_string(op.message))
@@ -327,7 +327,7 @@ unsafe impl WorkerSdkConversion<Worker_Op> for WorkerOp {
             }
             Worker_OpType_WORKER_OP_TYPE_ENTITY_QUERY_RESPONSE => {
                 let op = erased_op.entity_query_response;
-                let status_code = match op.status_code as u32 {
+                let status_code = match u32::from(op.status_code) {
                     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                         if op.results.is_null() {
                             // Is count type.
