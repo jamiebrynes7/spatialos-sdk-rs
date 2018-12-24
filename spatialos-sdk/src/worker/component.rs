@@ -2,19 +2,17 @@ use spatialos_sdk_sys::worker::{
     Schema_ComponentData, Schema_ComponentUpdate, Worker_ComponentData, Worker_ComponentUpdate,
 };
 
-use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
-
 // TODO: Wrap Schema_ComponentData
 pub struct ComponentData {
     pub component_id: u32,
     pub schema_type: *mut Schema_ComponentData,
 }
 
-unsafe impl WorkerSdkConversion<Worker_ComponentData> for ComponentData {
-    unsafe fn from_worker_sdk(component_data: &Worker_ComponentData) -> ComponentData {
+impl From<&Worker_ComponentData> for ComponentData {
+    fn from(data: &Worker_ComponentData) -> Self {
         ComponentData {
-            component_id: component_data.component_id,
-            schema_type: component_data.schema_type,
+            component_id: data.component_id,
+            schema_type: data.schema_type,
         }
     }
 }
@@ -25,11 +23,11 @@ pub struct ComponentUpdate {
     pub schema_type: *mut Schema_ComponentUpdate,
 }
 
-unsafe impl WorkerSdkConversion<Worker_ComponentUpdate> for ComponentUpdate {
-    unsafe fn from_worker_sdk(component_update: &Worker_ComponentUpdate) -> ComponentUpdate {
+impl From<&Worker_ComponentUpdate> for ComponentUpdate {
+    fn from(update: &Worker_ComponentUpdate) -> Self {
         ComponentUpdate {
-            component_id: component_update.component_id,
-            schema_type: component_update.schema_type,
+            component_id: update.component_id,
+            schema_type: update.schema_type,
         }
     }
 }

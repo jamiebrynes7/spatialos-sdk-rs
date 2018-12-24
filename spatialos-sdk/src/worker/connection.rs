@@ -82,7 +82,7 @@ pub trait Connection {
     fn is_connected(&self) -> bool;
     fn get_worker_id(&self) -> &str;
     fn get_worker_attributes(&self) -> Vec<String>;
-    fn get_worker_flag<T: Into<Vec<u8>>>(&self, name: T) -> Option<String>;
+    fn get_worker_flag(&self, name: &str) -> Option<String>;
 
     fn get_op_list(&mut self, timeout_millis: u32) -> OpList;
 }
@@ -366,7 +366,7 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn get_worker_flag<T: Into<Vec<u8>>>(&self, name: T) -> Option<String> {
+    fn get_worker_flag(&self, name: &str) -> Option<String> {
         let flag_name = CString::new(name).unwrap();
 
         extern "C" fn worker_flag_handler(

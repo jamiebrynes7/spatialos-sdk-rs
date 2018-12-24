@@ -97,6 +97,7 @@ impl LogLevel {
     }
 }
 
+// TODO: Replace with TryFrom when it stabilises: https://github.com/rust-lang/rust/issues/33417
 impl From<u8> for LogLevel {
     fn from(log_level: u8) -> Self {
         match log_level {
@@ -105,7 +106,10 @@ impl From<u8> for LogLevel {
             3 => LogLevel::Warn,
             4 => LogLevel::Error,
             5 => LogLevel::Fatal,
-            _ => panic!("Unknown log level: {}", log_level),
+            _ => {
+                eprintln!("Unknown log level: {}, returning Error.", log_level);
+                LogLevel::Error
+            },
         }
     }
 }
