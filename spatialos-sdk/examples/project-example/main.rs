@@ -7,7 +7,7 @@ use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
 use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
-use spatialos_sdk::worker::metrics::*;
+use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
 use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 
@@ -96,27 +96,19 @@ fn send_query(c: &mut WorkerConnection) {
 }
 
 fn send_metrics(c: &mut WorkerConnection) {
-    let m = Metrics {
-        load: Some(0.2),
-        gauge_metrics: vec![
-            GaugeMetric {
-                key: "some metric".to_owned(),
-                value: 0.15,
-            },
-            GaugeMetric {
-                key: "another metric".to_owned(),
-                value: 0.2,
-            },
-        ],
-        histogram_metrics: vec![HistogramMetric {
-            key: "yet another metric".to_owned(),
-            sum: 2.0,
-            buckets: vec![HistogramMetricBucket {
-                upper_bound: 6.7,
-                samples: 2,
-            }],
-        }],
-    };
+    let mut m = Metrics::new()
+        .set_load(0.2)
+        .set_gauge_metric("some_metric", 0.15)
+        .set_histogram_metric("histogram_metric", HistogramMetric::new(&[6.7]));
+
+    let gauge_metric = m.add_gauge_metric("another_metric").unwrap();
+    *gauge_metric = 0.2;
+
+    let histogram_metric = m
+        .add_histogram_metric("another_histogram", &[0.1, 0.2, 0.3])
+        .unwrap();
+    histogram_metric.add_sample(1.0);
+    histogram_metric.add_sample(0.5);
 
     c.send_metrics(&m);
 }
