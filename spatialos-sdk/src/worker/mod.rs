@@ -109,7 +109,7 @@ impl From<u8> for LogLevel {
             _ => {
                 eprintln!("Unknown log level: {}, returning Error.", log_level);
                 LogLevel::Error
-            },
+            }
         }
     }
 }
