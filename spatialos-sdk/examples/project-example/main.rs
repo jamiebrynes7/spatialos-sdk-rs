@@ -97,9 +97,9 @@ fn send_query(c: &mut WorkerConnection) {
 
 fn send_metrics(c: &mut WorkerConnection) {
     let mut m = Metrics::new()
-        .set_load(0.2)
-        .set_gauge_metric("some_metric", 0.15)
-        .set_histogram_metric("histogram_metric", HistogramMetric::new(&[6.7]));
+        .with_load(0.2)
+        .with_gauge_metric("some_metric", 0.15)
+        .with_histogram_metric("histogram_metric", HistogramMetric::new(&[6.7]));
 
     let gauge_metric = m.add_gauge_metric("another_metric").unwrap();
     *gauge_metric = 0.2;

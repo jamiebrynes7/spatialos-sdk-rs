@@ -8,6 +8,12 @@ use spatialos_sdk_sys::worker::{
     Worker_GaugeMetric, Worker_HistogramMetric, Worker_HistogramMetricBucket, Worker_Metrics,
 };
 
+#[derive(Debug)]
+pub enum MetricsError {
+    KeyAlreadyExists,
+}
+
+#[derive(Default)]
 pub struct Metrics {
     pub load: Option<f64>,
     pub gauge_metrics: HashMap<String, f64>,
@@ -23,12 +29,12 @@ impl Metrics {
         }
     }
 
-    pub fn set_load(mut self, load: f64) -> Self {
+    pub fn with_load(mut self, load: f64) -> Self {
         self.load = Some(load);
         self
     }
 
-    pub fn set_histogram_metric<T: Into<String>>(
+    pub fn with_histogram_metric<T: Into<String>>(
         mut self,
         key: T,
         histogram_metric: HistogramMetric,
@@ -37,14 +43,14 @@ impl Metrics {
         self
     }
 
-    pub fn set_gauge_metric<T: Into<String>>(mut self, key: T, value: f64) -> Self {
+    pub fn with_gauge_metric<T: Into<String>>(mut self, key: T, value: f64) -> Self {
         self.gauge_metrics.insert(key.into(), value);
         self
     }
 
-    pub fn add_gauge_metric<T: Into<String>>(&mut self, key: T) -> Result<&mut f64, ()> {
+    pub fn add_gauge_metric<T: Into<String>>(&mut self, key: T) -> Result<&mut f64, MetricsError> {
         match self.gauge_metrics.entry(key.into()) {
-            Entry::Occupied(_) => Err(()),
+            Entry::Occupied(_) => Err(MetricsError::KeyAlreadyExists),
             Entry::Vacant(entry) => Ok(entry.insert(0.0)),
         }
     }
@@ -53,9 +59,9 @@ impl Metrics {
         &mut self,
         key: T,
         bounds: &[f64],
-    ) -> Result<&mut HistogramMetric, ()> {
+    ) -> Result<&mut HistogramMetric, MetricsError> {
         match self.histogram_metrics.entry(key.into()) {
-            Entry::Occupied(_) => Err(()),
+            Entry::Occupied(_) => Err(MetricsError::KeyAlreadyExists),
             Entry::Vacant(entry) => Ok(entry.insert(HistogramMetric::new(bounds))),
         }
     }

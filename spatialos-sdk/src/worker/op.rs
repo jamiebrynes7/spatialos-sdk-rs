@@ -25,7 +25,7 @@ impl OpList {
             let worker_op_list = *raw_ops_list_ptr;
             let ops = slice::from_raw_parts(worker_op_list.ops, worker_op_list.op_count as usize)
                 .iter()
-                .map(|op| WorkerOp::from(op))
+                .map(WorkerOp::from)
                 .collect::<Vec<WorkerOp>>();
 
             OpList {
