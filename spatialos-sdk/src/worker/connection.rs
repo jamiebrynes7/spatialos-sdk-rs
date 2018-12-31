@@ -157,8 +157,7 @@ impl WorkerConnection {
 
     pub fn get_disconnect_reason(&mut self) -> Option<String> {
         self.get_op_list(0)
-            .ops
-            .iter()
+            .into_iter()
             .filter_map(|op| match op {
                 WorkerOp::Disconnect(op) => Some(op.reason.clone()),
                 _ => None,

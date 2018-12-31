@@ -12,10 +12,8 @@ use crate::worker::{Authority, EntityId, LogLevel, RequestId};
 use crate::worker::internal::utils::*;
 use spatialos_sdk_sys::worker::*;
 
-// TODO: Investigate tying lifetimes of ops to the OpList - there is potentially C-level data contained
-// inside them.
 pub struct OpList {
-    pub ops: Vec<WorkerOp>,
+    ops: Vec<WorkerOp>,
     internal_ptr: *mut Worker_OpList,
 }
 
@@ -33,6 +31,15 @@ impl OpList {
                 internal_ptr: raw_ops_list_ptr,
             }
         }
+    }
+}
+
+impl<'a> IntoIterator for &'a OpList {
+    type Item = &'a WorkerOp;
+    type IntoIter = slice::Iter<'a, WorkerOp>;
+
+    fn into_iter(self) -> <Self as IntoIterator>::IntoIter {
+        self.ops.iter()
     }
 }
 
