@@ -34,6 +34,13 @@ pub struct EntityQuery {
 }
 
 impl EntityQuery {
+    pub fn new(constraint: QueryConstraint, result_type: ResultType) -> Self {
+        EntityQuery {
+            constraint,
+            result_type,
+        }
+    }
+
     pub(crate) fn to_worker_sdk(&self) -> WrappedEntityQuery {
         let (constraint, underlying_constraints) = self.constraint.to_worker_sdk();
         match &self.result_type {

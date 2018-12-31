@@ -69,22 +69,20 @@ fn check_for_flag(connection: &WorkerConnection, flag_name: &str) {
 }
 
 fn send_query(c: &mut WorkerConnection) {
-    let c1 = QueryConstraint::Component(0);
-    let c2 = QueryConstraint::Component(1);
-    let c3 = QueryConstraint::Component(2);
-    let c4 = QueryConstraint::Component(3);
-    let c5 = QueryConstraint::Component(4);
-    let c6 = QueryConstraint::Sphere(10.0, 10.0, 10.0, 250.0);
-
-    let or = QueryConstraint::Or(vec![c1, c2]);
-    let not = QueryConstraint::Not(Box::new(c3));
-    let and_not = QueryConstraint::And(vec![c6, not]);
-
-    let final_constraint = QueryConstraint::And(vec![or, and_not, c4, c5]);
-    let query = EntityQuery {
-        constraint: final_constraint,
-        result_type: ResultType::Count,
-    };
+    let query = EntityQuery::new(
+        QueryConstraint::And(vec![
+            QueryConstraint::Or(vec![
+                QueryConstraint::Component(0),
+                QueryConstraint::Component(1),
+            ]),
+            QueryConstraint::And(vec![
+                QueryConstraint::Sphere(10.0, 10.0, 10.0, 250.0),
+                QueryConstraint::Not(Box::new(QueryConstraint::Component(2))),
+            ]),
+            QueryConstraint::EntityId(EntityId::new(10)),
+        ]),
+        ResultType::Count,
+    );
 
     c.send_entity_query_request(EntityQueryRequest(query), None);
 }
