@@ -7,7 +7,7 @@ use crate::worker::commands::*;
 use crate::worker::component::*;
 use crate::worker::entity_snapshot::EntitySnapshot;
 use crate::worker::metrics::Metrics;
-use crate::worker::{Authority, EntityId, LogLevel, RequestId};
+use crate::worker::{Authority, ComponentId, EntityId, LogLevel, RequestId};
 
 use crate::worker::internal::utils::*;
 use spatialos_sdk_sys::worker::*;
@@ -445,12 +445,12 @@ pub struct AddComponentOp {
 
 pub struct RemoveComponentOp {
     pub entity_id: EntityId,
-    pub component_id: u32,
+    pub component_id: ComponentId,
 }
 
 pub struct AuthorityChangeOp {
     pub entity_id: EntityId,
-    pub component_id: u32,
+    pub component_id: ComponentId,
     pub authority: Authority,
 }
 

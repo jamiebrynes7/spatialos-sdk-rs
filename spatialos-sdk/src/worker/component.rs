@@ -2,9 +2,11 @@ use spatialos_sdk_sys::worker::{
     Schema_ComponentData, Schema_ComponentUpdate, Worker_ComponentData, Worker_ComponentUpdate,
 };
 
+use crate::worker::ComponentId;
+
 // TODO: Wrap Schema_ComponentData
 pub struct ComponentData {
-    pub component_id: u32,
+    pub component_id: ComponentId,
     pub schema_type: *mut Schema_ComponentData,
 }
 
@@ -19,7 +21,7 @@ impl From<&Worker_ComponentData> for ComponentData {
 
 // TODO: Wrap Schema_ComponentUpdate
 pub struct ComponentUpdate {
-    pub component_id: u32,
+    pub component_id: ComponentId,
     pub schema_type: *mut Schema_ComponentUpdate,
 }
 

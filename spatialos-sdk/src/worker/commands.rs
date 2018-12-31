@@ -1,5 +1,5 @@
 use crate::worker::query::EntityQuery;
-use crate::worker::EntityId;
+use crate::worker::{ComponentId, EntityId};
 
 use spatialos_sdk_sys::worker::{
     Schema_CommandRequest, Schema_CommandResponse, Worker_CommandRequest, Worker_CommandResponse,
@@ -7,7 +7,7 @@ use spatialos_sdk_sys::worker::{
 
 // TODO: Wrap Schema_CommandRequest
 pub struct CommandRequest {
-    pub component_id: u32,
+    pub component_id: ComponentId,
     pub schema_type: *mut Schema_CommandRequest,
 }
 
@@ -22,7 +22,7 @@ impl From<&Worker_CommandRequest> for CommandRequest {
 
 // TODO: Wrap Schema_CommandResponse
 pub struct CommandResponse {
-    pub component_id: u32,
+    pub component_id: ComponentId,
     pub schema_type: *mut Schema_CommandResponse,
 }
 

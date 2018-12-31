@@ -15,6 +15,8 @@ pub mod vtable;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::marker::PhantomData;
 
+type ComponentId = u32;
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct EntityId {
     pub id: i64,
@@ -115,7 +117,7 @@ impl From<u8> for LogLevel {
 }
 
 pub struct InterestOverride {
-    pub component_id: u32,
+    pub component_id: ComponentId,
     pub is_interested: bool,
 }
 
