@@ -40,14 +40,8 @@ fn exercise_connection_code_paths(mut c: WorkerConnection) {
     send_query(&mut c);
 
     let interested = vec![
-        InterestOverride {
-            is_interested: true,
-            component_id: 1,
-        },
-        InterestOverride {
-            is_interested: false,
-            component_id: 100,
-        },
+        InterestOverride::new(1, true),
+        InterestOverride::new(100, false),
     ];
     c.send_component_interest(EntityId::new(1), &interested);
     c.send_authority_loss_imminent_acknowledgement(EntityId::new(1), 1337);

@@ -36,7 +36,7 @@ impl EntityId {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct RequestId<T> {
     pub id: u32,
     _type: PhantomData<*const T>,
@@ -122,6 +122,13 @@ pub struct InterestOverride {
 }
 
 impl InterestOverride {
+    pub fn new(component_id: ComponentId, is_interested: bool) -> Self {
+        InterestOverride {
+            component_id,
+            is_interested,
+        }
+    }
+
     pub(crate) fn to_worker_sdk(&self) -> Worker_InterestOverride {
         Worker_InterestOverride {
             is_interested: self.is_interested as u8,
