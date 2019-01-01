@@ -1,6 +1,8 @@
-use spatialos_sdk_sys::worker::*;
-
 use std::ffi::{CStr, CString};
+
+use futures::{Async, Future};
+
+use spatialos_sdk_sys::worker::*;
 
 use crate::worker::internal::utils::cstr_to_string;
 use crate::worker::parameters::ProtocolLoggingParameters;
@@ -165,37 +167,17 @@ pub struct DeploymentListFuture {
 }
 
 impl DeploymentListFuture {
-    pub fn get(&mut self) -> Result<Vec<Deployment>, String> {
-        if self.was_consumed {
-            return Err("DeploymentListFuture has already been consumed".to_owned());
-        }
-
-        assert!(!self.future.is_null());
-        let mut data: Result<Vec<Deployment>, String> = Ok(vec![]);
-        unsafe {
-            Worker_DeploymentListFuture_Get(
-                self.future,
-                ::std::ptr::null(),
-                (&mut data as *mut Result<Vec<Deployment>, String>) as *mut ::std::os::raw::c_void,
-                Some(DeploymentListFuture::deployment_list_handler),
-            );
-        }
-        self.was_consumed = true;
-        data
-    }
-
-    extern "C" fn deployment_list_handler(
+    extern "C" fn callback_handler(
         user_data: *mut ::std::os::raw::c_void,
         deployment_list: *const Worker_DeploymentList,
     ) {
         assert!(!deployment_list.is_null());
         unsafe {
             let list = *deployment_list;
-            let data = &mut *(user_data as *mut Result<Vec<Deployment>, String>);
-            let err_ptr = list.error;
-            if !err_ptr.is_null() {
-                let err = cstr_to_string(err_ptr);
-                *data = Err(err);
+            let data = &mut *(user_data as *mut Option<Result<Vec<Deployment>, String>>);
+            if !list.error.is_null() {
+                let err = cstr_to_string(list.error);
+                *data = Some(Err(err));
                 return;
             }
 
@@ -205,7 +187,70 @@ impl DeploymentListFuture {
                     .map(|deployment| Deployment::from_worker_sdk(deployment))
                     .collect::<Vec<Deployment>>();
 
-            *data = Ok(deployments);
+            *data = Some(Ok(deployments));
+        }
+    }
+}
+
+impl Future for DeploymentListFuture {
+    type Item = Vec<Deployment>;
+    type Error = String;
+
+    fn poll(&mut self) -> Result<Async<<Self as Future>::Item>, <Self as Future>::Error> {
+        if self.was_consumed {
+            return Err("DeploymentListFuture has already been consumed".to_owned());
+        }
+
+        assert!(!self.future.is_null());
+        let mut data: Option<Result<Vec<Deployment>, String>> = None;
+        unsafe {
+            Worker_DeploymentListFuture_Get(
+                self.future,
+                &0,
+                &mut data as *mut _ as *mut ::std::os::raw::c_void,
+                Some(DeploymentListFuture::callback_handler),
+            );
+        }
+
+        match data {
+            Some(result) => {
+                self.was_consumed = true;
+                match result {
+                    Ok(deployments) => Ok(Async::Ready(deployments)),
+                    Err(e) => Err(e),
+                }
+            }
+            None => Ok(Async::NotReady),
+        }
+    }
+
+    fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
+    where
+        Self: Sized,
+    {
+        if self.was_consumed {
+            return Err("DeploymentListFuture has already been consumed".to_owned());
+        }
+
+        assert!(!self.future.is_null());
+        let mut data: Option<Result<Vec<Deployment>, String>> = None;
+        unsafe {
+            Worker_DeploymentListFuture_Get(
+                self.future,
+                ::std::ptr::null(),
+                &mut data as *mut _ as *mut ::std::os::raw::c_void,
+                Some(DeploymentListFuture::callback_handler),
+            );
+        }
+
+        match data {
+            Some(result) => match result {
+                Ok(deployments) => Ok(deployments),
+                Err(e) => Err(e),
+            },
+            None => {
+                panic!("Blocking call to Worker_DeploymentListFuture_Get did not trigger callback")
+            }
         }
     }
 }

@@ -1,6 +1,9 @@
-use spatialos_sdk_sys::worker::*;
 use std::ffi::{CStr, CString};
 use std::ptr;
+
+use futures::{Async, Future};
+
+use spatialos_sdk_sys::worker::*;
 
 use crate::worker::commands::*;
 use crate::worker::component::ComponentUpdate;
@@ -152,8 +155,8 @@ impl WorkerConnection {
         }
     }
 
-    pub fn get_disconnect_reason(&self, op_list: &OpList) -> Option<String> {
-        op_list
+    pub fn get_disconnect_reason(&mut self) -> Option<String> {
+        self.get_op_list(0)
             .ops
             .iter()
             .filter_map(|op| match op {
@@ -423,61 +426,6 @@ impl WorkerConnectionFuture {
             queue_status_callback: None,
         }
     }
-
-    pub fn get(&mut self) -> Result<WorkerConnection, String> {
-        if self.was_consumed {
-            return Err("WorkerConnectionFuture has already been consumed.".to_owned());
-        }
-
-        assert!(!self.future_ptr.is_null());
-        let connection_ptr = unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ptr::null()) };
-        assert!(!connection_ptr.is_null());
-
-        self.was_consumed = true;
-        let mut worker_connection = WorkerConnection::new(connection_ptr);
-
-        if worker_connection.is_connected() {
-            Ok(worker_connection)
-        } else {
-            let op_list = worker_connection.get_op_list(0);
-            let disconnect_reason = worker_connection.get_disconnect_reason(&op_list);
-            match disconnect_reason {
-                Some(v) => Err(v),
-                None => Err("No disconnect op found in ops list.".to_owned()),
-            }
-        }
-    }
-
-    pub fn poll(&mut self, timeout_millis: u32) -> Option<Result<WorkerConnection, String>> {
-        if self.was_consumed {
-            return Some(Err(
-                "WorkerConnectionFuture has already been consumed.".to_owned()
-            ));
-        }
-
-        assert!(!self.future_ptr.is_null());
-        let connection_ptr =
-            unsafe { Worker_ConnectionFuture_Get(self.future_ptr, &timeout_millis) };
-
-        if connection_ptr.is_null() {
-            None
-        } else {
-            let mut worker_connection = WorkerConnection::new(connection_ptr);
-            self.was_consumed = true;
-
-            if worker_connection.is_connected() {
-                Some(Ok(worker_connection))
-            } else {
-                let op_list = worker_connection.get_op_list(0);
-                let disconnect_reason = worker_connection.get_disconnect_reason(&op_list);
-
-                match disconnect_reason {
-                    Some(v) => Some(Err(v)),
-                    None => Some(Err("No disconnect op found in ops list.".to_owned())),
-                }
-            }
-        }
-    }
 }
 
 impl Drop for WorkerConnectionFuture {
@@ -490,5 +438,57 @@ impl Drop for WorkerConnectionFuture {
                 let _callback = Box::from_raw(ptr as *mut QueueStatusCallback);
             }
         };
+    }
+}
+
+impl Future for WorkerConnectionFuture {
+    type Item = WorkerConnection;
+    type Error = String;
+
+    fn poll(&mut self) -> Result<Async<WorkerConnection>, String> {
+        if self.was_consumed {
+            return Err("WorkerConnectionFuture has already been consumed.".to_owned());
+        }
+
+        assert!(!self.future_ptr.is_null());
+        let connection_ptr = unsafe { Worker_ConnectionFuture_Get(self.future_ptr, &0) };
+
+        if connection_ptr.is_null() {
+            return Ok(Async::NotReady);
+        }
+
+        self.was_consumed = true;
+        let mut connection = WorkerConnection::new(connection_ptr);
+
+        if connection.is_connected() {
+            return Ok(Async::Ready(connection));
+        }
+
+        match connection.get_disconnect_reason() {
+            Some(v) => Err(v),
+            None => Err("No disconnect op found in ops list.".to_owned()),
+        }
+    }
+
+    fn wait(self) -> Result<WorkerConnection, String>
+    where
+        Self: Sized,
+    {
+        if self.was_consumed {
+            return Err("WorkerConnectionFuture has already been consumed.".to_owned());
+        }
+
+        assert!(!self.future_ptr.is_null());
+        let connection_ptr = unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ptr::null()) };
+        let mut connection = WorkerConnection::new(connection_ptr);
+
+        if connection.is_connected() {
+            return Ok(connection);
+        }
+
+        match connection.get_disconnect_reason() {
+            Some(v) => Err(v),
+            None => Err("No disconnect op found in ops list.".to_owned()),
+        }
     }
 }
