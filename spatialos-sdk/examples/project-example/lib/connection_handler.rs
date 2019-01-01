@@ -57,8 +57,8 @@ fn queue_status_callback(_queue_status: &Result<u32, String>) -> bool {
 }
 
 fn get_deployment(locator: &Locator) -> Result<String, String> {
-    let mut deployment_list_future = locator.get_deployment_list_async();
-    let deployment_list = deployment_list_future.get()?;
+    let deployment_list_future = locator.get_deployment_list_async();
+    let deployment_list = deployment_list_future.wait()?;
 
     if deployment_list.is_empty() {
         return Err("No deployments could be found!".to_owned());
