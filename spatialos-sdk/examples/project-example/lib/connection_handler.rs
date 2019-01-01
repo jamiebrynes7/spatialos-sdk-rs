@@ -1,5 +1,6 @@
-extern crate uuid;
-use self::uuid::Uuid;
+use futures::{Async, Future};
+
+use uuid::Uuid;
 
 use spatialos_sdk::worker::connection::WorkerConnection;
 use spatialos_sdk::worker::connection::WorkerConnectionFuture;
@@ -38,7 +39,7 @@ pub fn get_connection(configuration: WorkerConfiguration) -> Result<WorkerConnec
     if configuration.connect_with_poll {
         get_connection_poll(&mut future)
     } else {
-        future.get()
+        future.wait()
     }
 }
 
@@ -69,9 +70,14 @@ fn get_deployment(locator: &Locator) -> Result<String, String> {
 fn get_connection_poll(future: &mut WorkerConnectionFuture) -> Result<WorkerConnection, String> {
     for _ in 0..POLL_NUM_ATTEMPTS {
         println!("Attempting to poll.");
-        if let Some(result) = future.poll(100) {
-            return result;
-        }
+        match future.poll() {
+            Ok(res) => {
+                if let Async::Ready(conn) = res {
+                    return Ok(conn);
+                }
+            }
+            Err(s) => return Err(s),
+        };
 
         ::std::thread::sleep(::std::time::Duration::from_millis(
             POLL_TIME_BETWEEN_ATTEMPTS_MILLIS,
