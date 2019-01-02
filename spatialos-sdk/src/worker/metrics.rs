@@ -270,3 +270,42 @@ impl HistogramMetricBucket {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::worker::metrics::HistogramMetric;
+
+    #[test]
+    pub fn histogram_metric_bounds_are_sorted() {
+        let metric = HistogramMetric::new(&[10.0, 5.0, 15.0, 3.0]);
+
+        let (success, _) = metric
+            .buckets
+            .iter()
+            .map(|m| m.upper_bound)
+            .fold((true, ::std::f64::MIN), |last, next| (last.1 <= next, next));
+
+        assert_eq!(true, success);
+    }
+
+    #[test]
+    pub fn histogram_metric_add_sample() {
+        let mut metric = HistogramMetric::new(&[10.0, 5.0, 15.0, 3.0]);
+
+        // Test halfway through.
+        metric.add_sample(7.5);
+        assert_eq!(0, metric.buckets[0].samples);
+        assert_eq!(0, metric.buckets[1].samples);
+        assert_eq!(1, metric.buckets[2].samples);
+        assert_eq!(1, metric.buckets[3].samples);
+
+        metric.reset();
+
+        // Test everything.
+        metric.add_sample(1.0);
+        assert_eq!(1, metric.buckets[0].samples);
+        assert_eq!(1, metric.buckets[1].samples);
+        assert_eq!(1, metric.buckets[2].samples);
+        assert_eq!(1, metric.buckets[3].samples);
+    }
+}
