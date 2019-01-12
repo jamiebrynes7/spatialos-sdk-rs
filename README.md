@@ -26,3 +26,12 @@ To run the example project, you will need to:
    - Navigate to the `spatialos` directory and start spatial: `cd spatialos-sdk/examples/project-example/spatialos/ && spatial local launch`
    - Run the example project worker - `cargo run --example project-example -- receptionist --worker_type RustWorker`
 
+### Updating Rust bindings
+
+To update the Rust bindings found in `spatialos-sdk-sys` run the following command from the root of the repository:
+
+```bash
+cargo run --bin generate_bindings -- -i ./dependencies/win/include/improbable/ -o ./spatialos-sdk-sys/src/
+```
+
+Note that this depends on `bindgen` which has `clang` as a dependency. See [here](https://rust-lang.github.io/rust-bindgen/requirements.html) for more info.
