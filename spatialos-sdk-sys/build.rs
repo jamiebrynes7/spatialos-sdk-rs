@@ -37,7 +37,7 @@ static PACKAGE_DIR: &str = "linux/lib";
 #[cfg(target_os = "macos")]
 static PACKAGE_DIR: &str = "macos/lib";
 #[cfg(target_os = "windows")]
-static PACKAGE_DIR: &str = "win/lib";
+static PACKAGE_DIR: &str = "win\\lib";
 
 fn main() {
     let lib_dir = match env::var("SPATIAL_LIB_DIR") {

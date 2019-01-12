@@ -9,5 +9,5 @@ name = "download_sdk"
 path = "src/download_sdk/main.rs"
 
 [dependencies]
-zip = "0.4"
+zip = "0.5"
 clap = "2.32.0"
