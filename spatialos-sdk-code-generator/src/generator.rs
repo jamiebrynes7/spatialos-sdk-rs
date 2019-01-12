@@ -298,6 +298,17 @@ pub fn generate_code(bundle: SchemaBundle) -> String {
         }
     ));
     let mut root_package = Package::new(Rc::clone(&generated_code), "", 0);
+    /*
+    Notes to self to implement packages properly:
+    1) do a first pass over all definitions to figure out the package structure and store in a BTreeMap<String, Package>. Eessentially:
+       - Check whether the entire path exists. If so, a subtype already thought this type was a package, so remove it.
+         (case where 'foo.bar.Baz.Foo' adds 'foo.bar.Baz' as a package, when 'foo.bar.Baz' is a type defined later).
+       - Add all sub paths as packages. e.g. given 'foo.bar.Baz', add 'foo' and 'foo.bar' as packages.
+    2) Write a function to look up the package of a type given a path. This package will essentially strip the last element of the path
+       and keep searching until it finds a match. E.g. given `foo.bar.Baz.Bat`, search for `foo.bar.Baz`, then `foo.bar`, then `foo`.
+       The reminants of the path indicate subtypes.
+    3) Iterate over all the definitions again, using the function in (2) to find the right package to insert the type information into.
+    */
     for type_def in v1.type_definitions {
         let mut package = get_or_create_package(&mut root_package, get_package_path(&type_def.identifier));
         let qualified_name = type_def.identifier.qualified_name.clone();

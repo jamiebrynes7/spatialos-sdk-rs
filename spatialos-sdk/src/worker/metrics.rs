@@ -13,7 +13,7 @@ pub enum MetricsError {
     KeyAlreadyExists,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Metrics {
     pub load: Option<f64>,
     pub gauge_metrics: HashMap<String, f64>,

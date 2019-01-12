@@ -143,7 +143,7 @@ impl From<&Worker_Op> for WorkerOp {
                     let op = erased_op.add_component;
                     let add_component_op = AddComponentOp {
                         entity_id: EntityId::new(op.entity_id),
-                        component_data: ComponentData::from(&op.data),
+                        component_data: internal::ComponentData::from(&op.data),
                     };
                     WorkerOp::AddComponent(add_component_op)
                 }
@@ -168,7 +168,7 @@ impl From<&Worker_Op> for WorkerOp {
                     let op = erased_op.component_update;
                     let component_update_op = ComponentUpdateOp {
                         entity_id: EntityId::new(op.entity_id),
-                        component_update: ComponentUpdate::from(&op.update),
+                        component_update: internal::ComponentUpdate::from(&op.update),
                     };
                     WorkerOp::ComponentUpdate(component_update_op)
                 }
@@ -185,7 +185,7 @@ impl From<&Worker_Op> for WorkerOp {
                         timeout_millis: op.timeout_millis,
                         caller_worker_id: cstr_to_string(op.caller_worker_id),
                         caller_attribute_set: attribute_set,
-                        request: CommandRequest::from(&op.request),
+                        request: internal::CommandRequest::from(&op.request),
                     };
                     WorkerOp::CommandRequest(command_request_op)
                 }
@@ -193,7 +193,7 @@ impl From<&Worker_Op> for WorkerOp {
                     let op = erased_op.command_response;
                     let status_code = match u32::from(op.status_code) {
                         Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
-                            StatusCode::Success(CommandResponse::from(&op.response))
+                            StatusCode::Success(internal::CommandResponse::from(&op.response))
                         }
                         Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
                             StatusCode::Timeout(cstr_to_string(op.message))
