@@ -6,17 +6,26 @@ env:
 
 language: rust
 
-rust:
-  - stable
-  - beta
-  - nightly
-
 matrix:
   include:
     - os: linux
       dist: xenial
+      rust: stable
+
+    - os: linux
+      dist: xenial
+      rust: beta
+
+    - os: linux
+      dist: xenial
+      rust: nightly
+
     - os: osx
+      rust: stable
+
     - os: windows
+      rust: stable
+
   allow_failures: 
     - os: windows
     - rust: nightly
