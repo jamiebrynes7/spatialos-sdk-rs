@@ -82,7 +82,7 @@ pub trait Connection {
     fn is_connected(&self) -> bool;
     fn get_worker_id(&self) -> &str;
     fn get_worker_attributes(&self) -> Vec<String>;
-    fn get_worker_flag<T: Into<Vec<u8>>>(&self, name: T) -> Option<String>;
+    fn get_worker_flag(&self, name: &str) -> Option<String>;
 
     fn get_op_list(&mut self, timeout_millis: u32) -> OpList;
 }
@@ -157,8 +157,7 @@ impl WorkerConnection {
 
     pub fn get_disconnect_reason(&mut self) -> Option<String> {
         self.get_op_list(0)
-            .ops
-            .iter()
+            .into_iter()
             .filter_map(|op| match op {
                 WorkerOp::Disconnect(op) => Some(op.reason.clone()),
                 _ => None,
@@ -306,7 +305,7 @@ impl Connection for WorkerConnection {
         assert!(!self.connection_ptr.is_null());
         let worker_sdk_overrides = interest_overrides
             .iter()
-            .map(|x| x.to_woker_sdk())
+            .map(|x| x.to_worker_sdk())
             .collect::<Vec<Worker_InterestOverride>>();
 
         unsafe {
@@ -366,7 +365,7 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn get_worker_flag<T: Into<Vec<u8>>>(&self, name: T) -> Option<String> {
+    fn get_worker_flag(&self, name: &str) -> Option<String> {
         let flag_name = CString::new(name).unwrap();
 
         extern "C" fn worker_flag_handler(

@@ -15,6 +15,8 @@ pub mod vtable;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::marker::PhantomData;
 
+type ComponentId = u32;
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct EntityId {
     pub id: i64,
@@ -34,7 +36,7 @@ impl EntityId {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct RequestId<T> {
     pub id: u32,
     _type: PhantomData<*const T>,
@@ -97,6 +99,7 @@ impl LogLevel {
     }
 }
 
+// TODO: Replace with TryFrom when it stabilises: https://github.com/rust-lang/rust/issues/33417
 impl From<u8> for LogLevel {
     fn from(log_level: u8) -> Self {
         match log_level {
@@ -105,30 +108,31 @@ impl From<u8> for LogLevel {
             3 => LogLevel::Warn,
             4 => LogLevel::Error,
             5 => LogLevel::Fatal,
-            _ => panic!("Unknown log level: {}", log_level),
+            _ => {
+                eprintln!("Unknown log level: {}, returning Error.", log_level);
+                LogLevel::Error
+            }
         }
     }
 }
 
 pub struct InterestOverride {
-    pub component_id: u32,
+    pub component_id: ComponentId,
     pub is_interested: bool,
 }
 
 impl InterestOverride {
-    pub(crate) fn to_woker_sdk(&self) -> Worker_InterestOverride {
+    pub fn new(component_id: ComponentId, is_interested: bool) -> Self {
+        InterestOverride {
+            component_id,
+            is_interested,
+        }
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_InterestOverride {
         Worker_InterestOverride {
             is_interested: self.is_interested as u8,
             component_id: self.component_id,
-        }
-    }
-}
-
-impl From<InterestOverride> for Worker_InterestOverride {
-    fn from(interest_override: InterestOverride) -> Self {
-        Worker_InterestOverride {
-            is_interested: interest_override.is_interested as u8,
-            component_id: interest_override.component_id,
         }
     }
 }
