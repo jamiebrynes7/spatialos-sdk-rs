@@ -23,5 +23,5 @@ fn main() {
     let snapshot_path = path_buf.to_str().unwrap();
     println!("Creating empty snapshot at: {}", snapshot_path);
 
-    let _stream = SnapshotOutputStream::new(snapshot_path, SnapshotParameters {});
+    let _stream = SnapshotOutputStream::new(snapshot_path, &SnapshotParameters {});
 }

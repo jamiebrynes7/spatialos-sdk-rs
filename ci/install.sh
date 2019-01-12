@@ -53,3 +53,4 @@ mkdir -p "${DEPENDENCIES_TARGET_DIR}"
 rm -rf "./tmp"
 
 rustup component add rustfmt-preview
+rustup component add clippy-preview

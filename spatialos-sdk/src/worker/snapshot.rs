@@ -11,7 +11,7 @@ pub struct SnapshotOutputStream {
 }
 
 impl SnapshotOutputStream {
-    pub fn new<P: AsRef<Path>>(filename: P, params: SnapshotParameters) -> Self {
+    pub fn new<P: AsRef<Path>>(filename: P, params: &SnapshotParameters) -> Self {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
         let ptr = unsafe {

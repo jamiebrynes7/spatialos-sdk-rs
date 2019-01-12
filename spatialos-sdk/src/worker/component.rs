@@ -317,22 +317,22 @@ use spatialos_sdk_sys::worker::{
     Worker_ComponentDataHandle, Worker_ComponentUpdateHandle, Worker_CommandRequestHandle, Worker_CommandResponseHandle
 };
 
-use crate::worker::internal::worker_sdk_conversion::WorkerSdkConversion;
+use crate::worker::ComponentId;
 
 // TODO: Wrap Schema_ComponentData
 #[derive(Debug)]
 pub struct ComponentData {
-    pub component_id: u32,
+    pub component_id: ComponentId,
     pub schema_type: *mut Schema_ComponentData,
     pub user_handle: *mut Worker_ComponentDataHandle,
 }
 
-unsafe impl WorkerSdkConversion<Worker_ComponentData> for ComponentData {
-    unsafe fn from_worker_sdk(component_data: &Worker_ComponentData) -> ComponentData {
+impl From<&Worker_ComponentData> for ComponentData {
+    fn from(data: &Worker_ComponentData) -> Self {
         ComponentData {
-            component_id: component_data.component_id,
-            schema_type: component_data.schema_type,
-            user_handle: component_data.user_handle,
+            component_id: data.component_id,
+            schema_type: data.schema_type,
+            user_handle: data.user_handle,
         }
     }
 }
@@ -340,17 +340,17 @@ unsafe impl WorkerSdkConversion<Worker_ComponentData> for ComponentData {
 // TODO: Wrap Schema_ComponentUpdate
 #[derive(Debug)]
 pub struct ComponentUpdate {
-    pub component_id: u32,
+    pub component_id: ComponentId,
     pub schema_type: *mut Schema_ComponentUpdate,
     pub user_handle: *mut Worker_ComponentUpdateHandle,
 }
 
-unsafe impl WorkerSdkConversion<Worker_ComponentUpdate> for ComponentUpdate {
-    unsafe fn from_worker_sdk(component_update: &Worker_ComponentUpdate) -> ComponentUpdate {
+impl From<&Worker_ComponentUpdate> for ComponentUpdate {
+    fn from(update: &Worker_ComponentUpdate) -> Self {
         ComponentUpdate {
-            component_id: component_update.component_id,
-            schema_type: component_update.schema_type,
-            user_handle: component_update.user_handle,
+            component_id: update.component_id,
+            schema_type: update.schema_type,
+            user_handle: update.user_handle,
         }
     }
 }

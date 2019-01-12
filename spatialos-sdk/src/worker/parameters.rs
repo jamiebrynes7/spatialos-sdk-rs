@@ -151,7 +151,7 @@ impl NetworkParameters {
         NetworkParameters {
             use_external_ip: false,
             protocol_params: ProtocolType::Tcp(TcpNetworkParameters::default()),
-            connection_timeout_millis: WORKER_DEFAULTS_CONNECTION_TIMEOUT_MILLIS as u64,
+            connection_timeout_millis: u64::from(WORKER_DEFAULTS_CONNECTION_TIMEOUT_MILLIS),
             default_command_timeout_millis: WORKER_DEFAULTS_DEFAULT_COMMAND_TIMEOUT_MILLIS,
         }
     }
