@@ -18,8 +18,6 @@ pub use self::component::*;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::marker::PhantomData;
 
-type ComponentId = u32;
-
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct EntityId {
     pub id: i64,

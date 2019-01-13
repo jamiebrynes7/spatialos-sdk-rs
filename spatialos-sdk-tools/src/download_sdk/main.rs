@@ -20,7 +20,7 @@ fn main() {
 
     download_and_unpack(
         &SpatialPackageSource::WorkerSdk,
-        "c-static-x86_64-msvc_md-win32",
+        "c-static-x86_64-msvc_mt-win32",
         &sdk_version,
         &format!("{}/win", &download_dir),
     )
@@ -54,7 +54,7 @@ fn main() {
     )
     .expect("Could not download package");
     download_and_unpack(
-        SpatialPackageSource::Tools,
+        &SpatialPackageSource::Tools,
         format!("snapshot_converter-x86_64-{}", DEV_PLATFORM).as_ref(),
         &sdk_version,
         &format!("{}/snapshot-converter", &download_dir),

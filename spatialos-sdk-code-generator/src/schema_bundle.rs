@@ -9,26 +9,6 @@ pub struct Identifier {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct EnumReference {
-    pub qualified_name: String
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct EnumValueDefinition {
-    pub identifier: Identifier,
-    pub value: u32
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct EnumDefinition {
-    pub identifier: Identifier,
-    pub value_definitions: Vec<EnumValueDefinition>
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum PrimitiveType {
   Invalid = 0,
   Int32 = 1,
@@ -50,6 +30,30 @@ pub enum PrimitiveType {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct TypeReference {
+    pub qualified_name: String
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EnumReference {
+    pub qualified_name: String
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EnumValueReference {
+    pub qualified_name: String
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct FieldReference {
+    pub qualified_name: String
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ValueTypeReference {
     #[serde(rename = "primitive")]
     pub primitive_reference: Option<PrimitiveType>,
@@ -61,8 +65,96 @@ pub struct ValueTypeReference {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct TypeReference {
-    pub qualified_name: String
+pub struct Value_OptionValue {
+  pub value: Option<Box<Value>>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Value_ListValue {
+  pub values: Vec<Value>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Value_MapValue_MapPairValue {
+  pub key: Value,
+  pub value: Value,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Value_MapValue {
+  pub values: Vec<Value_MapValue_MapPairValue>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Value {
+  pub bool_value: Option<bool>,
+  pub uint32_value: Option<u32>,
+  pub uint64_value: Option<u64>,
+  pub int32_value: Option<i32>,
+  pub int64_value: Option<i64>,
+  pub float_value: Option<f32>,
+  pub double_value: Option<f64>,
+  pub string_value: Option<String>,
+  pub bytes_value: Option<String>,
+  pub entity_id_value: Option<i64>,
+  pub enum_value: Option<EnumValue>,
+  pub type_value: Option<TypeValue>,
+  pub option_value: Option<Value_OptionValue>,
+  pub list_value: Option<Value_ListValue>,
+  pub map_value: Option<Value_MapValue>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EnumValue {
+  pub enum_value: EnumValueReference,
+  #[serde(rename = "enum")]
+  pub enum_reference: EnumReference,
+  pub name: String,
+  pub value: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct TypeValue_FieldValue {
+  pub field: FieldReference,
+  pub name: String,
+  pub number: u32,
+  pub value: Value
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct TypeValue {
+  #[serde(rename = "type")]
+  pub type_reference: TypeReference,
+  pub fields: Vec<TypeValue_FieldValue>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Annotation {
+  pub type_value: TypeValue,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EnumValueDefinition {
+    pub identifier: Identifier,
+    pub value: u32,
+    pub annotations: Vec<Annotation>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EnumDefinition {
+    pub identifier: Identifier,
+    pub value_definitions: Vec<EnumValueDefinition>,
+    pub annotations: Vec<Annotation>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -99,32 +191,36 @@ pub struct FieldDefinition {
     pub singular_type: Option<FieldDefinition_SingularType>,
     pub option_type: Option<FieldDefinition_OptionType>,
     pub list_type: Option<FieldDefinition_ListType>,
-    pub map_type: Option<FieldDefinition_MapType>
+    pub map_type: Option<FieldDefinition_MapType>,
+    pub annotations: Vec<Annotation>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeDefinition {
     pub identifier: Identifier,
-    pub field_definitions: Vec<FieldDefinition>
+    pub field_definitions: Vec<FieldDefinition>,
+    pub annotations: Vec<Annotation>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct ComponentEventDefinition {
+pub struct ComponentDefinition_EventDefinition {
     pub identifier: Identifier,
     pub event_index: u32,
     #[serde(rename="type")]
-    pub type_reference: ValueTypeReference
+    pub type_reference: ValueTypeReference,
+    pub annotations: Vec<Annotation>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct ComponentCommandDefinition {
+pub struct ComponentDefinition_CommandDefinition {
     pub identifier: Identifier,
     pub command_index: u32,
     pub request_type: ValueTypeReference,
-    pub response_type: ValueTypeReference
+    pub response_type: ValueTypeReference,
+    pub annotations: Vec<Annotation>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -132,9 +228,11 @@ pub struct ComponentCommandDefinition {
 pub struct ComponentDefinition {
     pub identifier: Identifier,
     pub component_id: u32,
-    pub data_definition: ValueTypeReference,
-    pub event_definitions: Vec<ComponentEventDefinition>,
-    pub command_definitions: Vec<ComponentCommandDefinition>
+    pub data_definition: Option<TypeReference>,
+    pub field_definitions: Vec<FieldDefinition>,
+    pub event_definitions: Vec<ComponentDefinition_EventDefinition>,
+    pub command_definitions: Vec<ComponentDefinition_CommandDefinition>,
+    pub annotations: Vec<Annotation>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

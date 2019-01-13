@@ -74,14 +74,6 @@ impl Package {
         }
     }
 
-    fn root_module(&self) -> String {
-        if self.depth == 0 {
-            "self".to_string()
-        } else {
-            vec!["super".to_string(); self.depth].join("::")
-        }
-    }
-
     fn generate_identifier(&self, identifier: &Identifier) -> String {
        self.generated_code.borrow().generate_identifier(identifier)
     }
@@ -107,9 +99,12 @@ impl Package {
     }
 
     fn get_component_fields(&self, component: &ComponentDefinition) -> Vec<FieldDefinition> {
-        let data_type_ref = component.data_definition.type_reference.as_ref().unwrap();
-        let data_type = self.resolve_type_reference(data_type_ref);
-        data_type.field_definitions.clone()
+        if let Some(ref data_definition) = component.data_definition {
+            let data_type = self.resolve_type_reference(data_definition);
+            data_type.field_definitions.clone()
+        } else {
+            component.field_definitions.clone()
+        }
     }
     
     fn generate_value_type_reference(&self, value_type: &ValueTypeReference) -> String {
@@ -168,12 +163,12 @@ impl Package {
         } else if let Some(ref list_type) = field.list_type {
             let capacity = format!("{}.count()", schema_field);
             let deserialize_element = self.deserialize_type(&list_type.inner_type, &format!("{}.index(i)", schema_field));
-            format!("{{ let size = {}; let mut l = Vec::with_capacity(size); for i in [0..size] {{ l.push({}); }}; l }}", capacity, deserialize_element)
+            format!("{{ let size = {}; let mut l = Vec::with_capacity(size); for i in 0..size {{ l.push({}); }}; l }}", capacity, deserialize_element)
         } else if let Some(ref map_type) = field.map_type {
             let capacity = format!("{}.count()", schema_field);
             let deserialize_key = self.deserialize_type(&map_type.key_type, "kv.field::<SchemaObject>(1)");
             let deserialize_value = self.deserialize_type(&map_type.value_type, "kv.field::<SchemaObject>(2)");
-            format!("{{ let size = {}; let mut m = BTreeMap::new(); for i in [0..size] {{ let kv = {}.index(i); m.insert({}, {}); }}; m }}", capacity, schema_field, deserialize_key, deserialize_value)
+            format!("{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index(i); m.insert({}, {}); }}; m }}", capacity, schema_field, deserialize_key, deserialize_value)
         } else {
             panic!("Field doesn't have a type. {:?}", field);
         }
@@ -207,7 +202,7 @@ struct GeneratedCode {
 
 impl GeneratedCode {
     fn generate_identifier(&self, identifier: &Identifier) -> String {
-        identifier.path.iter().cloned().fold("generated_code".to_string(), |type_name, next| type_name + "::" + &next)
+        identifier.path.iter().cloned().fold("generated".to_string(), |type_name, next| type_name + "::" + &next)
     }
 
     fn resolve_type_reference(&self, reference: &TypeReference) -> &TypeDefinition {
@@ -278,11 +273,13 @@ fn generate_module(package: &Package) -> String {
     } else {
         "".to_string()
     };
+    // Passing `package` to format! causes the T4 template engine to generate output.
     let module_contents = format!("{}\n{}", package, submodules);
+    // The only package with a depth of 0 is the root package.
     if package.depth == 0 {
-        module_contents
+        format!("mod generated {{\n{}}}\n\npub use self::generated::*;\n", module_contents)
     } else {
-        format!("mod {} {{\n{}\n}}\n", package.name, module_contents)
+        format!("mod {} {{\n{}}}\n", package.name, module_contents)
     }
 }
 

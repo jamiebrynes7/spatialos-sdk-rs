@@ -53,14 +53,14 @@ fn logic_loop(c: &mut WorkerConnection) {
             match op {
                 // TODO: Make this safer and not rely on `component::get_component_xx`
                 WorkerOp::AddComponent(add_component) => {
-                    if add_component.component_data.component_id == generated_code::Example::component_id() {
-                        let component_data = component::get_component_data::<generated_code::Example>(&add_component.component_data);
+                    if add_component.component_data.component_id == generated_code::example::Example::component_id() {
+                        let component_data = component::get_component_data::<generated_code::example::Example>(&add_component.component_data);
                         println!("Received Example data: {:?}", component_data);
                     }
                 },
                 WorkerOp::ComponentUpdate(update) => {
-                    if update.component_update.component_id == generated_code::Example::component_id() {
-                        let component_update = component::get_component_update::<generated_code::Example>(&update.component_update);
+                    if update.component_update.component_id == generated_code::example::Example::component_id() {
+                        let component_update = component::get_component_update::<generated_code::example::Example>(&update.component_update);
                         println!("Received Example update: {:?}", component_update);
                     }
                 },

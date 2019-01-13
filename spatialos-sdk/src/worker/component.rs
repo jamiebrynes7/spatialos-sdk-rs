@@ -18,12 +18,10 @@ pub trait ComponentMetaclass {
 }
 
 pub trait ComponentUpdate<M: ComponentMetaclass> {
-    fn to_data(self) -> M::Data;
     fn merge(&mut self, update: M::Update);
 }
 
 pub trait ComponentData<M: ComponentMetaclass> {
-    fn to_update(self) -> M::Update;
     fn merge(&mut self, update: M::Update);
 }
 
@@ -68,7 +66,7 @@ pub trait TypeSerializer<T> {
     fn deserialize(input: &schema::SchemaObject) -> Result<T, String>;
 }
 
-// Client handles. An object which contains a refernce counted instance to T.
+// Client handles. An object which contains a reference counted instance to T.
 struct ClientHandle<T> {
     data: Rc<T>,
     // When Drop() is called, data should reduce its reference count.

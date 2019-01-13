@@ -1,1290 +1,1613 @@
 {
- "v1": {
-  "enumDefinitions": [],
-  "typeDefinitions": [
-   {
-    "identifier": {
-     "qualifiedName": "improbable.WorkerAttributeSet",
-     "name": "WorkerAttributeSet",
-     "path": [
-      "improbable",
-      "WorkerAttributeSet"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.WorkerAttributeSet.attribute",
-       "name": "attribute",
-       "path": [
-        "improbable",
-        "WorkerAttributeSet",
-        "attribute"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "listType": {
-       "innerType": {
-        "primitive": "String"
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.WorkerRequirementSet",
-     "name": "WorkerRequirementSet",
-     "path": [
-      "improbable",
-      "WorkerRequirementSet"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.WorkerRequirementSet.attribute_set",
-       "name": "attribute_set",
-       "path": [
-        "improbable",
-        "WorkerRequirementSet",
-        "attribute_set"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "listType": {
-       "innerType": {
-        "type": {
-         "qualifiedName": "improbable.WorkerAttributeSet"
-        }
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.Coordinates",
-     "name": "Coordinates",
-     "path": [
-      "improbable",
-      "Coordinates"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.Coordinates.x",
-       "name": "x",
-       "path": [
-        "improbable",
-        "Coordinates",
-        "x"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.Coordinates.y",
-       "name": "y",
-       "path": [
-        "improbable",
-        "Coordinates",
-        "y"
-       ]
-      },
-      "fieldId": 2,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.Coordinates.z",
-       "name": "z",
-       "path": [
-        "improbable",
-        "Coordinates",
-        "z"
-       ]
-      },
-      "fieldId": 3,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.EdgeLength",
-     "name": "EdgeLength",
-     "path": [
-      "improbable",
-      "EdgeLength"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.EdgeLength.x",
-       "name": "x",
-       "path": [
-        "improbable",
-        "EdgeLength",
-        "x"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.EdgeLength.y",
-       "name": "y",
-       "path": [
-        "improbable",
-        "EdgeLength",
-        "y"
-       ]
-      },
-      "fieldId": 2,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.EdgeLength.z",
-       "name": "z",
-       "path": [
-        "improbable",
-        "EdgeLength",
-        "z"
-       ]
-      },
-      "fieldId": 3,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.ComponentInterest",
-     "name": "ComponentInterest",
-     "path": [
-      "improbable",
-      "ComponentInterest"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.queries",
-       "name": "queries",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "queries"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "listType": {
-       "innerType": {
-        "type": {
-         "qualifiedName": "improbable.ComponentInterest.Query"
-        }
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.ComponentInterest.Query",
-     "name": "Query",
-     "path": [
-      "improbable",
-      "ComponentInterest",
-      "Query"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.Query.constraint",
-       "name": "constraint",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "Query",
-        "constraint"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "type": {
-         "qualifiedName": "improbable.ComponentInterest.QueryConstraint"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.Query.full_snapshot_result",
-       "name": "full_snapshot_result",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "Query",
-        "full_snapshot_result"
-       ]
-      },
-      "fieldId": 2,
-      "transient": false,
-      "optionType": {
-       "innerType": {
-        "primitive": "Bool"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.Query.result_component_id",
-       "name": "result_component_id",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "Query",
-        "result_component_id"
-       ]
-      },
-      "fieldId": 3,
-      "transient": false,
-      "listType": {
-       "innerType": {
-        "primitive": "Uint32"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.Query.frequency",
-       "name": "frequency",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "Query",
-        "frequency"
-       ]
-      },
-      "fieldId": 4,
-      "transient": false,
-      "optionType": {
-       "innerType": {
-        "primitive": "Float"
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.ComponentInterest.QueryConstraint",
-     "name": "QueryConstraint",
-     "path": [
-      "improbable",
-      "ComponentInterest",
-      "QueryConstraint"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.QueryConstraint.sphere_constraint",
-       "name": "sphere_constraint",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "QueryConstraint",
-        "sphere_constraint"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "optionType": {
-       "innerType": {
-        "type": {
-         "qualifiedName": "improbable.ComponentInterest.SphereConstraint"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.QueryConstraint.cylinder_constraint",
-       "name": "cylinder_constraint",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "QueryConstraint",
-        "cylinder_constraint"
-       ]
-      },
-      "fieldId": 2,
-      "transient": false,
-      "optionType": {
-       "innerType": {
-        "type": {
-         "qualifiedName": "improbable.ComponentInterest.CylinderConstraint"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.QueryConstraint.box_constraint",
-       "name": "box_constraint",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "QueryConstraint",
-        "box_constraint"
-       ]
-      },
-      "fieldId": 3,
-      "transient": false,
-      "optionType": {
-       "innerType": {
-        "type": {
-         "qualifiedName": "improbable.ComponentInterest.BoxConstraint"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.QueryConstraint.relative_sphere_constraint",
-       "name": "relative_sphere_constraint",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "QueryConstraint",
-        "relative_sphere_constraint"
-       ]
-      },
-      "fieldId": 4,
-      "transient": false,
-      "optionType": {
-       "innerType": {
-        "type": {
-         "qualifiedName": "improbable.ComponentInterest.RelativeSphereConstraint"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.QueryConstraint.relative_cylinder_constraint",
-       "name": "relative_cylinder_constraint",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "QueryConstraint",
-        "relative_cylinder_constraint"
-       ]
-      },
-      "fieldId": 5,
-      "transient": false,
-      "optionType": {
-       "innerType": {
-        "type": {
-         "qualifiedName": "improbable.ComponentInterest.RelativeCylinderConstraint"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.QueryConstraint.relative_box_constraint",
-       "name": "relative_box_constraint",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "QueryConstraint",
-        "relative_box_constraint"
-       ]
-      },
-      "fieldId": 6,
-      "transient": false,
-      "optionType": {
-       "innerType": {
-        "type": {
-         "qualifiedName": "improbable.ComponentInterest.RelativeBoxConstraint"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.QueryConstraint.entity_id_constraint",
-       "name": "entity_id_constraint",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "QueryConstraint",
-        "entity_id_constraint"
-       ]
-      },
-      "fieldId": 7,
-      "transient": false,
-      "optionType": {
-       "innerType": {
-        "primitive": "Int64"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.QueryConstraint.component_constraint",
-       "name": "component_constraint",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "QueryConstraint",
-        "component_constraint"
-       ]
-      },
-      "fieldId": 8,
-      "transient": false,
-      "optionType": {
-       "innerType": {
-        "primitive": "Uint32"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.QueryConstraint.and_constraint",
-       "name": "and_constraint",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "QueryConstraint",
-        "and_constraint"
-       ]
-      },
-      "fieldId": 9,
-      "transient": false,
-      "listType": {
-       "innerType": {
-        "type": {
-         "qualifiedName": "improbable.ComponentInterest.QueryConstraint"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.QueryConstraint.or_constraint",
-       "name": "or_constraint",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "QueryConstraint",
-        "or_constraint"
-       ]
-      },
-      "fieldId": 10,
-      "transient": false,
-      "listType": {
-       "innerType": {
-        "type": {
-         "qualifiedName": "improbable.ComponentInterest.QueryConstraint"
-        }
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.ComponentInterest.SphereConstraint",
-     "name": "SphereConstraint",
-     "path": [
-      "improbable",
-      "ComponentInterest",
-      "SphereConstraint"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.SphereConstraint.center",
-       "name": "center",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "SphereConstraint",
-        "center"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "type": {
-         "qualifiedName": "improbable.Coordinates"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.SphereConstraint.radius",
-       "name": "radius",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "SphereConstraint",
-        "radius"
-       ]
-      },
-      "fieldId": 2,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.ComponentInterest.CylinderConstraint",
-     "name": "CylinderConstraint",
-     "path": [
-      "improbable",
-      "ComponentInterest",
-      "CylinderConstraint"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.CylinderConstraint.center",
-       "name": "center",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "CylinderConstraint",
-        "center"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "type": {
-         "qualifiedName": "improbable.Coordinates"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.CylinderConstraint.radius",
-       "name": "radius",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "CylinderConstraint",
-        "radius"
-       ]
-      },
-      "fieldId": 2,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.ComponentInterest.BoxConstraint",
-     "name": "BoxConstraint",
-     "path": [
-      "improbable",
-      "ComponentInterest",
-      "BoxConstraint"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.BoxConstraint.center",
-       "name": "center",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "BoxConstraint",
-        "center"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "type": {
-         "qualifiedName": "improbable.Coordinates"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.BoxConstraint.edge_length",
-       "name": "edge_length",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "BoxConstraint",
-        "edge_length"
-       ]
-      },
-      "fieldId": 2,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "type": {
-         "qualifiedName": "improbable.EdgeLength"
-        }
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.ComponentInterest.RelativeSphereConstraint",
-     "name": "RelativeSphereConstraint",
-     "path": [
-      "improbable",
-      "ComponentInterest",
-      "RelativeSphereConstraint"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.RelativeSphereConstraint.radius",
-       "name": "radius",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "RelativeSphereConstraint",
-        "radius"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.ComponentInterest.RelativeCylinderConstraint",
-     "name": "RelativeCylinderConstraint",
-     "path": [
-      "improbable",
-      "ComponentInterest",
-      "RelativeCylinderConstraint"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.RelativeCylinderConstraint.radius",
-       "name": "radius",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "RelativeCylinderConstraint",
-        "radius"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.ComponentInterest.RelativeBoxConstraint",
-     "name": "RelativeBoxConstraint",
-     "path": [
-      "improbable",
-      "ComponentInterest",
-      "RelativeBoxConstraint"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.ComponentInterest.RelativeBoxConstraint.edge_length",
-       "name": "edge_length",
-       "path": [
-        "improbable",
-        "ComponentInterest",
-        "RelativeBoxConstraint",
-        "edge_length"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "type": {
-         "qualifiedName": "improbable.EdgeLength"
-        }
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.EntityAclData",
-     "name": "EntityAclData",
-     "path": [
-      "improbable",
-      "EntityAclData"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.EntityAclData.read_acl",
-       "name": "read_acl",
-       "path": [
-        "improbable",
-        "EntityAclData",
-        "read_acl"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "type": {
-         "qualifiedName": "improbable.WorkerRequirementSet"
-        }
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.EntityAclData.component_write_acl",
-       "name": "component_write_acl",
-       "path": [
-        "improbable",
-        "EntityAclData",
-        "component_write_acl"
-       ]
-      },
-      "fieldId": 2,
-      "transient": false,
-      "mapType": {
-       "keyType": {
-        "primitive": "Uint32"
+    "v1": {
+     "enumDefinitions": [],
+     "typeDefinitions": [
+      {
+       "identifier": {
+        "qualifiedName": "example.CommandData",
+        "name": "CommandData",
+        "path": [
+         "example",
+         "CommandData"
+        ]
        },
-       "valueType": {
-        "type": {
-         "qualifiedName": "improbable.WorkerRequirementSet"
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "example.CommandData.value",
+          "name": "value",
+          "path": [
+           "example",
+           "CommandData",
+           "value"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Int32"
+          }
+         },
+         "annotations": []
         }
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.MetadataData",
-     "name": "MetadataData",
-     "path": [
-      "improbable",
-      "MetadataData"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.MetadataData.entity_type",
-       "name": "entity_type",
-       "path": [
-        "improbable",
-        "MetadataData",
-        "entity_type"
-       ]
+       ],
+       "annotations": []
       },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "String"
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.PositionData",
-     "name": "PositionData",
-     "path": [
-      "improbable",
-      "PositionData"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.PositionData.coords",
-       "name": "coords",
-       "path": [
-        "improbable",
-        "PositionData",
-        "coords"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "type": {
-         "qualifiedName": "improbable.Coordinates"
-        }
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.PersistenceData",
-     "name": "PersistenceData",
-     "path": [
-      "improbable",
-      "PersistenceData"
-     ]
-    },
-    "fieldDefinitions": []
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.InterestData",
-     "name": "InterestData",
-     "path": [
-      "improbable",
-      "InterestData"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.InterestData.component_interest",
-       "name": "component_interest",
-       "path": [
-        "improbable",
-        "InterestData",
-        "component_interest"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "mapType": {
-       "keyType": {
-        "primitive": "Uint32"
+      {
+       "identifier": {
+        "qualifiedName": "improbable.WorkerAttributeSet",
+        "name": "WorkerAttributeSet",
+        "path": [
+         "improbable",
+         "WorkerAttributeSet"
+        ]
        },
-       "valueType": {
-        "type": {
-         "qualifiedName": "improbable.ComponentInterest"
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.WorkerAttributeSet.attribute",
+          "name": "attribute",
+          "path": [
+           "improbable",
+           "WorkerAttributeSet",
+           "attribute"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "listType": {
+          "innerType": {
+           "primitive": "String"
+          }
+         },
+         "annotations": []
         }
-       }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.WorkerRequirementSet",
+        "name": "WorkerRequirementSet",
+        "path": [
+         "improbable",
+         "WorkerRequirementSet"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.WorkerRequirementSet.attribute_set",
+          "name": "attribute_set",
+          "path": [
+           "improbable",
+           "WorkerRequirementSet",
+           "attribute_set"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "listType": {
+          "innerType": {
+           "type": {
+            "qualifiedName": "improbable.WorkerAttributeSet"
+           }
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.Coordinates",
+        "name": "Coordinates",
+        "path": [
+         "improbable",
+         "Coordinates"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Coordinates.x",
+          "name": "x",
+          "path": [
+           "improbable",
+           "Coordinates",
+           "x"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Coordinates.y",
+          "name": "y",
+          "path": [
+           "improbable",
+           "Coordinates",
+           "y"
+          ]
+         },
+         "fieldId": 2,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Coordinates.z",
+          "name": "z",
+          "path": [
+           "improbable",
+           "Coordinates",
+           "z"
+          ]
+         },
+         "fieldId": 3,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.EdgeLength",
+        "name": "EdgeLength",
+        "path": [
+         "improbable",
+         "EdgeLength"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.EdgeLength.x",
+          "name": "x",
+          "path": [
+           "improbable",
+           "EdgeLength",
+           "x"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.EdgeLength.y",
+          "name": "y",
+          "path": [
+           "improbable",
+           "EdgeLength",
+           "y"
+          ]
+         },
+         "fieldId": 2,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.EdgeLength.z",
+          "name": "z",
+          "path": [
+           "improbable",
+           "EdgeLength",
+           "z"
+          ]
+         },
+         "fieldId": 3,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.ComponentInterest",
+        "name": "ComponentInterest",
+        "path": [
+         "improbable",
+         "ComponentInterest"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.queries",
+          "name": "queries",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "queries"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "listType": {
+          "innerType": {
+           "type": {
+            "qualifiedName": "improbable.ComponentInterest.Query"
+           }
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.ComponentInterest.Query",
+        "name": "Query",
+        "path": [
+         "improbable",
+         "ComponentInterest",
+         "Query"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.Query.constraint",
+          "name": "constraint",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "Query",
+           "constraint"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "type": {
+            "qualifiedName": "improbable.ComponentInterest.QueryConstraint"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.Query.full_snapshot_result",
+          "name": "full_snapshot_result",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "Query",
+           "full_snapshot_result"
+          ]
+         },
+         "fieldId": 2,
+         "transient": false,
+         "optionType": {
+          "innerType": {
+           "primitive": "Bool"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.Query.result_component_id",
+          "name": "result_component_id",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "Query",
+           "result_component_id"
+          ]
+         },
+         "fieldId": 3,
+         "transient": false,
+         "listType": {
+          "innerType": {
+           "primitive": "Uint32"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.Query.frequency",
+          "name": "frequency",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "Query",
+           "frequency"
+          ]
+         },
+         "fieldId": 4,
+         "transient": false,
+         "optionType": {
+          "innerType": {
+           "primitive": "Float"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.ComponentInterest.QueryConstraint",
+        "name": "QueryConstraint",
+        "path": [
+         "improbable",
+         "ComponentInterest",
+         "QueryConstraint"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.QueryConstraint.sphere_constraint",
+          "name": "sphere_constraint",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "QueryConstraint",
+           "sphere_constraint"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "optionType": {
+          "innerType": {
+           "type": {
+            "qualifiedName": "improbable.ComponentInterest.SphereConstraint"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.QueryConstraint.cylinder_constraint",
+          "name": "cylinder_constraint",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "QueryConstraint",
+           "cylinder_constraint"
+          ]
+         },
+         "fieldId": 2,
+         "transient": false,
+         "optionType": {
+          "innerType": {
+           "type": {
+            "qualifiedName": "improbable.ComponentInterest.CylinderConstraint"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.QueryConstraint.box_constraint",
+          "name": "box_constraint",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "QueryConstraint",
+           "box_constraint"
+          ]
+         },
+         "fieldId": 3,
+         "transient": false,
+         "optionType": {
+          "innerType": {
+           "type": {
+            "qualifiedName": "improbable.ComponentInterest.BoxConstraint"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.QueryConstraint.relative_sphere_constraint",
+          "name": "relative_sphere_constraint",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "QueryConstraint",
+           "relative_sphere_constraint"
+          ]
+         },
+         "fieldId": 4,
+         "transient": false,
+         "optionType": {
+          "innerType": {
+           "type": {
+            "qualifiedName": "improbable.ComponentInterest.RelativeSphereConstraint"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.QueryConstraint.relative_cylinder_constraint",
+          "name": "relative_cylinder_constraint",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "QueryConstraint",
+           "relative_cylinder_constraint"
+          ]
+         },
+         "fieldId": 5,
+         "transient": false,
+         "optionType": {
+          "innerType": {
+           "type": {
+            "qualifiedName": "improbable.ComponentInterest.RelativeCylinderConstraint"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.QueryConstraint.relative_box_constraint",
+          "name": "relative_box_constraint",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "QueryConstraint",
+           "relative_box_constraint"
+          ]
+         },
+         "fieldId": 6,
+         "transient": false,
+         "optionType": {
+          "innerType": {
+           "type": {
+            "qualifiedName": "improbable.ComponentInterest.RelativeBoxConstraint"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.QueryConstraint.entity_id_constraint",
+          "name": "entity_id_constraint",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "QueryConstraint",
+           "entity_id_constraint"
+          ]
+         },
+         "fieldId": 7,
+         "transient": false,
+         "optionType": {
+          "innerType": {
+           "primitive": "Int64"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.QueryConstraint.component_constraint",
+          "name": "component_constraint",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "QueryConstraint",
+           "component_constraint"
+          ]
+         },
+         "fieldId": 8,
+         "transient": false,
+         "optionType": {
+          "innerType": {
+           "primitive": "Uint32"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.QueryConstraint.and_constraint",
+          "name": "and_constraint",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "QueryConstraint",
+           "and_constraint"
+          ]
+         },
+         "fieldId": 9,
+         "transient": false,
+         "listType": {
+          "innerType": {
+           "type": {
+            "qualifiedName": "improbable.ComponentInterest.QueryConstraint"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.QueryConstraint.or_constraint",
+          "name": "or_constraint",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "QueryConstraint",
+           "or_constraint"
+          ]
+         },
+         "fieldId": 10,
+         "transient": false,
+         "listType": {
+          "innerType": {
+           "type": {
+            "qualifiedName": "improbable.ComponentInterest.QueryConstraint"
+           }
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.ComponentInterest.SphereConstraint",
+        "name": "SphereConstraint",
+        "path": [
+         "improbable",
+         "ComponentInterest",
+         "SphereConstraint"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.SphereConstraint.center",
+          "name": "center",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "SphereConstraint",
+           "center"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "type": {
+            "qualifiedName": "improbable.Coordinates"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.SphereConstraint.radius",
+          "name": "radius",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "SphereConstraint",
+           "radius"
+          ]
+         },
+         "fieldId": 2,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.ComponentInterest.CylinderConstraint",
+        "name": "CylinderConstraint",
+        "path": [
+         "improbable",
+         "ComponentInterest",
+         "CylinderConstraint"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.CylinderConstraint.center",
+          "name": "center",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "CylinderConstraint",
+           "center"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "type": {
+            "qualifiedName": "improbable.Coordinates"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.CylinderConstraint.radius",
+          "name": "radius",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "CylinderConstraint",
+           "radius"
+          ]
+         },
+         "fieldId": 2,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.ComponentInterest.BoxConstraint",
+        "name": "BoxConstraint",
+        "path": [
+         "improbable",
+         "ComponentInterest",
+         "BoxConstraint"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.BoxConstraint.center",
+          "name": "center",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "BoxConstraint",
+           "center"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "type": {
+            "qualifiedName": "improbable.Coordinates"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.BoxConstraint.edge_length",
+          "name": "edge_length",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "BoxConstraint",
+           "edge_length"
+          ]
+         },
+         "fieldId": 2,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "type": {
+            "qualifiedName": "improbable.EdgeLength"
+           }
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.ComponentInterest.RelativeSphereConstraint",
+        "name": "RelativeSphereConstraint",
+        "path": [
+         "improbable",
+         "ComponentInterest",
+         "RelativeSphereConstraint"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.RelativeSphereConstraint.radius",
+          "name": "radius",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "RelativeSphereConstraint",
+           "radius"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.ComponentInterest.RelativeCylinderConstraint",
+        "name": "RelativeCylinderConstraint",
+        "path": [
+         "improbable",
+         "ComponentInterest",
+         "RelativeCylinderConstraint"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.RelativeCylinderConstraint.radius",
+          "name": "radius",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "RelativeCylinderConstraint",
+           "radius"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.ComponentInterest.RelativeBoxConstraint",
+        "name": "RelativeBoxConstraint",
+        "path": [
+         "improbable",
+         "ComponentInterest",
+         "RelativeBoxConstraint"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.ComponentInterest.RelativeBoxConstraint.edge_length",
+          "name": "edge_length",
+          "path": [
+           "improbable",
+           "ComponentInterest",
+           "RelativeBoxConstraint",
+           "edge_length"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "type": {
+            "qualifiedName": "improbable.EdgeLength"
+           }
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.Vector3f",
+        "name": "Vector3f",
+        "path": [
+         "improbable",
+         "Vector3f"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Vector3f.x",
+          "name": "x",
+          "path": [
+           "improbable",
+           "Vector3f",
+           "x"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Float"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Vector3f.y",
+          "name": "y",
+          "path": [
+           "improbable",
+           "Vector3f",
+           "y"
+          ]
+         },
+         "fieldId": 2,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Float"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Vector3f.z",
+          "name": "z",
+          "path": [
+           "improbable",
+           "Vector3f",
+           "z"
+          ]
+         },
+         "fieldId": 3,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Float"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.Vector3d",
+        "name": "Vector3d",
+        "path": [
+         "improbable",
+         "Vector3d"
+        ]
+       },
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Vector3d.x",
+          "name": "x",
+          "path": [
+           "improbable",
+           "Vector3d",
+           "x"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Vector3d.y",
+          "name": "y",
+          "path": [
+           "improbable",
+           "Vector3d",
+           "y"
+          ]
+         },
+         "fieldId": 2,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Vector3d.z",
+          "name": "z",
+          "path": [
+           "improbable",
+           "Vector3d",
+           "z"
+          ]
+         },
+         "fieldId": 3,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Double"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
       }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.Vector3f",
-     "name": "Vector3f",
-     "path": [
-      "improbable",
-      "Vector3f"
+     ],
+     "componentDefinitions": [
+      {
+       "identifier": {
+        "qualifiedName": "example.Example",
+        "name": "Example",
+        "path": [
+         "example",
+         "Example"
+        ]
+       },
+       "componentId": 1000,
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "example.Example.x",
+          "name": "x",
+          "path": [
+           "example",
+           "Example",
+           "x"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "Float"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "eventDefinitions": [],
+       "commandDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "example.Example.test_command",
+          "name": "test_command",
+          "path": [
+           "example",
+           "Example",
+           "test_command"
+          ]
+         },
+         "commandIndex": 1,
+         "requestType": {
+          "type": {
+           "qualifiedName": "example.CommandData"
+          }
+         },
+         "responseType": {
+          "type": {
+           "qualifiedName": "example.CommandData"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.EntityAcl",
+        "name": "EntityAcl",
+        "path": [
+         "improbable",
+         "EntityAcl"
+        ]
+       },
+       "componentId": 50,
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.EntityAcl.read_acl",
+          "name": "read_acl",
+          "path": [
+           "improbable",
+           "EntityAcl",
+           "read_acl"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "type": {
+            "qualifiedName": "improbable.WorkerRequirementSet"
+           }
+          }
+         },
+         "annotations": []
+        },
+        {
+         "identifier": {
+          "qualifiedName": "improbable.EntityAcl.component_write_acl",
+          "name": "component_write_acl",
+          "path": [
+           "improbable",
+           "EntityAcl",
+           "component_write_acl"
+          ]
+         },
+         "fieldId": 2,
+         "transient": false,
+         "mapType": {
+          "keyType": {
+           "primitive": "Uint32"
+          },
+          "valueType": {
+           "type": {
+            "qualifiedName": "improbable.WorkerRequirementSet"
+           }
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "eventDefinitions": [],
+       "commandDefinitions": [],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.Metadata",
+        "name": "Metadata",
+        "path": [
+         "improbable",
+         "Metadata"
+        ]
+       },
+       "componentId": 53,
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Metadata.entity_type",
+          "name": "entity_type",
+          "path": [
+           "improbable",
+           "Metadata",
+           "entity_type"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "primitive": "String"
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "eventDefinitions": [],
+       "commandDefinitions": [],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.Position",
+        "name": "Position",
+        "path": [
+         "improbable",
+         "Position"
+        ]
+       },
+       "componentId": 54,
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Position.coords",
+          "name": "coords",
+          "path": [
+           "improbable",
+           "Position",
+           "coords"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "singularType": {
+          "type": {
+           "type": {
+            "qualifiedName": "improbable.Coordinates"
+           }
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "eventDefinitions": [],
+       "commandDefinitions": [],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.Persistence",
+        "name": "Persistence",
+        "path": [
+         "improbable",
+         "Persistence"
+        ]
+       },
+       "componentId": 55,
+       "fieldDefinitions": [],
+       "eventDefinitions": [],
+       "commandDefinitions": [],
+       "annotations": []
+      },
+      {
+       "identifier": {
+        "qualifiedName": "improbable.Interest",
+        "name": "Interest",
+        "path": [
+         "improbable",
+         "Interest"
+        ]
+       },
+       "componentId": 58,
+       "fieldDefinitions": [
+        {
+         "identifier": {
+          "qualifiedName": "improbable.Interest.component_interest",
+          "name": "component_interest",
+          "path": [
+           "improbable",
+           "Interest",
+           "component_interest"
+          ]
+         },
+         "fieldId": 1,
+         "transient": false,
+         "mapType": {
+          "keyType": {
+           "primitive": "Uint32"
+          },
+          "valueType": {
+           "type": {
+            "qualifiedName": "improbable.ComponentInterest"
+           }
+          }
+         },
+         "annotations": []
+        }
+       ],
+       "eventDefinitions": [],
+       "commandDefinitions": [],
+       "annotations": []
+      }
      ]
     },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.Vector3f.x",
-       "name": "x",
-       "path": [
-        "improbable",
-        "Vector3f",
-        "x"
-       ]
+    "sourceMapV1": {
+     "sourceReferences": {
+      "improbable.ComponentInterest.CylinderConstraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 149,
+       "column": 3
       },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Float"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.Vector3f.y",
-       "name": "y",
-       "path": [
-        "improbable",
-        "Vector3f",
-        "y"
-       ]
+      "improbable.ComponentInterest.RelativeCylinderConstraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 163,
+       "column": 3
       },
-      "fieldId": 2,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Float"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.Vector3f.z",
-       "name": "z",
-       "path": [
-        "improbable",
-        "Vector3f",
-        "z"
-       ]
+      "example.Example.x": {
+       "filePath": "spatialos/schema/example.schema",
+       "line": 9,
+       "column": 5
       },
-      "fieldId": 3,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Float"
-       }
+      "example.Example.test_command": {
+       "filePath": "spatialos/schema/example.schema",
+       "line": 10,
+       "column": 5
+      },
+      "improbable.ComponentInterest.BoxConstraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 154,
+       "column": 3
+      },
+      "improbable.Metadata.entity_type": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 57,
+       "column": 3
+      },
+      "improbable.ComponentInterest.QueryConstraint.and_constraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 140,
+       "column": 5
+      },
+      "improbable.Persistence": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 89,
+       "column": 1
+      },
+      "improbable.Metadata": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 51,
+       "column": 1
+      },
+      "improbable.Position.coords": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 83,
+       "column": 3
+      },
+      "improbable.ComponentInterest.BoxConstraint.center": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 155,
+       "column": 5
+      },
+      "example.CommandData": {
+       "filePath": "spatialos/schema/example.schema",
+       "line": 3,
+       "column": 1
+      },
+      "improbable.WorkerAttributeSet": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 6,
+       "column": 1
+      },
+      "improbable.ComponentInterest.QueryConstraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 129,
+       "column": 3
+      },
+      "example.CommandData.value": {
+       "filePath": "spatialos/schema/example.schema",
+       "line": 4,
+       "column": 5
+      },
+      "improbable.EdgeLength.z": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 72,
+       "column": 3
+      },
+      "improbable.ComponentInterest.RelativeSphereConstraint.radius": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 160,
+       "column": 5
+      },
+      "improbable.Vector3f.z": {
+       "filePath": "../../../dependencies/std-lib/improbable/vector3.schema",
+       "line": 6,
+       "column": 3
+      },
+      "improbable.ComponentInterest.QueryConstraint.sphere_constraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 132,
+       "column": 5
+      },
+      "improbable.Vector3d.y": {
+       "filePath": "../../../dependencies/std-lib/improbable/vector3.schema",
+       "line": 11,
+       "column": 3
+      },
+      "improbable.ComponentInterest.RelativeSphereConstraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 159,
+       "column": 3
+      },
+      "improbable.Coordinates.y": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 64,
+       "column": 3
+      },
+      "improbable.ComponentInterest.QueryConstraint.or_constraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 141,
+       "column": 5
+      },
+      "improbable.EdgeLength.x": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 70,
+       "column": 3
+      },
+      "improbable.ComponentInterest.QueryConstraint.cylinder_constraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 133,
+       "column": 5
+      },
+      "improbable.Vector3f.x": {
+       "filePath": "../../../dependencies/std-lib/improbable/vector3.schema",
+       "line": 4,
+       "column": 3
+      },
+      "improbable.ComponentInterest.RelativeCylinderConstraint.radius": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 164,
+       "column": 5
+      },
+      "improbable.ComponentInterest.queries": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 171,
+       "column": 3
+      },
+      "improbable.ComponentInterest.Query": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 104,
+       "column": 3
+      },
+      "improbable.Vector3f": {
+       "filePath": "../../../dependencies/std-lib/improbable/vector3.schema",
+       "line": 3,
+       "column": 1
+      },
+      "improbable.ComponentInterest.Query.frequency": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 126,
+       "column": 5
+      },
+      "improbable.WorkerRequirementSet.attribute_set": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 28,
+       "column": 3
+      },
+      "improbable.EntityAcl.component_write_acl": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 46,
+       "column": 3
+      },
+      "improbable.WorkerRequirementSet": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 24,
+       "column": 1
+      },
+      "improbable.Vector3d": {
+       "filePath": "../../../dependencies/std-lib/improbable/vector3.schema",
+       "line": 9,
+       "column": 1
+      },
+      "improbable.WorkerAttributeSet.attribute": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 9,
+       "column": 3
+      },
+      "improbable.ComponentInterest.SphereConstraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 144,
+       "column": 3
+      },
+      "improbable.EntityAcl": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 33,
+       "column": 1
+      },
+      "improbable.ComponentInterest.BoxConstraint.edge_length": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 156,
+       "column": 5
+      },
+      "improbable.ComponentInterest.Query.result_component_id": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 109,
+       "column": 5
+      },
+      "improbable.Coordinates": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 62,
+       "column": 1
+      },
+      "improbable.EntityAcl.read_acl": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 40,
+       "column": 3
+      },
+      "improbable.ComponentInterest.RelativeBoxConstraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 167,
+       "column": 3
+      },
+      "improbable.ComponentInterest.Query.full_snapshot_result": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 108,
+       "column": 5
+      },
+      "improbable.ComponentInterest.QueryConstraint.entity_id_constraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 138,
+       "column": 5
+      },
+      "improbable.Interest": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 98,
+       "column": 1
+      },
+      "improbable.ComponentInterest.CylinderConstraint.radius": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 151,
+       "column": 5
+      },
+      "improbable.EdgeLength": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 69,
+       "column": 1
+      },
+      "improbable.ComponentInterest.QueryConstraint.relative_sphere_constraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 135,
+       "column": 5
+      },
+      "improbable.Vector3d.x": {
+       "filePath": "../../../dependencies/std-lib/improbable/vector3.schema",
+       "line": 10,
+       "column": 3
+      },
+      "improbable.ComponentInterest.QueryConstraint.box_constraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 134,
+       "column": 5
+      },
+      "improbable.EdgeLength.y": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 71,
+       "column": 3
+      },
+      "example.Example": {
+       "filePath": "spatialos/schema/example.schema",
+       "line": 7,
+       "column": 1
+      },
+      "improbable.ComponentInterest.QueryConstraint.component_constraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 139,
+       "column": 5
+      },
+      "improbable.Vector3d.z": {
+       "filePath": "../../../dependencies/std-lib/improbable/vector3.schema",
+       "line": 12,
+       "column": 3
+      },
+      "improbable.Coordinates.x": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 63,
+       "column": 3
+      },
+      "improbable.ComponentInterest.SphereConstraint.radius": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 146,
+       "column": 5
+      },
+      "improbable.Interest.component_interest": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 100,
+       "column": 3
+      },
+      "improbable.ComponentInterest.QueryConstraint.relative_box_constraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 137,
+       "column": 5
+      },
+      "improbable.Vector3f.y": {
+       "filePath": "../../../dependencies/std-lib/improbable/vector3.schema",
+       "line": 5,
+       "column": 3
+      },
+      "improbable.ComponentInterest.Query.constraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 105,
+       "column": 5
+      },
+      "improbable.ComponentInterest": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 103,
+       "column": 1
+      },
+      "improbable.Coordinates.z": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 65,
+       "column": 3
+      },
+      "improbable.Position": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 81,
+       "column": 1
+      },
+      "improbable.ComponentInterest.CylinderConstraint.center": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 150,
+       "column": 5
+      },
+      "improbable.ComponentInterest.SphereConstraint.center": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 145,
+       "column": 5
+      },
+      "improbable.ComponentInterest.QueryConstraint.relative_cylinder_constraint": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 136,
+       "column": 5
+      },
+      "improbable.ComponentInterest.RelativeBoxConstraint.edge_length": {
+       "filePath": "../../../dependencies/std-lib/improbable/standard_library.schema",
+       "line": 168,
+       "column": 5
       }
      }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.Vector3d",
-     "name": "Vector3d",
-     "path": [
-      "improbable",
-      "Vector3d"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "improbable.Vector3d.x",
-       "name": "x",
-       "path": [
-        "improbable",
-        "Vector3d",
-        "x"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.Vector3d.y",
-       "name": "y",
-       "path": [
-        "improbable",
-        "Vector3d",
-        "y"
-       ]
-      },
-      "fieldId": 2,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     },
-     {
-      "identifier": {
-       "qualifiedName": "improbable.Vector3d.z",
-       "name": "z",
-       "path": [
-        "improbable",
-        "Vector3d",
-        "z"
-       ]
-      },
-      "fieldId": 3,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Double"
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "example.CommandData",
-     "name": "CommandData",
-     "path": [
-      "example",
-      "CommandData"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "example.CommandData.value",
-       "name": "value",
-       "path": [
-        "example",
-        "CommandData",
-        "value"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Int32"
-       }
-      }
-     }
-    ]
-   },
-   {
-    "identifier": {
-     "qualifiedName": "example.ExampleData",
-     "name": "ExampleData",
-     "path": [
-      "example",
-      "ExampleData"
-     ]
-    },
-    "fieldDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "example.ExampleData.x",
-       "name": "x",
-       "path": [
-        "example",
-        "ExampleData",
-        "x"
-       ]
-      },
-      "fieldId": 1,
-      "transient": false,
-      "singularType": {
-       "type": {
-        "primitive": "Float"
-       }
-      }
-     }
-    ]
+    }
    }
-  ],
-  "componentDefinitions": [
-   {
-    "identifier": {
-     "qualifiedName": "improbable.EntityAcl",
-     "name": "EntityAcl",
-     "path": [
-      "improbable",
-      "EntityAcl"
-     ]
-    },
-    "componentId": 50,
-    "dataDefinition": {
-     "type": {
-      "qualifiedName": "improbable.EntityAclData"
-     }
-    },
-    "eventDefinitions": [],
-    "commandDefinitions": []
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.Metadata",
-     "name": "Metadata",
-     "path": [
-      "improbable",
-      "Metadata"
-     ]
-    },
-    "componentId": 53,
-    "dataDefinition": {
-     "type": {
-      "qualifiedName": "improbable.MetadataData"
-     }
-    },
-    "eventDefinitions": [],
-    "commandDefinitions": []
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.Position",
-     "name": "Position",
-     "path": [
-      "improbable",
-      "Position"
-     ]
-    },
-    "componentId": 54,
-    "dataDefinition": {
-     "type": {
-      "qualifiedName": "improbable.PositionData"
-     }
-    },
-    "eventDefinitions": [],
-    "commandDefinitions": []
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.Persistence",
-     "name": "Persistence",
-     "path": [
-      "improbable",
-      "Persistence"
-     ]
-    },
-    "componentId": 55,
-    "dataDefinition": {
-     "type": {
-      "qualifiedName": "improbable.PersistenceData"
-     }
-    },
-    "eventDefinitions": [],
-    "commandDefinitions": []
-   },
-   {
-    "identifier": {
-     "qualifiedName": "improbable.Interest",
-     "name": "Interest",
-     "path": [
-      "improbable",
-      "Interest"
-     ]
-    },
-    "componentId": 58,
-    "dataDefinition": {
-     "type": {
-      "qualifiedName": "improbable.InterestData"
-     }
-    },
-    "eventDefinitions": [],
-    "commandDefinitions": []
-   },
-   {
-    "identifier": {
-     "qualifiedName": "example.Example",
-     "name": "Example",
-     "path": [
-      "example",
-      "Example"
-     ]
-    },
-    "componentId": 1000,
-    "dataDefinition": {
-     "type": {
-      "qualifiedName": "example.ExampleData"
-     }
-    },
-    "eventDefinitions": [],
-    "commandDefinitions": [
-     {
-      "identifier": {
-       "qualifiedName": "example.Example.test_command",
-       "name": "test_command",
-       "path": [
-        "example",
-        "Example",
-        "test_command"
-       ]
-      },
-      "commandIndex": 1,
-      "requestType": {
-       "type": {
-        "qualifiedName": "example.CommandData"
-       }
-      },
-      "responseType": {
-       "type": {
-        "qualifiedName": "example.CommandData"
-       }
-      }
-     }
-    ]
-   }
-  ]
- }
-}
+   
