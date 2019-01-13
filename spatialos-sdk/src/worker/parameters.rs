@@ -103,6 +103,7 @@ impl ConnectionParameters {
 pub enum ProtocolType {
     Tcp(TcpNetworkParameters),
     RakNet(RakNetNetworkParameters),
+    Kcp(KcpNetworkParameters),
 }
 
 impl ProtocolType {
@@ -112,24 +113,40 @@ impl ProtocolType {
         u8,
         Worker_RakNetNetworkParameters,
         Worker_TcpNetworkParameters,
+        Worker_Alpha_KcpNetworkParameters,
     ) {
         match self {
             ProtocolType::Tcp(params) => {
                 let tcp_params = params.to_worker_sdk();
                 let raknet_params = RakNetNetworkParameters::default().to_worker_sdk();
+                let kcp_params = KcpNetworkParameters::default().to_worker_sdk();
                 (
                     Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8,
                     raknet_params,
                     tcp_params,
+                    kcp_params,
                 )
             }
             ProtocolType::RakNet(params) => {
                 let tcp_params = TcpNetworkParameters::default().to_worker_sdk();
                 let raknet_params = params.to_worker_sdk();
+                let kcp_params = KcpNetworkParameters::default().to_worker_sdk();
                 (
                     Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8,
                     raknet_params,
                     tcp_params,
+                    kcp_params,
+                )
+            }
+            ProtocolType::Kcp(params) => {
+                let tcp_params = TcpNetworkParameters::default().to_worker_sdk();
+                let raknet_params = RakNetNetworkParameters::default().to_worker_sdk();
+                let kcp_params = params.to_worker_sdk();
+                (
+                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8,
+                    raknet_params,
+                    tcp_params,
+                    kcp_params,
                 )
             }
         }
@@ -154,32 +171,14 @@ impl NetworkParameters {
     }
 
     pub(crate) fn to_worker_sdk(&self) -> Worker_NetworkParameters {
-        let (protocol_type, raknet_params, tcp_params) = self.protocol_params.to_worker_sdk();
+        let (protocol_type, raknet_params, tcp_params, kcp_params) =
+            self.protocol_params.to_worker_sdk();
         Worker_NetworkParameters {
             use_external_ip: self.use_external_ip as u8,
             connection_type: protocol_type,
             raknet: raknet_params,
             tcp: tcp_params,
-            // TODO: Fill out later.
-            kcp: Worker_Alpha_KcpNetworkParameters {
-                fast_retransmission: 0,
-                early_retransmission: 0,
-                non_concessional_flow_control: 0,
-                multiplex_level: 0,
-                update_interval_millis: 0,
-                min_rto_millis: 0,
-                window_size: 0,
-                enable_erasure_codec: 0,
-                erasure_codec: Worker_Alpha_ErasureCodecParameters {
-                    original_packet_count: 0,
-                    recovery_packet_count: 0,
-                    window_size: 0,
-                },
-                heartbeat: Worker_Alpha_HeartbeatParameters {
-                    interval_millis: 0,
-                    timeout_millis: 0,
-                },
-            },
+            kcp: kcp_params,
             connection_timeout_millis: self.connection_timeout_millis,
             default_command_timeout_millis: self.default_command_timeout_millis,
         }
@@ -227,6 +226,102 @@ impl TcpNetworkParameters {
             send_buffer_size: self.send_buffer_size,
             receive_buffer_size: self.receive_buffer_size,
             no_delay: self.no_delay as u8,
+        }
+    }
+}
+
+pub struct KcpNetworkParameters {
+    pub fast_transmission: bool,
+    pub early_retransmission: bool,
+    pub non_concessional_flow_control: bool,
+    pub multiplex_level: u32,
+    pub update_interval_millis: u32,
+    pub min_rto_millis: u32,
+    pub window_size: u32,
+    pub erasure_codec: Option<ErasureCodecParameters>,
+    pub heartbeat_params: HeartbeatParameters,
+}
+
+impl KcpNetworkParameters {
+    pub fn default() -> Self {
+        KcpNetworkParameters {
+            fast_transmission: WORKER_DEFAULTS_KCP_FAST_RETRANSMISSION != 0,
+            early_retransmission: WORKER_DEFAULTS_KCP_EARLY_RETRANSMISSION != 0,
+            non_concessional_flow_control: WORKER_DEFAULTS_KCP_NON_CONCESSIONAL_FLOW_CONTROL != 0,
+            multiplex_level: WORKER_DEFAULTS_KCP_MULTIPLEX_LEVEL,
+            update_interval_millis: WORKER_DEFAULTS_KCP_UPDATE_INTERVAL_MILLIS,
+            min_rto_millis: WORKER_DEFAULTS_KCP_MIN_RTO_MILLIS,
+            window_size: WORKER_DEFAULTS_KCP_WINDOW_SIZE,
+            erasure_codec: if WORKER_DEFAULTS_KCP_ENABLE_ERASURE_CODEC != 0 {
+                Some(ErasureCodecParameters::default())
+            } else {
+                None
+            },
+            heartbeat_params: HeartbeatParameters::default(),
+        }
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_KcpNetworkParameters {
+        Worker_Alpha_KcpNetworkParameters {
+            fast_retransmission: self.fast_transmission as u8,
+            early_retransmission: self.early_retransmission as u8,
+            non_concessional_flow_control: self.non_concessional_flow_control as u8,
+            multiplex_level: self.multiplex_level,
+            update_interval_millis: self.update_interval_millis,
+            min_rto_millis: self.min_rto_millis,
+            window_size: self.window_size,
+            enable_erasure_codec: self.erasure_codec.is_some() as u8,
+            erasure_codec: self
+                .erasure_codec
+                .as_ref()
+                .unwrap_or(&ErasureCodecParameters::default())
+                .to_worker_sdk(),
+            heartbeat: self.heartbeat_params.to_worker_sdk(),
+        }
+    }
+}
+
+pub struct ErasureCodecParameters {
+    pub original_packet_count: u8,
+    pub recovery_packet_count: u8,
+    pub window_size: u8,
+}
+
+impl ErasureCodecParameters {
+    pub fn default() -> Self {
+        ErasureCodecParameters {
+            original_packet_count: WORKER_DEFAULTS_ERASURE_CODEC_ORIGINAL_PACKET_COUNT as u8,
+            recovery_packet_count: WORKER_DEFAULTS_ERASURE_CODEC_RECOVERY_PACKET_COUNT as u8,
+            window_size: WORKER_DEFAULTS_ERASURE_CODEC_WINDOW_SIZE as u8,
+        }
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_ErasureCodecParameters {
+        Worker_Alpha_ErasureCodecParameters {
+            original_packet_count: self.original_packet_count,
+            recovery_packet_count: self.recovery_packet_count,
+            window_size: self.window_size,
+        }
+    }
+}
+
+pub struct HeartbeatParameters {
+    pub interval_millis: u64,
+    pub timeout_millis: u64,
+}
+
+impl HeartbeatParameters {
+    pub fn default() -> Self {
+        HeartbeatParameters {
+            interval_millis: u64::from(WORKER_DEFAULTS_HEARTBEAT_INTERVAL_MILLIS),
+            timeout_millis: u64::from(WORKER_DEFAULTS_HEARTBEAT_TIMEOUT_MILLIS),
+        }
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_HeartbeatParameters {
+        Worker_Alpha_HeartbeatParameters {
+            interval_millis: self.interval_millis,
+            timeout_millis: self.timeout_millis,
         }
     }
 }
