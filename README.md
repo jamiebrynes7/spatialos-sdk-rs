@@ -10,7 +10,7 @@ This is still heavily WIP and should be treated as such. Progress can be seen in
 ## Setup 
 
 1. Clone this repository.
-2. Run `cargo run --bin download_sdk -- -d dependencies -s 13.3.1` to download the C API dependencies.
+2. Run `cargo run --bin download_sdk -- -d dependencies -s 13.5.1` to download the C API dependencies.
 3. Set the `SPATIAL_LIB_DIR` environment variable to the location of the dependencies: `export SPATIAL_LIB_DIR=$(pwd)/dependencies`.
 4. Run `cargo build` 
 
