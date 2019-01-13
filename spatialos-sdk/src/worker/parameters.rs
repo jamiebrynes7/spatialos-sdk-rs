@@ -48,6 +48,15 @@ impl ConnectionParameters {
         self
     }
 
+    pub fn using_kcp(self) -> Self {
+        self.using_kcp_with_params(KcpNetworkParameters::default())
+    }
+
+    pub fn using_kcp_with_params(mut self, params: KcpNetworkParameters) -> Self {
+        self.network.protocol_params = ProtocolType::Kcp(params);
+        self
+    }
+
     pub fn using_external_ip(mut self) -> Self {
         self.network.use_external_ip = true;
         self
