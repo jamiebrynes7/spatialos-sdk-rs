@@ -163,6 +163,26 @@ impl NetworkParameters {
             connection_type: protocol_type,
             raknet: raknet_params,
             tcp: tcp_params,
+            // TODO: Fill out later.
+            kcp: Worker_Alpha_KcpNetworkParameters {
+                fast_retransmission: 0,
+                early_retransmission: 0,
+                non_concessional_flow_control: 0,
+                multiplex_level: 0,
+                update_interval_millis: 0,
+                min_rto_millis: 0,
+                window_size: 0,
+                enable_erasure_codec: 0,
+                erasure_codec: Worker_Alpha_ErasureCodecParameters {
+                    original_packet_count: 0,
+                    recovery_packet_count: 0,
+                    window_size: 0,
+                },
+                heartbeat: Worker_Alpha_HeartbeatParameters {
+                    interval_millis: 0,
+                    timeout_millis: 0,
+                },
+            },
             connection_timeout_millis: self.connection_timeout_millis,
             default_command_timeout_millis: self.default_command_timeout_millis,
         }
