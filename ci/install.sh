@@ -43,6 +43,8 @@ curl -sSL $SPATIAL_URL --output ./tmp/spatial
 chmod +x ./tmp/spatial
 PATH=$PATH:$(pwd)/tmp/
 
+# TODO: Windows support
+
 mkdir -p ~/.improbable/oauth2
 echo $SPATIAL_OAUTH > ~/.improbable/oauth2/oauth2_refresh_token
 
