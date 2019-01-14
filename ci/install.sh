@@ -37,7 +37,7 @@ chmod +x ./tmp/spatial
 PATH=$PATH:$(pwd)/tmp/
 
 mkdir -p ~/.improbable/oauth2
-echo $SPATIAL_OAUTH > ~/.improbable/ouath2/oauth2_refresh_token
+echo $SPATIAL_OAUTH > ~/.improbable/oauth2/oauth2_refresh_token
 
 cargo run --bin download_sdk -- -d dependencies -s 13.5.1
 
