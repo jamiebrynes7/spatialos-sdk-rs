@@ -17,6 +17,7 @@ function isWindows() {
   ! ( isLinux || isMacOS );
 }
 
+
 if isWindows; then
   SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/win"
 elif isMacOS; then
