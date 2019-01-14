@@ -17,6 +17,13 @@ function isWindows() {
   ! ( isLinux || isMacOS );
 }
 
+function waitOnExit() {
+  sleep 5
+}
+
+# Force full output on Travis instead of truncating output.
+trap waitOnExit EXIT
+
 
 if isWindows; then
   SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/win"
