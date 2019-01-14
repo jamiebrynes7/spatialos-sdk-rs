@@ -5,8 +5,6 @@ if [[ -n "${DEBUG-}" ]]; then
   set -x
 fi
 
-ARCHIVER_RELEASE="3.1.0"
-
 function isLinux() {
   [[ "$(uname -s)" == "Linux" ]];
 }
@@ -19,36 +17,28 @@ function isWindows() {
   ! ( isLinux || isMacOS );
 }
 
+if isWindows; then
+  SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/win"
+elif isMacOS; then
+  SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/mac"
+elif isLinux; then
+  SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/linux"
+else 
+  echo "Unsupported platform"
+  exit 1
+fi
+
 rm -rf "./tmp"
 mkdir -p "./tmp"
 
-echo "Downloading archiver."
-if isLinux; then
-    ARCHIVER_PLATFORM="arc_linux_amd64"
-elif isMacOS; then
-    ARCHIVER_PLATFORM="arc_mac_amd64"
-elif isWindows; then
-    ARCHIVER_PLATFORM="arc_windows_amd64.exe"
-else 
-    echo "Unsupported platform"
-    exit 1
-fi
+curl -sSL $SPATIAL_URL --output ./tmp/spatial
+chmod +x ./tmp/spatial
+PATH=$PATH:$(pwd)/tmp/
 
-URL="https://github.com/mholt/archiver/releases/download/v${ARCHIVER_RELEASE}/${ARCHIVER_PLATFORM}"
+mkdir -p ~/.improbable/oauth2
+echo $SPATIAL_OAUTH > ~/.improbable/ouath2/oauth2_refresh_token
 
-curl -sSLf -o ./tmp/archiver "${URL}"
-chmod +x ./tmp/archiver
-
-echo "Unpacking SpatialOS dependencies"
-
-curl -c ./tmp/cookie -s -L "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
-curl -Lb ./tmp/cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./tmp/cookie`&id=${FILE_ID}" -o "./tmp/dependencies.tar"
-
-DEPENDENCIES_TARGET_DIR="dependencies"
-rm -rf "${DEPENDENCIES_TARGET_DIR}"
-mkdir -p "${DEPENDENCIES_TARGET_DIR}"
-
-./tmp/archiver unarchive "./tmp/dependencies.tar" "${DEPENDENCIES_TARGET_DIR}"
+cargo run --bin download_sdk -- -d dependencies -s 13.5.1
 
 rm -rf "./tmp"
 
