@@ -17,7 +17,7 @@ mod generated_code;
 fn main() {
     println!("Entered program");
 
-    let components = ComponentDatabase::new().add_component::<generated_code::Example, generated_code::Example>();
+    let components = ComponentDatabase::new().add_component::<generated_code::example::Example, generated_code::example::Example>();
     let config = match get_worker_configuration(components) {
         Ok(c) => c,
         Err(e) => panic!("{}", e),
@@ -48,7 +48,7 @@ fn logic_loop(c: &mut WorkerConnection) {
         */
 
         // Process ops.
-        for op in &ops.ops {
+        for op in &ops {
             println!("Received op: {:?}", op);
             match op {
                 // TODO: Make this safer and not rely on `component::get_component_xx`
