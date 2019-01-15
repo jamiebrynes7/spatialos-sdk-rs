@@ -36,12 +36,14 @@ else
   exit 1
 fi
 
-rm -rf "./tmp"
-mkdir -p "./tmp"
+rm -rf "./temp"
+mkdir -p "./etmp"
 
-curl -sSL $SPATIAL_URL --output ./tmp/spatial
-chmod +x ./tmp/spatial
-PATH=$PATH:$(pwd)/tmp/
+curl -sSL $SPATIAL_URL --output ./temp/spatial
+chmod +x ./temp/spatial
+PATH=$PATH:$(pwd)/temp/
+
+export RUST_BACKTRACE=1
 
 # TODO: Windows support
 
@@ -50,7 +52,7 @@ echo $SPATIAL_OAUTH > ~/.improbable/oauth2/oauth2_refresh_token
 
 cargo run --bin download_sdk -- -d dependencies -s 13.5.1
 
-rm -rf "./tmp"
+rm -rf "./temp"
 
 rustup component add rustfmt-preview
 rustup component add clippy-preview
