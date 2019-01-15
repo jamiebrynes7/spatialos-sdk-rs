@@ -37,7 +37,7 @@ else
 fi
 
 rm -rf "./temp"
-mkdir -p "./etmp"
+mkdir -p "./temp"
 
 curl -sSL $SPATIAL_URL --output ./temp/spatial
 chmod +x ./temp/spatial
