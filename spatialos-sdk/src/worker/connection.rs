@@ -7,11 +7,48 @@ use spatialos_sdk_sys::worker::*;
 
 use crate::worker::commands::*;
 use crate::worker::component::ComponentUpdate;
+use crate::worker::internal::utils::cstr_to_string;
 use crate::worker::locator::*;
 use crate::worker::metrics::Metrics;
-use crate::worker::op::{OpList, WorkerOp};
+use crate::worker::op::OpList;
 use crate::worker::parameters::{CommandParameters, ConnectionParameters};
 use crate::worker::{EntityId, InterestOverride, LogLevel, RequestId};
+
+#[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
+pub enum ConnectionStatusCode {
+    Success,
+    InternalError,
+    InvalidArgument,
+    NetworkError,
+    Timeout,
+    Cancelled,
+    Rejected,
+    PlayerIdentityTokenExpired,
+    LoginTokenExpired,
+    CapacityExceeded,
+    RateExceeded,
+    ServerShutdown,
+}
+
+impl From<u8> for ConnectionStatusCode {
+    fn from(value: u8) -> Self {
+        match u32::from(value) {
+            1 => ConnectionStatusCode::Success,
+            2 => ConnectionStatusCode::InternalError,
+            3 => ConnectionStatusCode::InvalidArgument,
+            4 => ConnectionStatusCode::NetworkError,
+            5 => ConnectionStatusCode::Timeout,
+            6 => ConnectionStatusCode::Cancelled,
+            7 => ConnectionStatusCode::Rejected,
+            8 => ConnectionStatusCode::PlayerIdentityTokenExpired,
+            9 => ConnectionStatusCode::LoginTokenExpired,
+            10 => ConnectionStatusCode::CapacityExceeded,
+            11 => ConnectionStatusCode::RateExceeded,
+            12 => ConnectionStatusCode::ServerShutdown,
+            _ => panic!(format!("Unknown connection status code: {}", value)),
+        }
+    }
+}
 
 /// Connection trait to allow for mocking the connection.
 pub trait Connection {
@@ -79,7 +116,12 @@ pub trait Connection {
     );
 
     fn set_protocol_logging_enabled(&mut self, enabled: bool);
+
+    #[deprecated(note = "Use get_connection_status_code == ConnectionStatusCode::Success instead.")]
     fn is_connected(&self) -> bool;
+
+    fn get_connection_status_code(&self) -> ConnectionStatusCode;
+    fn get_connection_status_detail(&self) -> String;
     fn get_worker_id(&self) -> &str;
     fn get_worker_attributes(&self) -> Vec<String>;
     fn get_worker_flag(&self, name: &str) -> Option<String>;
@@ -153,16 +195,6 @@ impl WorkerConnection {
                 queue_status_callback: Some(callback_ptr),
             }
         }
-    }
-
-    pub fn get_disconnect_reason(&mut self) -> Option<String> {
-        self.get_op_list(0)
-            .into_iter()
-            .filter_map(|op| match op {
-                WorkerOp::Disconnect(op) => Some(op.reason.clone()),
-                _ => None,
-            })
-            .next()
     }
 }
 
@@ -344,7 +376,25 @@ impl Connection for WorkerConnection {
 
     fn is_connected(&self) -> bool {
         assert!(!self.connection_ptr.is_null());
-        (unsafe { Worker_Connection_IsConnected(self.connection_ptr) } != 0)
+        self.get_connection_status_code() == ConnectionStatusCode::Success
+    }
+
+    fn get_connection_status_code(&self) -> ConnectionStatusCode {
+        assert!(!self.connection_ptr.is_null());
+        unsafe {
+            ConnectionStatusCode::from(Worker_Connection_GetConnectionStatusCode(
+                self.connection_ptr,
+            ))
+        }
+    }
+
+    fn get_connection_status_detail(&self) -> String {
+        assert!(!self.connection_ptr.is_null());
+        unsafe {
+            cstr_to_string(Worker_Connection_GetConnectionStatusDetailString(
+                self.connection_ptr,
+            ))
+        }
     }
 
     fn get_worker_id(&self) -> &str {
@@ -457,16 +507,13 @@ impl Future for WorkerConnectionFuture {
         }
 
         self.was_consumed = true;
-        let mut connection = WorkerConnection::new(connection_ptr);
+        let connection = WorkerConnection::new(connection_ptr);
 
-        if connection.is_connected() {
+        if connection.get_connection_status_code() == ConnectionStatusCode::Success {
             return Ok(Async::Ready(connection));
         }
 
-        match connection.get_disconnect_reason() {
-            Some(v) => Err(v),
-            None => Err("No disconnect op found in ops list.".to_owned()),
-        }
+        Err(connection.get_connection_status_detail())
     }
 
     fn wait(self) -> Result<WorkerConnection, String>
@@ -479,15 +526,12 @@ impl Future for WorkerConnectionFuture {
 
         assert!(!self.future_ptr.is_null());
         let connection_ptr = unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ptr::null()) };
-        let mut connection = WorkerConnection::new(connection_ptr);
+        let connection = WorkerConnection::new(connection_ptr);
 
-        if connection.is_connected() {
+        if connection.get_connection_status_code() == ConnectionStatusCode::Success {
             return Ok(connection);
         }
 
-        match connection.get_disconnect_reason() {
-            Some(v) => Err(v),
-            None => Err("No disconnect op found in ops list.".to_owned()),
-        }
+        Err(connection.get_connection_status_detail())
     }
 }
