@@ -20,20 +20,26 @@ pub fn do_setup(spatial_lib_dir: PathBuf, out_dir: PathBuf) {
     fs::create_dir_all(&tmp_path).expect("Failed to create tmp");
 
     // Copy the contents of the schema-compiler/proto dir into the temp dir.
-    dir::copy(
-        spatial_lib_dir.join("schema-compiler/proto"),
-        &tmp_path,
-        &CopyOptions {
-            overwrite: true,
-            ..CopyOptions::new()
-        },
-    )
-    .expect("Failed to copy contents of schema-compiler/proto");
+    let proto_dir_glob = spatial_lib_dir.join("schema-compiler/proto/*");
+    for entry in glob::glob(proto_dir_glob.to_str().unwrap())
+        .unwrap()
+        .filter_map(Result::ok)
+    {
+        dir::copy(
+            &entry,
+            &tmp_path,
+            &CopyOptions {
+                overwrite: true,
+                ..CopyOptions::new()
+            },
+        )
+        .expect("Failed to copy contents of schema-compiler/proto");
+    }
 
     // Run the schema compiler for each of the schema files in std-lib/improbable.
     let schema_glob = spatial_lib_dir.join("std-lib/improbable/*.schema");
-    let schema_path_arg = OsString::from("--schema_path=")
-        .tap(|arg| arg.push(&spatial_lib_dir.join("std-lib")));
+    let schema_path_arg =
+        OsString::from("--schema_path=").tap(|arg| arg.push(&spatial_lib_dir.join("std-lib")));
     let proto_out_arg = OsString::from("--proto_out=").tap(|arg| arg.push(&tmp_path));
     for entry in glob::glob(schema_glob.to_str().unwrap())
         .unwrap()
@@ -47,4 +53,25 @@ pub fn do_setup(spatial_lib_dir: PathBuf, out_dir: PathBuf) {
             .status()
             .expect("Failed to compile schema :'(");
     }
+
+    // Run protoc on all the generated proto files.
+    let proto_glob = tmp_path.join("**/*.proto");
+    let proto_path_arg = OsString::from("--proto_path=.\\").tap(|arg| arg.push(&tmp_path));
+    let descriptor_out_arg = OsString::from("--descriptor_set_out=")
+        .tap(|arg| arg.push(&bin_path.join("schema.descriptor")));
+    for entry in glob::glob(proto_glob.to_str().unwrap())
+        .unwrap()
+        .filter_map(Result::ok)
+    {
+        let mut command = Command::new(&protoc_path);
+        command
+            .arg(&proto_path_arg)
+            .arg(&descriptor_out_arg)
+            .arg("--include_imports")
+            .arg(PathBuf::from(".").join(entry))
+            .status()
+            .expect("Failed to run protoc");
+    }
+
+    fs::remove_dir_all(&tmp_path).expect("Failed to remove temp dir");
 }
