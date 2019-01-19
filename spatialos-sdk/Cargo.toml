@@ -17,3 +17,4 @@ uuid = { version = "0.7", features = ["v4"] }
 clap = "2.32.0"
 glob = "0.2.11"
 fs_extra = "1.1.0"
+tap = "0.3.0"

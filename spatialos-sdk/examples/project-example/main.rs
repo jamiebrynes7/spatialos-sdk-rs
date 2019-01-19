@@ -1,6 +1,7 @@
 extern crate spatialos_sdk;
 
 mod lib;
+mod setup;
 use crate::lib::{get_connection, get_worker_configuration, CommandType};
 
 use spatialos_sdk::worker::commands::{
@@ -22,7 +23,7 @@ fn main() {
     let config = match config {
         CommandType::Worker(config) => config,
         CommandType::Setup { spatial_lib_dir, out_dir } => {
-            do_setup(spatial_lib_dir, out_dir);
+            crate::setup::do_setup(spatial_lib_dir, out_dir);
             return;
         }
     };
@@ -112,29 +113,4 @@ fn send_metrics(c: &mut WorkerConnection) {
     histogram_metric.add_sample(0.5);
 
     c.send_metrics(&m);
-}
-
-fn do_setup(spatial_lib_dir: std::path::PathBuf, out_dir: std::path::PathBuf) {
-    use std::fs;
-    use fs_extra::dir::{self, CopyOptions};
-
-    // Determine the paths the the schema compiler and protoc relative the the lib
-    // dir path.
-    let schema_compiler_path = spatial_lib_dir.join("schema-compiler/schema_compiler");
-    let protoc_path = spatial_lib_dir.join("schema-compiler/protoc");
-
-    // Calculate the various output directories relative to `out_dir`.
-    let bin_path = out_dir.join("spatialos/schema/bin");
-    let tmp_path = out_dir.join("tmp");
-
-    // Create the output directories if they don't already exist.
-    fs::create_dir_all(&bin_path).expect("Failed to crate spatialos/schema/bin");
-    fs::create_dir_all(&tmp_path).expect("Failed to create tmp");
-
-    dir::copy(spatial_lib_dir.join("schema-compiler/proto"), &tmp_path, &CopyOptions::new()).expect("Failed to copy contents of schema-compiler/proto");
-    // let proto_glob = spatial_lib_dir.join("schema-compiler/proto/*");
-    // for entry in glob::glob(proto_glob.to_str().unwrap()).unwrap().filter_map(Result::ok) {
-    //     dbg!(entry);
-    //     fs_extra::dir::copy(entry, )
-    // }
 }
