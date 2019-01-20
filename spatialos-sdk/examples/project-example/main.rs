@@ -15,27 +15,35 @@ use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 fn main() {
     println!("Entered program");
 
+    // Get the configuration for the app from the command line arguments, exiting
+    // with an error code if the arguments are invalid.
     let config = match get_worker_configuration() {
         Ok(c) => c,
-        Err(e) => panic!("{}", e),
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
     };
 
-    let config = match config {
-        CommandType::Worker(config) => config,
+    match config {
+        // Spawn a worker with the configuration specified by the user.
+        CommandType::Worker(config) => {
+            let worker_connection = match get_connection(config) {
+                Ok(c) => c,
+                Err(e) => panic!("{}", e),
+            };
+
+            println!("Connected as: {}", worker_connection.get_worker_id());
+
+            exercise_connection_code_paths(worker_connection);
+        },
+
+        // Perform initial setup for the example by compiling necessary schema files.
         CommandType::Setup { spatial_lib_dir, out_dir } => {
             crate::setup::do_setup(spatial_lib_dir, out_dir);
             return;
         }
-    };
-
-    let worker_connection = match get_connection(config) {
-        Ok(c) => c,
-        Err(e) => panic!("{}", e),
-    };
-
-    println!("Connected as: {}", worker_connection.get_worker_id());
-
-    exercise_connection_code_paths(worker_connection);
+    }
 }
 
 fn exercise_connection_code_paths(mut c: WorkerConnection) {
