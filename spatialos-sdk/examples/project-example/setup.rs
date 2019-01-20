@@ -5,7 +5,11 @@ use std::path::PathBuf;
 use std::process::Command;
 use tap::*;
 
-pub fn do_setup(spatial_lib_dir: PathBuf, out_dir: PathBuf) {
+pub fn do_setup(spatial_lib_dir: Option<PathBuf>, out_dir: PathBuf) {
+    let spatial_lib_dir = spatial_lib_dir
+        .or_else(|| std::env::var("SPATIAL_LIB_DIR").map(Into::into).ok())
+        .expect("--spatial_lib_dir argument must be specified or the SPATIAL_LIB_DIR environment variable must be set");
+
     // Determine the paths the the schema compiler and protoc relative the the lib
     // dir path.
     let schema_compiler_path = spatial_lib_dir.join("schema-compiler/schema_compiler");
@@ -56,7 +60,7 @@ pub fn do_setup(spatial_lib_dir: PathBuf, out_dir: PathBuf) {
 
     // Run protoc on all the generated proto files.
     let proto_glob = tmp_path.join("**/*.proto");
-    let proto_path_arg = OsString::from("--proto_path=.\\").tap(|arg| arg.push(&tmp_path));
+    let proto_path_arg = OsString::from("--proto_path=").tap(|arg| arg.push(&tmp_path));
     let descriptor_out_arg = OsString::from("--descriptor_set_out=")
         .tap(|arg| arg.push(&bin_path.join("schema.descriptor")));
     for entry in glob::glob(proto_glob.to_str().unwrap())
@@ -68,7 +72,7 @@ pub fn do_setup(spatial_lib_dir: PathBuf, out_dir: PathBuf) {
             .arg(&proto_path_arg)
             .arg(&descriptor_out_arg)
             .arg("--include_imports")
-            .arg(PathBuf::from(".").join(entry))
+            .arg(&entry)
             .status()
             .expect("Failed to run protoc");
     }

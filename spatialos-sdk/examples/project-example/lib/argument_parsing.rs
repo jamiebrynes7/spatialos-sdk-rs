@@ -24,7 +24,7 @@ static SETUP_OUT_ARG: &str = "out_dir";
 pub enum CommandType {
     Worker(WorkerConfiguration),
     Setup {
-        spatial_lib_dir: PathBuf,
+        spatial_lib_dir: Option<PathBuf>,
         out_dir: PathBuf,
     },
 }
@@ -99,13 +99,10 @@ pub fn get_worker_configuration() -> Result<CommandType, String> {
                         .long(SPATIAL_LIB_DIR_ARG)
                         .short("l")
                         .value_name("SPATIAL_LIB_DIR")
-                        .help("The path to the directory whe the SpatialOS library is installed")
-                        .required(true),
+                        .help("The path to the directory whe the SpatialOS library is installed. If omitted, the command will attempt to use the SPATIAL_LIB_DIR environment variable instead."),
                 )
                 .arg(
                     Arg::with_name(SETUP_OUT_ARG)
-                        .long(SETUP_OUT_ARG)
-                        .short("o")
                         .value_name("OUT_DIR")
                         .help("The output directory")
                         .required(true),
@@ -158,8 +155,7 @@ pub fn get_worker_configuration() -> Result<CommandType, String> {
     if let Some(sub_matches) = matches.subcommand_matches(SETUP_SUBCOMMAND) {
         let spatial_lib_dir = sub_matches
             .value_of(SPATIAL_LIB_DIR_ARG)
-            .expect("No path the SpatialOS lib dir specified")
-            .into();
+            .map(Into::into);
 
         let out_dir = sub_matches
             .value_of(SETUP_OUT_ARG)
