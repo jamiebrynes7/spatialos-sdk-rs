@@ -16,7 +16,29 @@ fn get_package_path<'a>(package_names: &BTreeSet<Vec<String>>, identifier: &'a I
     unreachable!();
 }
 
-fn get_primitive_type(primitive_type: &PrimitiveType) -> &str {
+fn get_rust_primitive_type_tag(primitive_type: &PrimitiveType) -> &str {
+    match primitive_type {
+        PrimitiveType::Invalid => panic!("Encountered invalid primitive."),
+        PrimitiveType::Int32 => "SchemaInt32",
+        PrimitiveType::Sint32 => "SchemaSint32",
+        PrimitiveType::Sfixed32 => "SchemaSfixed32",
+        PrimitiveType::Int64 => "SchemaInt64",
+        PrimitiveType::Sint64 => "SchemaSint64",
+        PrimitiveType::Sfixed64 => "SchemaSfixed64",
+        PrimitiveType::Uint32 => "SchemaUint32",
+        PrimitiveType::Fixed32 => "SchemaFixed32",
+        PrimitiveType::Uint64 => "SchemaUint64",
+        PrimitiveType::Fixed64 => "SchemaFixed64",
+        PrimitiveType::Bool => "SchemaBool",
+        PrimitiveType::Float => "SchemaFloat",
+        PrimitiveType::Double => "SchemaDouble",
+        PrimitiveType::String => "SchemaString",
+        PrimitiveType::EntityId => "SchemaEntityId",
+        PrimitiveType::Bytes => "SchemaBytes"
+    }
+}
+
+fn get_rust_primitive_type(primitive_type: &PrimitiveType) -> &str {
     match primitive_type {
         PrimitiveType::Invalid => panic!("Encountered invalid primitive."),
         PrimitiveType::Int32 | PrimitiveType::Sint32 | PrimitiveType::Sfixed32 => "i32",
@@ -34,9 +56,9 @@ fn get_primitive_type(primitive_type: &PrimitiveType) -> &str {
 
 fn get_schema_type(value_type: &ValueTypeReference) -> &str {
     if let Some(ref primitive_type) = value_type.primitive_reference {
-        get_primitive_type(&primitive_type)
+        get_rust_primitive_type_tag(&primitive_type)
     } else if let Some(_) = value_type.enum_reference {
-        "u32"
+        "SchemaEnum"
     } else if let Some(_) = value_type.type_reference {
         "SchemaObject"
     } else {
@@ -171,7 +193,7 @@ impl Package {
         } else if let Some(ref list_type) = field.list_type {
             // If we have a list of primitives, we can just pass a slice directly to add_list.
             if let Some(ref primitive_type) = list_type.inner_type.primitive_reference {
-                format!("{}.field::<{}>({}).add_list({}[..])", schema_object, get_primitive_type(&primitive_type), field.field_id, expression)
+                format!("{}.field::<{}>({}).add_list({}[..])", schema_object, get_rust_primitive_type_tag(&primitive_type), field.field_id, expression)
             } else {
                 let add_item = self.serialize_type(field.field_id, &list_type.inner_type, "element", schema_object);
                 format!("for element in {}.iter() {{ {}; }}", expression, add_item)
@@ -189,12 +211,12 @@ impl Package {
     // Generates an expression which serializes a value from an expression into a schema object.
     fn serialize_type(&self, field_id: u32, value_type: &ValueTypeReference, expression: &str, schema_object: &str) -> String {
         if let Some(ref primitive_type) = value_type.primitive_reference {
-            format!("{}.field::<{}>({}).add({})", schema_object, get_primitive_type(&primitive_type), field_id, expression)
+            format!("{}.field::<{}>({}).add({})", schema_object, get_rust_primitive_type_tag(&primitive_type), field_id, expression)
         } else if let Some(_) = value_type.enum_reference {
             format!("{}.field::<u32>({}).add(({}) as u32)", schema_object, field_id, expression)
         } else if let Some(ref type_ref) = value_type.type_reference {
             let type_definition = self.rust_fqname(&self.get_type_definition(&type_ref.qualified_name).identifier);
-            format!("TypeSerializer::<{}>::serialize({}, &mut {}.field::<SchemaObject>({}).add())", type_definition, expression, schema_object, field_id)
+            format!("TypeSerializer::<{}>::serialize(&{}, &mut {}.field::<SchemaObject>({}).add())", type_definition, expression, schema_object, field_id)
         } else {
             panic!("Unknown value type reference. {:?}", value_type);
         }

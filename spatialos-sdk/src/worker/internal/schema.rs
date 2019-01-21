@@ -28,37 +28,6 @@ pub struct SchemaObject {
     internal: *mut Schema_Object,
 }
 
-pub struct SchemaFieldContainer<'a, T> {
-    field_id: FieldId,
-    container: &'a SchemaObject,
-    _phantom: PhantomData<T>,
-}
-
-pub trait SchemaField<T> {
-    fn get(&self) -> Option<T> {
-        if self.count() == 0 { None } else { Some(self.get_or_default()) }
-    }
-
-    fn get_or_default(&self) -> T;
-    fn index(&self, index: usize) -> T;
-    fn count(&self) -> usize;
-
-    fn add(&mut self, value: T);
-    fn add_list(&mut self, value: &[T]);
-}
-
-pub trait SchemaObjectField {
-    fn get(&self) -> Option<SchemaObject> {
-        if self.count() == 0 { None } else { Some(self.get_or_add()) }
-    }
-
-    fn get_or_add(&self) -> SchemaObject;
-    fn index(&self, index: usize) -> SchemaObject;
-    fn count(&self) -> usize;
-
-    fn add(&mut self) -> SchemaObject;
-}
-
 impl SchemaComponentUpdate {
     pub(crate) fn from_worker_sdk(component_id: ComponentId, component_update: *mut Schema_ComponentUpdate) -> SchemaComponentUpdate {
         SchemaComponentUpdate {
@@ -209,6 +178,58 @@ impl SchemaCommandResponse {
     }
 }
 
+// A schema field. T is a schema type tag.
+pub struct SchemaFieldContainer<'a, T> {
+    field_id: FieldId,
+    container: &'a SchemaObject,
+    _phantom: PhantomData<T>,
+}
+
+// Tags to represent schema types.
+pub struct SchemaFloat;
+pub struct SchemaDouble;
+pub struct SchemaBool;
+pub struct SchemaInt32;
+pub struct SchemaInt64;
+pub struct SchemaUint32;
+pub struct SchemaUint64;
+pub struct SchemaSint32;
+pub struct SchemaSint64;
+pub struct SchemaFixed32;
+pub struct SchemaFixed64;
+pub struct SchemaSfixed32;
+pub struct SchemaSfixed64;
+pub struct SchemaEntityId;
+pub struct SchemaEnum;
+pub struct SchemaBytes;
+
+// A primitive schema field.
+pub trait SchemaPrimitiveField<T> {
+    fn get(&self) -> Option<T> {
+        if self.count() == 0 { None } else { Some(self.get_or_default()) }
+    }
+
+    fn get_or_default(&self) -> T;
+    fn index(&self, index: usize) -> T;
+    fn count(&self) -> usize;
+
+    fn add(&mut self, value: T);
+    fn add_list(&mut self, value: &[T]);
+}
+
+// An object schema field.
+pub trait SchemaObjectField {
+    fn get(&self) -> Option<SchemaObject> {
+        if self.count() == 0 { None } else { Some(self.get_or_add()) }
+    }
+
+    fn get_or_add(&self) -> SchemaObject;
+    fn index(&self, index: usize) -> SchemaObject;
+    fn count(&self) -> usize;
+
+    fn add(&mut self) -> SchemaObject;
+}
+
 impl SchemaObject {
     pub fn field<T>(&self, field_id: ComponentId) -> SchemaFieldContainer<T> {
         SchemaFieldContainer { field_id: field_id, container: self, _phantom: PhantomData }
@@ -216,8 +237,8 @@ impl SchemaObject {
 }
 
 macro_rules! impl_primitive_field {
-    ($rust_type:ty, $schema_get:ident, $schema_index:ident, $schema_count:ident, $schema_add:ident, $schema_add_list:ident) => (
-        impl<'a> SchemaField<$rust_type> for SchemaFieldContainer<'a, $rust_type> {
+    ($rust_type:ty, $schema_type:ty, $schema_get:ident, $schema_index:ident, $schema_count:ident, $schema_add:ident, $schema_add_list:ident) => (
+        impl<'a> SchemaPrimitiveField<$rust_type> for SchemaFieldContainer<'a, $schema_type> {
             fn get_or_default(&self) -> $rust_type {
                 unsafe { $schema_get(self.container.internal, self.field_id) }
             }
@@ -241,64 +262,43 @@ macro_rules! impl_primitive_field {
     )
 }
 
-/*
+impl_primitive_field!(f32, SchemaFloat, Schema_GetFloat, Schema_IndexFloat, Schema_GetFloatCount, Schema_AddFloat, Schema_AddFloatList);
+impl_primitive_field!(f64, SchemaDouble, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
+impl_primitive_field!(i32, SchemaInt32, Schema_GetInt32, Schema_IndexInt32, Schema_GetInt32Count, Schema_AddInt32, Schema_AddInt32List);
+impl_primitive_field!(i64, SchemaInt64, Schema_GetInt64, Schema_IndexInt64, Schema_GetInt64Count, Schema_AddInt64, Schema_AddInt64List);
+impl_primitive_field!(u32, SchemaUint32, Schema_GetUint32, Schema_IndexUint32, Schema_GetUint32Count, Schema_AddUint32, Schema_AddUint32List);
+impl_primitive_field!(u64, SchemaUint64, Schema_GetUint64, Schema_IndexUint64, Schema_GetUint64Count, Schema_AddUint64, Schema_AddUint64List);
+impl_primitive_field!(i32, SchemaSint32, Schema_GetSint32, Schema_IndexSint32, Schema_GetSint32Count, Schema_AddSint32, Schema_AddSint32List);
+impl_primitive_field!(i64, SchemaSint64, Schema_GetSint64, Schema_IndexSint64, Schema_GetSint64Count, Schema_AddSint64, Schema_AddSint64List);
+impl_primitive_field!(u32, SchemaFixed32, Schema_GetFixed32, Schema_IndexFixed32, Schema_GetFixed32Count, Schema_AddFixed32, Schema_AddFixed32List);
+impl_primitive_field!(u64, SchemaFixed64, Schema_GetFixed64, Schema_IndexFixed64, Schema_GetFixed64Count, Schema_AddFixed64, Schema_AddFixed64List);
+impl_primitive_field!(i32, SchemaSfixed32, Schema_GetSfixed32, Schema_IndexSfixed32, Schema_GetSfixed32Count, Schema_AddSfixed32, Schema_AddSfixed32List);
+impl_primitive_field!(i64, SchemaSfixed64, Schema_GetSfixed64, Schema_IndexSfixed64, Schema_GetSfixed64Count, Schema_AddSfixed64, Schema_AddSfixed64List);
+impl_primitive_field!(i64, SchemaEntityId, Schema_GetEntityId, Schema_IndexEntityId, Schema_GetEntityIdCount, Schema_AddEntityId, Schema_AddEntityIdList);
+impl_primitive_field!(u32, SchemaEnum, Schema_GetEnum, Schema_IndexEnum, Schema_GetEnumCount, Schema_AddEnum, Schema_AddEnumList);
 
-Better API design:
+impl<'a> SchemaPrimitiveField<bool> for SchemaFieldContainer<'a, SchemaBool> {
+    fn get_or_default(&self) -> bool {
+        unsafe { Schema_GetBool(self.container.internal, self.field_id) != 0 }
+    }
+    fn index(&self, index: usize) -> bool {
+        unsafe { Schema_IndexBool(self.container.internal, self.field_id, index as u32) != 0 }
+    }
+    fn count(&self) -> usize {
+        unsafe { Schema_GetBoolCount(self.container.internal, self.field_id) as usize }
+    }
 
-struct SchemaObject {
-    fn float_field(field_id) -> SchemaFieldContainer<SchemaType::Float> {
-        ...
+    fn add(&mut self, value: bool) {
+        unsafe { Schema_AddBool(self.container.internal, self.field_id, value as u8); }
     }
-    fn double_field(field_id) -> SchemaFieldContainer<SchemaType::Double> {
-        ...
-    }
-    ...
-    fn sint32_field(field_id) -> SchemaFieldContainer<SchemaType::Sint32> {
-        ...
+    fn add_list(&mut self, value: &[bool]) {
+        let converted_list: Vec<u8> = value.iter().map(|v| { if *v { 1u8 } else { 0u8 } }).collect();
+        unsafe {
+            let ptr = converted_list.as_ptr();
+            Schema_AddBoolList(self.container.internal, self.field_id, ptr, value.len() as u32);
+        }
     }
 }
-
-*/
-
-/*
-pub fn Schema_GetFloatCount(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetDoubleCount(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetBoolCount(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetInt32Count(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetInt64Count(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetUint32Count(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetUint64Count(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetSint32Count(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetSint64Count(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetFixed32Count(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetFixed64Count(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetSfixed32Count(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetSfixed64Count(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetEntityIdCount(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetEnumCount(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetBytesCount(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-pub fn Schema_GetObjectCount(object: *const Schema_Object, field_id: Schema_FieldId) -> u32;
-*/
-
-impl_primitive_field!(f32, Schema_GetFloat, Schema_IndexFloat, Schema_GetFloatCount, Schema_AddFloat, Schema_AddFloatList);
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(bool, Schema_GetBool, Schema_IndexBool, Schema_GetBoolCount, Schema_AddBool, Schema_AddBoolList);
-impl_primitive_field!(i32, Schema_GetInt32, Schema_IndexInt32, Schema_GetInt32Count, Schema_AddInt32, Schema_AddInt32List);
-impl_primitive_field!(i64, Schema_GetInt64, Schema_IndexInt64, Schema_GetInt64Count, Schema_AddInt64, Schema_AddInt64List);
-impl_primitive_field!(u32, Schema_GetUint32, Schema_IndexUint32, Schema_GetUint32Count, Schema_AddUint32, Schema_AddUint32List);
-impl_primitive_field!(u64, Schema_GetUint64, Schema_IndexUint64, Schema_GetUint64Count, Schema_AddUint64, Schema_AddUint64List);
-// PROBLEM: We can't identifier certain schema types with rust types (cause multiple schema types map to the same rust type).
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(f64, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
 
 // TODO: Generate this for all primitive types with a macro.
 // i.e. impl_field_primitives!([f32, Float], [f64, Double])
