@@ -5,7 +5,24 @@ use std::path::PathBuf;
 use std::process::Command;
 use tap::*;
 
-pub fn do_setup(spatial_lib_dir: Option<PathBuf>, out_dir: PathBuf) {
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "setup", about = "Perform setup for a Rust SpatialOS project.")]
+struct Opt {
+    /// The path to your local installation of the SpatialOS SDK. If not specified,
+    /// the SPATIAL_OS_DIR environment variable instead.
+    #[structopt(long = "spatial-lib-dir", short = "l", parse(from_os_str))]
+    spatial_lib_dir: Option<PathBuf>,
+
+    /// The path the schema directory for the project.
+    #[structopt(parse(from_os_str))]
+    schema_dir: PathBuf,
+}
+
+fn main() {
+    let Opt { spatial_lib_dir, schema_dir } = Opt::from_args();
+
     let spatial_lib_dir = spatial_lib_dir
         .or_else(|| std::env::var("SPATIAL_LIB_DIR").map(Into::into).ok())
         .expect("--spatial_lib_dir argument must be specified or the SPATIAL_LIB_DIR environment variable must be set");
@@ -16,11 +33,11 @@ pub fn do_setup(spatial_lib_dir: Option<PathBuf>, out_dir: PathBuf) {
     let protoc_path = spatial_lib_dir.join("schema-compiler/protoc");
 
     // Calculate the various output directories relative to `out_dir`.
-    let bin_path = out_dir.join("spatialos/schema/bin");
-    let tmp_path = out_dir.join("tmp");
+    let bin_path = schema_dir.join("bin");
+    let tmp_path = schema_dir.join("tmp");
 
     // Create the output directories if they don't already exist.
-    fs::create_dir_all(&bin_path).expect("Failed to crate spatialos/schema/bin");
+    fs::create_dir_all(&bin_path).expect("Failed to create bin");
     fs::create_dir_all(&tmp_path).expect("Failed to create tmp");
 
     // Copy the contents of the schema-compiler/proto dir into the temp dir.

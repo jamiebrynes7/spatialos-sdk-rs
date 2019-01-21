@@ -4,30 +4,18 @@ use self::clap::{App, Arg, ArgMatches, SubCommand};
 
 use spatialos_sdk::worker::locator::{LocatorCredentials, LocatorParameters};
 use spatialos_sdk::worker::parameters::ConnectionParameters;
-use std::path::PathBuf;
 
 static RECEPTIONIST_HOST: &str = "127.0.0.1";
 static RECEPTIONIST_PORT: u16 = 7777;
 
 static RECEPTIONIST_SUBCOMMAND: &str = "receptionist";
 static LOCATOR_SUBCOMMAND: &str = "locator";
-static SETUP_SUBCOMMAND: &str = "setup";
 
 static CONNECT_POLL_ARG: &str = "connect_with_poll";
 static EXTERNAL_IP_ARG: &str = "use_external_ip";
 static LOCATOR_TOKEN_ARG: &str = "locator_token";
 static PROJECT_NAME_ARG: &str = "project_name";
 static WORKER_TYPE_ARG: &str = "worker_type";
-static SPATIAL_LIB_DIR_ARG: &str = "spatial_lib_dir";
-static SETUP_OUT_ARG: &str = "out_dir";
-
-pub enum CommandType {
-    Worker(WorkerConfiguration),
-    Setup {
-        spatial_lib_dir: Option<PathBuf>,
-        out_dir: PathBuf,
-    },
-}
 
 pub enum ConnectionType {
     Receptionist(String, u16),
@@ -41,7 +29,7 @@ pub struct WorkerConfiguration {
 }
 
 // Gets the configuration of the worker.
-pub fn get_worker_configuration() -> Result<CommandType, String> {
+pub fn get_worker_configuration() -> Result<WorkerConfiguration, String> {
     let polling_connection_arg = Arg::with_name(CONNECT_POLL_ARG)
         .long(CONNECT_POLL_ARG)
         .short("p")
@@ -92,22 +80,6 @@ pub fn get_worker_configuration() -> Result<CommandType, String> {
                         .required(true),
                 ),
         )
-        .subcommand(
-            SubCommand::with_name(SETUP_SUBCOMMAND)
-                .arg(
-                    Arg::with_name(SPATIAL_LIB_DIR_ARG)
-                        .long(SPATIAL_LIB_DIR_ARG)
-                        .short("l")
-                        .value_name("SPATIAL_LIB_DIR")
-                        .help("The path to the directory whe the SpatialOS library is installed. If omitted, the command will attempt to use the SPATIAL_LIB_DIR environment variable instead."),
-                )
-                .arg(
-                    Arg::with_name(SETUP_OUT_ARG)
-                        .value_name("OUT_DIR")
-                        .help("The output directory")
-                        .required(true),
-                )
-        )
         .get_matches();
 
     if let Some(sub_matches) = matches.subcommand_matches(LOCATOR_SUBCOMMAND) {
@@ -128,11 +100,11 @@ pub fn get_worker_configuration() -> Result<CommandType, String> {
             .using_tcp()
             .using_external_ip();
 
-        return Ok(CommandType::Worker(WorkerConfiguration {
+        return Ok(WorkerConfiguration {
             connection_params: params,
             connect_with_poll: sub_matches.is_present(CONNECT_POLL_ARG),
             connection_type: ConnectionType::Locator(locator_params),
-        }));
+        });
     }
 
     if let Some(sub_matches) = matches.subcommand_matches(RECEPTIONIST_SUBCOMMAND) {
@@ -142,26 +114,14 @@ pub fn get_worker_configuration() -> Result<CommandType, String> {
             params.network.use_external_ip = true;
         }
 
-        return Ok(CommandType::Worker(WorkerConfiguration {
+        return Ok(WorkerConfiguration {
             connection_params: params,
             connect_with_poll: sub_matches.is_present(CONNECT_POLL_ARG),
             connection_type: ConnectionType::Receptionist(
                 RECEPTIONIST_HOST.to_string(),
                 RECEPTIONIST_PORT,
             ),
-        }));
-    }
-
-    if let Some(sub_matches) = matches.subcommand_matches(SETUP_SUBCOMMAND) {
-        let spatial_lib_dir = sub_matches
-            .value_of(SPATIAL_LIB_DIR_ARG)
-            .map(Into::into);
-
-        let out_dir = sub_matches
-            .value_of(SETUP_OUT_ARG)
-            .expect("No output directory specified")
-            .into();
-        return Ok(CommandType::Setup { spatial_lib_dir, out_dir })
+        });
     }
 
     Err("Please select one of the subcommands".to_owned())

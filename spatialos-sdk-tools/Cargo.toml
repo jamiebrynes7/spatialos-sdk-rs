@@ -12,8 +12,15 @@ path = "src/download_sdk/main.rs"
 name = "generate_bindings"
 path = "src/generate_bindings/main.rs"
 
+[[bin]]
+name = "setup"
+path = "src/setup/main.rs"
+
 [dependencies]
 zip = "0.5"
 clap = "2.32.0"
 glob = "0.2"
 bindgen = "0.42"
+structopt = "0.2.14"
+tap = "0.3.0"
+fs_extra = "1.1.0"
