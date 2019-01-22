@@ -17,6 +17,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Get the configuration for the app from the command line arguments, exiting
     // with an error code if the arguments are invalid.
     let config = get_worker_configuration()?;
+
+    // Attempt to establish a connection to SpatialOS.
     let worker_connection = get_connection(config)?;
 
     println!("Connected as: {}", worker_connection.get_worker_id());
