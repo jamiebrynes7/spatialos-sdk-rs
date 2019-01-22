@@ -38,7 +38,7 @@ impl EntityId {
 
 #[derive(Debug, Copy, Clone, Eq, Hash, PartialOrd, Ord)]
 pub struct RequestId<T> {
-    pub id: u32,
+    pub(crate) id: u32,
     _type: PhantomData<*const T>,
 }
 
