@@ -21,7 +21,10 @@ struct Opt {
 }
 
 fn main() {
-    let Opt { spatial_lib_dir, schema_dir } = Opt::from_args();
+    let Opt {
+        spatial_lib_dir,
+        schema_dir,
+    } = Opt::from_args();
 
     let spatial_lib_dir = spatial_lib_dir
         .or_else(|| std::env::var("SPATIAL_LIB_DIR").map(Into::into).ok())
@@ -58,41 +61,45 @@ fn main() {
     }
 
     // Run the schema compiler for each of the schema files in std-lib/improbable.
-    let schema_glob = spatial_lib_dir.join("std-lib/improbable/*.schema");
     let schema_path_arg =
         OsString::from("--schema_path=").tap(|arg| arg.push(&spatial_lib_dir.join("std-lib")));
     let proto_out_arg = OsString::from("--proto_out=").tap(|arg| arg.push(&tmp_path));
+
+    let mut command = Command::new(&schema_compiler_path);
+    command
+        .arg(&schema_path_arg)
+        .arg(&proto_out_arg)
+        .arg("--load_all_schema_on_schema_path");
+
+    let schema_glob = spatial_lib_dir.join("std-lib/improbable/*.schema");
     for entry in glob::glob(schema_glob.to_str().unwrap())
         .unwrap()
         .filter_map(Result::ok)
     {
-        Command::new(&schema_compiler_path)
-            .arg(&schema_path_arg)
-            .arg(&proto_out_arg)
-            .arg("--load_all_schema_on_schema_path")
-            .arg(&entry)
-            .status()
-            .expect("Failed to compile schema :'(");
+        command.arg(&entry);
     }
+
+    command.status().expect("Failed to compile schema files");
 
     // Run protoc on all the generated proto files.
     let proto_glob = tmp_path.join("**/*.proto");
     let proto_path_arg = OsString::from("--proto_path=").tap(|arg| arg.push(&tmp_path));
     let descriptor_out_arg = OsString::from("--descriptor_set_out=")
         .tap(|arg| arg.push(&bin_path.join("schema.descriptor")));
+
+    let mut command = Command::new(&protoc_path);
+    command
+        .arg(&proto_path_arg)
+        .arg(&descriptor_out_arg)
+        .arg("--include_imports");
     for entry in glob::glob(proto_glob.to_str().unwrap())
         .unwrap()
         .filter_map(Result::ok)
     {
-        let mut command = Command::new(&protoc_path);
-        command
-            .arg(&proto_path_arg)
-            .arg(&descriptor_out_arg)
-            .arg("--include_imports")
-            .arg(&entry)
-            .status()
-            .expect("Failed to run protoc");
+        command.arg(&entry);
     }
+
+    command.status().expect("Failed to run protoc");
 
     fs::remove_dir_all(&tmp_path).expect("Failed to remove temp dir");
 }
