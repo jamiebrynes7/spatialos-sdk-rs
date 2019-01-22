@@ -55,7 +55,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let schema_path_arg =
         OsString::from("--schema_path=").tap(|arg| arg.push(&spatial_lib_dir.join("std-lib")));
     let proto_out_arg = OsString::from("--proto_out=").tap(|arg| arg.push(&tmp_path));
-
     let mut command = Command::new(&schema_compiler_path);
     command
         .arg(&schema_path_arg)
@@ -76,7 +75,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let proto_path_arg = OsString::from("--proto_path=").tap(|arg| arg.push(&tmp_path));
     let descriptor_out_arg = OsString::from("--descriptor_set_out=")
         .tap(|arg| arg.push(&bin_path.join("schema.descriptor")));
-
     let mut command = Command::new(&protoc_path);
     command
         .arg(&proto_path_arg)
@@ -88,6 +86,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     command.status().map_err(|_| "Failed to run protoc")?;
 
+    // Remove the temp directory once the setup process has finished.
     fs::remove_dir_all(&tmp_path).map_err(|_| "Failed to remove temp dir")?;
 
     Ok(())
