@@ -3,21 +3,24 @@ extern crate spatialos_sdk;
 mod lib;
 use crate::lib::{get_connection, get_worker_configuration};
 
-use spatialos_sdk::worker::commands::{ReserveEntityIdsRequest, DeleteEntityRequest, EntityQueryRequest};
+use spatialos_sdk::worker::commands::{
+    DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
+};
+use spatialos_sdk::worker::component::{self, ComponentDatabase};
 use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
 use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
-use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
-use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 use spatialos_sdk::worker::op::WorkerOp;
-use spatialos_sdk::worker::component::{self, ComponentDatabase};
+use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::ComponentMetaclass;
+use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 
 mod generated_code;
 
 fn main() {
     println!("Entered program");
 
-    let components = ComponentDatabase::new().add_component::<generated_code::example::Example, generated_code::example::Example>();
+    let components = ComponentDatabase::new()
+        .add_component::<generated_code::example::Example, generated_code::example::Example>();
     let config = match get_worker_configuration(components) {
         Ok(c) => c,
         Err(e) => panic!("{}", e),
@@ -53,17 +56,26 @@ fn logic_loop(c: &mut WorkerConnection) {
             match op {
                 // TODO: Make this safer and not rely on `component::get_component_xx`
                 WorkerOp::AddComponent(add_component) => {
-                    if add_component.component_data.component_id == generated_code::example::Example::component_id() {
-                        let component_data = component::get_component_data::<generated_code::example::Example>(&add_component.component_data);
+                    if add_component.component_data.component_id
+                        == generated_code::example::Example::component_id()
+                    {
+                        let component_data =
+                            component::get_component_data::<generated_code::example::Example>(
+                                &add_component.component_data,
+                            );
                         println!("Received Example data: {:?}", component_data);
                     }
-                },
+                }
                 WorkerOp::ComponentUpdate(update) => {
-                    if update.component_update.component_id == generated_code::example::Example::component_id() {
-                        let component_update = component::get_component_update::<generated_code::example::Example>(&update.component_update);
+                    if update.component_update.component_id
+                        == generated_code::example::Example::component_id()
+                    {
+                        let component_update = component::get_component_update::<
+                            generated_code::example::Example,
+                        >(&update.component_update);
                         println!("Received Example update: {:?}", component_update);
                     }
-                },
+                }
                 _ => {}
             }
         }

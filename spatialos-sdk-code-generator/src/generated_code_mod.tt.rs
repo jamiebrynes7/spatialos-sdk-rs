@@ -16,11 +16,16 @@ pub struct <#= self.rust_name(&type_def.identifier) #> {<#
     #>
     <#= field.identifier.name #>: <#= self.generate_field_type(field) #>,<# } #>
 }
-impl TypeSerializer<<#= self.rust_name(&type_def.identifier) #>> for <#= self.rust_name(&type_def.identifier) #> {
+impl TypeSerializer for <#= self.rust_name(&type_def.identifier) #> {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
         for field in &type_def.field_definitions {
+            let borrow = if self.field_needs_borrow(field) {
+                "&"
+            } else {
+                ""
+            };
         #>
-        <#= self.serialize_field(field, &format!("input.{}", field.identifier.name), "output") #>;<# } #>
+        <#= self.serialize_field(field, &format!("{}input.{}", borrow, field.identifier.name), "output") #>;<# } #>
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
@@ -42,11 +47,16 @@ pub struct <#= self.rust_name(&component.identifier) #> {<#
     #>
     <#= field.identifier.name #>: <#= self.generate_field_type(field) #>,<# } #>
 }
-impl TypeSerializer<<#= self.rust_name(&component.identifier) #>> for <#= self.rust_name(&component.identifier) #> {
+impl TypeSerializer for <#= self.rust_name(&component.identifier) #> {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
         for field in &component_fields {
+            let borrow = if self.field_needs_borrow(field) {
+                "&"
+            } else {
+                ""
+            };
         #>
-        <#= self.serialize_field(field, &format!("input.{}", field.identifier.name), "output") #>;<# } #>
+        <#= self.serialize_field(field, &format!("{}input.{}", borrow, field.identifier.name), "output") #>;<# } #>
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
@@ -72,12 +82,17 @@ pub struct <#= self.rust_name(&component.identifier) #>Update {<#
     #>
     <#= field.identifier.name #>: Option<<#= self.generate_field_type(field) #>>,<# } #>
 }
-impl TypeSerializer<<#= self.rust_name(&component.identifier) #>Update> for <#= self.rust_name(&component.identifier) #>Update {
+impl TypeSerializer for <#= self.rust_name(&component.identifier) #>Update {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
         for field in &component_fields {
+            let ref_decorator = if self.field_needs_borrow(field) {
+                "ref "
+            } else {
+                ""
+            };
         #>
-        if let Some(ref value) = input.<#= field.identifier.name #> {
-            <#= self.serialize_field(field, "value.clone()", "output") #>;
+        if let Some(<#= ref_decorator #>value) = input.<#= field.identifier.name #> {
+            <#= self.serialize_field(field, "value", "output") #>;
         }<# } #>
         Ok(())
     }
@@ -133,22 +148,22 @@ pub enum <#= self.rust_name(&component.identifier) #>CommandResponse {<#
 impl ComponentVtable<<#= self.rust_name(&component.identifier) #>> for <#= self.rust_name(&component.identifier) #> {
     fn serialize_data(data: &<#= self.rust_fqname(&component.identifier) #>) -> Result<SchemaComponentData, String> {
         let mut serialized_data = SchemaComponentData::new(Self::component_id());
-        TypeSerializer::<<#= self.rust_fqname(&component.identifier) #>>::serialize(data, &mut serialized_data.fields_mut());
+        <<#= self.rust_fqname(&component.identifier) #> as TypeSerializer>::serialize(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn deserialize_data(data: &SchemaComponentData) -> Result<<#= self.rust_fqname(&component.identifier) #>, String> {
-        TypeSerializer::<<#= self.rust_fqname(&component.identifier) #>>::deserialize(&data.fields())
+        <<#= self.rust_fqname(&component.identifier) #> as TypeSerializer>::deserialize(&data.fields())
     }
 
     fn serialize_update(update: &<#= self.rust_fqname(&component.identifier) #>Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::component_id());
-        TypeSerializer::<<#= self.rust_fqname(&component.identifier) #>Update>::serialize(update, &mut serialized_update.fields_mut());
+        <<#= self.rust_fqname(&component.identifier) #>Update as TypeSerializer>::serialize(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
     fn deserialize_update(update: &SchemaComponentUpdate) -> Result<<#= self.rust_fqname(&component.identifier) #>Update, String> {
-        TypeSerializer::<<#= self.rust_fqname(&component.identifier) #>Update>::deserialize(&update.fields())
+        <<#= self.rust_fqname(&component.identifier) #>Update as TypeSerializer>::deserialize(&update.fields())
     }
 
     fn serialize_command_request(request: &<#= self.rust_fqname(&component.identifier) #>CommandRequest) -> Result<SchemaCommandRequest, String> {
@@ -163,7 +178,7 @@ impl ComponentVtable<<#= self.rust_name(&component.identifier) #>> for <#= self.
             for command in &component.command_definitions {
             #>
             <#= self.rust_name(&component.identifier) #>CommandRequest::<#= command.identifier.name #>(ref data) => {
-                TypeSerializer::<<#= self.generate_value_type_reference(&command.request_type) #>>::serialize(data, &mut serialized_request.object_mut());
+                <<#= self.generate_value_type_reference(&command.request_type) #> as TypeSerializer>::serialize(data, &mut serialized_request.object_mut());
             },<# } #>
             _ => unreachable!()
         }
@@ -175,7 +190,7 @@ impl ComponentVtable<<#= self.rust_name(&component.identifier) #>> for <#= self.
             for command in &component.command_definitions {
             #>
             <#= command.command_index #> => {
-                let result = TypeSerializer::<<#= self.generate_value_type_reference(&command.request_type) #>>::deserialize(&request.object());
+                let result = <<#= self.generate_value_type_reference(&command.request_type) #> as TypeSerializer>::deserialize(&request.object());
                 result.and_then(|deserialized| Ok(<#= self.rust_name(&component.identifier) #>CommandRequest::<#= command.identifier.name #>(deserialized)))
             },<# } #>
             _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component <#= self.rust_name(&component.identifier) #>.", request.command_index()))
@@ -194,7 +209,7 @@ impl ComponentVtable<<#= self.rust_name(&component.identifier) #>> for <#= self.
             for command in &component.command_definitions {
             #>
             <#= self.rust_name(&component.identifier) #>CommandResponse::<#= command.identifier.name #>(ref data) => {
-                TypeSerializer::<<#= self.generate_value_type_reference(&command.response_type) #>>::serialize(data, &mut serialized_response.object_mut());
+                <<#= self.generate_value_type_reference(&command.response_type) #> as TypeSerializer>::serialize(data, &mut serialized_response.object_mut());
             },<# } #>
             _ => unreachable!()
         }
@@ -206,7 +221,7 @@ impl ComponentVtable<<#= self.rust_name(&component.identifier) #>> for <#= self.
             for command in &component.command_definitions {
             #>
             <#= command.command_index #> => {
-                let result = TypeSerializer::<<#= self.generate_value_type_reference(&command.response_type) #>>::deserialize(&response.object());
+                let result = <<#= self.generate_value_type_reference(&command.response_type) #> as TypeSerializer>::deserialize(&response.object());
                 result.and_then(|deserialized| Ok(<#= self.rust_name(&component.identifier) #>CommandResponse::<#= command.identifier.name #>(deserialized)))
             },<# } #>
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component <#= self.rust_name(&component.identifier) #>.", response.command_index()))

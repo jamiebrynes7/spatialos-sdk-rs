@@ -24,7 +24,7 @@ use super::super::generated as generated;
 pub struct CommandData {
     value: i32,
 }
-impl TypeSerializer<CommandData> for CommandData {
+impl TypeSerializer for CommandData {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.field::<SchemaInt32>(1).add(input.value);
         Ok(())
@@ -41,7 +41,7 @@ impl TypeSerializer<CommandData> for CommandData {
 pub struct Example {
     x: f32,
 }
-impl TypeSerializer<Example> for Example {
+impl TypeSerializer for Example {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.field::<SchemaFloat>(1).add(input.x);
         Ok(())
@@ -62,10 +62,10 @@ impl ComponentData<Example> for Example {
 pub struct ExampleUpdate {
     x: Option<f32>,
 }
-impl TypeSerializer<ExampleUpdate> for ExampleUpdate {
+impl TypeSerializer for ExampleUpdate {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(ref value) = input.x {
-            output.field::<SchemaFloat>(1).add(value.clone());
+        if let Some(value) = input.x {
+            output.field::<SchemaFloat>(1).add(value);
         }
         Ok(())
     }
@@ -111,22 +111,22 @@ pub enum ExampleCommandResponse {
 impl ComponentVtable<Example> for Example {
     fn serialize_data(data: &generated::example::Example) -> Result<SchemaComponentData, String> {
         let mut serialized_data = SchemaComponentData::new(Self::component_id());
-        TypeSerializer::<generated::example::Example>::serialize(data, &mut serialized_data.fields_mut());
+        <generated::example::Example as TypeSerializer>::serialize(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn deserialize_data(data: &SchemaComponentData) -> Result<generated::example::Example, String> {
-        TypeSerializer::<generated::example::Example>::deserialize(&data.fields())
+        <generated::example::Example as TypeSerializer>::deserialize(&data.fields())
     }
 
     fn serialize_update(update: &generated::example::ExampleUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::component_id());
-        TypeSerializer::<generated::example::ExampleUpdate>::serialize(update, &mut serialized_update.fields_mut());
+        <generated::example::ExampleUpdate as TypeSerializer>::serialize(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
     fn deserialize_update(update: &SchemaComponentUpdate) -> Result<generated::example::ExampleUpdate, String> {
-        TypeSerializer::<generated::example::ExampleUpdate>::deserialize(&update.fields())
+        <generated::example::ExampleUpdate as TypeSerializer>::deserialize(&update.fields())
     }
 
     fn serialize_command_request(request: &generated::example::ExampleCommandRequest) -> Result<SchemaCommandRequest, String> {
@@ -137,7 +137,7 @@ impl ComponentVtable<Example> for Example {
         let mut serialized_request = SchemaCommandRequest::new(Self::component_id(), command_index);
         match request {
             ExampleCommandRequest::test_command(ref data) => {
-                TypeSerializer::<generated::example::CommandData>::serialize(data, &mut serialized_request.object_mut());
+                <generated::example::CommandData as TypeSerializer>::serialize(data, &mut serialized_request.object_mut());
             },
             _ => unreachable!()
         }
@@ -147,7 +147,7 @@ impl ComponentVtable<Example> for Example {
     fn deserialize_command_request(request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest, String> {
         match request.command_index() {
             1 => {
-                let result = TypeSerializer::<generated::example::CommandData>::deserialize(&request.object());
+                let result = <generated::example::CommandData as TypeSerializer>::deserialize(&request.object());
                 result.and_then(|deserialized| Ok(ExampleCommandRequest::test_command(deserialized)))
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Example.", request.command_index()))
@@ -162,7 +162,7 @@ impl ComponentVtable<Example> for Example {
         let mut serialized_response = SchemaCommandResponse::new(Self::component_id(), command_index);
         match response {
             ExampleCommandResponse::test_command(ref data) => {
-                TypeSerializer::<generated::example::CommandData>::serialize(data, &mut serialized_response.object_mut());
+                <generated::example::CommandData as TypeSerializer>::serialize(data, &mut serialized_response.object_mut());
             },
             _ => unreachable!()
         }
@@ -172,7 +172,7 @@ impl ComponentVtable<Example> for Example {
     fn deserialize_command_response(response: &SchemaCommandResponse) -> Result<generated::example::ExampleCommandResponse, String> {
         match response.command_index() {
             1 => {
-                let result = TypeSerializer::<generated::example::CommandData>::deserialize(&response.object());
+                let result = <generated::example::CommandData as TypeSerializer>::deserialize(&response.object());
                 result.and_then(|deserialized| Ok(ExampleCommandResponse::test_command(deserialized)))
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Example.", response.command_index()))
@@ -195,14 +195,14 @@ use super::super::generated as generated;
 pub struct ComponentInterest {
     queries: Vec<generated::improbable::ComponentInterest_Query>,
 }
-impl TypeSerializer<ComponentInterest> for ComponentInterest {
+impl TypeSerializer for ComponentInterest {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        for element in input.queries.iter() { TypeSerializer::<generated::improbable::ComponentInterest_Query>::serialize(&element, &mut output.field::<SchemaObject>(1).add()); };
+        for element in (&input.queries).iter() { <generated::improbable::ComponentInterest_Query as TypeSerializer>::serialize(&element, &mut output.field::<SchemaObject>(1).add()); };
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            queries: { let size = input.field::<SchemaObject>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::ComponentInterest_Query>::deserialize(&input.field::<SchemaObject>(1).index(i))?); }; l },
+            queries: { let size = input.field::<SchemaObject>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(<generated::improbable::ComponentInterest_Query as TypeSerializer>::deserialize(&input.field::<SchemaObject>(1).index(i))?); }; l },
         })
     }
 }
@@ -212,16 +212,16 @@ pub struct ComponentInterest_BoxConstraint {
     center: generated::improbable::Coordinates,
     edge_length: generated::improbable::EdgeLength,
 }
-impl TypeSerializer<ComponentInterest_BoxConstraint> for ComponentInterest_BoxConstraint {
+impl TypeSerializer for ComponentInterest_BoxConstraint {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        TypeSerializer::<generated::improbable::Coordinates>::serialize(&input.center, &mut output.field::<SchemaObject>(1).add());
-        TypeSerializer::<generated::improbable::EdgeLength>::serialize(&input.edge_length, &mut output.field::<SchemaObject>(2).add());
+        <generated::improbable::Coordinates as TypeSerializer>::serialize(&&input.center, &mut output.field::<SchemaObject>(1).add());
+        <generated::improbable::EdgeLength as TypeSerializer>::serialize(&&input.edge_length, &mut output.field::<SchemaObject>(2).add());
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            center: TypeSerializer::<generated::improbable::Coordinates>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
-            edge_length: TypeSerializer::<generated::improbable::EdgeLength>::deserialize(&input.field::<SchemaObject>(2).get_or_default())?,
+            center: <generated::improbable::Coordinates as TypeSerializer>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
+            edge_length: <generated::improbable::EdgeLength as TypeSerializer>::deserialize(&input.field::<SchemaObject>(2).get_or_default())?,
         })
     }
 }
@@ -231,15 +231,15 @@ pub struct ComponentInterest_CylinderConstraint {
     center: generated::improbable::Coordinates,
     radius: f64,
 }
-impl TypeSerializer<ComponentInterest_CylinderConstraint> for ComponentInterest_CylinderConstraint {
+impl TypeSerializer for ComponentInterest_CylinderConstraint {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        TypeSerializer::<generated::improbable::Coordinates>::serialize(&input.center, &mut output.field::<SchemaObject>(1).add());
+        <generated::improbable::Coordinates as TypeSerializer>::serialize(&&input.center, &mut output.field::<SchemaObject>(1).add());
         output.field::<SchemaDouble>(2).add(input.radius);
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            center: TypeSerializer::<generated::improbable::Coordinates>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
+            center: <generated::improbable::Coordinates as TypeSerializer>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
             radius: input.field::<SchemaDouble>(2).get_or_default(),
         })
     }
@@ -252,20 +252,20 @@ pub struct ComponentInterest_Query {
     result_component_id: Vec<u32>,
     frequency: Option<f32>,
 }
-impl TypeSerializer<ComponentInterest_Query> for ComponentInterest_Query {
+impl TypeSerializer for ComponentInterest_Query {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::serialize(&input.constraint, &mut output.field::<SchemaObject>(1).add());
-        if let Some(ref data) = input.full_snapshot_result { output.field::<SchemaBool>(2).add(data); };
-        output.field::<SchemaUint32>(3).add_list(&input.result_component_id[..]);
-        if let Some(ref data) = input.frequency { output.field::<SchemaFloat>(4).add(data); };
+        <generated::improbable::ComponentInterest_QueryConstraint as TypeSerializer>::serialize(&&input.constraint, &mut output.field::<SchemaObject>(1).add());
+        if let Some(data) = input.full_snapshot_result { output.field::<SchemaBool>(2).add(data); };
+        output.field::<SchemaUint32>(3).add_list(&&input.result_component_id[..]);
+        if let Some(data) = input.frequency { output.field::<SchemaFloat>(4).add(data); };
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            constraint: TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
-            full_snapshot_result: input.field::<SchemaBool>(2).get().map(|v| { v }),
+            constraint: <generated::improbable::ComponentInterest_QueryConstraint as TypeSerializer>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
+            full_snapshot_result: if let Some(data) = input.field::<SchemaBool>(2).get() { Some(data) } else { None },
             result_component_id: { let size = input.field::<SchemaUint32>(3).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(input.field::<SchemaUint32>(3).index(i)); }; l },
-            frequency: input.field::<SchemaFloat>(4).get().map(|v| { v }),
+            frequency: if let Some(data) = input.field::<SchemaFloat>(4).get() { Some(data) } else { None },
         })
     }
 }
@@ -283,32 +283,32 @@ pub struct ComponentInterest_QueryConstraint {
     and_constraint: Vec<generated::improbable::ComponentInterest_QueryConstraint>,
     or_constraint: Vec<generated::improbable::ComponentInterest_QueryConstraint>,
 }
-impl TypeSerializer<ComponentInterest_QueryConstraint> for ComponentInterest_QueryConstraint {
+impl TypeSerializer for ComponentInterest_QueryConstraint {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(ref data) = input.sphere_constraint { TypeSerializer::<generated::improbable::ComponentInterest_SphereConstraint>::serialize(&data, &mut output.field::<SchemaObject>(1).add()); };
-        if let Some(ref data) = input.cylinder_constraint { TypeSerializer::<generated::improbable::ComponentInterest_CylinderConstraint>::serialize(&data, &mut output.field::<SchemaObject>(2).add()); };
-        if let Some(ref data) = input.box_constraint { TypeSerializer::<generated::improbable::ComponentInterest_BoxConstraint>::serialize(&data, &mut output.field::<SchemaObject>(3).add()); };
-        if let Some(ref data) = input.relative_sphere_constraint { TypeSerializer::<generated::improbable::ComponentInterest_RelativeSphereConstraint>::serialize(&data, &mut output.field::<SchemaObject>(4).add()); };
-        if let Some(ref data) = input.relative_cylinder_constraint { TypeSerializer::<generated::improbable::ComponentInterest_RelativeCylinderConstraint>::serialize(&data, &mut output.field::<SchemaObject>(5).add()); };
-        if let Some(ref data) = input.relative_box_constraint { TypeSerializer::<generated::improbable::ComponentInterest_RelativeBoxConstraint>::serialize(&data, &mut output.field::<SchemaObject>(6).add()); };
-        if let Some(ref data) = input.entity_id_constraint { output.field::<SchemaInt64>(7).add(data); };
-        if let Some(ref data) = input.component_constraint { output.field::<SchemaUint32>(8).add(data); };
-        for element in input.and_constraint.iter() { TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::serialize(&element, &mut output.field::<SchemaObject>(9).add()); };
-        for element in input.or_constraint.iter() { TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::serialize(&element, &mut output.field::<SchemaObject>(10).add()); };
+        if let Some(ref data) = &input.sphere_constraint { <generated::improbable::ComponentInterest_SphereConstraint as TypeSerializer>::serialize(&data, &mut output.field::<SchemaObject>(1).add()); };
+        if let Some(ref data) = &input.cylinder_constraint { <generated::improbable::ComponentInterest_CylinderConstraint as TypeSerializer>::serialize(&data, &mut output.field::<SchemaObject>(2).add()); };
+        if let Some(ref data) = &input.box_constraint { <generated::improbable::ComponentInterest_BoxConstraint as TypeSerializer>::serialize(&data, &mut output.field::<SchemaObject>(3).add()); };
+        if let Some(ref data) = &input.relative_sphere_constraint { <generated::improbable::ComponentInterest_RelativeSphereConstraint as TypeSerializer>::serialize(&data, &mut output.field::<SchemaObject>(4).add()); };
+        if let Some(ref data) = &input.relative_cylinder_constraint { <generated::improbable::ComponentInterest_RelativeCylinderConstraint as TypeSerializer>::serialize(&data, &mut output.field::<SchemaObject>(5).add()); };
+        if let Some(ref data) = &input.relative_box_constraint { <generated::improbable::ComponentInterest_RelativeBoxConstraint as TypeSerializer>::serialize(&data, &mut output.field::<SchemaObject>(6).add()); };
+        if let Some(data) = input.entity_id_constraint { output.field::<SchemaInt64>(7).add(data); };
+        if let Some(data) = input.component_constraint { output.field::<SchemaUint32>(8).add(data); };
+        for element in (&input.and_constraint).iter() { <generated::improbable::ComponentInterest_QueryConstraint as TypeSerializer>::serialize(&element, &mut output.field::<SchemaObject>(9).add()); };
+        for element in (&input.or_constraint).iter() { <generated::improbable::ComponentInterest_QueryConstraint as TypeSerializer>::serialize(&element, &mut output.field::<SchemaObject>(10).add()); };
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            sphere_constraint: input.field::<SchemaObject>(1).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_SphereConstraint>::deserialize(&v)? }),
-            cylinder_constraint: input.field::<SchemaObject>(2).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_CylinderConstraint>::deserialize(&v)? }),
-            box_constraint: input.field::<SchemaObject>(3).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_BoxConstraint>::deserialize(&v)? }),
-            relative_sphere_constraint: input.field::<SchemaObject>(4).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_RelativeSphereConstraint>::deserialize(&v)? }),
-            relative_cylinder_constraint: input.field::<SchemaObject>(5).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_RelativeCylinderConstraint>::deserialize(&v)? }),
-            relative_box_constraint: input.field::<SchemaObject>(6).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_RelativeBoxConstraint>::deserialize(&v)? }),
-            entity_id_constraint: input.field::<SchemaInt64>(7).get().map(|v| { v }),
-            component_constraint: input.field::<SchemaUint32>(8).get().map(|v| { v }),
-            and_constraint: { let size = input.field::<SchemaObject>(9).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::deserialize(&input.field::<SchemaObject>(9).index(i))?); }; l },
-            or_constraint: { let size = input.field::<SchemaObject>(10).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::deserialize(&input.field::<SchemaObject>(10).index(i))?); }; l },
+            sphere_constraint: if let Some(data) = input.field::<SchemaObject>(1).get() { Some(<generated::improbable::ComponentInterest_SphereConstraint as TypeSerializer>::deserialize(&data)?) } else { None },
+            cylinder_constraint: if let Some(data) = input.field::<SchemaObject>(2).get() { Some(<generated::improbable::ComponentInterest_CylinderConstraint as TypeSerializer>::deserialize(&data)?) } else { None },
+            box_constraint: if let Some(data) = input.field::<SchemaObject>(3).get() { Some(<generated::improbable::ComponentInterest_BoxConstraint as TypeSerializer>::deserialize(&data)?) } else { None },
+            relative_sphere_constraint: if let Some(data) = input.field::<SchemaObject>(4).get() { Some(<generated::improbable::ComponentInterest_RelativeSphereConstraint as TypeSerializer>::deserialize(&data)?) } else { None },
+            relative_cylinder_constraint: if let Some(data) = input.field::<SchemaObject>(5).get() { Some(<generated::improbable::ComponentInterest_RelativeCylinderConstraint as TypeSerializer>::deserialize(&data)?) } else { None },
+            relative_box_constraint: if let Some(data) = input.field::<SchemaObject>(6).get() { Some(<generated::improbable::ComponentInterest_RelativeBoxConstraint as TypeSerializer>::deserialize(&data)?) } else { None },
+            entity_id_constraint: if let Some(data) = input.field::<SchemaInt64>(7).get() { Some(data) } else { None },
+            component_constraint: if let Some(data) = input.field::<SchemaUint32>(8).get() { Some(data) } else { None },
+            and_constraint: { let size = input.field::<SchemaObject>(9).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(<generated::improbable::ComponentInterest_QueryConstraint as TypeSerializer>::deserialize(&input.field::<SchemaObject>(9).index(i))?); }; l },
+            or_constraint: { let size = input.field::<SchemaObject>(10).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(<generated::improbable::ComponentInterest_QueryConstraint as TypeSerializer>::deserialize(&input.field::<SchemaObject>(10).index(i))?); }; l },
         })
     }
 }
@@ -317,14 +317,14 @@ impl TypeSerializer<ComponentInterest_QueryConstraint> for ComponentInterest_Que
 pub struct ComponentInterest_RelativeBoxConstraint {
     edge_length: generated::improbable::EdgeLength,
 }
-impl TypeSerializer<ComponentInterest_RelativeBoxConstraint> for ComponentInterest_RelativeBoxConstraint {
+impl TypeSerializer for ComponentInterest_RelativeBoxConstraint {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        TypeSerializer::<generated::improbable::EdgeLength>::serialize(&input.edge_length, &mut output.field::<SchemaObject>(1).add());
+        <generated::improbable::EdgeLength as TypeSerializer>::serialize(&&input.edge_length, &mut output.field::<SchemaObject>(1).add());
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            edge_length: TypeSerializer::<generated::improbable::EdgeLength>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
+            edge_length: <generated::improbable::EdgeLength as TypeSerializer>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
         })
     }
 }
@@ -333,7 +333,7 @@ impl TypeSerializer<ComponentInterest_RelativeBoxConstraint> for ComponentIntere
 pub struct ComponentInterest_RelativeCylinderConstraint {
     radius: f64,
 }
-impl TypeSerializer<ComponentInterest_RelativeCylinderConstraint> for ComponentInterest_RelativeCylinderConstraint {
+impl TypeSerializer for ComponentInterest_RelativeCylinderConstraint {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.field::<SchemaDouble>(1).add(input.radius);
         Ok(())
@@ -349,7 +349,7 @@ impl TypeSerializer<ComponentInterest_RelativeCylinderConstraint> for ComponentI
 pub struct ComponentInterest_RelativeSphereConstraint {
     radius: f64,
 }
-impl TypeSerializer<ComponentInterest_RelativeSphereConstraint> for ComponentInterest_RelativeSphereConstraint {
+impl TypeSerializer for ComponentInterest_RelativeSphereConstraint {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.field::<SchemaDouble>(1).add(input.radius);
         Ok(())
@@ -366,15 +366,15 @@ pub struct ComponentInterest_SphereConstraint {
     center: generated::improbable::Coordinates,
     radius: f64,
 }
-impl TypeSerializer<ComponentInterest_SphereConstraint> for ComponentInterest_SphereConstraint {
+impl TypeSerializer for ComponentInterest_SphereConstraint {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        TypeSerializer::<generated::improbable::Coordinates>::serialize(&input.center, &mut output.field::<SchemaObject>(1).add());
+        <generated::improbable::Coordinates as TypeSerializer>::serialize(&&input.center, &mut output.field::<SchemaObject>(1).add());
         output.field::<SchemaDouble>(2).add(input.radius);
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            center: TypeSerializer::<generated::improbable::Coordinates>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
+            center: <generated::improbable::Coordinates as TypeSerializer>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
             radius: input.field::<SchemaDouble>(2).get_or_default(),
         })
     }
@@ -386,7 +386,7 @@ pub struct Coordinates {
     y: f64,
     z: f64,
 }
-impl TypeSerializer<Coordinates> for Coordinates {
+impl TypeSerializer for Coordinates {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.field::<SchemaDouble>(1).add(input.x);
         output.field::<SchemaDouble>(2).add(input.y);
@@ -408,7 +408,7 @@ pub struct EdgeLength {
     y: f64,
     z: f64,
 }
-impl TypeSerializer<EdgeLength> for EdgeLength {
+impl TypeSerializer for EdgeLength {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.field::<SchemaDouble>(1).add(input.x);
         output.field::<SchemaDouble>(2).add(input.y);
@@ -430,7 +430,7 @@ pub struct Vector3d {
     y: f64,
     z: f64,
 }
-impl TypeSerializer<Vector3d> for Vector3d {
+impl TypeSerializer for Vector3d {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.field::<SchemaDouble>(1).add(input.x);
         output.field::<SchemaDouble>(2).add(input.y);
@@ -452,7 +452,7 @@ pub struct Vector3f {
     y: f32,
     z: f32,
 }
-impl TypeSerializer<Vector3f> for Vector3f {
+impl TypeSerializer for Vector3f {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.field::<SchemaFloat>(1).add(input.x);
         output.field::<SchemaFloat>(2).add(input.y);
@@ -472,14 +472,14 @@ impl TypeSerializer<Vector3f> for Vector3f {
 pub struct WorkerAttributeSet {
     attribute: Vec<String>,
 }
-impl TypeSerializer<WorkerAttributeSet> for WorkerAttributeSet {
+impl TypeSerializer for WorkerAttributeSet {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        output.field::<SchemaString>(1).add_list(&input.attribute[..]);
+        output.field::<SchemaString>(1).add_list(&&input.attribute[..]);
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            attribute: { let size = input.field::<SchemaString>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(&input.field::<SchemaString>(1).index(i)); }; l },
+            attribute: { let size = input.field::<SchemaString>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(input.field::<SchemaString>(1).index(i)); }; l },
         })
     }
 }
@@ -488,14 +488,14 @@ impl TypeSerializer<WorkerAttributeSet> for WorkerAttributeSet {
 pub struct WorkerRequirementSet {
     attribute_set: Vec<generated::improbable::WorkerAttributeSet>,
 }
-impl TypeSerializer<WorkerRequirementSet> for WorkerRequirementSet {
+impl TypeSerializer for WorkerRequirementSet {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        for element in input.attribute_set.iter() { TypeSerializer::<generated::improbable::WorkerAttributeSet>::serialize(&element, &mut output.field::<SchemaObject>(1).add()); };
+        for element in (&input.attribute_set).iter() { <generated::improbable::WorkerAttributeSet as TypeSerializer>::serialize(&element, &mut output.field::<SchemaObject>(1).add()); };
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            attribute_set: { let size = input.field::<SchemaObject>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::WorkerAttributeSet>::deserialize(&input.field::<SchemaObject>(1).index(i))?); }; l },
+            attribute_set: { let size = input.field::<SchemaObject>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(<generated::improbable::WorkerAttributeSet as TypeSerializer>::deserialize(&input.field::<SchemaObject>(1).index(i))?); }; l },
         })
     }
 }
@@ -506,16 +506,16 @@ pub struct EntityAcl {
     read_acl: generated::improbable::WorkerRequirementSet,
     component_write_acl: BTreeMap<u32, generated::improbable::WorkerRequirementSet>,
 }
-impl TypeSerializer<EntityAcl> for EntityAcl {
+impl TypeSerializer for EntityAcl {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        TypeSerializer::<generated::improbable::WorkerRequirementSet>::serialize(&input.read_acl, &mut output.field::<SchemaObject>(1).add());
-        for (k, v) in input.component_write_acl { let object = output.field::<SchemaObject>(2).add(); object.field::<SchemaUint32>(1).add(k); TypeSerializer::<generated::improbable::WorkerRequirementSet>::serialize(&v, &mut object.field::<SchemaObject>(2).add()); };
+        <generated::improbable::WorkerRequirementSet as TypeSerializer>::serialize(&&input.read_acl, &mut output.field::<SchemaObject>(1).add());
+        for (k, v) in &input.component_write_acl { let object = output.field::<SchemaObject>(2).add(); object.field::<SchemaUint32>(1).add(*k); <generated::improbable::WorkerRequirementSet as TypeSerializer>::serialize(&v, &mut object.field::<SchemaObject>(2).add()); };
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            read_acl: TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
-            component_write_acl: { let size = input.field::<SchemaObject>(2).count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = input.field::<SchemaObject>(2).index(i); m.insert(kv.field::<SchemaObject>(1).get(), TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(&kv.field::<SchemaObject>(2).get())?); }; m },
+            read_acl: <generated::improbable::WorkerRequirementSet as TypeSerializer>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
+            component_write_acl: { let size = input.field::<SchemaObject>(2).count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = input.field::<SchemaObject>(2).index(i); m.insert(kv.field::<SchemaUint32>(1).get_or_default(), <generated::improbable::WorkerRequirementSet as TypeSerializer>::deserialize(&kv.field::<SchemaObject>(2).get_or_default())?); }; m },
         })
     }
 }
@@ -531,13 +531,13 @@ pub struct EntityAclUpdate {
     read_acl: Option<generated::improbable::WorkerRequirementSet>,
     component_write_acl: Option<BTreeMap<u32, generated::improbable::WorkerRequirementSet>>,
 }
-impl TypeSerializer<EntityAclUpdate> for EntityAclUpdate {
+impl TypeSerializer for EntityAclUpdate {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         if let Some(ref value) = input.read_acl {
-            TypeSerializer::<generated::improbable::WorkerRequirementSet>::serialize(&value.clone(), &mut output.field::<SchemaObject>(1).add());
+            <generated::improbable::WorkerRequirementSet as TypeSerializer>::serialize(&value, &mut output.field::<SchemaObject>(1).add());
         }
         if let Some(ref value) = input.component_write_acl {
-            for (k, v) in value.clone() { let object = output.field::<SchemaObject>(2).add(); object.field::<SchemaUint32>(1).add(k); TypeSerializer::<generated::improbable::WorkerRequirementSet>::serialize(&v, &mut object.field::<SchemaObject>(2).add()); };
+            for (k, v) in value { let object = output.field::<SchemaObject>(2).add(); object.field::<SchemaUint32>(1).add(*k); <generated::improbable::WorkerRequirementSet as TypeSerializer>::serialize(&v, &mut object.field::<SchemaObject>(2).add()); };
         }
         Ok(())
     }
@@ -549,12 +549,12 @@ impl TypeSerializer<EntityAclUpdate> for EntityAclUpdate {
         let _field_read_acl = input.field::<SchemaObject>(1);
         if _field_read_acl.count() > 0 {
             let field = &_field_read_acl;
-            output.read_acl = Some(TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(&field.get_or_default())?);
+            output.read_acl = Some(<generated::improbable::WorkerRequirementSet as TypeSerializer>::deserialize(&field.get_or_default())?);
         }
         let _field_component_write_acl = input.field::<SchemaObject>(2);
         if _field_component_write_acl.count() > 0 {
             let field = &_field_component_write_acl;
-            output.component_write_acl = Some({ let size = field.count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = field.index(i); m.insert(kv.field::<SchemaObject>(1).get(), TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(&kv.field::<SchemaObject>(2).get())?); }; m });
+            output.component_write_acl = Some({ let size = field.count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = field.index(i); m.insert(kv.field::<SchemaUint32>(1).get_or_default(), <generated::improbable::WorkerRequirementSet as TypeSerializer>::deserialize(&kv.field::<SchemaObject>(2).get_or_default())?); }; m });
         }
         Ok(output)
     }
@@ -588,22 +588,22 @@ pub enum EntityAclCommandResponse {
 impl ComponentVtable<EntityAcl> for EntityAcl {
     fn serialize_data(data: &generated::improbable::EntityAcl) -> Result<SchemaComponentData, String> {
         let mut serialized_data = SchemaComponentData::new(Self::component_id());
-        TypeSerializer::<generated::improbable::EntityAcl>::serialize(data, &mut serialized_data.fields_mut());
+        <generated::improbable::EntityAcl as TypeSerializer>::serialize(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn deserialize_data(data: &SchemaComponentData) -> Result<generated::improbable::EntityAcl, String> {
-        TypeSerializer::<generated::improbable::EntityAcl>::deserialize(&data.fields())
+        <generated::improbable::EntityAcl as TypeSerializer>::deserialize(&data.fields())
     }
 
     fn serialize_update(update: &generated::improbable::EntityAclUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::component_id());
-        TypeSerializer::<generated::improbable::EntityAclUpdate>::serialize(update, &mut serialized_update.fields_mut());
+        <generated::improbable::EntityAclUpdate as TypeSerializer>::serialize(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
     fn deserialize_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::EntityAclUpdate, String> {
-        TypeSerializer::<generated::improbable::EntityAclUpdate>::deserialize(&update.fields())
+        <generated::improbable::EntityAclUpdate as TypeSerializer>::deserialize(&update.fields())
     }
 
     fn serialize_command_request(request: &generated::improbable::EntityAclCommandRequest) -> Result<SchemaCommandRequest, String> {
@@ -645,14 +645,14 @@ impl ComponentVtable<EntityAcl> for EntityAcl {
 pub struct Interest {
     component_interest: BTreeMap<u32, generated::improbable::ComponentInterest>,
 }
-impl TypeSerializer<Interest> for Interest {
+impl TypeSerializer for Interest {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        for (k, v) in input.component_interest { let object = output.field::<SchemaObject>(1).add(); object.field::<SchemaUint32>(1).add(k); TypeSerializer::<generated::improbable::ComponentInterest>::serialize(&v, &mut object.field::<SchemaObject>(2).add()); };
+        for (k, v) in &input.component_interest { let object = output.field::<SchemaObject>(1).add(); object.field::<SchemaUint32>(1).add(*k); <generated::improbable::ComponentInterest as TypeSerializer>::serialize(&v, &mut object.field::<SchemaObject>(2).add()); };
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            component_interest: { let size = input.field::<SchemaObject>(1).count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = input.field::<SchemaObject>(1).index(i); m.insert(kv.field::<SchemaObject>(1).get(), TypeSerializer::<generated::improbable::ComponentInterest>::deserialize(&kv.field::<SchemaObject>(2).get())?); }; m },
+            component_interest: { let size = input.field::<SchemaObject>(1).count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = input.field::<SchemaObject>(1).index(i); m.insert(kv.field::<SchemaUint32>(1).get_or_default(), <generated::improbable::ComponentInterest as TypeSerializer>::deserialize(&kv.field::<SchemaObject>(2).get_or_default())?); }; m },
         })
     }
 }
@@ -666,10 +666,10 @@ impl ComponentData<Interest> for Interest {
 pub struct InterestUpdate {
     component_interest: Option<BTreeMap<u32, generated::improbable::ComponentInterest>>,
 }
-impl TypeSerializer<InterestUpdate> for InterestUpdate {
+impl TypeSerializer for InterestUpdate {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         if let Some(ref value) = input.component_interest {
-            for (k, v) in value.clone() { let object = output.field::<SchemaObject>(1).add(); object.field::<SchemaUint32>(1).add(k); TypeSerializer::<generated::improbable::ComponentInterest>::serialize(&v, &mut object.field::<SchemaObject>(2).add()); };
+            for (k, v) in value { let object = output.field::<SchemaObject>(1).add(); object.field::<SchemaUint32>(1).add(*k); <generated::improbable::ComponentInterest as TypeSerializer>::serialize(&v, &mut object.field::<SchemaObject>(2).add()); };
         }
         Ok(())
     }
@@ -680,7 +680,7 @@ impl TypeSerializer<InterestUpdate> for InterestUpdate {
         let _field_component_interest = input.field::<SchemaObject>(1);
         if _field_component_interest.count() > 0 {
             let field = &_field_component_interest;
-            output.component_interest = Some({ let size = field.count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = field.index(i); m.insert(kv.field::<SchemaObject>(1).get(), TypeSerializer::<generated::improbable::ComponentInterest>::deserialize(&kv.field::<SchemaObject>(2).get())?); }; m });
+            output.component_interest = Some({ let size = field.count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = field.index(i); m.insert(kv.field::<SchemaUint32>(1).get_or_default(), <generated::improbable::ComponentInterest as TypeSerializer>::deserialize(&kv.field::<SchemaObject>(2).get_or_default())?); }; m });
         }
         Ok(output)
     }
@@ -713,22 +713,22 @@ pub enum InterestCommandResponse {
 impl ComponentVtable<Interest> for Interest {
     fn serialize_data(data: &generated::improbable::Interest) -> Result<SchemaComponentData, String> {
         let mut serialized_data = SchemaComponentData::new(Self::component_id());
-        TypeSerializer::<generated::improbable::Interest>::serialize(data, &mut serialized_data.fields_mut());
+        <generated::improbable::Interest as TypeSerializer>::serialize(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn deserialize_data(data: &SchemaComponentData) -> Result<generated::improbable::Interest, String> {
-        TypeSerializer::<generated::improbable::Interest>::deserialize(&data.fields())
+        <generated::improbable::Interest as TypeSerializer>::deserialize(&data.fields())
     }
 
     fn serialize_update(update: &generated::improbable::InterestUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::component_id());
-        TypeSerializer::<generated::improbable::InterestUpdate>::serialize(update, &mut serialized_update.fields_mut());
+        <generated::improbable::InterestUpdate as TypeSerializer>::serialize(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
     fn deserialize_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::InterestUpdate, String> {
-        TypeSerializer::<generated::improbable::InterestUpdate>::deserialize(&update.fields())
+        <generated::improbable::InterestUpdate as TypeSerializer>::deserialize(&update.fields())
     }
 
     fn serialize_command_request(request: &generated::improbable::InterestCommandRequest) -> Result<SchemaCommandRequest, String> {
@@ -770,14 +770,14 @@ impl ComponentVtable<Interest> for Interest {
 pub struct Metadata {
     entity_type: String,
 }
-impl TypeSerializer<Metadata> for Metadata {
+impl TypeSerializer for Metadata {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        output.field::<SchemaString>(1).add(input.entity_type);
+        output.field::<SchemaString>(1).add(&&input.entity_type);
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            entity_type: &input.field::<SchemaString>(1).get_or_default(),
+            entity_type: input.field::<SchemaString>(1).get_or_default(),
         })
     }
 }
@@ -791,10 +791,10 @@ impl ComponentData<Metadata> for Metadata {
 pub struct MetadataUpdate {
     entity_type: Option<String>,
 }
-impl TypeSerializer<MetadataUpdate> for MetadataUpdate {
+impl TypeSerializer for MetadataUpdate {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         if let Some(ref value) = input.entity_type {
-            output.field::<SchemaString>(1).add(value.clone());
+            output.field::<SchemaString>(1).add(&value);
         }
         Ok(())
     }
@@ -805,7 +805,7 @@ impl TypeSerializer<MetadataUpdate> for MetadataUpdate {
         let _field_entity_type = input.field::<SchemaString>(1);
         if _field_entity_type.count() > 0 {
             let field = &_field_entity_type;
-            output.entity_type = Some(&field.get_or_default());
+            output.entity_type = Some(field.get_or_default());
         }
         Ok(output)
     }
@@ -838,22 +838,22 @@ pub enum MetadataCommandResponse {
 impl ComponentVtable<Metadata> for Metadata {
     fn serialize_data(data: &generated::improbable::Metadata) -> Result<SchemaComponentData, String> {
         let mut serialized_data = SchemaComponentData::new(Self::component_id());
-        TypeSerializer::<generated::improbable::Metadata>::serialize(data, &mut serialized_data.fields_mut());
+        <generated::improbable::Metadata as TypeSerializer>::serialize(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn deserialize_data(data: &SchemaComponentData) -> Result<generated::improbable::Metadata, String> {
-        TypeSerializer::<generated::improbable::Metadata>::deserialize(&data.fields())
+        <generated::improbable::Metadata as TypeSerializer>::deserialize(&data.fields())
     }
 
     fn serialize_update(update: &generated::improbable::MetadataUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::component_id());
-        TypeSerializer::<generated::improbable::MetadataUpdate>::serialize(update, &mut serialized_update.fields_mut());
+        <generated::improbable::MetadataUpdate as TypeSerializer>::serialize(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
     fn deserialize_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::MetadataUpdate, String> {
-        TypeSerializer::<generated::improbable::MetadataUpdate>::deserialize(&update.fields())
+        <generated::improbable::MetadataUpdate as TypeSerializer>::deserialize(&update.fields())
     }
 
     fn serialize_command_request(request: &generated::improbable::MetadataCommandRequest) -> Result<SchemaCommandRequest, String> {
@@ -894,7 +894,7 @@ impl ComponentVtable<Metadata> for Metadata {
 #[derive(Debug)]
 pub struct Persistence {
 }
-impl TypeSerializer<Persistence> for Persistence {
+impl TypeSerializer for Persistence {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         Ok(())
     }
@@ -911,7 +911,7 @@ impl ComponentData<Persistence> for Persistence {
 #[derive(Debug)]
 pub struct PersistenceUpdate {
 }
-impl TypeSerializer<PersistenceUpdate> for PersistenceUpdate {
+impl TypeSerializer for PersistenceUpdate {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         Ok(())
     }
@@ -948,22 +948,22 @@ pub enum PersistenceCommandResponse {
 impl ComponentVtable<Persistence> for Persistence {
     fn serialize_data(data: &generated::improbable::Persistence) -> Result<SchemaComponentData, String> {
         let mut serialized_data = SchemaComponentData::new(Self::component_id());
-        TypeSerializer::<generated::improbable::Persistence>::serialize(data, &mut serialized_data.fields_mut());
+        <generated::improbable::Persistence as TypeSerializer>::serialize(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn deserialize_data(data: &SchemaComponentData) -> Result<generated::improbable::Persistence, String> {
-        TypeSerializer::<generated::improbable::Persistence>::deserialize(&data.fields())
+        <generated::improbable::Persistence as TypeSerializer>::deserialize(&data.fields())
     }
 
     fn serialize_update(update: &generated::improbable::PersistenceUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::component_id());
-        TypeSerializer::<generated::improbable::PersistenceUpdate>::serialize(update, &mut serialized_update.fields_mut());
+        <generated::improbable::PersistenceUpdate as TypeSerializer>::serialize(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
     fn deserialize_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PersistenceUpdate, String> {
-        TypeSerializer::<generated::improbable::PersistenceUpdate>::deserialize(&update.fields())
+        <generated::improbable::PersistenceUpdate as TypeSerializer>::deserialize(&update.fields())
     }
 
     fn serialize_command_request(request: &generated::improbable::PersistenceCommandRequest) -> Result<SchemaCommandRequest, String> {
@@ -1005,14 +1005,14 @@ impl ComponentVtable<Persistence> for Persistence {
 pub struct Position {
     coords: generated::improbable::Coordinates,
 }
-impl TypeSerializer<Position> for Position {
+impl TypeSerializer for Position {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        TypeSerializer::<generated::improbable::Coordinates>::serialize(&input.coords, &mut output.field::<SchemaObject>(1).add());
+        <generated::improbable::Coordinates as TypeSerializer>::serialize(&&input.coords, &mut output.field::<SchemaObject>(1).add());
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            coords: TypeSerializer::<generated::improbable::Coordinates>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
+            coords: <generated::improbable::Coordinates as TypeSerializer>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
         })
     }
 }
@@ -1026,10 +1026,10 @@ impl ComponentData<Position> for Position {
 pub struct PositionUpdate {
     coords: Option<generated::improbable::Coordinates>,
 }
-impl TypeSerializer<PositionUpdate> for PositionUpdate {
+impl TypeSerializer for PositionUpdate {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         if let Some(ref value) = input.coords {
-            TypeSerializer::<generated::improbable::Coordinates>::serialize(&value.clone(), &mut output.field::<SchemaObject>(1).add());
+            <generated::improbable::Coordinates as TypeSerializer>::serialize(&value, &mut output.field::<SchemaObject>(1).add());
         }
         Ok(())
     }
@@ -1040,7 +1040,7 @@ impl TypeSerializer<PositionUpdate> for PositionUpdate {
         let _field_coords = input.field::<SchemaObject>(1);
         if _field_coords.count() > 0 {
             let field = &_field_coords;
-            output.coords = Some(TypeSerializer::<generated::improbable::Coordinates>::deserialize(&field.get_or_default())?);
+            output.coords = Some(<generated::improbable::Coordinates as TypeSerializer>::deserialize(&field.get_or_default())?);
         }
         Ok(output)
     }
@@ -1073,22 +1073,22 @@ pub enum PositionCommandResponse {
 impl ComponentVtable<Position> for Position {
     fn serialize_data(data: &generated::improbable::Position) -> Result<SchemaComponentData, String> {
         let mut serialized_data = SchemaComponentData::new(Self::component_id());
-        TypeSerializer::<generated::improbable::Position>::serialize(data, &mut serialized_data.fields_mut());
+        <generated::improbable::Position as TypeSerializer>::serialize(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn deserialize_data(data: &SchemaComponentData) -> Result<generated::improbable::Position, String> {
-        TypeSerializer::<generated::improbable::Position>::deserialize(&data.fields())
+        <generated::improbable::Position as TypeSerializer>::deserialize(&data.fields())
     }
 
     fn serialize_update(update: &generated::improbable::PositionUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::component_id());
-        TypeSerializer::<generated::improbable::PositionUpdate>::serialize(update, &mut serialized_update.fields_mut());
+        <generated::improbable::PositionUpdate as TypeSerializer>::serialize(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
     fn deserialize_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PositionUpdate, String> {
-        TypeSerializer::<generated::improbable::PositionUpdate>::deserialize(&update.fields())
+        <generated::improbable::PositionUpdate as TypeSerializer>::deserialize(&update.fields())
     }
 
     fn serialize_command_request(request: &generated::improbable::PositionCommandRequest) -> Result<SchemaCommandRequest, String> {

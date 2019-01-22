@@ -7,7 +7,7 @@ use spatialos_sdk_sys::worker::*;
 
 use crate::worker::commands::*;
 use crate::worker::component;
-use crate::worker::component::internal::{ComponentUpdate, CommandRequest, CommandResponse};
+use crate::worker::component::internal::{CommandRequest, CommandResponse, ComponentUpdate};
 use crate::worker::locator::*;
 use crate::worker::metrics::Metrics;
 use crate::worker::op::{OpList, WorkerOp};
@@ -66,7 +66,11 @@ pub trait Connection {
         message: &str,
     );
 
-    fn send_component_update(&mut self, entity_id: EntityId, component_update: component::internal::ComponentUpdate);
+    fn send_component_update(
+        &mut self,
+        entity_id: EntityId,
+        component_update: component::internal::ComponentUpdate,
+    );
     fn send_component_interest(
         &mut self,
         entity_id: EntityId,

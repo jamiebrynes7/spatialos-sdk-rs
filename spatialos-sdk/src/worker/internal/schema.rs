@@ -1,6 +1,6 @@
+use crate::worker::component::ComponentId;
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
-use crate::worker::component::ComponentId;
 use std::slice;
 
 pub type FieldId = u32;
@@ -30,17 +30,20 @@ pub struct SchemaObject {
 }
 
 impl SchemaComponentUpdate {
-    pub(crate) fn from_worker_sdk(component_id: ComponentId, component_update: *mut Schema_ComponentUpdate) -> SchemaComponentUpdate {
+    pub(crate) fn from_worker_sdk(
+        component_id: ComponentId,
+        component_update: *mut Schema_ComponentUpdate,
+    ) -> SchemaComponentUpdate {
         SchemaComponentUpdate {
             component_id: component_id,
-            internal: component_update
+            internal: component_update,
         }
     }
 
     pub fn new(component_id: ComponentId) -> SchemaComponentUpdate {
         SchemaComponentUpdate {
             component_id: component_id,
-            internal: unsafe { Schema_CreateComponentUpdate(component_id) }
+            internal: unsafe { Schema_CreateComponentUpdate(component_id) },
         }
     }
 
@@ -50,25 +53,25 @@ impl SchemaComponentUpdate {
 
     pub fn fields(&self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateFields(self.internal) }
+            internal: unsafe { Schema_GetComponentUpdateFields(self.internal) },
         }
     }
 
     pub fn fields_mut(&mut self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateFields(self.internal) }
+            internal: unsafe { Schema_GetComponentUpdateFields(self.internal) },
         }
     }
 
     pub fn events(&self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) }
+            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) },
         }
     }
 
     pub fn events_mut(&mut self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) }
+            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) },
         }
     }
 
@@ -76,17 +79,20 @@ impl SchemaComponentUpdate {
 }
 
 impl SchemaComponentData {
-    pub(crate) fn from_worker_sdk(component_id: ComponentId, component_data: *mut Schema_ComponentData) -> SchemaComponentData {
+    pub(crate) fn from_worker_sdk(
+        component_id: ComponentId,
+        component_data: *mut Schema_ComponentData,
+    ) -> SchemaComponentData {
         SchemaComponentData {
             component_id: component_id,
-            internal: component_data
+            internal: component_data,
         }
     }
 
     pub fn new(component_id: ComponentId) -> SchemaComponentData {
         SchemaComponentData {
             component_id: component_id,
-            internal: unsafe { Schema_CreateComponentData(component_id) }
+            internal: unsafe { Schema_CreateComponentData(component_id) },
         }
     }
 
@@ -96,29 +102,32 @@ impl SchemaComponentData {
 
     pub fn fields(&self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_GetComponentDataFields(self.internal) }
+            internal: unsafe { Schema_GetComponentDataFields(self.internal) },
         }
     }
 
     pub fn fields_mut(&mut self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_GetComponentDataFields(self.internal) }
+            internal: unsafe { Schema_GetComponentDataFields(self.internal) },
         }
     }
 }
 
 impl SchemaCommandRequest {
-    pub(crate) fn from_worker_sdk(component_id: ComponentId, command_request: *mut Schema_CommandRequest) -> SchemaCommandRequest {
+    pub(crate) fn from_worker_sdk(
+        component_id: ComponentId,
+        command_request: *mut Schema_CommandRequest,
+    ) -> SchemaCommandRequest {
         SchemaCommandRequest {
             component_id: component_id,
-            internal: command_request
+            internal: command_request,
         }
     }
 
     pub fn new(component_id: ComponentId, command_index: FieldId) -> SchemaCommandRequest {
         SchemaCommandRequest {
             component_id: component_id,
-            internal: unsafe { Schema_CreateCommandRequest(component_id, command_index) }
+            internal: unsafe { Schema_CreateCommandRequest(component_id, command_index) },
         }
     }
 
@@ -132,29 +141,32 @@ impl SchemaCommandRequest {
 
     pub fn object(&self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_GetCommandRequestObject(self.internal) }
+            internal: unsafe { Schema_GetCommandRequestObject(self.internal) },
         }
     }
 
     pub fn object_mut(&mut self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_GetCommandRequestObject(self.internal) }
+            internal: unsafe { Schema_GetCommandRequestObject(self.internal) },
         }
     }
 }
 
 impl SchemaCommandResponse {
-    pub(crate) fn from_worker_sdk(component_id: u32, command_response: *mut Schema_CommandResponse) -> SchemaCommandResponse {
+    pub(crate) fn from_worker_sdk(
+        component_id: u32,
+        command_response: *mut Schema_CommandResponse,
+    ) -> SchemaCommandResponse {
         SchemaCommandResponse {
             component_id: component_id,
-            internal: command_response
+            internal: command_response,
         }
     }
 
     pub fn new(component_id: u32, command_index: u32) -> SchemaCommandResponse {
         SchemaCommandResponse {
             component_id: component_id,
-            internal: unsafe { Schema_CreateCommandResponse(component_id, command_index) }
+            internal: unsafe { Schema_CreateCommandResponse(component_id, command_index) },
         }
     }
 
@@ -168,13 +180,13 @@ impl SchemaCommandResponse {
 
     pub fn object(&self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_GetCommandResponseObject(self.internal) }
+            internal: unsafe { Schema_GetCommandResponseObject(self.internal) },
         }
     }
 
     pub fn object_mut(&mut self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_GetCommandResponseObject(self.internal) }
+            internal: unsafe { Schema_GetCommandResponseObject(self.internal) },
         }
     }
 }
@@ -208,7 +220,11 @@ pub struct SchemaString;
 // A primitive schema field.
 pub trait SchemaPrimitiveField<T> {
     fn get(&self) -> Option<T> {
-        if self.count() == 0 { None } else { Some(self.get_or_default()) }
+        if self.count() == 0 {
+            None
+        } else {
+            Some(self.get_or_default())
+        }
     }
 
     fn get_or_default(&self) -> T;
@@ -222,7 +238,11 @@ pub trait SchemaPrimitiveField<T> {
 // A bytes schema field.
 pub trait SchemaBytesField {
     fn get(&self) -> Option<Vec<u8>> {
-        if self.count() == 0 { None } else { Some(self.get_or_default()) }
+        if self.count() == 0 {
+            None
+        } else {
+            Some(self.get_or_default())
+        }
     }
 
     fn get_or_default(&self) -> Vec<u8>;
@@ -234,7 +254,11 @@ pub trait SchemaBytesField {
 // A string schema field.
 pub trait SchemaStringField {
     fn get(&self) -> Option<String> {
-        if self.count() == 0 { None } else { Some(self.get_or_default()) }
+        if self.count() == 0 {
+            None
+        } else {
+            Some(self.get_or_default())
+        }
     }
 
     fn get_or_default(&self) -> String;
@@ -248,7 +272,11 @@ pub trait SchemaStringField {
 // An object schema field.
 pub trait SchemaObjectField {
     fn get(&self) -> Option<SchemaObject> {
-        if self.count() == 0 { None } else { Some(self.get_or_default()) }
+        if self.count() == 0 {
+            None
+        } else {
+            Some(self.get_or_default())
+        }
     }
 
     fn get_or_default(&self) -> SchemaObject;
@@ -260,12 +288,16 @@ pub trait SchemaObjectField {
 
 impl SchemaObject {
     pub fn field<T>(&self, field_id: ComponentId) -> SchemaFieldContainer<T> {
-        SchemaFieldContainer { field_id: field_id, container: self, _phantom: PhantomData }
+        SchemaFieldContainer {
+            field_id: field_id,
+            container: self,
+            _phantom: PhantomData,
+        }
     }
 }
 
 macro_rules! impl_primitive_field {
-    ($rust_type:ty, $schema_type:ty, $schema_get:ident, $schema_index:ident, $schema_count:ident, $schema_add:ident, $schema_add_list:ident) => (
+    ($rust_type:ty, $schema_type:ty, $schema_get:ident, $schema_index:ident, $schema_count:ident, $schema_add:ident, $schema_add_list:ident) => {
         impl<'a> SchemaPrimitiveField<$rust_type> for SchemaFieldContainer<'a, $schema_type> {
             fn get_or_default(&self) -> $rust_type {
                 unsafe { $schema_get(self.container.internal, self.field_id) }
@@ -278,32 +310,151 @@ macro_rules! impl_primitive_field {
             }
 
             fn add(&mut self, value: $rust_type) {
-                unsafe { $schema_add(self.container.internal, self.field_id, value); }
+                unsafe {
+                    $schema_add(self.container.internal, self.field_id, value);
+                }
             }
             fn add_list(&mut self, value: &[$rust_type]) {
                 unsafe {
                     let ptr = value.as_ptr();
-                    $schema_add_list(self.container.internal, self.field_id, ptr, value.len() as u32);
+                    $schema_add_list(
+                        self.container.internal,
+                        self.field_id,
+                        ptr,
+                        value.len() as u32,
+                    );
                 }
             }
         }
-    )
+    };
 }
 
-impl_primitive_field!(f32, SchemaFloat, Schema_GetFloat, Schema_IndexFloat, Schema_GetFloatCount, Schema_AddFloat, Schema_AddFloatList);
-impl_primitive_field!(f64, SchemaDouble, Schema_GetDouble, Schema_IndexDouble, Schema_GetDoubleCount, Schema_AddDouble, Schema_AddDoubleList);
-impl_primitive_field!(i32, SchemaInt32, Schema_GetInt32, Schema_IndexInt32, Schema_GetInt32Count, Schema_AddInt32, Schema_AddInt32List);
-impl_primitive_field!(i64, SchemaInt64, Schema_GetInt64, Schema_IndexInt64, Schema_GetInt64Count, Schema_AddInt64, Schema_AddInt64List);
-impl_primitive_field!(u32, SchemaUint32, Schema_GetUint32, Schema_IndexUint32, Schema_GetUint32Count, Schema_AddUint32, Schema_AddUint32List);
-impl_primitive_field!(u64, SchemaUint64, Schema_GetUint64, Schema_IndexUint64, Schema_GetUint64Count, Schema_AddUint64, Schema_AddUint64List);
-impl_primitive_field!(i32, SchemaSint32, Schema_GetSint32, Schema_IndexSint32, Schema_GetSint32Count, Schema_AddSint32, Schema_AddSint32List);
-impl_primitive_field!(i64, SchemaSint64, Schema_GetSint64, Schema_IndexSint64, Schema_GetSint64Count, Schema_AddSint64, Schema_AddSint64List);
-impl_primitive_field!(u32, SchemaFixed32, Schema_GetFixed32, Schema_IndexFixed32, Schema_GetFixed32Count, Schema_AddFixed32, Schema_AddFixed32List);
-impl_primitive_field!(u64, SchemaFixed64, Schema_GetFixed64, Schema_IndexFixed64, Schema_GetFixed64Count, Schema_AddFixed64, Schema_AddFixed64List);
-impl_primitive_field!(i32, SchemaSfixed32, Schema_GetSfixed32, Schema_IndexSfixed32, Schema_GetSfixed32Count, Schema_AddSfixed32, Schema_AddSfixed32List);
-impl_primitive_field!(i64, SchemaSfixed64, Schema_GetSfixed64, Schema_IndexSfixed64, Schema_GetSfixed64Count, Schema_AddSfixed64, Schema_AddSfixed64List);
-impl_primitive_field!(i64, SchemaEntityId, Schema_GetEntityId, Schema_IndexEntityId, Schema_GetEntityIdCount, Schema_AddEntityId, Schema_AddEntityIdList);
-impl_primitive_field!(u32, SchemaEnum, Schema_GetEnum, Schema_IndexEnum, Schema_GetEnumCount, Schema_AddEnum, Schema_AddEnumList);
+impl_primitive_field!(
+    f32,
+    SchemaFloat,
+    Schema_GetFloat,
+    Schema_IndexFloat,
+    Schema_GetFloatCount,
+    Schema_AddFloat,
+    Schema_AddFloatList
+);
+impl_primitive_field!(
+    f64,
+    SchemaDouble,
+    Schema_GetDouble,
+    Schema_IndexDouble,
+    Schema_GetDoubleCount,
+    Schema_AddDouble,
+    Schema_AddDoubleList
+);
+impl_primitive_field!(
+    i32,
+    SchemaInt32,
+    Schema_GetInt32,
+    Schema_IndexInt32,
+    Schema_GetInt32Count,
+    Schema_AddInt32,
+    Schema_AddInt32List
+);
+impl_primitive_field!(
+    i64,
+    SchemaInt64,
+    Schema_GetInt64,
+    Schema_IndexInt64,
+    Schema_GetInt64Count,
+    Schema_AddInt64,
+    Schema_AddInt64List
+);
+impl_primitive_field!(
+    u32,
+    SchemaUint32,
+    Schema_GetUint32,
+    Schema_IndexUint32,
+    Schema_GetUint32Count,
+    Schema_AddUint32,
+    Schema_AddUint32List
+);
+impl_primitive_field!(
+    u64,
+    SchemaUint64,
+    Schema_GetUint64,
+    Schema_IndexUint64,
+    Schema_GetUint64Count,
+    Schema_AddUint64,
+    Schema_AddUint64List
+);
+impl_primitive_field!(
+    i32,
+    SchemaSint32,
+    Schema_GetSint32,
+    Schema_IndexSint32,
+    Schema_GetSint32Count,
+    Schema_AddSint32,
+    Schema_AddSint32List
+);
+impl_primitive_field!(
+    i64,
+    SchemaSint64,
+    Schema_GetSint64,
+    Schema_IndexSint64,
+    Schema_GetSint64Count,
+    Schema_AddSint64,
+    Schema_AddSint64List
+);
+impl_primitive_field!(
+    u32,
+    SchemaFixed32,
+    Schema_GetFixed32,
+    Schema_IndexFixed32,
+    Schema_GetFixed32Count,
+    Schema_AddFixed32,
+    Schema_AddFixed32List
+);
+impl_primitive_field!(
+    u64,
+    SchemaFixed64,
+    Schema_GetFixed64,
+    Schema_IndexFixed64,
+    Schema_GetFixed64Count,
+    Schema_AddFixed64,
+    Schema_AddFixed64List
+);
+impl_primitive_field!(
+    i32,
+    SchemaSfixed32,
+    Schema_GetSfixed32,
+    Schema_IndexSfixed32,
+    Schema_GetSfixed32Count,
+    Schema_AddSfixed32,
+    Schema_AddSfixed32List
+);
+impl_primitive_field!(
+    i64,
+    SchemaSfixed64,
+    Schema_GetSfixed64,
+    Schema_IndexSfixed64,
+    Schema_GetSfixed64Count,
+    Schema_AddSfixed64,
+    Schema_AddSfixed64List
+);
+impl_primitive_field!(
+    i64,
+    SchemaEntityId,
+    Schema_GetEntityId,
+    Schema_IndexEntityId,
+    Schema_GetEntityIdCount,
+    Schema_AddEntityId,
+    Schema_AddEntityIdList
+);
+impl_primitive_field!(
+    u32,
+    SchemaEnum,
+    Schema_GetEnum,
+    Schema_IndexEnum,
+    Schema_GetEnumCount,
+    Schema_AddEnum,
+    Schema_AddEnumList
+);
 
 impl<'a> SchemaPrimitiveField<bool> for SchemaFieldContainer<'a, SchemaBool> {
     fn get_or_default(&self) -> bool {
@@ -317,20 +468,27 @@ impl<'a> SchemaPrimitiveField<bool> for SchemaFieldContainer<'a, SchemaBool> {
     }
 
     fn add(&mut self, value: bool) {
-        unsafe { Schema_AddBool(self.container.internal, self.field_id, value as u8); }
+        unsafe {
+            Schema_AddBool(self.container.internal, self.field_id, value as u8);
+        }
     }
     fn add_list(&mut self, value: &[bool]) {
-        let converted_list: Vec<u8> = value.iter().map(|v| { if *v { 1u8 } else { 0u8 } }).collect();
+        let converted_list: Vec<u8> = value.iter().map(|v| if *v { 1u8 } else { 0u8 }).collect();
         unsafe {
             let ptr = converted_list.as_ptr();
-            Schema_AddBoolList(self.container.internal, self.field_id, ptr, value.len() as u32);
+            Schema_AddBoolList(
+                self.container.internal,
+                self.field_id,
+                ptr,
+                value.len() as u32,
+            );
         }
     }
 }
 
 impl<'a> SchemaStringField for SchemaFieldContainer<'a, SchemaString> {
     fn get_or_default(&self) -> String {
-        let slice =  unsafe {
+        let slice = unsafe {
             let bytes_ptr = Schema_GetBytes(self.container.internal, self.field_id);
             let bytes_len = Schema_GetBytesLength(self.container.internal, self.field_id);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
@@ -338,9 +496,10 @@ impl<'a> SchemaStringField for SchemaFieldContainer<'a, SchemaString> {
         String::from_utf8_lossy(slice).to_string()
     }
     fn index(&self, index: usize) -> String {
-        let slice =  unsafe {
+        let slice = unsafe {
             let bytes_ptr = Schema_IndexBytes(self.container.internal, self.field_id, index as u32);
-            let bytes_len = Schema_IndexBytesLength(self.container.internal, self.field_id, index as u32);
+            let bytes_len =
+                Schema_IndexBytesLength(self.container.internal, self.field_id, index as u32);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
         };
         String::from_utf8_lossy(slice).to_string()
@@ -351,7 +510,14 @@ impl<'a> SchemaStringField for SchemaFieldContainer<'a, SchemaString> {
 
     fn add(&mut self, value: &String) {
         let utf8_bytes = value.as_bytes();
-        unsafe { Schema_AddBytes(self.container.internal, self.field_id, utf8_bytes.as_ptr(), utf8_bytes.len() as u32); }
+        unsafe {
+            Schema_AddBytes(
+                self.container.internal,
+                self.field_id,
+                utf8_bytes.as_ptr(),
+                utf8_bytes.len() as u32,
+            );
+        }
     }
     fn add_list(&mut self, value: &[String]) {
         for str in value.iter() {
@@ -362,7 +528,7 @@ impl<'a> SchemaStringField for SchemaFieldContainer<'a, SchemaString> {
 
 impl<'a> SchemaBytesField for SchemaFieldContainer<'a, SchemaBytes> {
     fn get_or_default(&self) -> Vec<u8> {
-        let slice =  unsafe {
+        let slice = unsafe {
             let bytes_ptr = Schema_GetBytes(self.container.internal, self.field_id);
             let bytes_len = Schema_GetBytesLength(self.container.internal, self.field_id);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
@@ -370,9 +536,10 @@ impl<'a> SchemaBytesField for SchemaFieldContainer<'a, SchemaBytes> {
         slice.to_vec()
     }
     fn index(&self, index: usize) -> Vec<u8> {
-        let slice =  unsafe {
+        let slice = unsafe {
             let bytes_ptr = Schema_IndexBytes(self.container.internal, self.field_id, index as u32);
-            let bytes_len = Schema_IndexBytesLength(self.container.internal, self.field_id, index as u32);
+            let bytes_len =
+                Schema_IndexBytesLength(self.container.internal, self.field_id, index as u32);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
         };
         slice.to_vec()
@@ -382,19 +549,28 @@ impl<'a> SchemaBytesField for SchemaFieldContainer<'a, SchemaBytes> {
     }
 
     fn add(&mut self, value: &[u8]) {
-        unsafe { Schema_AddBytes(self.container.internal, self.field_id, value.as_ptr(), value.len() as u32); }
+        unsafe {
+            Schema_AddBytes(
+                self.container.internal,
+                self.field_id,
+                value.as_ptr(),
+                value.len() as u32,
+            );
+        }
     }
 }
 
 impl<'a> SchemaObjectField for SchemaFieldContainer<'a, SchemaObject> {
     fn get_or_default(&self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_GetObject(self.container.internal, self.field_id) }
+            internal: unsafe { Schema_GetObject(self.container.internal, self.field_id) },
         }
     }
     fn index(&self, index: usize) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_IndexObject(self.container.internal, self.field_id, index as u32) }
+            internal: unsafe {
+                Schema_IndexObject(self.container.internal, self.field_id, index as u32)
+            },
         }
     }
     fn count(&self) -> usize {
@@ -403,7 +579,7 @@ impl<'a> SchemaObjectField for SchemaFieldContainer<'a, SchemaObject> {
 
     fn add(&mut self) -> SchemaObject {
         SchemaObject {
-            internal: unsafe { Schema_AddObject(self.container.internal, self.field_id) }
+            internal: unsafe { Schema_AddObject(self.container.internal, self.field_id) },
         }
     }
 }

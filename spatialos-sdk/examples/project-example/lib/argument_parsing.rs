@@ -2,9 +2,9 @@ extern crate clap;
 
 use self::clap::{App, Arg, ArgMatches, SubCommand};
 
+use spatialos_sdk::worker::component::ComponentDatabase;
 use spatialos_sdk::worker::locator::{LocatorCredentials, LocatorParameters};
 use spatialos_sdk::worker::parameters::ConnectionParameters;
-use spatialos_sdk::worker::component::ComponentDatabase;
 
 static RECEPTIONIST_HOST: &str = "127.0.0.1";
 static RECEPTIONIST_PORT: u16 = 7777;
@@ -30,7 +30,9 @@ pub struct WorkerConfiguration {
 }
 
 // Gets the configuration of the worker.
-pub fn get_worker_configuration(components: ComponentDatabase) -> Result<WorkerConfiguration, String> {
+pub fn get_worker_configuration(
+    components: ComponentDatabase,
+) -> Result<WorkerConfiguration, String> {
     let polling_connection_arg = Arg::with_name(CONNECT_POLL_ARG)
         .long(CONNECT_POLL_ARG)
         .short("p")
@@ -109,7 +111,8 @@ pub fn get_worker_configuration(components: ComponentDatabase) -> Result<WorkerC
     }
 
     if let Some(sub_matches) = matches.subcommand_matches(RECEPTIONIST_SUBCOMMAND) {
-        let mut params = ConnectionParameters::new(get_worker_type(sub_matches)?, components).using_tcp();
+        let mut params =
+            ConnectionParameters::new(get_worker_type(sub_matches)?, components).using_tcp();
 
         if sub_matches.is_present(EXTERNAL_IP_ARG) {
             params.network.use_external_ip = true;

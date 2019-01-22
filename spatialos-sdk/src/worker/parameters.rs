@@ -1,10 +1,10 @@
 use std::ffi::CString;
 use std::ptr;
 
-use spatialos_sdk_sys::worker::*;
+use crate::worker::component::ComponentDatabase;
 use crate::worker::internal::utils::WrappedNativeStructWithString;
 use crate::worker::vtable;
-use crate::worker::component::ComponentDatabase;
+use spatialos_sdk_sys::worker::*;
 
 pub struct ConnectionParameters {
     pub worker_type: String,
@@ -72,7 +72,7 @@ impl ConnectionParameters {
             protocol_logging: ProtocolLoggingParameters::default(),
             enable_protocol_logging_at_startup: false,
             thread_affinity: ThreadAffinityParameters::default(),
-            components: components
+            components: components,
         }
     }
 
