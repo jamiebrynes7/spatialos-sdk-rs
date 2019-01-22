@@ -36,7 +36,7 @@ impl EntityId {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, Eq, Hash, PartialOrd, Ord)]
 pub struct RequestId<T> {
     pub id: u32,
     _type: PhantomData<*const T>,
@@ -52,6 +52,12 @@ impl<T> RequestId<T> {
 
     pub fn to_string(&self) -> String {
         format!("RequestId: {}", self.id)
+    }
+}
+
+impl<T> PartialEq for RequestId<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
     }
 }
 
