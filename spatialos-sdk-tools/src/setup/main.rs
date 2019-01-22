@@ -9,7 +9,7 @@ use tap::*;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let Opt {
         spatial_lib_dir,
-        schema_dir,
+        output_dir,
     } = Opt::from_args();
 
     let spatial_lib_dir = spatial_lib_dir
@@ -21,9 +21,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let schema_compiler_path = spatial_lib_dir.join("schema-compiler/schema_compiler");
     let protoc_path = spatial_lib_dir.join("schema-compiler/protoc");
 
-    // Calculate the various output directories relative to `out_dir`.
-    let bin_path = schema_dir.join("bin");
-    let tmp_path = schema_dir.join("tmp");
+    // Calculate the various output directories relative to `output_dir`.
+    let bin_path = output_dir.join("bin");
+    let tmp_path = output_dir.join("tmp");
 
     // Create the output directories if they don't already exist.
     fs::create_dir_all(&bin_path)
@@ -100,7 +100,7 @@ struct Opt {
     #[structopt(long = "spatial-lib-dir", short = "l", parse(from_os_str))]
     spatial_lib_dir: Option<PathBuf>,
 
-    /// The path the schema directory for the project.
+    /// The path the output directory for the project.
     #[structopt(parse(from_os_str))]
-    schema_dir: PathBuf,
+    output_dir: PathBuf,
 }
