@@ -11,27 +11,19 @@ use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
 use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Entered program");
 
     // Get the configuration for the app from the command line arguments, exiting
     // with an error code if the arguments are invalid.
-    let config = match get_worker_configuration() {
-        Ok(c) => c,
-        Err(e) => {
-            eprintln!("{}", e);
-            std::process::exit(1);
-        }
-    };
-
-    let worker_connection = match get_connection(config) {
-        Ok(c) => c,
-        Err(e) => panic!("{}", e),
-    };
+    let config = get_worker_configuration()?;
+    let worker_connection = get_connection(config)?;
 
     println!("Connected as: {}", worker_connection.get_worker_id());
 
     exercise_connection_code_paths(worker_connection);
+
+    Ok(())
 }
 
 fn exercise_connection_code_paths(mut c: WorkerConnection) {
