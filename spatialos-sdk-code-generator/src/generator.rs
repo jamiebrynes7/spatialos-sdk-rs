@@ -189,11 +189,11 @@ impl Package {
         if let Some(ref singular_type) = field.singular_type {
             self.serialize_type(field.field_id, &singular_type.type_reference, expression, schema_object)
         } else if let Some(ref option_type) = field.option_type {
-            self.serialize_type(field.field_id, &option_type.inner_type, expression, schema_object)
+            format!("if let Some(ref data) = {} {{ {}; }}", expression, self.serialize_type(field.field_id, &option_type.inner_type, "data", schema_object))
         } else if let Some(ref list_type) = field.list_type {
             // If we have a list of primitives, we can just pass a slice directly to add_list.
             if let Some(ref primitive_type) = list_type.inner_type.primitive_reference {
-                format!("{}.field::<{}>({}).add_list({}[..])", schema_object, get_rust_primitive_type_tag(&primitive_type), field.field_id, expression)
+                format!("{}.field::<{}>({}).add_list(&{}[..])", schema_object, get_rust_primitive_type_tag(&primitive_type), field.field_id, expression)
             } else {
                 let add_item = self.serialize_type(field.field_id, &list_type.inner_type, "element", schema_object);
                 format!("for element in {}.iter() {{ {}; }}", expression, add_item)
@@ -226,18 +226,18 @@ impl Package {
     fn deserialize_field(&self, field: &FieldDefinition, schema_field: &str) -> String {
         if let Some(ref singular_type) = field.singular_type {
             let schema_expr = format!("{}.get_or_default()", schema_field);
-            self.deserialize_type(&singular_type.type_reference, &schema_expr)
+            self.deserialize_type_unwrapped(&singular_type.type_reference, &schema_expr)
         } else if let Some(ref option_type) = field.option_type {
             let schema_expr = format!("{}.get()", schema_field);
-            format!("{}.map(|v| {{ {} }})", schema_expr, self.deserialize_type(&option_type.inner_type, "v"))
+            format!("{}.map(|v| {{ {} }})", schema_expr, self.deserialize_type_unwrapped(&option_type.inner_type, "v"))
         } else if let Some(ref list_type) = field.list_type {
             let capacity = format!("{}.count()", schema_field);
-            let deserialize_element = self.deserialize_type(&list_type.inner_type, &format!("{}.index(i)", schema_field));
+            let deserialize_element = self.deserialize_type_unwrapped(&list_type.inner_type, &format!("{}.index(i)", schema_field));
             format!("{{ let size = {}; let mut l = Vec::with_capacity(size); for i in 0..size {{ l.push({}); }}; l }}", capacity, deserialize_element)
         } else if let Some(ref map_type) = field.map_type {
             let capacity = format!("{}.count()", schema_field);
-            let deserialize_key = self.deserialize_type(&map_type.key_type, "kv.field::<SchemaObject>(1)");
-            let deserialize_value = self.deserialize_type(&map_type.value_type, "kv.field::<SchemaObject>(2)");
+            let deserialize_key = self.deserialize_type_unwrapped(&map_type.key_type, "kv.field::<SchemaObject>(1).get()");
+            let deserialize_value = self.deserialize_type_unwrapped(&map_type.value_type, "kv.field::<SchemaObject>(2).get()");
             format!("{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index(i); m.insert({}, {}); }}; m }}", capacity, schema_field, deserialize_key, deserialize_value)
         } else {
             panic!("Field doesn't have a type. {:?}", field);
@@ -246,17 +246,31 @@ impl Package {
 
     // Generates an expression which deserializes a value from a schema type in 'schema_expr'.
     fn deserialize_type(&self, value_type: &ValueTypeReference, schema_expr: &str) -> String {
-        if let Some(_) = value_type.primitive_reference {
-            // Primitive types don't need any processing.
-            schema_expr.to_string()
+        if let Some(ref primitive) = value_type.primitive_reference {
+            match primitive {
+                PrimitiveType::String => format!("&{}", schema_expr),
+                // Primitive types don't need any processing.
+                _ => schema_expr.to_string()
+            }
         } else if let Some(ref enum_type) = value_type.enum_reference {
             let enum_name = self.rust_fqname(&self.get_enum_definition(&enum_type.qualified_name).identifier);
             format!("({}) as {}", schema_expr, enum_name)
         } else if let Some(ref type_ref) = value_type.type_reference {
             let type_name = self.rust_fqname(&self.get_type_definition(&type_ref.qualified_name).identifier);
-            format!("TypeSerializer::<{}>::deserialize({})", type_name, schema_expr)
+            format!("TypeSerializer::<{}>::deserialize(&{})", type_name, schema_expr)
         } else {
             panic!("Unknown value type reference. {:?}", value_type);
+        }
+    }
+
+    // Generates an expression which deserializes a value from a schema type in 'schema_expr'. Also unwraps the result
+    // using ? operator.
+    fn deserialize_type_unwrapped(&self, value_type: &ValueTypeReference, schema_expr: &str) -> String {
+        let deserialize_expr = self.deserialize_type(value_type, schema_expr);
+        if let Some(ref type_ref) = value_type.type_reference {
+            format!("{}?", deserialize_expr)
+        } else {
+            deserialize_expr
         }
     }
 }
@@ -312,7 +326,10 @@ fn generate_module(package: &Package) -> String {
     let module_contents = format!("{}\n{}", package, submodules);
     // The only package with a depth of 0 is the root package.
     if package.depth() == 0 {
-        let allow_warnings = vec!["#[allow(unused_imports)]"].join("\n");
+        let allow_warnings = vec![
+            "#[allow(unused_imports)]",
+            "#[allow(unreachable_code)]"
+        ].join("\n");
         // The root module places everything in "mod generated", and each inner module has an alias for this mod
         // (such as `use super::super::generated as generated`), so we can get fully qualified names without
         // making symbols global.

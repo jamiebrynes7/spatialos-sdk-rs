@@ -1,4 +1,5 @@
 #[allow(unused_imports)]
+#[allow(unreachable_code)]
 mod generated {
 use spatialos_sdk::worker::internal::schema::*;
 use spatialos_sdk::worker::{ComponentMetaclass, ComponentUpdate, ComponentData, ComponentVtable, ComponentId, TypeSerializer};
@@ -201,7 +202,7 @@ impl TypeSerializer<ComponentInterest> for ComponentInterest {
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            queries: { let size = input.field::<SchemaObject>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::ComponentInterest_Query>::deserialize(input.field::<SchemaObject>(1).index(i))); }; l },
+            queries: { let size = input.field::<SchemaObject>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::ComponentInterest_Query>::deserialize(&input.field::<SchemaObject>(1).index(i))?); }; l },
         })
     }
 }
@@ -219,8 +220,8 @@ impl TypeSerializer<ComponentInterest_BoxConstraint> for ComponentInterest_BoxCo
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            center: TypeSerializer::<generated::improbable::Coordinates>::deserialize(input.field::<SchemaObject>(1).get_or_default()),
-            edge_length: TypeSerializer::<generated::improbable::EdgeLength>::deserialize(input.field::<SchemaObject>(2).get_or_default()),
+            center: TypeSerializer::<generated::improbable::Coordinates>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
+            edge_length: TypeSerializer::<generated::improbable::EdgeLength>::deserialize(&input.field::<SchemaObject>(2).get_or_default())?,
         })
     }
 }
@@ -238,7 +239,7 @@ impl TypeSerializer<ComponentInterest_CylinderConstraint> for ComponentInterest_
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            center: TypeSerializer::<generated::improbable::Coordinates>::deserialize(input.field::<SchemaObject>(1).get_or_default()),
+            center: TypeSerializer::<generated::improbable::Coordinates>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
             radius: input.field::<SchemaDouble>(2).get_or_default(),
         })
     }
@@ -254,14 +255,14 @@ pub struct ComponentInterest_Query {
 impl TypeSerializer<ComponentInterest_Query> for ComponentInterest_Query {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::serialize(&input.constraint, &mut output.field::<SchemaObject>(1).add());
-        output.field::<SchemaBool>(2).add(input.full_snapshot_result);
-        output.field::<SchemaUint32>(3).add_list(input.result_component_id[..]);
-        output.field::<SchemaFloat>(4).add(input.frequency);
+        if let Some(ref data) = input.full_snapshot_result { output.field::<SchemaBool>(2).add(data); };
+        output.field::<SchemaUint32>(3).add_list(&input.result_component_id[..]);
+        if let Some(ref data) = input.frequency { output.field::<SchemaFloat>(4).add(data); };
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            constraint: TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::deserialize(input.field::<SchemaObject>(1).get_or_default()),
+            constraint: TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
             full_snapshot_result: input.field::<SchemaBool>(2).get().map(|v| { v }),
             result_component_id: { let size = input.field::<SchemaUint32>(3).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(input.field::<SchemaUint32>(3).index(i)); }; l },
             frequency: input.field::<SchemaFloat>(4).get().map(|v| { v }),
@@ -284,30 +285,30 @@ pub struct ComponentInterest_QueryConstraint {
 }
 impl TypeSerializer<ComponentInterest_QueryConstraint> for ComponentInterest_QueryConstraint {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        TypeSerializer::<generated::improbable::ComponentInterest_SphereConstraint>::serialize(&input.sphere_constraint, &mut output.field::<SchemaObject>(1).add());
-        TypeSerializer::<generated::improbable::ComponentInterest_CylinderConstraint>::serialize(&input.cylinder_constraint, &mut output.field::<SchemaObject>(2).add());
-        TypeSerializer::<generated::improbable::ComponentInterest_BoxConstraint>::serialize(&input.box_constraint, &mut output.field::<SchemaObject>(3).add());
-        TypeSerializer::<generated::improbable::ComponentInterest_RelativeSphereConstraint>::serialize(&input.relative_sphere_constraint, &mut output.field::<SchemaObject>(4).add());
-        TypeSerializer::<generated::improbable::ComponentInterest_RelativeCylinderConstraint>::serialize(&input.relative_cylinder_constraint, &mut output.field::<SchemaObject>(5).add());
-        TypeSerializer::<generated::improbable::ComponentInterest_RelativeBoxConstraint>::serialize(&input.relative_box_constraint, &mut output.field::<SchemaObject>(6).add());
-        output.field::<SchemaInt64>(7).add(input.entity_id_constraint);
-        output.field::<SchemaUint32>(8).add(input.component_constraint);
+        if let Some(ref data) = input.sphere_constraint { TypeSerializer::<generated::improbable::ComponentInterest_SphereConstraint>::serialize(&data, &mut output.field::<SchemaObject>(1).add()); };
+        if let Some(ref data) = input.cylinder_constraint { TypeSerializer::<generated::improbable::ComponentInterest_CylinderConstraint>::serialize(&data, &mut output.field::<SchemaObject>(2).add()); };
+        if let Some(ref data) = input.box_constraint { TypeSerializer::<generated::improbable::ComponentInterest_BoxConstraint>::serialize(&data, &mut output.field::<SchemaObject>(3).add()); };
+        if let Some(ref data) = input.relative_sphere_constraint { TypeSerializer::<generated::improbable::ComponentInterest_RelativeSphereConstraint>::serialize(&data, &mut output.field::<SchemaObject>(4).add()); };
+        if let Some(ref data) = input.relative_cylinder_constraint { TypeSerializer::<generated::improbable::ComponentInterest_RelativeCylinderConstraint>::serialize(&data, &mut output.field::<SchemaObject>(5).add()); };
+        if let Some(ref data) = input.relative_box_constraint { TypeSerializer::<generated::improbable::ComponentInterest_RelativeBoxConstraint>::serialize(&data, &mut output.field::<SchemaObject>(6).add()); };
+        if let Some(ref data) = input.entity_id_constraint { output.field::<SchemaInt64>(7).add(data); };
+        if let Some(ref data) = input.component_constraint { output.field::<SchemaUint32>(8).add(data); };
         for element in input.and_constraint.iter() { TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::serialize(&element, &mut output.field::<SchemaObject>(9).add()); };
         for element in input.or_constraint.iter() { TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::serialize(&element, &mut output.field::<SchemaObject>(10).add()); };
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            sphere_constraint: input.field::<SchemaObject>(1).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_SphereConstraint>::deserialize(v) }),
-            cylinder_constraint: input.field::<SchemaObject>(2).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_CylinderConstraint>::deserialize(v) }),
-            box_constraint: input.field::<SchemaObject>(3).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_BoxConstraint>::deserialize(v) }),
-            relative_sphere_constraint: input.field::<SchemaObject>(4).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_RelativeSphereConstraint>::deserialize(v) }),
-            relative_cylinder_constraint: input.field::<SchemaObject>(5).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_RelativeCylinderConstraint>::deserialize(v) }),
-            relative_box_constraint: input.field::<SchemaObject>(6).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_RelativeBoxConstraint>::deserialize(v) }),
+            sphere_constraint: input.field::<SchemaObject>(1).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_SphereConstraint>::deserialize(&v)? }),
+            cylinder_constraint: input.field::<SchemaObject>(2).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_CylinderConstraint>::deserialize(&v)? }),
+            box_constraint: input.field::<SchemaObject>(3).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_BoxConstraint>::deserialize(&v)? }),
+            relative_sphere_constraint: input.field::<SchemaObject>(4).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_RelativeSphereConstraint>::deserialize(&v)? }),
+            relative_cylinder_constraint: input.field::<SchemaObject>(5).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_RelativeCylinderConstraint>::deserialize(&v)? }),
+            relative_box_constraint: input.field::<SchemaObject>(6).get().map(|v| { TypeSerializer::<generated::improbable::ComponentInterest_RelativeBoxConstraint>::deserialize(&v)? }),
             entity_id_constraint: input.field::<SchemaInt64>(7).get().map(|v| { v }),
             component_constraint: input.field::<SchemaUint32>(8).get().map(|v| { v }),
-            and_constraint: { let size = input.field::<SchemaObject>(9).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::deserialize(input.field::<SchemaObject>(9).index(i))); }; l },
-            or_constraint: { let size = input.field::<SchemaObject>(10).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::deserialize(input.field::<SchemaObject>(10).index(i))); }; l },
+            and_constraint: { let size = input.field::<SchemaObject>(9).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::deserialize(&input.field::<SchemaObject>(9).index(i))?); }; l },
+            or_constraint: { let size = input.field::<SchemaObject>(10).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::ComponentInterest_QueryConstraint>::deserialize(&input.field::<SchemaObject>(10).index(i))?); }; l },
         })
     }
 }
@@ -323,7 +324,7 @@ impl TypeSerializer<ComponentInterest_RelativeBoxConstraint> for ComponentIntere
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            edge_length: TypeSerializer::<generated::improbable::EdgeLength>::deserialize(input.field::<SchemaObject>(1).get_or_default()),
+            edge_length: TypeSerializer::<generated::improbable::EdgeLength>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
         })
     }
 }
@@ -373,7 +374,7 @@ impl TypeSerializer<ComponentInterest_SphereConstraint> for ComponentInterest_Sp
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            center: TypeSerializer::<generated::improbable::Coordinates>::deserialize(input.field::<SchemaObject>(1).get_or_default()),
+            center: TypeSerializer::<generated::improbable::Coordinates>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
             radius: input.field::<SchemaDouble>(2).get_or_default(),
         })
     }
@@ -473,12 +474,12 @@ pub struct WorkerAttributeSet {
 }
 impl TypeSerializer<WorkerAttributeSet> for WorkerAttributeSet {
     fn serialize(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        output.field::<SchemaString>(1).add_list(input.attribute[..]);
+        output.field::<SchemaString>(1).add_list(&input.attribute[..]);
         Ok(())
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            attribute: { let size = input.field::<SchemaString>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(input.field::<SchemaString>(1).index(i)); }; l },
+            attribute: { let size = input.field::<SchemaString>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(&input.field::<SchemaString>(1).index(i)); }; l },
         })
     }
 }
@@ -494,7 +495,7 @@ impl TypeSerializer<WorkerRequirementSet> for WorkerRequirementSet {
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            attribute_set: { let size = input.field::<SchemaObject>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::WorkerAttributeSet>::deserialize(input.field::<SchemaObject>(1).index(i))); }; l },
+            attribute_set: { let size = input.field::<SchemaObject>(1).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(TypeSerializer::<generated::improbable::WorkerAttributeSet>::deserialize(&input.field::<SchemaObject>(1).index(i))?); }; l },
         })
     }
 }
@@ -513,8 +514,8 @@ impl TypeSerializer<EntityAcl> for EntityAcl {
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            read_acl: TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(input.field::<SchemaObject>(1).get_or_default()),
-            component_write_acl: { let size = input.field::<SchemaObject>(2).count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = input.field::<SchemaObject>(2).index(i); m.insert(kv.field::<SchemaObject>(1), TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(kv.field::<SchemaObject>(2))); }; m },
+            read_acl: TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
+            component_write_acl: { let size = input.field::<SchemaObject>(2).count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = input.field::<SchemaObject>(2).index(i); m.insert(kv.field::<SchemaObject>(1).get(), TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(&kv.field::<SchemaObject>(2).get())?); }; m },
         })
     }
 }
@@ -548,12 +549,12 @@ impl TypeSerializer<EntityAclUpdate> for EntityAclUpdate {
         let _field_read_acl = input.field::<SchemaObject>(1);
         if _field_read_acl.count() > 0 {
             let field = &_field_read_acl;
-            output.read_acl = Some(TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(field.get_or_default()));
+            output.read_acl = Some(TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(&field.get_or_default())?);
         }
         let _field_component_write_acl = input.field::<SchemaObject>(2);
         if _field_component_write_acl.count() > 0 {
             let field = &_field_component_write_acl;
-            output.component_write_acl = Some({ let size = field.count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = field.index(i); m.insert(kv.field::<SchemaObject>(1), TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(kv.field::<SchemaObject>(2))); }; m });
+            output.component_write_acl = Some({ let size = field.count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = field.index(i); m.insert(kv.field::<SchemaObject>(1).get(), TypeSerializer::<generated::improbable::WorkerRequirementSet>::deserialize(&kv.field::<SchemaObject>(2).get())?); }; m });
         }
         Ok(output)
     }
@@ -651,7 +652,7 @@ impl TypeSerializer<Interest> for Interest {
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            component_interest: { let size = input.field::<SchemaObject>(1).count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = input.field::<SchemaObject>(1).index(i); m.insert(kv.field::<SchemaObject>(1), TypeSerializer::<generated::improbable::ComponentInterest>::deserialize(kv.field::<SchemaObject>(2))); }; m },
+            component_interest: { let size = input.field::<SchemaObject>(1).count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = input.field::<SchemaObject>(1).index(i); m.insert(kv.field::<SchemaObject>(1).get(), TypeSerializer::<generated::improbable::ComponentInterest>::deserialize(&kv.field::<SchemaObject>(2).get())?); }; m },
         })
     }
 }
@@ -679,7 +680,7 @@ impl TypeSerializer<InterestUpdate> for InterestUpdate {
         let _field_component_interest = input.field::<SchemaObject>(1);
         if _field_component_interest.count() > 0 {
             let field = &_field_component_interest;
-            output.component_interest = Some({ let size = field.count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = field.index(i); m.insert(kv.field::<SchemaObject>(1), TypeSerializer::<generated::improbable::ComponentInterest>::deserialize(kv.field::<SchemaObject>(2))); }; m });
+            output.component_interest = Some({ let size = field.count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = field.index(i); m.insert(kv.field::<SchemaObject>(1).get(), TypeSerializer::<generated::improbable::ComponentInterest>::deserialize(&kv.field::<SchemaObject>(2).get())?); }; m });
         }
         Ok(output)
     }
@@ -776,7 +777,7 @@ impl TypeSerializer<Metadata> for Metadata {
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            entity_type: input.field::<SchemaString>(1).get_or_default(),
+            entity_type: &input.field::<SchemaString>(1).get_or_default(),
         })
     }
 }
@@ -804,7 +805,7 @@ impl TypeSerializer<MetadataUpdate> for MetadataUpdate {
         let _field_entity_type = input.field::<SchemaString>(1);
         if _field_entity_type.count() > 0 {
             let field = &_field_entity_type;
-            output.entity_type = Some(field.get_or_default());
+            output.entity_type = Some(&field.get_or_default());
         }
         Ok(output)
     }
@@ -1011,7 +1012,7 @@ impl TypeSerializer<Position> for Position {
     }
     fn deserialize(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            coords: TypeSerializer::<generated::improbable::Coordinates>::deserialize(input.field::<SchemaObject>(1).get_or_default()),
+            coords: TypeSerializer::<generated::improbable::Coordinates>::deserialize(&input.field::<SchemaObject>(1).get_or_default())?,
         })
     }
 }
@@ -1039,7 +1040,7 @@ impl TypeSerializer<PositionUpdate> for PositionUpdate {
         let _field_coords = input.field::<SchemaObject>(1);
         if _field_coords.count() > 0 {
             let field = &_field_coords;
-            output.coords = Some(TypeSerializer::<generated::improbable::Coordinates>::deserialize(field.get_or_default()));
+            output.coords = Some(TypeSerializer::<generated::improbable::Coordinates>::deserialize(&field.get_or_default())?);
         }
         Ok(output)
     }

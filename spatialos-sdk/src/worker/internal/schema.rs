@@ -1,6 +1,7 @@
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 use crate::worker::component::ComponentId;
+use std::slice;
 
 pub type FieldId = u32;
 
@@ -202,6 +203,7 @@ pub struct SchemaSfixed64;
 pub struct SchemaEntityId;
 pub struct SchemaEnum;
 pub struct SchemaBytes;
+pub struct SchemaString;
 
 // A primitive schema field.
 pub trait SchemaPrimitiveField<T> {
@@ -217,13 +219,39 @@ pub trait SchemaPrimitiveField<T> {
     fn add_list(&mut self, value: &[T]);
 }
 
+// A bytes schema field.
+pub trait SchemaBytesField {
+    fn get(&self) -> Option<Vec<u8>> {
+        if self.count() == 0 { None } else { Some(self.get_or_default()) }
+    }
+
+    fn get_or_default(&self) -> Vec<u8>;
+    fn index(&self, index: usize) -> Vec<u8>;
+    fn count(&self) -> usize;
+    fn add(&mut self, value: &[u8]);
+}
+
+// A string schema field.
+pub trait SchemaStringField {
+    fn get(&self) -> Option<String> {
+        if self.count() == 0 { None } else { Some(self.get_or_default()) }
+    }
+
+    fn get_or_default(&self) -> String;
+    fn index(&self, index: usize) -> String;
+    fn count(&self) -> usize;
+
+    fn add(&mut self, value: &String);
+    fn add_list(&mut self, value: &[String]);
+}
+
 // An object schema field.
 pub trait SchemaObjectField {
     fn get(&self) -> Option<SchemaObject> {
-        if self.count() == 0 { None } else { Some(self.get_or_add()) }
+        if self.count() == 0 { None } else { Some(self.get_or_default()) }
     }
 
-    fn get_or_add(&self) -> SchemaObject;
+    fn get_or_default(&self) -> SchemaObject;
     fn index(&self, index: usize) -> SchemaObject;
     fn count(&self) -> usize;
 
@@ -300,56 +328,66 @@ impl<'a> SchemaPrimitiveField<bool> for SchemaFieldContainer<'a, SchemaBool> {
     }
 }
 
-// TODO: Generate this for all primitive types with a macro.
-// i.e. impl_field_primitives!([f32, Float], [f64, Double])
-/*
-impl<'a> SchemaField<f32> for SchemaFieldContainer<'a, f32> {
-    fn get_or_default(&self) -> f32 {
-        unsafe { Schema_GetFloat(self.container.internal, self.field_id) }
+impl<'a> SchemaStringField for SchemaFieldContainer<'a, SchemaString> {
+    fn get_or_default(&self) -> String {
+        let slice =  unsafe {
+            let bytes_ptr = Schema_GetBytes(self.container.internal, self.field_id);
+            let bytes_len = Schema_GetBytesLength(self.container.internal, self.field_id);
+            slice::from_raw_parts(bytes_ptr, bytes_len as usize)
+        };
+        String::from_utf8_lossy(slice).to_string()
     }
-    fn index(&self, index: usize) -> f32 {
-        unsafe { Schema_IndexFloat(self.container.internal, self.field_id, index as u32) }
+    fn index(&self, index: usize) -> String {
+        let slice =  unsafe {
+            let bytes_ptr = Schema_IndexBytes(self.container.internal, self.field_id, index as u32);
+            let bytes_len = Schema_IndexBytesLength(self.container.internal, self.field_id, index as u32);
+            slice::from_raw_parts(bytes_ptr, bytes_len as usize)
+        };
+        String::from_utf8_lossy(slice).to_string()
     }
     fn count(&self) -> usize {
-        unsafe { Schema_GetFloatCount(self.container.internal, self.field_id) as usize }
+        unsafe { Schema_GetBytesCount(self.container.internal, self.field_id) as usize }
     }
 
-    fn add(&mut self, value: f32) {
-        unsafe { Schema_AddFloat(self.container.internal, self.field_id, value); }
+    fn add(&mut self, value: &String) {
+        let utf8_bytes = value.as_bytes();
+        unsafe { Schema_AddBytes(self.container.internal, self.field_id, utf8_bytes.as_ptr(), utf8_bytes.len() as u32); }
     }
-    fn add_list(&mut self, value: &[f32]) {
-        unsafe {
-            let ptr = value.as_ptr();
-            Schema_AddFloatList(self.container.internal, self.field_id, ptr, value.len() as u32);
+    fn add_list(&mut self, value: &[String]) {
+        for str in value.iter() {
+            self.add(str);
         }
     }
 }
 
-impl<'a> SchemaField<i32> for SchemaFieldContainer<'a, i32> {
-    fn get_or_default(&self) -> i32 {
-        unsafe { Schema_GetInt32(self.container.internal, self.field_id) }
+impl<'a> SchemaBytesField for SchemaFieldContainer<'a, SchemaBytes> {
+    fn get_or_default(&self) -> Vec<u8> {
+        let slice =  unsafe {
+            let bytes_ptr = Schema_GetBytes(self.container.internal, self.field_id);
+            let bytes_len = Schema_GetBytesLength(self.container.internal, self.field_id);
+            slice::from_raw_parts(bytes_ptr, bytes_len as usize)
+        };
+        slice.to_vec()
     }
-    fn index(&self, index: usize) -> i32 {
-        unsafe { Schema_IndexInt32(self.container.internal, self.field_id, index as u32) }
+    fn index(&self, index: usize) -> Vec<u8> {
+        let slice =  unsafe {
+            let bytes_ptr = Schema_IndexBytes(self.container.internal, self.field_id, index as u32);
+            let bytes_len = Schema_IndexBytesLength(self.container.internal, self.field_id, index as u32);
+            slice::from_raw_parts(bytes_ptr, bytes_len as usize)
+        };
+        slice.to_vec()
     }
     fn count(&self) -> usize {
-        unsafe { Schema_GetInt32Count(self.container.internal, self.field_id) as usize }
+        unsafe { Schema_GetBytesCount(self.container.internal, self.field_id) as usize }
     }
 
-    fn add(&mut self, value: i32) {
-        unsafe { Schema_AddInt32(self.container.internal, self.field_id, value); }
-    }
-    fn add_list(&mut self, value: &[i32]) {
-        unsafe {
-            let ptr = value.as_ptr();
-            Schema_AddInt32List(self.container.internal, self.field_id, ptr, value.len() as u32);
-        }
+    fn add(&mut self, value: &[u8]) {
+        unsafe { Schema_AddBytes(self.container.internal, self.field_id, value.as_ptr(), value.len() as u32); }
     }
 }
-*/
 
 impl<'a> SchemaObjectField for SchemaFieldContainer<'a, SchemaObject> {
-    fn get_or_add(&self) -> SchemaObject {
+    fn get_or_default(&self) -> SchemaObject {
         SchemaObject {
             internal: unsafe { Schema_GetObject(self.container.internal, self.field_id) }
         }
