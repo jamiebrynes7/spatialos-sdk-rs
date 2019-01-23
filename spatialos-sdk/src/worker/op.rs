@@ -58,7 +58,7 @@ impl Drop for OpList {
     }
 }
 
-struct Iter<'a> {
+pub struct Iter<'a> {
     iter: slice::Iter<'a, Worker_Op>,
 }
 
@@ -93,7 +93,7 @@ pub enum WorkerOp<'a> {
     ComponentUpdate(ComponentUpdateOp<'a>),
     AuthorityChange(AuthorityChangeOp),
     CommandRequest(CommandRequestOp<'a>),
-    CommandResponse(CommandResponseOp),
+    CommandResponse(CommandResponseOp<'a>),
     ReserveEntityIdsResponse(ReserveEntityIdsResponseOp),
     CreateEntityResponse(CreateEntityResponseOp),
     DeleteEntityResponse(DeleteEntityResponseOp),
@@ -101,9 +101,9 @@ pub enum WorkerOp<'a> {
 }
 
 impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
-    fn from(op: &Worker_Op) -> Self {
+    fn from(op: &'a Worker_Op) -> Self {
         unsafe {
-            let erased_op = op.__bindgen_anon_1;
+            let erased_op = &op.__bindgen_anon_1;
             let op_type = u32::from(op.op_type);
             match op_type {
                 Worker_OpType_WORKER_OP_TYPE_DISCONNECT => {
@@ -191,7 +191,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     WorkerOp::ComponentUpdate(component_update_op)
                 }
                 Worker_OpType_WORKER_OP_TYPE_COMMAND_REQUEST => {
-                    let op = erased_op.command_request;
+                    let op = &erased_op.command_request;
                     let attribute_set = cstr_array_to_vec_string(
                         op.caller_attribute_set.attributes,
                         op.caller_attribute_set.attribute_count,
@@ -208,7 +208,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     WorkerOp::CommandRequest(command_request_op)
                 }
                 Worker_OpType_WORKER_OP_TYPE_COMMAND_RESPONSE => {
-                    let op = erased_op.command_response;
+                    let op = &erased_op.command_response;
                     let status_code = match u32::from(op.status_code) {
                         Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                             StatusCode::Success(CommandResponse::from(&op.response))
@@ -488,8 +488,8 @@ pub struct CommandRequestOp<'a> {
     pub request: CommandRequest<'a>,
 }
 
-pub struct CommandResponseOp {
+pub struct CommandResponseOp<'a> {
     pub request_id: RequestId<OutgoingCommandRequest>,
     pub entity_id: EntityId,
-    pub status_code: StatusCode<CommandResponse>,
+    pub status_code: StatusCode<CommandResponse<'a>>,
 }

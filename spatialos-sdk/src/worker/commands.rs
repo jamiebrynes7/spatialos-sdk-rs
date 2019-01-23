@@ -8,29 +8,29 @@ use spatialos_sdk_sys::worker::{
 // TODO: Wrap Schema_CommandRequest
 pub struct CommandRequest<'a> {
     pub component_id: ComponentId,
-    pub schema_type: &'a mut Schema_CommandRequest,
+    pub schema_type: &'a Schema_CommandRequest,
 }
 
-impl From<&Worker_CommandRequest> for CommandRequest {
-    fn from(command_request: &Worker_CommandRequest) -> Self {
+impl<'a> From<&'a Worker_CommandRequest> for CommandRequest<'a> {
+    fn from(command_request: &'a Worker_CommandRequest) -> Self {
         CommandRequest {
             component_id: command_request.component_id,
-            schema_type: command_request.schema_type,
+            schema_type: unsafe { &*command_request.schema_type },
         }
     }
 }
 
 // TODO: Wrap Schema_CommandResponse
-pub struct CommandResponse {
+pub struct CommandResponse<'a> {
     pub component_id: ComponentId,
-    pub schema_type: *mut Schema_CommandResponse,
+    pub schema_type: &'a Schema_CommandResponse,
 }
 
-impl From<&Worker_CommandResponse> for CommandResponse {
+impl<'a> From<&'a Worker_CommandResponse> for CommandResponse<'a> {
     fn from(command_response: &Worker_CommandResponse) -> Self {
         CommandResponse {
             component_id: command_response.component_id,
-            schema_type: command_response.schema_type,
+            schema_type: unsafe { &*command_response.schema_type },
         }
     }
 }

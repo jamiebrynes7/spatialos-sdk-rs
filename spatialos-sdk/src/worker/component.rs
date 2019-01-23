@@ -7,14 +7,14 @@ use crate::worker::ComponentId;
 // TODO: Wrap Schema_ComponentData
 pub struct ComponentData<'a> {
     pub component_id: ComponentId,
-    pub schema_type: &'a mut Schema_ComponentData,
+    pub schema_type: &'a Schema_ComponentData,
 }
 
-impl From<&Worker_ComponentData> for ComponentData {
+impl<'a> From<&Worker_ComponentData> for ComponentData<'a> {
     fn from(data: &Worker_ComponentData) -> Self {
         ComponentData {
             component_id: data.component_id,
-            schema_type: data.schema_type,
+            schema_type: unsafe { &*data.schema_type },
         }
     }
 }
@@ -22,14 +22,14 @@ impl From<&Worker_ComponentData> for ComponentData {
 // TODO: Wrap Schema_ComponentUpdate
 pub struct ComponentUpdate<'a> {
     pub component_id: ComponentId,
-    pub schema_type: &'a mut Schema_ComponentUpdate,
+    pub schema_type: &'a Schema_ComponentUpdate,
 }
 
-impl From<&Worker_ComponentUpdate> for ComponentUpdate {
+impl<'a> From<&Worker_ComponentUpdate> for ComponentUpdate<'a> {
     fn from(update: &Worker_ComponentUpdate) -> Self {
         ComponentUpdate {
             component_id: update.component_id,
-            schema_type: update.schema_type,
+            schema_type: unsafe { &*update.schema_type },
         }
     }
 }
