@@ -7,6 +7,8 @@ extern crate serde_json;
 #[macro_use]
 extern crate t4rust_derive;
 
+extern crate heck;
+
 pub mod generator;
 #[allow(non_camel_case_types)]
 pub mod schema_bundle;

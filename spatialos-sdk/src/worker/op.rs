@@ -7,7 +7,7 @@ use crate::worker::commands::*;
 use crate::worker::component::{self, *};
 use crate::worker::entity_snapshot::EntitySnapshot;
 use crate::worker::metrics::Metrics;
-use crate::worker::{Authority, ComponentId, EntityId, LogLevel, RequestId};
+use crate::worker::{Authority, EntityId, LogLevel, RequestId};
 
 use crate::worker::internal::utils::*;
 use spatialos_sdk_sys::worker::*;

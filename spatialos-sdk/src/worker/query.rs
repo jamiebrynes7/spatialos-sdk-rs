@@ -1,6 +1,7 @@
 use std::ptr;
 
-use crate::worker::{ComponentId, EntityId};
+use crate::worker::component::ComponentId;
+use crate::worker::EntityId;
 
 use spatialos_sdk_sys::worker::{
     Worker_AndConstraint, Worker_ComponentConstraint, Worker_Constraint,

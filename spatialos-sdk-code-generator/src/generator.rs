@@ -1,3 +1,4 @@
+use heck::CamelCase;
 #[allow(dead_code)]
 use schema_bundle::*;
 use std::cell::RefCell;
@@ -362,7 +363,7 @@ impl Package {
                     .identifier,
             );
             format!(
-                "<{} as TypeSerializer>::serialize(&{}, &mut {}.field::<SchemaObject>({}).add())?",
+                "<{} as TypeConversion>::to_type(&{}, &mut {}.field::<SchemaObject>({}).add())?",
                 type_definition, expression, schema_object, field_id
             )
         } else {
@@ -434,7 +435,7 @@ impl Package {
                     .identifier,
             );
             format!(
-                "<{} as TypeSerializer>::deserialize(&{})",
+                "<{} as TypeConversion>::from_type(&{})",
                 type_name, schema_expr
             )
         } else {
