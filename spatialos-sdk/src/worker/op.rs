@@ -17,12 +17,9 @@ pub struct OpList {
 }
 
 impl OpList {
-    pub(crate) fn new(raw_ops_list_ptr: *mut Worker_OpList) -> Self {
-        assert!(!raw_ops_list_ptr.is_null());
-
-        OpList {
-            raw: raw_ops_list_ptr,
-        }
+    pub(crate) fn new(raw: *mut Worker_OpList) -> Self {
+        assert!(!raw.is_null());
+        OpList { raw }
     }
 
     /// Returns the number of ops in the list.
@@ -54,6 +51,10 @@ impl OpList {
         self.into_iter()
     }
 
+    /// Returns a reference to the raw `Worker_OpList`.
+    ///
+    /// This is a simple helper to reduce the `unsafe` boilerplate in all the
+    /// places where we need to access data on the raw op list.
     fn raw(&self) -> &Worker_OpList {
         unsafe { &*self.raw }
     }
