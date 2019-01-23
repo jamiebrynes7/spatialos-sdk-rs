@@ -5,44 +5,39 @@ use std::slice;
 
 pub type FieldId = u32;
 
+#[derive(Debug)]
 pub struct SchemaComponentUpdate {
     pub component_id: ComponentId,
     pub internal: *mut Schema_ComponentUpdate,
 }
 
+#[derive(Debug)]
 pub struct SchemaComponentData {
     pub component_id: ComponentId,
     pub internal: *mut Schema_ComponentData,
 }
 
+#[derive(Debug)]
 pub struct SchemaCommandRequest {
     pub component_id: ComponentId,
     pub internal: *mut Schema_CommandRequest,
 }
 
+#[derive(Debug)]
 pub struct SchemaCommandResponse {
     pub component_id: ComponentId,
     pub internal: *mut Schema_CommandResponse,
 }
 
+#[derive(Debug)]
 pub struct SchemaObject {
     internal: *mut Schema_Object,
 }
 
 impl SchemaComponentUpdate {
-    pub(crate) fn from_worker_sdk(
-        component_id: ComponentId,
-        component_update: *mut Schema_ComponentUpdate,
-    ) -> SchemaComponentUpdate {
-        SchemaComponentUpdate {
-            component_id: component_id,
-            internal: component_update,
-        }
-    }
-
     pub fn new(component_id: ComponentId) -> SchemaComponentUpdate {
         SchemaComponentUpdate {
-            component_id: component_id,
+            component_id,
             internal: unsafe { Schema_CreateComponentUpdate(component_id) },
         }
     }
@@ -79,19 +74,9 @@ impl SchemaComponentUpdate {
 }
 
 impl SchemaComponentData {
-    pub(crate) fn from_worker_sdk(
-        component_id: ComponentId,
-        component_data: *mut Schema_ComponentData,
-    ) -> SchemaComponentData {
-        SchemaComponentData {
-            component_id: component_id,
-            internal: component_data,
-        }
-    }
-
     pub fn new(component_id: ComponentId) -> SchemaComponentData {
         SchemaComponentData {
-            component_id: component_id,
+            component_id,
             internal: unsafe { Schema_CreateComponentData(component_id) },
         }
     }
@@ -114,19 +99,9 @@ impl SchemaComponentData {
 }
 
 impl SchemaCommandRequest {
-    pub(crate) fn from_worker_sdk(
-        component_id: ComponentId,
-        command_request: *mut Schema_CommandRequest,
-    ) -> SchemaCommandRequest {
-        SchemaCommandRequest {
-            component_id: component_id,
-            internal: command_request,
-        }
-    }
-
     pub fn new(component_id: ComponentId, command_index: FieldId) -> SchemaCommandRequest {
         SchemaCommandRequest {
-            component_id: component_id,
+            component_id,
             internal: unsafe { Schema_CreateCommandRequest(component_id, command_index) },
         }
     }
@@ -153,19 +128,9 @@ impl SchemaCommandRequest {
 }
 
 impl SchemaCommandResponse {
-    pub(crate) fn from_worker_sdk(
-        component_id: u32,
-        command_response: *mut Schema_CommandResponse,
-    ) -> SchemaCommandResponse {
-        SchemaCommandResponse {
-            component_id: component_id,
-            internal: command_response,
-        }
-    }
-
     pub fn new(component_id: u32, command_index: u32) -> SchemaCommandResponse {
         SchemaCommandResponse {
-            component_id: component_id,
+            component_id,
             internal: unsafe { Schema_CreateCommandResponse(component_id, command_index) },
         }
     }
@@ -192,6 +157,7 @@ impl SchemaCommandResponse {
 }
 
 // A schema field. T is a schema type tag.
+#[derive(Debug)]
 pub struct SchemaFieldContainer<'a, T> {
     field_id: FieldId,
     container: &'a SchemaObject,
@@ -199,22 +165,39 @@ pub struct SchemaFieldContainer<'a, T> {
 }
 
 // Tags to represent schema types.
+#[derive(Debug)]
 pub struct SchemaFloat;
+#[derive(Debug)]
 pub struct SchemaDouble;
+#[derive(Debug)]
 pub struct SchemaBool;
+#[derive(Debug)]
 pub struct SchemaInt32;
+#[derive(Debug)]
 pub struct SchemaInt64;
+#[derive(Debug)]
 pub struct SchemaUint32;
+#[derive(Debug)]
 pub struct SchemaUint64;
+#[derive(Debug)]
 pub struct SchemaSint32;
+#[derive(Debug)]
 pub struct SchemaSint64;
+#[derive(Debug)]
 pub struct SchemaFixed32;
+#[derive(Debug)]
 pub struct SchemaFixed64;
+#[derive(Debug)]
 pub struct SchemaSfixed32;
+#[derive(Debug)]
 pub struct SchemaSfixed64;
+#[derive(Debug)]
 pub struct SchemaEntityId;
+#[derive(Debug)]
 pub struct SchemaEnum;
+#[derive(Debug)]
 pub struct SchemaBytes;
+#[derive(Debug)]
 pub struct SchemaString;
 
 // A primitive schema field.

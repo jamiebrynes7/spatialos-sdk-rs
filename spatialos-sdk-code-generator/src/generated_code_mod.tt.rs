@@ -148,7 +148,7 @@ pub enum <#= self.rust_name(&component.identifier) #>CommandResponse {<#
 impl ComponentVtable<<#= self.rust_name(&component.identifier) #>> for <#= self.rust_name(&component.identifier) #> {
     fn serialize_data(data: &<#= self.rust_fqname(&component.identifier) #>) -> Result<SchemaComponentData, String> {
         let mut serialized_data = SchemaComponentData::new(Self::component_id());
-        <<#= self.rust_fqname(&component.identifier) #> as TypeSerializer>::serialize(data, &mut serialized_data.fields_mut());
+        <<#= self.rust_fqname(&component.identifier) #> as TypeSerializer>::serialize(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
@@ -158,7 +158,7 @@ impl ComponentVtable<<#= self.rust_name(&component.identifier) #>> for <#= self.
 
     fn serialize_update(update: &<#= self.rust_fqname(&component.identifier) #>Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::component_id());
-        <<#= self.rust_fqname(&component.identifier) #>Update as TypeSerializer>::serialize(update, &mut serialized_update.fields_mut());
+        <<#= self.rust_fqname(&component.identifier) #>Update as TypeSerializer>::serialize(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -178,7 +178,7 @@ impl ComponentVtable<<#= self.rust_name(&component.identifier) #>> for <#= self.
             for command in &component.command_definitions {
             #>
             <#= self.rust_name(&component.identifier) #>CommandRequest::<#= command.identifier.name #>(ref data) => {
-                <<#= self.generate_value_type_reference(&command.request_type) #> as TypeSerializer>::serialize(data, &mut serialized_request.object_mut());
+                <<#= self.generate_value_type_reference(&command.request_type) #> as TypeSerializer>::serialize(data, &mut serialized_request.object_mut())?;
             },<# } #>
             _ => unreachable!()
         }
@@ -209,7 +209,7 @@ impl ComponentVtable<<#= self.rust_name(&component.identifier) #>> for <#= self.
             for command in &component.command_definitions {
             #>
             <#= self.rust_name(&component.identifier) #>CommandResponse::<#= command.identifier.name #>(ref data) => {
-                <<#= self.generate_value_type_reference(&command.response_type) #> as TypeSerializer>::serialize(data, &mut serialized_response.object_mut());
+                <<#= self.generate_value_type_reference(&command.response_type) #> as TypeSerializer>::serialize(data, &mut serialized_response.object_mut())?;
             },<# } #>
             _ => unreachable!()
         }

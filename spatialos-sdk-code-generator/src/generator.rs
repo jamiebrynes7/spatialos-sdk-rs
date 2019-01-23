@@ -42,22 +42,6 @@ fn get_rust_primitive_type_tag(primitive_type: &PrimitiveType) -> &str {
     }
 }
 
-fn get_rust_primitive_type(primitive_type: &PrimitiveType) -> &str {
-    match primitive_type {
-        PrimitiveType::Invalid => panic!("Encountered invalid primitive."),
-        PrimitiveType::Int32 | PrimitiveType::Sint32 | PrimitiveType::Sfixed32 => "i32",
-        PrimitiveType::Int64 | PrimitiveType::Sint64 | PrimitiveType::Sfixed64 => "i64",
-        PrimitiveType::Uint32 | PrimitiveType::Fixed32 => "u32",
-        PrimitiveType::Uint64 | PrimitiveType::Fixed64 => "u64",
-        PrimitiveType::Bool => "bool",
-        PrimitiveType::Float => "f32",
-        PrimitiveType::Double => "f64",
-        PrimitiveType::String => "String",
-        PrimitiveType::EntityId => "worker::EntityId",
-        PrimitiveType::Bytes => "Vec<u8>",
-    }
-}
-
 fn get_schema_type(value_type: &ValueTypeReference) -> &str {
     if let Some(ref primitive_type) = value_type.primitive_reference {
         get_rust_primitive_type_tag(&primitive_type)
@@ -230,9 +214,9 @@ impl Package {
             self.type_needs_borrow(&singular_type.type_reference)
         } else if let Some(ref option) = field.option_type {
             self.type_needs_borrow(&option.inner_type)
-        } else if let Some(ref list) = field.list_type {
+        } else if let Some(_) = field.list_type {
             true
-        } else if let Some(ref map) = field.map_type {
+        } else if let Some(_) = field.map_type {
             true
         } else {
             false
@@ -258,6 +242,8 @@ impl Package {
         }
     }
 
+    // Generates an expression which serializes a field from an expression into a schema object. The generated
+    // expression should always have type ().
     fn serialize_field(
         &self,
         field: &FieldDefinition,
@@ -341,7 +327,8 @@ impl Package {
         }
     }
 
-    // Generates an expression which serializes a value from an expression into a schema object.
+    // Generates an expression which serializes a value from an expression into a schema object. The generated
+    // expression should always have type ().
     fn serialize_type(
         &self,
         field_id: u32,
@@ -375,7 +362,7 @@ impl Package {
                     .identifier,
             );
             format!(
-                "<{} as TypeSerializer>::serialize(&{}, &mut {}.field::<SchemaObject>({}).add())",
+                "<{} as TypeSerializer>::serialize(&{}, &mut {}.field::<SchemaObject>({}).add())?",
                 type_definition, expression, schema_object, field_id
             )
         } else {
@@ -425,7 +412,7 @@ impl Package {
     }
 
     // Generates an expression which deserializes a value from a schema type in 'schema_expr'. In the non primitive
-    // case, this expression is of type Result<GeneratedType, String>.
+    // case, this expression is of type Result<GeneratedType, String>, otherwise it is just T (where T is the primitive type).
     fn deserialize_type(&self, value_type: &ValueTypeReference, schema_expr: &str) -> String {
         if let Some(ref primitive) = value_type.primitive_reference {
             match primitive {
@@ -534,8 +521,16 @@ fn generate_module(package: &Package) -> String {
     let module_contents = format!("{}\n{}", package, submodules);
     // The only package with a depth of 0 is the root package.
     if package.depth() == 0 {
-        let allow_warnings =
-            vec!["#[allow(unused_imports)]", "#[allow(unreachable_code)]"].join("\n");
+        let allow_warnings = vec![
+            "#[allow(unused_imports)]",
+            "#[allow(unreachable_code)]",
+            "#[allow(unreachable_patterns)]",
+            "#[allow(unused_variables)]",
+            "#[allow(dead_code)]",
+            "#[allow(non_camel_case_types)]",
+            "#[allow(unused_mut)]",
+        ]
+        .join("\n");
         // The root module places everything in "mod generated", and each inner module has an alias for this mod
         // (such as `use super::super::generated as generated`), so we can get fully qualified names without
         // making symbols global.

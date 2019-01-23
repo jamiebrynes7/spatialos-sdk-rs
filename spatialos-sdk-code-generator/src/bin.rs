@@ -19,5 +19,5 @@ pub fn main() {
         .expect("Unable to read the test schema bundle");
     let generated_file = generator::generate_code(schema_bundle::load_bundle(&contents).unwrap());
     let mut output_file = File::create(output_filename).unwrap();
-    output_file.write_all(generated_file.as_bytes());
+    output_file.write_all(generated_file.as_bytes()).unwrap();
 }

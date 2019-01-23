@@ -16,6 +16,7 @@ pub mod vtable;
 pub use self::component::*;
 
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
+use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
@@ -37,9 +38,9 @@ impl EntityId {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, Eq, PartialOrd, Ord)]
 pub struct RequestId<T> {
-    pub id: u32,
+    id: u32,
     _type: PhantomData<*const T>,
 }
 
@@ -53,6 +54,18 @@ impl<T> RequestId<T> {
 
     pub fn to_string(&self) -> String {
         format!("RequestId: {}", self.id)
+    }
+}
+
+impl<T> PartialEq for RequestId<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl<T> Hash for RequestId<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
     }
 }
 

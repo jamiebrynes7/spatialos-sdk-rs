@@ -1,7 +1,6 @@
 use crate::worker::internal::schema;
 use spatialos_sdk_sys::worker;
 use std::borrow::Borrow;
-use std::collections::HashMap;
 use std::os::raw;
 use std::rc::Rc;
 use std::{
@@ -28,6 +27,104 @@ pub trait ComponentData<M: ComponentMetaclass> {
     fn merge(&mut self, update: M::Update);
 }
 
+// A trait that's implemented by a type which can be serialized and deserialized into a schema object.
+pub trait TypeSerializer
+where
+    Self: std::marker::Sized,
+{
+    fn serialize(input: &Self, output: &mut schema::SchemaObject) -> Result<(), String>;
+    fn deserialize(input: &schema::SchemaObject) -> Result<Self, String>;
+}
+
+// Internal untyped component data objects.
+pub mod internal {
+    use crate::worker::internal::schema::*;
+    use spatialos_sdk_sys::worker::*;
+
+    use crate::worker::ComponentId;
+
+    #[derive(Debug)]
+    pub struct ComponentData {
+        pub component_id: ComponentId,
+        pub schema_type: SchemaComponentData,
+        pub user_handle: *mut Worker_ComponentDataHandle,
+    }
+
+    impl From<&Worker_ComponentData> for ComponentData {
+        fn from(data: &Worker_ComponentData) -> Self {
+            ComponentData {
+                component_id: data.component_id,
+                schema_type: SchemaComponentData {
+                    component_id: data.component_id,
+                    internal: data.schema_type,
+                },
+                user_handle: data.user_handle,
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    pub struct ComponentUpdate {
+        pub component_id: ComponentId,
+        pub schema_type: SchemaComponentUpdate,
+        pub user_handle: *mut Worker_ComponentUpdateHandle,
+    }
+
+    impl From<&Worker_ComponentUpdate> for ComponentUpdate {
+        fn from(update: &Worker_ComponentUpdate) -> Self {
+            ComponentUpdate {
+                component_id: update.component_id,
+                schema_type: SchemaComponentUpdate {
+                    component_id: update.component_id,
+                    internal: update.schema_type,
+                },
+                user_handle: update.user_handle,
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    pub struct CommandRequest {
+        pub component_id: ComponentId,
+        pub schema_type: SchemaCommandRequest,
+        pub user_handle: *mut Worker_CommandRequestHandle,
+    }
+
+    impl From<&Worker_CommandRequest> for CommandRequest {
+        fn from(request: &Worker_CommandRequest) -> Self {
+            CommandRequest {
+                component_id: request.component_id,
+                schema_type: SchemaCommandRequest {
+                    component_id: request.component_id,
+                    internal: request.schema_type,
+                },
+                user_handle: request.user_handle,
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    pub struct CommandResponse {
+        pub component_id: ComponentId,
+        pub schema_type: SchemaCommandResponse,
+        pub user_handle: *mut Worker_CommandResponseHandle,
+    }
+
+    impl From<&Worker_CommandResponse> for CommandResponse {
+        fn from(response: &Worker_CommandResponse) -> Self {
+            CommandResponse {
+                component_id: response.component_id,
+                schema_type: SchemaCommandResponse {
+                    component_id: response.component_id,
+                    internal: response.schema_type,
+                },
+                user_handle: response.user_handle,
+            }
+        }
+    }
+}
+
+// A trait that defines a bunch of functions to convert data to/from schema blobs.
 pub trait ComponentVtable<M: ComponentMetaclass> {
     fn serialize_data(update: &M::Data) -> Result<schema::SchemaComponentData, String>;
     fn deserialize_data(update: &schema::SchemaComponentData) -> Result<M::Data, String>;
@@ -47,7 +144,8 @@ pub trait ComponentVtable<M: ComponentMetaclass> {
     ) -> Result<M::CommandResponse, String>;
 }
 
-// A data structure which represents all known component types.
+// A data structure which represents all known component types. Used to generate an array of vtables to pass
+// to the connection object.
 pub struct ComponentDatabase {
     component_vtables: Vec<worker::Worker_ComponentVtable>,
 }
@@ -74,13 +172,7 @@ impl ComponentDatabase {
     }
 }
 
-// A trait that's implemented by a type which can be serialized and deserialized into a schema object.
-pub trait TypeSerializer where Self: std::marker::Sized {
-    fn serialize(input: &Self, output: &mut schema::SchemaObject) -> Result<(), String>;
-    fn deserialize(input: &schema::SchemaObject) -> Result<Self, String>;
-}
-
-// Client handles. An object which contains a reference counted instance to T.
+// An object which contains a reference counted instance to T.
 struct ClientHandle<T> {
     data: Rc<T>,
     // When Drop() is called, data should reduce its reference count.
@@ -399,84 +491,5 @@ unsafe extern "C" fn vtable_command_response_serialize<
         *response = schema_response.internal;
     } else {
         *response = ptr::null_mut();
-    }
-}
-
-pub mod internal {
-    use spatialos_sdk_sys::worker::{
-        Schema_CommandRequest, Schema_CommandResponse, Schema_ComponentData,
-        Schema_ComponentUpdate, Worker_CommandRequest, Worker_CommandRequestHandle,
-        Worker_CommandResponse, Worker_CommandResponseHandle, Worker_ComponentData,
-        Worker_ComponentDataHandle, Worker_ComponentUpdate, Worker_ComponentUpdateHandle,
-    };
-
-    use crate::worker::ComponentId;
-
-    // TODO: Wrap Schema_ComponentData
-    #[derive(Debug)]
-    pub struct ComponentData {
-        pub component_id: ComponentId,
-        pub schema_type: *mut Schema_ComponentData,
-        pub user_handle: *mut Worker_ComponentDataHandle,
-    }
-
-    impl From<&Worker_ComponentData> for ComponentData {
-        fn from(data: &Worker_ComponentData) -> Self {
-            ComponentData {
-                component_id: data.component_id,
-                schema_type: data.schema_type,
-                user_handle: data.user_handle,
-            }
-        }
-    }
-
-    // TODO: Wrap Schema_ComponentUpdate
-    #[derive(Debug)]
-    pub struct ComponentUpdate {
-        pub component_id: ComponentId,
-        pub schema_type: *mut Schema_ComponentUpdate,
-        pub user_handle: *mut Worker_ComponentUpdateHandle,
-    }
-
-    impl From<&Worker_ComponentUpdate> for ComponentUpdate {
-        fn from(update: &Worker_ComponentUpdate) -> Self {
-            ComponentUpdate {
-                component_id: update.component_id,
-                schema_type: update.schema_type,
-                user_handle: update.user_handle,
-            }
-        }
-    }
-
-    // TODO: Wrap Schema_CommandRequest
-    #[derive(Debug)]
-    pub struct CommandRequest {
-        pub component_id: u32,
-        pub schema_type: *mut Schema_CommandRequest,
-    }
-
-    impl From<&Worker_CommandRequest> for CommandRequest {
-        fn from(request: &Worker_CommandRequest) -> Self {
-            CommandRequest {
-                component_id: request.component_id,
-                schema_type: request.schema_type,
-            }
-        }
-    }
-
-    // TODO: Wrap Schema_CommandResponse
-    #[derive(Debug)]
-    pub struct CommandResponse {
-        pub component_id: u32,
-        pub schema_type: *mut Schema_CommandResponse,
-    }
-
-    impl From<&Worker_CommandResponse> for CommandResponse {
-        fn from(response: &Worker_CommandResponse) -> Self {
-            CommandResponse {
-                component_id: response.component_id,
-                schema_type: response.schema_type,
-            }
-        }
     }
 }

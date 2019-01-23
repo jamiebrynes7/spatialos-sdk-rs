@@ -5,8 +5,6 @@ if [[ -n "${DEBUG-}" ]]; then
   set -x
 fi
 
-ARCHIVER_RELEASE="3.1.0"
-
 function isLinux() {
   [[ "$(uname -s)" == "Linux" ]];
 }
@@ -19,38 +17,42 @@ function isWindows() {
   ! ( isLinux || isMacOS );
 }
 
-rm -rf "./tmp"
-mkdir -p "./tmp"
+function waitOnExit() {
+  sleep 5
+}
 
-echo "Downloading archiver."
-if isLinux; then
-    ARCHIVER_PLATFORM="arc_linux_amd64"
+# Force full output on Travis instead of truncating output.
+trap waitOnExit EXIT
+
+
+if isWindows; then
+  SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/win"
 elif isMacOS; then
-    ARCHIVER_PLATFORM="arc_mac_amd64"
-elif isWindows; then
-    ARCHIVER_PLATFORM="arc_windows_amd64.exe"
+  SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/mac"
+elif isLinux; then
+  SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/linux"
 else 
-    echo "Unsupported platform"
-    exit 1
+  echo "Unsupported platform"
+  exit 1
 fi
 
-URL="https://github.com/mholt/archiver/releases/download/v${ARCHIVER_RELEASE}/${ARCHIVER_PLATFORM}"
+rm -rf "./temp"
+mkdir -p "./temp"
 
-curl -sSLf -o ./tmp/archiver "${URL}"
-chmod +x ./tmp/archiver
+curl -sSL $SPATIAL_URL --output ./temp/spatial
+chmod +x ./temp/spatial
+PATH=$PATH:$(pwd)/temp/
 
-echo "Unpacking SpatialOS dependencies"
+export RUST_BACKTRACE=1
 
-curl -c ./tmp/cookie -s -L "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
-curl -Lb ./tmp/cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./tmp/cookie`&id=${FILE_ID}" -o "./tmp/dependencies.tar"
+# TODO: Windows support
 
-DEPENDENCIES_TARGET_DIR="dependencies"
-rm -rf "${DEPENDENCIES_TARGET_DIR}"
-mkdir -p "${DEPENDENCIES_TARGET_DIR}"
+mkdir -p ~/.improbable/oauth2
+echo $SPATIAL_OAUTH > ~/.improbable/oauth2/oauth2_refresh_token
 
-./tmp/archiver unarchive "./tmp/dependencies.tar" "${DEPENDENCIES_TARGET_DIR}"
+cargo run --bin download_sdk -- -d dependencies -s 13.5.1
 
-rm -rf "./tmp"
+rm -rf "./temp"
 
 rustup component add rustfmt-preview
 rustup component add clippy-preview
