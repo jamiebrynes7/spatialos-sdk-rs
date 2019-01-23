@@ -5,9 +5,9 @@ use spatialos_sdk_sys::worker::{
 use crate::worker::ComponentId;
 
 // TODO: Wrap Schema_ComponentData
-pub struct ComponentData {
+pub struct ComponentData<'a> {
     pub component_id: ComponentId,
-    pub schema_type: *mut Schema_ComponentData,
+    pub schema_type: &'a mut Schema_ComponentData,
 }
 
 impl From<&Worker_ComponentData> for ComponentData {
@@ -20,9 +20,9 @@ impl From<&Worker_ComponentData> for ComponentData {
 }
 
 // TODO: Wrap Schema_ComponentUpdate
-pub struct ComponentUpdate {
+pub struct ComponentUpdate<'a> {
     pub component_id: ComponentId,
-    pub schema_type: *mut Schema_ComponentUpdate,
+    pub schema_type: &'a mut Schema_ComponentUpdate,
 }
 
 impl From<&Worker_ComponentUpdate> for ComponentUpdate {

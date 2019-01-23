@@ -13,60 +13,60 @@ use crate::worker::internal::utils::*;
 use spatialos_sdk_sys::worker::*;
 
 pub struct OpList {
-    ops: Vec<WorkerOp>,
-    internal_ptr: OpListPtr,
+    raw: *mut Worker_OpList,
 }
 
 impl OpList {
     pub(crate) fn new(raw_ops_list_ptr: *mut Worker_OpList) -> Self {
         assert!(!raw_ops_list_ptr.is_null());
 
-        unsafe {
-            let worker_op_list = *raw_ops_list_ptr;
-            let ops = slice::from_raw_parts(worker_op_list.ops, worker_op_list.op_count as usize)
-                .iter()
-                .map(WorkerOp::from)
-                .collect::<Vec<WorkerOp>>();
-
-            OpList {
-                ops,
-                internal_ptr: OpListPtr(raw_ops_list_ptr),
-            }
+        OpList {
+            raw: raw_ops_list_ptr,
         }
     }
-}
 
-impl IntoIterator for OpList {
-    type Item = WorkerOp;
-    type IntoIter = IntoIter;
+    /// Returns the number of ops in the list.
+    pub fn len(&self) -> usize {
+        self.raw().op_count as usize
+    }
 
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter {
-            iter: self.ops.into_iter(),
-            _internal_ptr: self.internal_ptr,
-        }
+    pub fn iter(&self) -> Iter<'_> {
+        self.into_iter()
+    }
+
+    fn raw(&self) -> &Worker_OpList {
+        unsafe { &*self.raw }
     }
 }
 
 impl<'a> IntoIterator for &'a OpList {
-    type Item = &'a WorkerOp;
-    type IntoIter = slice::Iter<'a, WorkerOp>;
+    type Item = WorkerOp<'a>;
+    type IntoIter = Iter<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.ops.iter()
+        let slice = unsafe { slice::from_raw_parts(self.raw().ops, self.len()) };
+        Iter { iter: slice.iter() }
     }
 }
 
-pub struct IntoIter {
-    iter: std::vec::IntoIter<WorkerOp>,
-    _internal_ptr: OpListPtr,
+impl Drop for OpList {
+    fn drop(&mut self) {
+        assert!(!self.raw.is_null());
+        unsafe {
+            Worker_OpList_Destroy(self.raw);
+        }
+    }
 }
 
-impl Iterator for IntoIter {
-    type Item = WorkerOp;
+struct Iter<'a> {
+    iter: slice::Iter<'a, Worker_Op>,
+}
+
+impl<'a> Iterator for Iter<'a> {
+    type Item = WorkerOp<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next()
+        self.iter.next().map(WorkerOp::from)
     }
 }
 
@@ -80,7 +80,7 @@ pub enum StatusCode<T> {
     InternalError(String),
 }
 
-pub enum WorkerOp {
+pub enum WorkerOp<'a> {
     Disconnect(DisconnectOp),
     FlagUpdate(FlagUpdateOp),
     LogMessage(LogMessageOp),
@@ -88,11 +88,11 @@ pub enum WorkerOp {
     CriticalSection(CriticalSectionOp),
     AddEntity(AddEntityOp),
     RemoveEntity(RemoveEntityOp),
-    AddComponent(AddComponentOp),
+    AddComponent(AddComponentOp<'a>),
     RemoveComponent(RemoveComponentOp),
-    ComponentUpdate(ComponentUpdateOp),
+    ComponentUpdate(ComponentUpdateOp<'a>),
     AuthorityChange(AuthorityChangeOp),
-    CommandRequest(CommandRequestOp),
+    CommandRequest(CommandRequestOp<'a>),
     CommandResponse(CommandResponseOp),
     ReserveEntityIdsResponse(ReserveEntityIdsResponseOp),
     CreateEntityResponse(CreateEntityResponseOp),
@@ -100,7 +100,7 @@ pub enum WorkerOp {
     EntityQueryResponse(EntityQueryResponseOp),
 }
 
-impl From<&Worker_Op> for WorkerOp {
+impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
     fn from(op: &Worker_Op) -> Self {
         unsafe {
             let erased_op = op.__bindgen_anon_1;
@@ -458,9 +458,9 @@ pub struct EntityQueryResponseOp {
     pub status_code: StatusCode<QueryResponse>,
 }
 
-pub struct AddComponentOp {
+pub struct AddComponentOp<'a> {
     pub entity_id: EntityId,
-    pub component_data: ComponentData,
+    pub component_data: ComponentData<'a>,
 }
 
 pub struct RemoveComponentOp {
@@ -474,33 +474,22 @@ pub struct AuthorityChangeOp {
     pub authority: Authority,
 }
 
-pub struct ComponentUpdateOp {
+pub struct ComponentUpdateOp<'a> {
     pub entity_id: EntityId,
-    pub component_update: ComponentUpdate,
+    pub component_update: ComponentUpdate<'a>,
 }
 
-pub struct CommandRequestOp {
+pub struct CommandRequestOp<'a> {
     pub request_id: RequestId<IncomingCommandRequest>,
     pub entity_id: EntityId,
     pub timeout_millis: u32,
     pub caller_worker_id: String,
     pub caller_attribute_set: Vec<String>,
-    pub request: CommandRequest,
+    pub request: CommandRequest<'a>,
 }
 
 pub struct CommandResponseOp {
     pub request_id: RequestId<OutgoingCommandRequest>,
     pub entity_id: EntityId,
     pub status_code: StatusCode<CommandResponse>,
-}
-
-/// Wrapper around a `*mut Worker_OpList` that destroys the op list when dropped.
-#[derive(Debug)]
-struct OpListPtr(*mut Worker_OpList);
-
-impl Drop for OpListPtr {
-    fn drop(&mut self) {
-        assert!(!self.0.is_null());
-        unsafe { Worker_OpList_Destroy(self.0) }
-    }
 }

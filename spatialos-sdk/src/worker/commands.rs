@@ -6,9 +6,9 @@ use spatialos_sdk_sys::worker::{
 };
 
 // TODO: Wrap Schema_CommandRequest
-pub struct CommandRequest {
+pub struct CommandRequest<'a> {
     pub component_id: ComponentId,
-    pub schema_type: *mut Schema_CommandRequest,
+    pub schema_type: &'a mut Schema_CommandRequest,
 }
 
 impl From<&Worker_CommandRequest> for CommandRequest {
