@@ -26,10 +26,30 @@ impl OpList {
     }
 
     /// Returns the number of ops in the list.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use spatialos_sdk::worker::connection::*;
+    /// # let connection: WorkerConnection = unimplemented!();
+    /// let op_list = connection.get_op_list(0);
+    /// println!("Number of ops received: {}", op_list.len());
+    /// ```
     pub fn len(&self) -> usize {
         self.raw().op_count as usize
     }
 
+    /// Returns an iterator over the list.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use spatialos_sdk::worker::connection::*;
+    /// # let connection: WorkerConnection = unimplemented!();
+    /// for op in connection.get_op_list(0).iter() {
+    ///     // Process `op`.
+    /// }
+    /// ```
     pub fn iter(&self) -> Iter<'_> {
         self.into_iter()
     }
