@@ -18,12 +18,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Determine the paths the the schema compiler and protoc relative the the lib
     // dir path.
-    let schema_compiler_path = spatial_lib_dir.join("schema-compiler/schema_compiler");
-    let protoc_path = spatial_lib_dir.join("schema-compiler/protoc");
+    let schema_compiler_path = normalize(spatial_lib_dir.join("schema-compiler/schema_compiler"));
+    let protoc_path = normalize(spatial_lib_dir.join("schema-compiler/protoc"));
+    let std_lib_path = normalize(spatial_lib_dir.join("std-lib"));
 
     // Calculate the various output directories relative to `output_dir`.
-    let bin_path = output_dir.join("bin");
-    let tmp_path = output_dir.join("tmp");
+    let bin_path = normalize(output_dir.join("bin"));
+    let tmp_path = normalize(output_dir.join("tmp"));
 
     // Create the output directories if they don't already exist.
     fs::create_dir_all(&bin_path)
@@ -53,7 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Run the schema compiler for each of the schema files in std-lib/improbable.
     let schema_path_arg =
-        OsString::from("--schema_path=").tap(|arg| arg.push(&spatial_lib_dir.join("std-lib")));
+        OsString::from("--schema_path=").tap(|arg| arg.push(&std_lib_path));
     let proto_out_arg = OsString::from("--proto_out=").tap(|arg| arg.push(&tmp_path));
     let mut command = Command::new(&schema_compiler_path);
     command
@@ -61,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .arg(&proto_out_arg)
         .arg("--load_all_schema_on_schema_path");
 
-    let schema_glob = spatial_lib_dir.join("std-lib/improbable/*.schema");
+    let schema_glob = std_lib_path.join("improbable/*.schema");
     for entry in glob::glob(schema_glob.to_str().unwrap())?.filter_map(Result::ok) {
         command.arg(&entry);
     }
@@ -71,15 +72,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|_| "Failed to compile schema files")?;
 
     // Run protoc on all the generated proto files.
-    let proto_glob = tmp_path.join("**/*.proto");
     let proto_path_arg = OsString::from("--proto_path=").tap(|arg| arg.push(&tmp_path));
     let descriptor_out_arg = OsString::from("--descriptor_set_out=")
-        .tap(|arg| arg.push(&bin_path.join("schema.descriptor")));
+        .tap(|arg| arg.push(normalize(bin_path.join("schema.descriptor"))));
     let mut command = Command::new(&protoc_path);
     command
         .arg(&proto_path_arg)
         .arg(&descriptor_out_arg)
         .arg("--include_imports");
+    let proto_glob = tmp_path.join("**/*.proto");
     for entry in glob::glob(proto_glob.to_str().unwrap())?.filter_map(Result::ok) {
         command.arg(&entry);
     }
@@ -103,4 +104,15 @@ struct Opt {
     /// The path the output directory for the project.
     #[structopt(parse(from_os_str))]
     output_dir: PathBuf,
+}
+
+// HACK: Normalizes the separators in `path`.
+//
+// This is necessary in order to be robust on Windows. Currently,
+// schema_compiler and protoc get tripped up if you have paths with mixed path
+// separators (i.e. mixing `\` and `/`). This function normalizes paths to use
+// the same separators everywhere, ensuring that we can be robust regardless of
+// how the user specifies their paths.
+fn normalize<P: AsRef<std::path::Path>>(path: P) -> PathBuf {
+    path.as_ref().components().collect()
 }
