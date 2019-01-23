@@ -53,8 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Run the schema compiler for each of the schema files in std-lib/improbable.
-    let schema_path_arg =
-        OsString::from("--schema_path=").tap(|arg| arg.push(&std_lib_path));
+    let schema_path_arg = OsString::from("--schema_path=").tap(|arg| arg.push(&std_lib_path));
     let proto_out_arg = OsString::from("--proto_out=").tap(|arg| arg.push(&tmp_path));
     let mut command = Command::new(&schema_compiler_path);
     command
