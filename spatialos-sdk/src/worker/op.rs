@@ -14,11 +14,13 @@ use spatialos_sdk_sys::worker::*;
 
 pub struct OpList {
     ops: Vec<WorkerOp>,
-    internal_ptr: *mut Worker_OpList,
+    internal_ptr: OpListPtr,
 }
 
 impl OpList {
     pub(crate) fn new(raw_ops_list_ptr: *mut Worker_OpList) -> Self {
+        assert!(!raw_ops_list_ptr.is_null());
+
         unsafe {
             let worker_op_list = *raw_ops_list_ptr;
             let ops = slice::from_raw_parts(worker_op_list.ops, worker_op_list.op_count as usize)
@@ -28,8 +30,20 @@ impl OpList {
 
             OpList {
                 ops,
-                internal_ptr: raw_ops_list_ptr,
+                internal_ptr: OpListPtr(raw_ops_list_ptr),
             }
+        }
+    }
+}
+
+impl IntoIterator for OpList {
+    type Item = WorkerOp;
+    type IntoIter = IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter {
+            iter: self.ops.into_iter(),
+            _internal_ptr: self.internal_ptr,
         }
     }
 }
@@ -38,15 +52,21 @@ impl<'a> IntoIterator for &'a OpList {
     type Item = &'a WorkerOp;
     type IntoIter = slice::Iter<'a, WorkerOp>;
 
-    fn into_iter(self) -> <Self as IntoIterator>::IntoIter {
+    fn into_iter(self) -> Self::IntoIter {
         self.ops.iter()
     }
 }
 
-impl Drop for OpList {
-    fn drop(&mut self) {
-        assert!(!self.internal_ptr.is_null());
-        unsafe { Worker_OpList_Destroy(self.internal_ptr) }
+pub struct IntoIter {
+    iter: std::vec::IntoIter<WorkerOp>,
+    _internal_ptr: OpListPtr,
+}
+
+impl Iterator for IntoIter {
+    type Item = WorkerOp;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next()
     }
 }
 
@@ -472,4 +492,15 @@ pub struct CommandResponseOp {
     pub request_id: RequestId<OutgoingCommandRequest>,
     pub entity_id: EntityId,
     pub status_code: StatusCode<CommandResponse>,
+}
+
+/// Wrapper around a `*mut Worker_OpList` that destroys the op list when dropped.
+#[derive(Debug)]
+struct OpListPtr(*mut Worker_OpList);
+
+impl Drop for OpListPtr {
+    fn drop(&mut self) {
+        assert!(!self.0.is_null());
+        unsafe { Worker_OpList_Destroy(self.0) }
+    }
 }
