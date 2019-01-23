@@ -13,8 +13,8 @@ pub mod snapshot;
 pub mod vtable;
 
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
-use std::marker::PhantomData;
 use std::hash::{Hash, Hasher};
+use std::marker::PhantomData;
 
 type ComponentId = u32;
 
