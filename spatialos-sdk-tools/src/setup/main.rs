@@ -12,6 +12,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         output_dir,
     } = Opt::from_args();
 
+    let output_dir = normalize(output_dir);
+
     let spatial_lib_dir = spatial_lib_dir
         .or_else(|| std::env::var("SPATIAL_LIB_DIR").map(Into::into).ok())
         .ok_or("--spatial-lib-dir argument must be specified or the SPATIAL_LIB_DIR environment variable must be set")?;
@@ -23,8 +25,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let std_lib_path = normalize(spatial_lib_dir.join("std-lib"));
 
     // Calculate the various output directories relative to `output_dir`.
-    let bin_path = normalize(output_dir.join("bin"));
-    let tmp_path = normalize(output_dir.join("tmp"));
+    let bin_path = output_dir.join("bin");
+    let tmp_path = output_dir.join("tmp");
+    let bundle_json_path = bin_path.join("bundle.json");
 
     // Create the output directories if they don't already exist.
     fs::create_dir_all(&bin_path)
@@ -55,10 +58,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Run the schema compiler for each of the schema files in std-lib/improbable.
     let schema_path_arg = OsString::from("--schema_path=").tap(|arg| arg.push(&std_lib_path));
     let proto_out_arg = OsString::from("--proto_out=").tap(|arg| arg.push(&tmp_path));
+    let bundle_json_arg = OsString::from("--bundle_json_out=").tap(|arg| arg.push(&bundle_json_path));
+    let descriptor_out_arg = OsString::from("--descriptor_set_out=")
+        .tap(|arg| arg.push(normalize(bin_path.join("schema.descriptor"))));
     let mut command = Command::new(&schema_compiler_path);
     command
         .arg(&schema_path_arg)
         .arg(&proto_out_arg)
+        .arg(&bundle_json_arg)
+        .arg(&descriptor_out_arg)
         .arg("--load_all_schema_on_schema_path");
 
     let schema_glob = std_lib_path.join("improbable/*.schema");
@@ -72,8 +80,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Run protoc on all the generated proto files.
     let proto_path_arg = OsString::from("--proto_path=").tap(|arg| arg.push(&tmp_path));
-    let descriptor_out_arg = OsString::from("--descriptor_set_out=")
-        .tap(|arg| arg.push(normalize(bin_path.join("schema.descriptor"))));
     let mut command = Command::new(&protoc_path);
     command
         .arg(&proto_path_arg)
