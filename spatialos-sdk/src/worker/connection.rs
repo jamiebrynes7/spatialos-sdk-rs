@@ -8,6 +8,7 @@ use spatialos_sdk_sys::worker::*;
 use crate::worker::commands::*;
 use crate::worker::component;
 use crate::worker::component::internal::{CommandRequest, CommandResponse, ComponentUpdate};
+use crate::worker::entity::Entity;
 use crate::worker::internal::utils::cstr_to_string;
 use crate::worker::locator::*;
 use crate::worker::metrics::Metrics;
@@ -69,7 +70,8 @@ pub trait Connection {
     ) -> RequestId<ReserveEntityIdsRequest>;
     fn send_create_entity_request(
         &mut self,
-        payload: CreateEntityRequest,
+        entity: Entity,
+        entity_id: Option<EntityId>,
         timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest>;
     fn send_delete_entity_request(
@@ -260,10 +262,29 @@ impl Connection for WorkerConnection {
 
     fn send_create_entity_request(
         &mut self,
-        _payload: CreateEntityRequest,
-        _timeout_millis: Option<u32>,
+        entity: Entity,
+        entity_id: Option<EntityId>,
+        timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest> {
-        unimplemented!()
+        let timeout = match timeout_millis {
+            Some(c) => &c,
+            None => ptr::null(),
+        };
+        let entity_id = match entity_id {
+            Some(e) => &e.id,
+            None => ptr::null(),
+        };
+        let id = unsafe {
+            Worker_Connection_SendCreateEntityRequest(
+                self.connection_ptr,
+                entity.component_data.len() as _,
+                entity.component_data.as_ptr(),
+                entity_id,
+                timeout,
+            )
+        };
+
+        RequestId::new(id)
     }
 
     fn send_delete_entity_request(

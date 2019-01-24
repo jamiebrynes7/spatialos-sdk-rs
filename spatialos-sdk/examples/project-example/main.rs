@@ -12,13 +12,14 @@ use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
 use spatialos_sdk::worker::op::WorkerOp;
 use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
+use spatialos_sdk::worker::entity::Entity;
 
 mod generated_code;
 
 fn main() {
     println!("Entered program");
 
-    let components = ComponentDatabase::new().add_component::<generated_code::example::Example>();
+    let components = ComponentDatabase::new().add_component::<generated_code::example::Example>().add_component::<generated_code::improbable::Position>();
     let config = match get_worker_configuration(components) {
         Ok(c) => c,
         Err(e) => panic!("{}", e),
@@ -108,6 +109,17 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
 
     send_metrics(c);
     c.set_protocol_logging_enabled(false);
+
+    let mut entity = Entity::new();
+    entity.add(generated_code::improbable::Position {
+        coords: generated_code::improbable::Coordinates {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+        },
+    });
+    let create_request_id = c.send_create_entity_request(entity, None, None);
+    dbg!(create_request_id);
 
     println!("Testing completed");
 }

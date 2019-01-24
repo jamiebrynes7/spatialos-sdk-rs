@@ -534,9 +534,9 @@ mod generated {
 
         #[derive(Debug)]
         pub struct Coordinates {
-            x: f64,
-            y: f64,
-            z: f64,
+            pub x: f64,
+            pub y: f64,
+            pub z: f64,
         }
         impl TypeConversion for Coordinates {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -1342,7 +1342,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct Position {
-            coords: generated::improbable::Coordinates,
+            pub coords: generated::improbable::Coordinates,
         }
         impl TypeConversion for Position {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
