@@ -9,6 +9,7 @@ use tap::*;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let Opt {
         spatial_lib_dir,
+        schema_paths,
         output_dir,
     } = Opt::from_args();
 
@@ -69,9 +70,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .arg(&descriptor_out_arg)
         .arg("--load_all_schema_on_schema_path");
 
+    for schema_path in &schema_paths {
+        let arg = OsString::from("--schema-path=").tap(|arg| arg.push(schema_path));
+        command.arg(&arg);
+    }
+
+    // Add all schema files in the std lib.
     let schema_glob = std_lib_path.join("improbable/*.schema");
     for entry in glob::glob(schema_glob.to_str().unwrap())?.filter_map(Result::ok) {
         command.arg(&entry);
+    }
+
+    // Add all user-provided schemas.
+    for schema_path in &schema_paths {
+        let schema_glob = schema_path.join("**/*.schema");
+        for entry in glob::glob(schema_glob.to_str().unwrap())?.filter_map(Result::ok) {
+            command.arg(&entry);
+        }
     }
 
     command
@@ -105,6 +120,9 @@ struct Opt {
     /// the SPATIAL_OS_DIR environment variable instead.
     #[structopt(long = "spatial-lib-dir", short = "l", parse(from_os_str))]
     spatial_lib_dir: Option<PathBuf>,
+
+    #[structop(long = "schema-path", short = "s", parse(from_os_str))]
+    schema_paths: Vec<PathBuf>,
 
     /// The path the output directory for the project.
     #[structopt(parse(from_os_str))]
