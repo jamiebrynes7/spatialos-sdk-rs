@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .arg("--load_all_schema_on_schema_path");
 
     for schema_path in &schema_paths {
-        let arg = OsString::from("--schema-path=").tap(|arg| arg.push(schema_path));
+        let arg = OsString::from("--schema_path=").tap(|arg| arg.push(schema_path));
         command.arg(&arg);
     }
 
