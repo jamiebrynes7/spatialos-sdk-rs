@@ -121,7 +121,7 @@ struct Opt {
     #[structopt(long = "spatial-lib-dir", short = "l", parse(from_os_str))]
     spatial_lib_dir: Option<PathBuf>,
 
-    #[structop(long = "schema-path", short = "s", parse(from_os_str))]
+    #[structopt(long = "schema-path", short = "s", parse(from_os_str))]
     schema_paths: Vec<PathBuf>,
 
     /// The path the output directory for the project.
