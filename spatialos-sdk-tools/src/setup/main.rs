@@ -26,13 +26,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let std_lib_path = normalize(spatial_lib_dir.join("std-lib"));
 
     // Calculate the various output directories relative to `output_dir`.
-    let bin_path = output_dir.join("bin");
     let tmp_path = output_dir.join("tmp");
-    let bundle_json_path = bin_path.join("bundle.json");
+    let bundle_json_path = output_dir.join("bundle.json");
 
     // Create the output directories if they don't already exist.
-    fs::create_dir_all(&bin_path)
-        .map_err(|_| format!("Failed to create {}", bin_path.display()))?;
+    fs::create_dir_all(&output_dir)
+        .map_err(|_| format!("Failed to create {}", output_dir.display()))?;
     fs::create_dir_all(&tmp_path)
         .map_err(|_| format!("Failed to create {}", tmp_path.display()))?;
 
@@ -61,7 +60,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let proto_out_arg = OsString::from("--proto_out=").tap(|arg| arg.push(&tmp_path));
     let bundle_json_arg = OsString::from("--bundle_json_out=").tap(|arg| arg.push(&bundle_json_path));
     let descriptor_out_arg = OsString::from("--descriptor_set_out=")
-        .tap(|arg| arg.push(normalize(bin_path.join("schema.descriptor"))));
+        .tap(|arg| arg.push(normalize(output_dir.join("schema.descriptor"))));
     let mut command = Command::new(&schema_compiler_path);
     command
         .arg(&schema_path_arg)
