@@ -14,6 +14,9 @@ use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 mod generated_code;
 mod lib;
 
+use generated_code::example;
+use generated_code::improbable;
+
 fn main() {
     println!("Entered program");
 
@@ -40,31 +43,25 @@ fn logic_loop(c: &mut WorkerConnection) {
 
     loop {
         let ops = c.get_op_list(0);
-        /*
-        c.send_log_message(
-            LogLevel::Info,
-            "loop",
-            &format!("Received {} ops", ops.ops.len()),
-            None,
-        );
-        */
 
         // Process ops.
         for op in &ops {
             println!("Received op: {:?}", op);
             match op {
-                WorkerOp::AddComponent(add_component) => {
-                    if add_component.component_id() == Example::ID {
+                WorkerOp::AddComponent(add_component) => match add_component.component_id {
+                    example::Example::ID => {
                         let component_data = add_component.get::<Example>().unwrap();
                         println!("Received Example data: {:?}", component_data);
                     }
-                }
-                WorkerOp::ComponentUpdate(update) => {
-                    if update.component_update.component_id == Example::ID {
+                    id => println!("Received unknown component: {}", id),
+                },
+                WorkerOp::ComponentUpdate(update) => match update.component_id {
+                    example::Example::ID => {
                         let component_update = update.get::<Example>();
-                        println!("Received Example update: {:?}", component_update);
+                        println!("Received Example update: {:?}", component_update)
                     }
-                }
+                    id => println!("Received unknown component: {}", id),
+                },
                 _ => {}
             }
         }

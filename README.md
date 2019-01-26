@@ -20,8 +20,8 @@ If these steps complete successfully, the `spatialos-sdk` crate has been built a
 
 To run the example project, you will need to:
 
-1. Build a release version of the RustWorker - `cargo build --example project-example --release`.
-2. Build the schema descriptor for Spatial - `./spatialos-sdk/examples/project-example/setup.sh`
+1. Run the code generator - `./spatialos-sdk/examples/project-example/codegen.sh`
+2. Build a release version of the RustWorker - `cargo build --example project-example --release`.
 3. In two terminals:
    - Navigate to the `spatialos` directory and start spatial: `cd spatialos-sdk/examples/project-example/spatialos/ && spatial local launch`
    - Run the example project worker - `cargo run --example project-example -- receptionist --worker_type RustWorker`

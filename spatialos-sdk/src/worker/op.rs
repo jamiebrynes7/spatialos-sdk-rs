@@ -6,6 +6,9 @@ use std::slice;
 use crate::worker::commands::*;
 use crate::worker::component::{self, *};
 use crate::worker::entity_snapshot::EntitySnapshot;
+use crate::worker::internal::schema::{
+    SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData, SchemaComponentUpdate,
+};
 use crate::worker::metrics::Metrics;
 use crate::worker::{Authority, EntityId, LogLevel, RequestId};
 
@@ -143,6 +146,7 @@ impl From<&Worker_Op> for WorkerOp {
                     let op = erased_op.add_component;
                     let add_component_op = AddComponentOp {
                         entity_id: EntityId::new(op.entity_id),
+                        component_id: op.data.component_id,
                         component_data: internal::ComponentData::from(&op.data),
                     };
                     WorkerOp::AddComponent(add_component_op)
@@ -168,6 +172,7 @@ impl From<&Worker_Op> for WorkerOp {
                     let op = erased_op.component_update;
                     let component_update_op = ComponentUpdateOp {
                         entity_id: EntityId::new(op.entity_id),
+                        component_id: op.update.component_id,
                         component_update: internal::ComponentUpdate::from(&op.update),
                     };
                     WorkerOp::ComponentUpdate(component_update_op)
@@ -185,6 +190,7 @@ impl From<&Worker_Op> for WorkerOp {
                         timeout_millis: op.timeout_millis,
                         caller_worker_id: cstr_to_string(op.caller_worker_id),
                         caller_attribute_set: attribute_set,
+                        component_id: op.request.component_id,
                         request: internal::CommandRequest::from(&op.request),
                     };
                     WorkerOp::CommandRequest(command_request_op)
@@ -193,7 +199,9 @@ impl From<&Worker_Op> for WorkerOp {
                     let op = erased_op.command_response;
                     let status_code = match u32::from(op.status_code) {
                         Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
-                            StatusCode::Success(internal::CommandResponse::from(&op.response))
+                            StatusCode::Success(CommandResponse {
+                                response: internal::CommandResponse::from(&op.response),
+                            })
                         }
                         Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
                             StatusCode::Timeout(cstr_to_string(op.message))
@@ -222,7 +230,8 @@ impl From<&Worker_Op> for WorkerOp {
                     let command_response_op = CommandResponseOp {
                         entity_id: EntityId::new(op.entity_id),
                         request_id: RequestId::new(op.request_id),
-                        status_code,
+                        component_id: op.response.component_id,
+                        response: status_code,
                     };
                     WorkerOp::CommandResponse(command_response_op)
                 }
@@ -455,22 +464,22 @@ pub struct EntityQueryResponseOp {
 #[derive(Debug)]
 pub struct AddComponentOp {
     pub entity_id: EntityId,
+    pub component_id: ComponentId,
     component_data: component::internal::ComponentData,
 }
 
 impl AddComponentOp {
-    pub fn component_id(&self) -> ComponentId {
-        self.component_data.component_id
-    }
-
     pub fn get<C: Component>(&self) -> Option<&C> {
-        if C::ID == self.component_id() {
-            Some(unsafe {
-                &*(self.component_data.user_handle as *const _)
-            })
+        if C::ID == self.component_data.component_id {
+            // TODO: Deserialize schema_type if user_handle is null.
+            Some(unsafe { &*(self.component_data.user_handle as *const _) })
         } else {
             None
         }
+    }
+
+    fn schema(&self) -> &SchemaComponentData {
+        &self.component_data.schema_type
     }
 }
 
@@ -490,22 +499,22 @@ pub struct AuthorityChangeOp {
 #[derive(Debug)]
 pub struct ComponentUpdateOp {
     pub entity_id: EntityId,
-    pub component_update: component::internal::ComponentUpdate,
+    pub component_id: ComponentId,
+    component_update: component::internal::ComponentUpdate,
 }
 
 impl ComponentUpdateOp {
-    pub fn component_id(&self) -> ComponentId {
-        self.component_update.component_id
-    }
-
     pub fn get<C: Component>(&self) -> Option<&C::Update> {
-        if C::ID == self.component_id() {
-            Some(unsafe {
-                &*(self.component_update.user_handle as *const _)
-            })
+        if C::ID == self.component_update.component_id {
+            // TODO: Deserialize schema_type if user_handle is null.
+            Some(unsafe { &*(self.component_update.user_handle as *const _) })
         } else {
             None
         }
+    }
+
+    fn schema(&self) -> &SchemaComponentUpdate {
+        &self.component_update.schema_type
     }
 }
 
@@ -516,12 +525,49 @@ pub struct CommandRequestOp {
     pub timeout_millis: u32,
     pub caller_worker_id: String,
     pub caller_attribute_set: Vec<String>,
-    pub request: component::internal::CommandRequest,
+    pub component_id: ComponentId,
+    request: component::internal::CommandRequest,
+}
+
+impl CommandRequestOp {
+    pub fn get<C: Component>(&self) -> Option<&C::CommandRequest> {
+        if C::ID == self.component_id {
+            // TODO: Deserialize schema_type if user_handle is null.
+            Some(unsafe { &*(self.request.user_handle as *const _) })
+        } else {
+            None
+        }
+    }
+
+    fn schema(&self) -> &SchemaCommandRequest {
+        &self.request.schema_type
+    }
 }
 
 #[derive(Debug)]
 pub struct CommandResponseOp {
     pub request_id: RequestId<OutgoingCommandRequest>,
     pub entity_id: EntityId,
-    pub status_code: StatusCode<component::internal::CommandResponse>,
+    pub component_id: ComponentId,
+    pub response: StatusCode<CommandResponse>,
+}
+
+#[derive(Debug)]
+pub struct CommandResponse {
+    response: component::internal::CommandResponse,
+}
+
+impl CommandResponse {
+    pub fn get<C: Component>(&self) -> Option<&C::CommandRequest> {
+        if C::ID == self.response.component_id {
+            // TODO: Deserialize schema_type if user_handle is null.
+            Some(unsafe { &*(self.response.user_handle as *const _) })
+        } else {
+            None
+        }
+    }
+
+    fn schema(&self) -> &SchemaCommandResponse {
+        &self.response.schema_type
+    }
 }
