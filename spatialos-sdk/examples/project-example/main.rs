@@ -1,24 +1,25 @@
-extern crate spatialos_sdk;
-
-mod lib;
 use crate::lib::{get_connection, get_worker_configuration};
-
+use generated_code::example::Example;
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
 use spatialos_sdk::worker::component::{self, Component, ComponentDatabase};
 use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
+use spatialos_sdk::worker::entity::Entity;
 use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
 use spatialos_sdk::worker::op::WorkerOp;
 use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 
 mod generated_code;
+mod lib;
 
 fn main() {
     println!("Entered program");
 
-    let components = ComponentDatabase::new().add_component::<generated_code::example::Example>();
+    let components = ComponentDatabase::new()
+        .add_component::<generated_code::example::Example>()
+        .add_component::<generated_code::improbable::Position>();
     let config = match get_worker_configuration(components) {
         Ok(c) => c,
         Err(e) => panic!("{}", e),
@@ -52,25 +53,15 @@ fn logic_loop(c: &mut WorkerConnection) {
         for op in &ops {
             println!("Received op: {:?}", op);
             match op {
-                // TODO: Make this safer and not rely on `component::get_component_xx`
                 WorkerOp::AddComponent(add_component) => {
-                    if add_component.component_data.component_id
-                        == generated_code::example::Example::component_id()
-                    {
-                        let component_data =
-                            component::get_component_data::<generated_code::example::Example>(
-                                &add_component.component_data,
-                            );
+                    if add_component.component_id() == Example::ID {
+                        let component_data = add_component.get::<Example>().unwrap();
                         println!("Received Example data: {:?}", component_data);
                     }
                 }
                 WorkerOp::ComponentUpdate(update) => {
-                    if update.component_update.component_id
-                        == generated_code::example::Example::component_id()
-                    {
-                        let component_update = component::get_component_update::<
-                            generated_code::example::Example,
-                        >(&update.component_update);
+                    if update.component_update.component_id == Example::ID {
+                        let component_update = update.get::<Example>();
                         println!("Received Example update: {:?}", component_update);
                     }
                 }
@@ -108,6 +99,17 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
 
     send_metrics(c);
     c.set_protocol_logging_enabled(false);
+
+    let mut entity = Entity::new();
+    entity.add(generated_code::improbable::Position {
+        coords: generated_code::improbable::Coordinates {
+            x: 10.0,
+            y: 12.0,
+            z: 0.0,
+        },
+    });
+    let create_request_id = c.send_create_entity_request(entity, None, None);
+    dbg!(create_request_id);
 
     println!("Testing completed");
 }

@@ -455,7 +455,23 @@ pub struct EntityQueryResponseOp {
 #[derive(Debug)]
 pub struct AddComponentOp {
     pub entity_id: EntityId,
-    pub component_data: component::internal::ComponentData,
+    component_data: component::internal::ComponentData,
+}
+
+impl AddComponentOp {
+    pub fn component_id(&self) -> ComponentId {
+        self.component_data.component_id
+    }
+
+    pub fn get<C: Component>(&self) -> Option<&C> {
+        if C::ID == self.component_id() {
+            Some(unsafe {
+                &*(self.component_data.user_handle as *const _)
+            })
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -475,6 +491,22 @@ pub struct AuthorityChangeOp {
 pub struct ComponentUpdateOp {
     pub entity_id: EntityId,
     pub component_update: component::internal::ComponentUpdate,
+}
+
+impl ComponentUpdateOp {
+    pub fn component_id(&self) -> ComponentId {
+        self.component_update.component_id
+    }
+
+    pub fn get<C: Component>(&self) -> Option<&C::Update> {
+        if C::ID == self.component_id() {
+            Some(unsafe {
+                &*(self.component_update.user_handle as *const _)
+            })
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Debug)]
