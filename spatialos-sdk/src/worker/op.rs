@@ -464,7 +464,7 @@ impl AddComponentOp {
     }
 
     pub fn get<C: Component>(&self) -> Option<&C> {
-        if C::component_id() == self.component_id() {
+        if C::ID == self.component_id() {
             Some(unsafe {
                 &*(self.component_data.user_handle as *const _)
             })
@@ -499,7 +499,7 @@ impl ComponentUpdateOp {
     }
 
     pub fn get<C: Component>(&self) -> Option<&C::Update> {
-        if C::component_id() == self.component_id() {
+        if C::ID == self.component_id() {
             Some(unsafe {
                 &*(self.component_update.user_handle as *const _)
             })

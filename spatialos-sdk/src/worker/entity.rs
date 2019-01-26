@@ -24,20 +24,20 @@ impl Entity {
 
     pub fn add<C: Component>(&mut self, component: C) {
         assert!(
-            !self.components.contains_key(&C::component_id()),
+            !self.components.contains_key(&C::ID),
             "Duplicate component added to `Entity`"
         );
 
         let data_ptr = component::handle_allocate(component);
         let raw_data = Worker_ComponentData {
             reserved: ptr::null_mut(),
-            component_id: C::component_id(),
+            component_id: C::ID,
             schema_type: ptr::null_mut(),
             user_handle: data_ptr as *mut _,
         };
 
         self.components.insert(
-            C::component_id(),
+            C::ID,
             ComponentData {
                 raw_data,
                 drop_fn: drop_raw::<C>,
@@ -47,7 +47,7 @@ impl Entity {
 
     pub fn get<C: Component>(&self) -> Option<&C> {
         self.components
-            .get(&C::component_id())
+            .get(&C::ID)
             .map(|data| unsafe { &*(data.raw_data.user_handle as *const _) })
     }
 

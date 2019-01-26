@@ -2,9 +2,7 @@ use crate::worker::internal::schema;
 use spatialos_sdk_sys::worker;
 use std::os::raw;
 use std::sync::Arc;
-use std::{
-    mem, ptr,
-};
+use std::{mem, ptr};
 
 pub type ComponentId = u32;
 
@@ -183,7 +181,7 @@ pub(crate) unsafe fn handle_copy<T>(handle: *mut raw::c_void) -> *mut raw::c_voi
 // Vtable implementation functions.
 fn create_component_vtable<C: Component>() -> worker::Worker_ComponentVtable {
     worker::Worker_ComponentVtable {
-        component_id: C::component_id(),
+        component_id: C::ID,
         user_data: ptr::null_mut(),
         command_request_free: Some(vtable_command_request_free::<C>),
         command_request_copy: Some(vtable_command_request_copy::<C>),
@@ -227,7 +225,7 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     handle_out: *mut *mut worker::Worker_ComponentDataHandle,
 ) -> u8 {
     let schema_data = schema::SchemaComponentData {
-        component_id: C::component_id(),
+        component_id: C::ID,
         internal: data,
     };
     let deserialized_result = C::from_data(&schema_data);
@@ -276,7 +274,7 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     handle_out: *mut *mut worker::Worker_ComponentUpdateHandle,
 ) -> u8 {
     let schema_update = schema::SchemaComponentUpdate {
-        component_id: C::component_id(),
+        component_id: C::ID,
         internal: update,
     };
     let deserialized_result = C::from_update(&schema_update);
@@ -326,7 +324,7 @@ unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
     handle_out: *mut *mut worker::Worker_CommandRequestHandle,
 ) -> u8 {
     let schema_request = schema::SchemaCommandRequest {
-        component_id: C::component_id(),
+        component_id: C::ID,
         internal: request,
     };
     let deserialized_result = C::from_request(&schema_request);
@@ -376,7 +374,7 @@ unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(
     handle_out: *mut *mut worker::Worker_CommandRequestHandle,
 ) -> u8 {
     let schema_response = schema::SchemaCommandResponse {
-        component_id: C::component_id(),
+        component_id: C::ID,
         internal: response,
     };
     let deserialized_result = C::from_response(&schema_response);
