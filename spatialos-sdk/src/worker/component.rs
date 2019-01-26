@@ -35,7 +35,7 @@ where
     type CommandRequest;
     type CommandResponse;
 
-    fn component_id() -> ComponentId;
+    const ID: ComponentId;
 
     fn from_data(data: &schema::SchemaComponentData) -> Result<Self, String>;
     fn from_update(update: &schema::SchemaComponentUpdate) -> Result<Self::Update, String>;
@@ -181,12 +181,12 @@ pub(crate) unsafe fn handle_copy<T>(handle: *mut raw::c_void) -> *mut raw::c_voi
     Arc::into_raw(copy) as *mut _
 }
 
-pub unsafe fn get_component_data<C: Component>(data: &internal::ComponentData) -> &C {
-    &*(data.user_handle as *const _)
+pub fn get_component_data<C: Component>(data: &internal::ComponentData) -> &C {
+    unsafe { &*(data.user_handle as *const _) }
 }
 
-pub unsafe fn get_component_update<C: Component>(update: &internal::ComponentUpdate) -> &C::Update {
-    &*(update.user_handle as *const _)
+pub fn get_component_update<C: Component>(update: &internal::ComponentUpdate) -> &C::Update {
+    unsafe { &*(update.user_handle as *const _) }
 }
 
 // Vtable implementation functions.

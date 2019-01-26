@@ -27,7 +27,7 @@ mod generated {
         /* Types. */
         #[derive(Debug)]
         pub struct CommandData {
-            value: i32,
+            pub value: i32,
         }
         impl TypeConversion for CommandData {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -45,7 +45,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct Example {
-            x: f32,
+            pub x: f32,
         }
         impl TypeConversion for Example {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -68,7 +68,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct ExampleUpdate {
-            x: Option<f32>,
+            pub x: Option<f32>,
         }
         impl TypeConversion for ExampleUpdate {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -110,9 +110,7 @@ mod generated {
             type CommandRequest = generated::example::ExampleCommandRequest;
             type CommandResponse = generated::example::ExampleCommandResponse;
 
-            fn component_id() -> ComponentId {
-                1000
-            }
+            const ID: ComponentId = 1000;
 
             fn from_data(
                 data: &SchemaComponentData,
@@ -226,7 +224,7 @@ mod generated {
         /* Types. */
         #[derive(Debug)]
         pub struct ComponentInterest {
-            queries: Vec<generated::improbable::ComponentInterest_Query>,
+            pub queries: Vec<generated::improbable::ComponentInterest_Query>,
         }
         impl TypeConversion for ComponentInterest {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -254,8 +252,8 @@ mod generated {
 
         #[derive(Debug)]
         pub struct ComponentInterest_BoxConstraint {
-            center: generated::improbable::Coordinates,
-            edge_length: generated::improbable::EdgeLength,
+            pub center: generated::improbable::Coordinates,
+            pub edge_length: generated::improbable::EdgeLength,
         }
         impl TypeConversion for ComponentInterest_BoxConstraint {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -283,8 +281,8 @@ mod generated {
 
         #[derive(Debug)]
         pub struct ComponentInterest_CylinderConstraint {
-            center: generated::improbable::Coordinates,
-            radius: f64,
+            pub center: generated::improbable::Coordinates,
+            pub radius: f64,
         }
         impl TypeConversion for ComponentInterest_CylinderConstraint {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -307,10 +305,10 @@ mod generated {
 
         #[derive(Debug)]
         pub struct ComponentInterest_Query {
-            constraint: generated::improbable::ComponentInterest_QueryConstraint,
-            full_snapshot_result: Option<bool>,
-            result_component_id: Vec<u32>,
-            frequency: Option<f32>,
+            pub constraint: generated::improbable::ComponentInterest_QueryConstraint,
+            pub full_snapshot_result: Option<bool>,
+            pub result_component_id: Vec<u32>,
+            pub frequency: Option<f32>,
         }
         impl TypeConversion for ComponentInterest_Query {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -338,20 +336,21 @@ mod generated {
 
         #[derive(Debug)]
         pub struct ComponentInterest_QueryConstraint {
-            sphere_constraint: Option<generated::improbable::ComponentInterest_SphereConstraint>,
-            cylinder_constraint:
+            pub sphere_constraint:
+                Option<generated::improbable::ComponentInterest_SphereConstraint>,
+            pub cylinder_constraint:
                 Option<generated::improbable::ComponentInterest_CylinderConstraint>,
-            box_constraint: Option<generated::improbable::ComponentInterest_BoxConstraint>,
-            relative_sphere_constraint:
+            pub box_constraint: Option<generated::improbable::ComponentInterest_BoxConstraint>,
+            pub relative_sphere_constraint:
                 Option<generated::improbable::ComponentInterest_RelativeSphereConstraint>,
-            relative_cylinder_constraint:
+            pub relative_cylinder_constraint:
                 Option<generated::improbable::ComponentInterest_RelativeCylinderConstraint>,
-            relative_box_constraint:
+            pub relative_box_constraint:
                 Option<generated::improbable::ComponentInterest_RelativeBoxConstraint>,
-            entity_id_constraint: Option<i64>,
-            component_constraint: Option<u32>,
-            and_constraint: Vec<generated::improbable::ComponentInterest_QueryConstraint>,
-            or_constraint: Vec<generated::improbable::ComponentInterest_QueryConstraint>,
+            pub entity_id_constraint: Option<i64>,
+            pub component_constraint: Option<u32>,
+            pub and_constraint: Vec<generated::improbable::ComponentInterest_QueryConstraint>,
+            pub or_constraint: Vec<generated::improbable::ComponentInterest_QueryConstraint>,
         }
         impl TypeConversion for ComponentInterest_QueryConstraint {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -457,7 +456,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct ComponentInterest_RelativeBoxConstraint {
-            edge_length: generated::improbable::EdgeLength,
+            pub edge_length: generated::improbable::EdgeLength,
         }
         impl TypeConversion for ComponentInterest_RelativeBoxConstraint {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -478,7 +477,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct ComponentInterest_RelativeCylinderConstraint {
-            radius: f64,
+            pub radius: f64,
         }
         impl TypeConversion for ComponentInterest_RelativeCylinderConstraint {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -494,7 +493,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct ComponentInterest_RelativeSphereConstraint {
-            radius: f64,
+            pub radius: f64,
         }
         impl TypeConversion for ComponentInterest_RelativeSphereConstraint {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -510,8 +509,8 @@ mod generated {
 
         #[derive(Debug)]
         pub struct ComponentInterest_SphereConstraint {
-            center: generated::improbable::Coordinates,
-            radius: f64,
+            pub center: generated::improbable::Coordinates,
+            pub radius: f64,
         }
         impl TypeConversion for ComponentInterest_SphereConstraint {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -534,9 +533,9 @@ mod generated {
 
         #[derive(Debug)]
         pub struct Coordinates {
-            x: f64,
-            y: f64,
-            z: f64,
+            pub x: f64,
+            pub y: f64,
+            pub z: f64,
         }
         impl TypeConversion for Coordinates {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -556,9 +555,9 @@ mod generated {
 
         #[derive(Debug)]
         pub struct EdgeLength {
-            x: f64,
-            y: f64,
-            z: f64,
+            pub x: f64,
+            pub y: f64,
+            pub z: f64,
         }
         impl TypeConversion for EdgeLength {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -578,9 +577,9 @@ mod generated {
 
         #[derive(Debug)]
         pub struct Vector3d {
-            x: f64,
-            y: f64,
-            z: f64,
+            pub x: f64,
+            pub y: f64,
+            pub z: f64,
         }
         impl TypeConversion for Vector3d {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -600,9 +599,9 @@ mod generated {
 
         #[derive(Debug)]
         pub struct Vector3f {
-            x: f32,
-            y: f32,
-            z: f32,
+            pub x: f32,
+            pub y: f32,
+            pub z: f32,
         }
         impl TypeConversion for Vector3f {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -622,7 +621,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct WorkerAttributeSet {
-            attribute: Vec<String>,
+            pub attribute: Vec<String>,
         }
         impl TypeConversion for WorkerAttributeSet {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -647,7 +646,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct WorkerRequirementSet {
-            attribute_set: Vec<generated::improbable::WorkerAttributeSet>,
+            pub attribute_set: Vec<generated::improbable::WorkerAttributeSet>,
         }
         impl TypeConversion for WorkerRequirementSet {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -677,8 +676,8 @@ mod generated {
 
         #[derive(Debug)]
         pub struct EntityAcl {
-            read_acl: generated::improbable::WorkerRequirementSet,
-            component_write_acl: BTreeMap<u32, generated::improbable::WorkerRequirementSet>,
+            pub read_acl: generated::improbable::WorkerRequirementSet,
+            pub component_write_acl: BTreeMap<u32, generated::improbable::WorkerRequirementSet>,
         }
         impl TypeConversion for EntityAcl {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -727,8 +726,9 @@ mod generated {
 
         #[derive(Debug)]
         pub struct EntityAclUpdate {
-            read_acl: Option<generated::improbable::WorkerRequirementSet>,
-            component_write_acl: Option<BTreeMap<u32, generated::improbable::WorkerRequirementSet>>,
+            pub read_acl: Option<generated::improbable::WorkerRequirementSet>,
+            pub component_write_acl:
+                Option<BTreeMap<u32, generated::improbable::WorkerRequirementSet>>,
         }
         impl TypeConversion for EntityAclUpdate {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -802,9 +802,7 @@ mod generated {
             type CommandRequest = generated::improbable::EntityAclCommandRequest;
             type CommandResponse = generated::improbable::EntityAclCommandResponse;
 
-            fn component_id() -> ComponentId {
-                50
-            }
+            const ID: ComponentId = 50;
 
             fn from_data(
                 data: &SchemaComponentData,
@@ -889,7 +887,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct Interest {
-            component_interest: BTreeMap<u32, generated::improbable::ComponentInterest>,
+            pub component_interest: BTreeMap<u32, generated::improbable::ComponentInterest>,
         }
         impl TypeConversion for Interest {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -927,7 +925,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct InterestUpdate {
-            component_interest: Option<BTreeMap<u32, generated::improbable::ComponentInterest>>,
+            pub component_interest: Option<BTreeMap<u32, generated::improbable::ComponentInterest>>,
         }
         impl TypeConversion for InterestUpdate {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -982,9 +980,7 @@ mod generated {
             type CommandRequest = generated::improbable::InterestCommandRequest;
             type CommandResponse = generated::improbable::InterestCommandResponse;
 
-            fn component_id() -> ComponentId {
-                58
-            }
+            const ID: ComponentId = 58;
 
             fn from_data(
                 data: &SchemaComponentData,
@@ -1069,7 +1065,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct Metadata {
-            entity_type: String,
+            pub entity_type: String,
         }
         impl TypeConversion for Metadata {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -1092,7 +1088,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct MetadataUpdate {
-            entity_type: Option<String>,
+            pub entity_type: Option<String>,
         }
         impl TypeConversion for MetadataUpdate {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -1130,9 +1126,7 @@ mod generated {
             type CommandRequest = generated::improbable::MetadataCommandRequest;
             type CommandResponse = generated::improbable::MetadataCommandResponse;
 
-            fn component_id() -> ComponentId {
-                53
-            }
+            const ID: ComponentId = 53;
 
             fn from_data(
                 data: &SchemaComponentData,
@@ -1255,9 +1249,7 @@ mod generated {
             type CommandRequest = generated::improbable::PersistenceCommandRequest;
             type CommandResponse = generated::improbable::PersistenceCommandResponse;
 
-            fn component_id() -> ComponentId {
-                55
-            }
+            const ID: ComponentId = 55;
 
             fn from_data(
                 data: &SchemaComponentData,
@@ -1342,7 +1334,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct Position {
-            coords: generated::improbable::Coordinates,
+            pub coords: generated::improbable::Coordinates,
         }
         impl TypeConversion for Position {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -1370,7 +1362,7 @@ mod generated {
 
         #[derive(Debug)]
         pub struct PositionUpdate {
-            coords: Option<generated::improbable::Coordinates>,
+            pub coords: Option<generated::improbable::Coordinates>,
         }
         impl TypeConversion for PositionUpdate {
             fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -1415,9 +1407,7 @@ mod generated {
             type CommandRequest = generated::improbable::PositionCommandRequest;
             type CommandResponse = generated::improbable::PositionCommandResponse;
 
-            fn component_id() -> ComponentId {
-                54
-            }
+            const ID: ComponentId = 54;
 
             fn from_data(
                 data: &SchemaComponentData,
