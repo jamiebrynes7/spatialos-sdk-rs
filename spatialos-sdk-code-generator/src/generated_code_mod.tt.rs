@@ -14,7 +14,7 @@ pub enum <#= self.rust_name(&enum_def.identifier) #> {
 pub struct <#= self.rust_name(&type_def.identifier) #> {<#
     for field in &type_def.field_definitions {
     #>
-    <#= field.identifier.name #>: <#= self.generate_field_type(field) #>,<# } #>
+    pub <#= field.identifier.name #>: <#= self.generate_field_type(field) #>,<# } #>
 }
 impl TypeConversion for <#= self.rust_name(&type_def.identifier) #> {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -45,7 +45,7 @@ impl TypeConversion for <#= self.rust_name(&type_def.identifier) #> {
 pub struct <#= self.rust_name(&component.identifier) #> {<# 
     for field in &component_fields {
     #>
-    <#= field.identifier.name #>: <#= self.generate_field_type(field) #>,<# } #>
+    pub <#= field.identifier.name #>: <#= self.generate_field_type(field) #>,<# } #>
 }
 impl TypeConversion for <#= self.rust_name(&component.identifier) #> {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -80,7 +80,7 @@ impl ComponentData<<#= self.rust_name(&component.identifier) #>> for <#= self.ru
 pub struct <#= self.rust_name(&component.identifier) #>Update {<# 
     for field in &component_fields {
     #>
-    <#= field.identifier.name #>: Option<<#= self.generate_field_type(field) #>>,<# } #>
+    pub <#= field.identifier.name #>: Option<<#= self.generate_field_type(field) #>>,<# } #>
 }
 impl TypeConversion for <#= self.rust_name(&component.identifier) #>Update {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
@@ -139,9 +139,7 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
     type CommandRequest = <#= self.rust_fqname(&component.identifier) #>CommandRequest;
     type CommandResponse = <#= self.rust_fqname(&component.identifier) #>CommandResponse;
 
-    fn component_id() -> ComponentId {
-        <#= component.component_id #>
-    }
+    const ID: ComponentId = <#= component.component_id #>;
 
     fn from_data(data: &SchemaComponentData) -> Result<<#= self.rust_fqname(&component.identifier) #>, String> {
         <<#= self.rust_fqname(&component.identifier) #> as TypeConversion>::from_type(&data.fields())

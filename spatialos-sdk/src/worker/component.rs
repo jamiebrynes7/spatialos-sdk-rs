@@ -34,7 +34,7 @@ where
     type CommandRequest;
     type CommandResponse;
 
-    fn component_id() -> ComponentId;
+    const ID: ComponentId;
 
     fn from_data(data: &schema::SchemaComponentData) -> Result<Self, String>;
     fn from_update(update: &schema::SchemaComponentUpdate) -> Result<Self::Update, String>;
