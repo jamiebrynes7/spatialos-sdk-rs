@@ -1,25 +1,25 @@
-extern crate spatialos_sdk;
-
-mod lib;
 use crate::lib::{get_connection, get_worker_configuration};
-
+use generated_code::example::Example;
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
 use spatialos_sdk::worker::component::{self, Component, ComponentDatabase};
 use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
+use spatialos_sdk::worker::entity::Entity;
 use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
 use spatialos_sdk::worker::op::WorkerOp;
 use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
-use spatialos_sdk::worker::entity::Entity;
 
 mod generated_code;
+mod lib;
 
 fn main() {
     println!("Entered program");
 
-    let components = ComponentDatabase::new().add_component::<generated_code::example::Example>().add_component::<generated_code::improbable::Position>();
+    let components = ComponentDatabase::new()
+        .add_component::<generated_code::example::Example>()
+        .add_component::<generated_code::improbable::Position>();
     let config = match get_worker_configuration(components) {
         Ok(c) => c,
         Err(e) => panic!("{}", e),
@@ -55,23 +55,14 @@ fn logic_loop(c: &mut WorkerConnection) {
             match op {
                 // TODO: Make this safer and not rely on `component::get_component_xx`
                 WorkerOp::AddComponent(add_component) => {
-                    if add_component.component_data.component_id
-                        == generated_code::example::Example::component_id()
-                    {
-                        let component_data =
-                            unsafe { component::get_component_data::<generated_code::example::Example>(
-                                &add_component.component_data,
-                            ) };
+                    if add_component.component_id() == Example::component_id() {
+                        let component_data = add_component.get::<Example>().unwrap();
                         println!("Received Example data: {:?}", component_data);
                     }
                 }
                 WorkerOp::ComponentUpdate(update) => {
-                    if update.component_update.component_id
-                        == generated_code::example::Example::component_id()
-                    {
-                        let component_update = unsafe { component::get_component_update::<
-                            generated_code::example::Example,
-                        >(&update.component_update) };
+                    if update.component_update.component_id == Example::component_id() {
+                        let component_update = update.get::<Example>();
                         println!("Received Example update: {:?}", component_update);
                     }
                 }

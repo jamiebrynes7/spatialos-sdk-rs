@@ -51,7 +51,7 @@ where
 }
 
 // Internal untyped component data objects.
-pub mod internal {
+pub(crate) mod internal {
     use crate::worker::internal::schema::*;
     use spatialos_sdk_sys::worker::*;
 
@@ -178,14 +178,6 @@ pub(crate) unsafe fn handle_copy<T>(handle: *mut raw::c_void) -> *mut raw::c_voi
     let copy = original.clone();
     mem::forget(original);
     Arc::into_raw(copy) as *mut _
-}
-
-pub unsafe fn get_component_data<C: Component>(data: &internal::ComponentData) -> &C {
-    &*(data.user_handle as *const _)
-}
-
-pub unsafe fn get_component_update<C: Component>(update: &internal::ComponentUpdate) -> &C::Update {
-    &*(update.user_handle as *const _)
 }
 
 // Vtable implementation functions.
