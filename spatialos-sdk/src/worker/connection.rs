@@ -274,11 +274,12 @@ impl Connection for WorkerConnection {
             Some(e) => &e.id,
             None => ptr::null(),
         };
+        let component_data = entity.raw_component_data();
         let id = unsafe {
             Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr,
-                entity.component_data.len() as _,
-                entity.component_data.as_ptr(),
+                component_data.len() as _,
+                component_data.as_ptr(),
                 entity_id,
                 timeout,
             )

@@ -3,7 +3,6 @@ use spatialos_sdk_sys::worker;
 use std::os::raw;
 use std::sync::Arc;
 use std::{
-    alloc::{self, Layout},
     mem, ptr,
 };
 
