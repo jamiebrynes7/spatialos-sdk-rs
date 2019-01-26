@@ -42,7 +42,7 @@ impl TypeConversion for <#= self.rust_name(&type_def.identifier) #> {
     let component = self.get_component_definition(component_name);
     let component_fields = self.get_component_fields(&component); #>
 #[derive(Debug)]
-pub struct <#= self.rust_name(&component.identifier) #> {<# 
+pub struct <#= self.rust_name(&component.identifier) #> {<#
     for field in &component_fields {
     #>
     pub <#= field.identifier.name #>: <#= self.generate_field_type(field) #>,<# } #>
@@ -77,7 +77,7 @@ impl ComponentData<<#= self.rust_name(&component.identifier) #>> for <#= self.ru
 }
 
 #[derive(Debug)]
-pub struct <#= self.rust_name(&component.identifier) #>Update {<# 
+pub struct <#= self.rust_name(&component.identifier) #>Update {<#
     for field in &component_fields {
     #>
     pub <#= field.identifier.name #>: Option<<#= self.generate_field_type(field) #>>,<# } #>
@@ -174,13 +174,13 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
     }
 
     fn to_data(data: &<#= self.rust_fqname(&component.identifier) #>) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::component_id());
+        let mut serialized_data = SchemaComponentData::new(Self::ID);
         <<#= self.rust_fqname(&component.identifier) #> as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &<#= self.rust_fqname(&component.identifier) #>Update) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::component_id());
+        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
         <<#= self.rust_fqname(&component.identifier) #>Update as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
@@ -192,7 +192,7 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
             <#= self.rust_name(&component.identifier) #>CommandRequest::<#= command.identifier.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
             _ => unreachable!()
         };
-        let mut serialized_request = SchemaCommandRequest::new(Self::component_id(), command_index);
+        let mut serialized_request = SchemaCommandRequest::new(Self::ID, command_index);
         match request {<#
             for command in &component.command_definitions {
             #>
@@ -211,7 +211,7 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
             <#= self.rust_name(&component.identifier) #>CommandResponse::<#= command.identifier.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
             _ => unreachable!()
         };
-        let mut serialized_response = SchemaCommandResponse::new(Self::component_id(), command_index);
+        let mut serialized_response = SchemaCommandResponse::new(Self::ID, command_index);
         match response {<#
             for command in &component.command_definitions {
             #>

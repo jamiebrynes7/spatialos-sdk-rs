@@ -53,7 +53,6 @@ fn logic_loop(c: &mut WorkerConnection) {
         for op in &ops {
             println!("Received op: {:?}", op);
             match op {
-                // TODO: Make this safer and not rely on `component::get_component_xx`
                 WorkerOp::AddComponent(add_component) => {
                     if add_component.component_id() == Example::ID {
                         let component_data = add_component.get::<Example>().unwrap();
