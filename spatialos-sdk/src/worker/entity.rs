@@ -45,6 +45,12 @@ impl Entity {
         );
     }
 
+    pub fn get<C: Component>(&self) -> Option<&C> {
+        self.components
+            .get(&C::component_id())
+            .map(|data| unsafe { &*(data.raw_data.user_handle as *const _) })
+    }
+
     pub(crate) fn raw_component_data(&self) -> Vec<Worker_ComponentData> {
         self.components.values().map(|data| data.raw_data).collect()
     }
