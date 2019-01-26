@@ -59,9 +59,9 @@ fn logic_loop(c: &mut WorkerConnection) {
                         == generated_code::example::Example::component_id()
                     {
                         let component_data =
-                            component::get_component_data::<generated_code::example::Example>(
+                            unsafe { component::get_component_data::<generated_code::example::Example>(
                                 &add_component.component_data,
-                            );
+                            ) };
                         println!("Received Example data: {:?}", component_data);
                     }
                 }
@@ -69,9 +69,9 @@ fn logic_loop(c: &mut WorkerConnection) {
                     if update.component_update.component_id
                         == generated_code::example::Example::component_id()
                     {
-                        let component_update = component::get_component_update::<
+                        let component_update = unsafe { component::get_component_update::<
                             generated_code::example::Example,
-                        >(&update.component_update);
+                        >(&update.component_update) };
                         println!("Received Example update: {:?}", component_update);
                     }
                 }
@@ -113,9 +113,9 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
     let mut entity = Entity::new();
     entity.add(generated_code::improbable::Position {
         coords: generated_code::improbable::Coordinates {
-            x: 1.0,
-            y: 2.0,
-            z: 3.0,
+            x: 10.0,
+            y: 12.0,
+            z: 0.0,
         },
     });
     let create_request_id = c.send_create_entity_request(entity, None, None);

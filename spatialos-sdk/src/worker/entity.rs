@@ -1,4 +1,4 @@
-use crate::worker::component::{Component, ComponentId};
+use crate::worker::component::{self, Component, ComponentId};
 use spatialos_sdk_sys::worker::Worker_ComponentData;
 use std::collections::HashSet;
 use std::ptr;
@@ -21,7 +21,7 @@ impl Entity {
             "Duplicate component added to `Entity`"
         );
 
-        let data_ptr = Box::into_raw(Box::new(component));
+        let data_ptr = component::handle_allocate(component);
         let component_data = Worker_ComponentData {
             reserved: ptr::null_mut(),
             component_id: C::component_id(),
@@ -46,5 +46,5 @@ impl Drop for Entity {
 }
 
 unsafe fn drop_raw<T>(raw: *mut std::ffi::c_void) {
-    let _ = Box::from_raw(raw as *mut T);
+    component::handle_free::<T>(raw);
 }

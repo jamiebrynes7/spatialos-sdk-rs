@@ -1,8 +1,7 @@
 use crate::worker::internal::schema;
 use spatialos_sdk_sys::worker;
-use std::borrow::Borrow;
 use std::os::raw;
-use std::rc::Rc;
+use std::sync::Arc;
 use std::{
     alloc::{self, Layout},
     mem, ptr,
@@ -167,75 +166,27 @@ impl ComponentDatabase {
     }
 }
 
-// An object which contains a reference counted instance to T.
-struct ClientHandle<T> {
-    data: Rc<T>,
-    // When Drop() is called, data should reduce its reference count.
+pub(crate) fn handle_allocate<T>(data: T) -> *mut raw::c_void {
+    Arc::into_raw(Arc::new(data)) as *mut _
 }
 
-impl<T> ClientHandle<T> {
-    fn new(data: T) -> ClientHandle<T> {
-        ClientHandle {
-            data: Rc::new(data),
-        }
-    }
-
-    fn copy(&self) -> ClientHandle<T> {
-        ClientHandle {
-            data: Rc::clone(&self.data),
-        }
-    }
-
-    // Vtable helper functions.
-    unsafe fn handle_allocate(data: T) -> *mut raw::c_void {
-        // Allocate client handle and initialize with data.
-        let new_client_handle: *mut ClientHandle<T> =
-            mem::transmute(alloc::alloc(Layout::new::<ClientHandle<T>>()));
-        ptr::write(new_client_handle, ClientHandle::<T>::new(data));
-
-        // Return new pointer.
-        mem::transmute(new_client_handle)
-    }
-
-    unsafe fn handle_free(handle: *mut raw::c_void) {
-        let client_handle_ptr: *mut ClientHandle<T> = mem::transmute(handle);
-
-        // Call drop() on pointer value.
-        client_handle_ptr.drop_in_place();
-
-        // Deallocate memory.
-        alloc::dealloc(
-            mem::transmute(client_handle_ptr),
-            Layout::new::<ClientHandle<T>>(),
-        );
-    }
-
-    unsafe fn handle_copy(handle: *mut raw::c_void) -> *mut raw::c_void {
-        let client_handle_ptr: *mut ClientHandle<T> = mem::transmute(handle);
-
-        // Allocate client handle and initialize with copy of existing client handle
-        let new_client_handle: *mut ClientHandle<T> =
-            mem::transmute(alloc::alloc(Layout::new::<ClientHandle<T>>()));
-        let client_handle: &ClientHandle<T> = &*client_handle_ptr;
-        ptr::write(new_client_handle, client_handle.copy());
-
-        // Return new pointer.
-        mem::transmute(new_client_handle)
-    }
+pub(crate) unsafe fn handle_free<T>(handle: *mut raw::c_void) {
+    let _ = Arc::<T>::from_raw(handle as *const _);
 }
 
-pub fn get_component_data<C: Component>(data: &internal::ComponentData) -> &C {
-    unsafe {
-        let client_handle_ptr: *mut ClientHandle<C> = mem::transmute(data.user_handle);
-        (*client_handle_ptr).data.borrow()
-    }
+pub(crate) unsafe fn handle_copy<T>(handle: *mut raw::c_void) -> *mut raw::c_void {
+    let original = Arc::<T>::from_raw(handle as *const _);
+    let copy = original.clone();
+    mem::forget(original);
+    Arc::into_raw(copy) as *mut _
 }
 
-pub fn get_component_update<C: Component>(update: &internal::ComponentUpdate) -> &C::Update {
-    unsafe {
-        let client_handle_ptr: *mut ClientHandle<C::Update> = mem::transmute(update.user_handle);
-        (*client_handle_ptr).data.borrow()
-    }
+pub unsafe fn get_component_data<C: Component>(data: &internal::ComponentData) -> &C {
+    &*(data.user_handle as *const _)
+}
+
+pub unsafe fn get_component_update<C: Component>(update: &internal::ComponentUpdate) -> &C::Update {
+    &*(update.user_handle as *const _)
 }
 
 // Vtable implementation functions.
@@ -267,7 +218,7 @@ unsafe extern "C" fn vtable_component_data_free<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
-    ClientHandle::<C>::handle_free(handle)
+    handle_free::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_component_data_copy<C: Component>(
@@ -275,7 +226,7 @@ unsafe extern "C" fn vtable_component_data_copy<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) -> *mut raw::c_void {
-    ClientHandle::<C>::handle_copy(handle)
+    handle_copy::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
@@ -290,7 +241,7 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     };
     let deserialized_result = C::from_data(&schema_data);
     if let Ok(deserialized_data) = deserialized_result {
-        *handle_out = ClientHandle::<C>::handle_allocate(deserialized_data);
+        *handle_out = handle_allocate(deserialized_data);
         1
     } else {
         0
@@ -303,9 +254,8 @@ unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
     handle: *mut raw::c_void,
     data: *mut *mut worker::Schema_ComponentData,
 ) {
-    let client_handle_ptr: *mut ClientHandle<C> = mem::transmute(handle);
-    let schema_result = C::to_data((*client_handle_ptr).data.borrow());
-    if let Ok(schema_data) = schema_result {
+    let client_data = &*(handle as *const C);
+    if let Ok(schema_data) = C::to_data(client_data) {
         *data = schema_data.internal;
     } else {
         *data = ptr::null_mut();
@@ -317,7 +267,7 @@ unsafe extern "C" fn vtable_component_update_free<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
-    ClientHandle::<C::Update>::handle_free(handle)
+    handle_free::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_component_update_copy<C: Component>(
@@ -325,7 +275,7 @@ unsafe extern "C" fn vtable_component_update_copy<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) -> *mut raw::c_void {
-    ClientHandle::<C::Update>::handle_copy(handle)
+    handle_copy::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
@@ -340,7 +290,7 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     };
     let deserialized_result = C::from_update(&schema_update);
     if let Ok(deserialized_update) = deserialized_result {
-        *handle_out = ClientHandle::<C::Update>::handle_allocate(deserialized_update);
+        *handle_out = handle_allocate(deserialized_update);
         1
     } else {
         0
@@ -353,8 +303,8 @@ unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
     handle: *mut raw::c_void,
     update: *mut *mut worker::Schema_ComponentUpdate,
 ) {
-    let client_handle_ptr: *mut ClientHandle<C::Update> = mem::transmute(handle);
-    let schema_result = C::to_update((*client_handle_ptr).data.borrow());
+    let data = &*(handle as *const _);
+    let schema_result = C::to_update(data);
     if let Ok(schema_update) = schema_result {
         *update = schema_update.internal;
     } else {
@@ -367,7 +317,7 @@ unsafe extern "C" fn vtable_command_request_free<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
-    ClientHandle::<C::CommandRequest>::handle_free(handle)
+    handle_free::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_command_request_copy<C: Component>(
@@ -375,7 +325,7 @@ unsafe extern "C" fn vtable_command_request_copy<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) -> *mut raw::c_void {
-    ClientHandle::<C::CommandRequest>::handle_copy(handle)
+    handle_copy::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
@@ -390,7 +340,7 @@ unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
     };
     let deserialized_result = C::from_request(&schema_request);
     if let Ok(deserialized_request) = deserialized_result {
-        *handle_out = ClientHandle::<C::CommandRequest>::handle_allocate(deserialized_request);
+        *handle_out = handle_allocate(deserialized_request);
         1
     } else {
         0
@@ -403,8 +353,8 @@ unsafe extern "C" fn vtable_command_request_serialize<C: Component>(
     handle: *mut raw::c_void,
     request: *mut *mut worker::Schema_CommandRequest,
 ) {
-    let client_handle_ptr: *mut ClientHandle<C::CommandRequest> = mem::transmute(handle);
-    let schema_result = C::to_request((*client_handle_ptr).data.borrow());
+    let data = &*(handle as *const _);
+    let schema_result = C::to_request(data);
     if let Ok(schema_request) = schema_result {
         *request = schema_request.internal;
     } else {
@@ -417,7 +367,7 @@ unsafe extern "C" fn vtable_command_response_free<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
-    ClientHandle::<C::CommandResponse>::handle_free(handle)
+    handle_free::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_command_response_copy<C: Component>(
@@ -425,7 +375,7 @@ unsafe extern "C" fn vtable_command_response_copy<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) -> *mut raw::c_void {
-    ClientHandle::<C::CommandResponse>::handle_copy(handle)
+    handle_copy::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(
@@ -440,7 +390,7 @@ unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(
     };
     let deserialized_result = C::from_response(&schema_response);
     if let Ok(deserialized_response) = deserialized_result {
-        *handle_out = ClientHandle::<C::CommandResponse>::handle_allocate(deserialized_response);
+        *handle_out = handle_allocate(deserialized_response);
         1
     } else {
         0
@@ -453,8 +403,8 @@ unsafe extern "C" fn vtable_command_response_serialize<C: Component>(
     handle: *mut raw::c_void,
     response: *mut *mut worker::Schema_CommandResponse,
 ) {
-    let client_handle_ptr: *mut ClientHandle<C::CommandResponse> = mem::transmute(handle);
-    let schema_result = C::to_response((*client_handle_ptr).data.borrow());
+    let data = &*(handle as *const _);
+    let schema_result = C::to_response(data);
     if let Ok(schema_response) = schema_result {
         *response = schema_response.internal;
     } else {
