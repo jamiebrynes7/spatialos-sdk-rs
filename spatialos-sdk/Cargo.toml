@@ -17,4 +17,5 @@ path = "./examples/project-example/main.rs"
 
 [dev-dependencies]
 uuid = { version = "0.7", features = ["v4"] }
-clap = "2.32.0"
+structopt = "0.2.14"
+tap = "0.3.0"

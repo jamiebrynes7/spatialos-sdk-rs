@@ -1,5 +1,5 @@
-pub mod argument_parsing;
+pub mod opt;
 pub mod connection_handler;
 
-pub use self::argument_parsing::*;
+pub use self::opt::*;
 pub use self::connection_handler::*;

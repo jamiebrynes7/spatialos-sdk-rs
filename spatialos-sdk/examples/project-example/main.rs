@@ -1,5 +1,6 @@
-use crate::lib::{get_connection, get_worker_configuration};
+use crate::lib::{get_connection, Opt};
 use generated_code::example::Example;
+use generated_code::improbable;
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
@@ -10,6 +11,9 @@ use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
 use spatialos_sdk::worker::op::WorkerOp;
 use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
+use std::collections::BTreeMap;
+use structopt::StructOpt;
+use tap::*;
 
 mod generated_code;
 mod lib;
@@ -20,13 +24,15 @@ fn main() {
     println!("Entered program");
 
     let components = ComponentDatabase::new()
-        .add_component::<generated_code::example::Example>()
-        .add_component::<generated_code::improbable::Position>();
-    let config = match get_worker_configuration(components) {
-        Ok(c) => c,
-        Err(e) => panic!("{}", e),
-    };
-    let mut worker_connection = match get_connection(config) {
+        .add_component::<Example>()
+        .add_component::<improbable::EntityAcl>()
+        .add_component::<improbable::Persistence>()
+        .add_component::<improbable::Metadata>()
+        .add_component::<improbable::Interest>()
+        .add_component::<improbable::Position>();
+
+    let opt = Opt::from_args();
+    let mut worker_connection = match get_connection(opt, components) {
         Ok(c) => c,
         Err(e) => panic!("{}", e),
     };
@@ -104,8 +110,25 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
             z: 0.0,
         },
     });
+    entity.add(improbable::EntityAcl {
+        read_acl: improbable::WorkerRequirementSet {
+            attribute_set: vec![improbable::WorkerAttributeSet {
+                attribute: vec!["rusty".into()],
+            }],
+        },
+        component_write_acl: BTreeMap::new().tap(|writes| {
+            writes.insert(
+                improbable::Position::ID,
+                improbable::WorkerRequirementSet {
+                    attribute_set: vec![improbable::WorkerAttributeSet {
+                        attribute: vec!["rusty".into()],
+                    }],
+                },
+            );
+        }),
+    });
     let create_request_id = c.send_create_entity_request(entity, None, None);
-    dbg!(create_request_id);
+    println!("Create entity request ID: {:?}", create_request_id);
 
     println!("Testing completed");
 }
