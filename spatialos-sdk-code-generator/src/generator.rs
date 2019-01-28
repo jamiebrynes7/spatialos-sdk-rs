@@ -1,5 +1,4 @@
 use heck::CamelCase;
-#[allow(dead_code)]
 use schema_bundle::*;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
@@ -46,9 +45,9 @@ fn get_rust_primitive_type_tag(primitive_type: &PrimitiveType) -> &str {
 fn get_schema_type(value_type: &ValueTypeReference) -> &str {
     if let Some(ref primitive_type) = value_type.primitive_reference {
         get_rust_primitive_type_tag(&primitive_type)
-    } else if let Some(_) = value_type.enum_reference {
+    } else if value_type.enum_reference.is_some() {
         "SchemaEnum"
-    } else if let Some(_) = value_type.type_reference {
+    } else if value_type.type_reference.is_some() {
         "SchemaObject"
     } else {
         panic!("Unknown value type reference. {:?}", value_type);
@@ -82,9 +81,9 @@ struct Package {
 impl Package {
     fn new(generated_code: Rc<RefCell<GeneratedCode>>, name: &str, path: Vec<String>) -> Package {
         Package {
-            generated_code: generated_code,
+            generated_code,
             name: name.to_string(),
-            path: path,
+            path,
             subpackages: BTreeMap::new(),
             enums: BTreeSet::new(),
             types: BTreeSet::new(),
@@ -112,27 +111,21 @@ impl Package {
     fn get_enum_definition(&self, qualified_name: &str) -> EnumDefinition {
         self.generated_code
             .borrow()
-            .enums
-            .get(&qualified_name.to_string())
-            .unwrap()
+            .enums[&qualified_name.to_string()]
             .clone()
     }
 
     fn get_type_definition(&self, qualified_name: &str) -> TypeDefinition {
         self.generated_code
             .borrow()
-            .types
-            .get(&qualified_name.to_string())
-            .unwrap()
+            .types[&qualified_name.to_string()]
             .clone()
     }
 
     fn get_component_definition(&self, qualified_name: &str) -> ComponentDefinition {
         self.generated_code
             .borrow()
-            .components
-            .get(&qualified_name.to_string())
-            .unwrap()
+            .components[&qualified_name.to_string()]
             .clone()
     }
 
@@ -215,9 +208,7 @@ impl Package {
             self.type_needs_borrow(&singular_type.type_reference)
         } else if let Some(ref option) = field.option_type {
             self.type_needs_borrow(&option.inner_type)
-        } else if let Some(_) = field.list_type {
-            true
-        } else if let Some(_) = field.map_type {
+        } else if field.list_type.is_some() || field.map_type.is_some() {
             true
         } else {
             false
@@ -232,10 +223,10 @@ impl Package {
                 PrimitiveType::String => true,
                 _ => false,
             }
-        } else if let Some(_) = type_ref.enum_reference {
+        } else if type_ref.enum_reference.is_some() {
             // Enums are always data.
             false
-        } else if let Some(_) = type_ref.type_reference {
+        } else if type_ref.type_reference.is_some() {
             // Types always need borrowing, as they're structs.
             true
         } else {
@@ -351,7 +342,7 @@ impl Package {
                 borrow,
                 expression
             )
-        } else if let Some(_) = value_type.enum_reference {
+        } else if value_type.enum_reference.is_some() {
             format!(
                 "{}.field::<u32>({}).add(({}) as u32)",
                 schema_object, field_id, expression
@@ -415,12 +406,8 @@ impl Package {
     // Generates an expression which deserializes a value from a schema type in 'schema_expr'. In the non primitive
     // case, this expression is of type Result<GeneratedType, String>, otherwise it is just T (where T is the primitive type).
     fn deserialize_type(&self, value_type: &ValueTypeReference, schema_expr: &str) -> String {
-        if let Some(ref primitive) = value_type.primitive_reference {
-            match primitive {
-                PrimitiveType::String => format!("{}", schema_expr),
-                // Primitive types don't need any processing.
-                _ => schema_expr.to_string(),
-            }
+        if value_type.primitive_reference.is_some() {
+            schema_expr.to_string()
         } else if let Some(ref enum_type) = value_type.enum_reference {
             let enum_name = self.rust_fqname(
                 &self
@@ -451,7 +438,7 @@ impl Package {
         schema_expr: &str,
     ) -> String {
         let deserialize_expr = self.deserialize_type(value_type, schema_expr);
-        if let Some(_) = value_type.type_reference {
+        if value_type.type_reference.is_some() {
             format!("{}?", deserialize_expr)
         } else {
             deserialize_expr
@@ -470,11 +457,11 @@ struct GeneratedCode {
 
 impl GeneratedCode {
     fn resolve_type_reference(&self, reference: &TypeReference) -> &TypeDefinition {
-        self.types.get(&reference.qualified_name).unwrap()
+        &self.types[&reference.qualified_name]
     }
 
     fn resolve_enum_reference(&self, reference: &EnumReference) -> &EnumDefinition {
-        self.enums.get(&reference.qualified_name).unwrap()
+        &self.enums[&reference.qualified_name]
     }
 }
 
@@ -509,7 +496,7 @@ fn get_or_create_packages<'a>(package: &'a mut Package, path: &[String]) -> &'a 
 }
 
 fn generate_module(package: &Package) -> String {
-    let submodules = if package.subpackages.len() > 0 {
+    let submodules = if !package.subpackages.is_empty() {
         package
             .subpackages
             .iter()
