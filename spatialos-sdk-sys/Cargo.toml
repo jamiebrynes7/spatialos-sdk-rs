@@ -4,7 +4,7 @@ version = "13.5.1"
 authors = [
     "David Avedissian <git@dga.me.uk>",
     "Jamie Brynes <jamiebrynes7@gmail.com>"
-    ]
+]
 edition = "2018"
 links = "worker"
 build = "build.rs"
