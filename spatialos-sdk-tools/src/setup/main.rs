@@ -1,8 +1,10 @@
 use fs_extra::dir::{self, CopyOptions};
 use log::*;
 use simplelog::*;
+use spatialos_sdk_code_generator::{generator, schema_bundle};
 use std::ffi::OsString;
-use std::fs;
+use std::fs::{self, File};
+use std::io::prelude::*;
 use std::path::PathBuf;
 use std::process::Command;
 use structopt::StructOpt;
@@ -12,6 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let Opt {
         spatial_lib_dir,
         schema_paths,
+        codegen,
         verbose,
         output_dir,
     } = Opt::from_args();
@@ -123,6 +126,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Remove the temp directory once the setup process has finished.
     fs::remove_dir_all(&tmp_path).map_err(|_| "Failed to remove temp dir")?;
 
+    if let Some(codegen_out_path) = codegen {
+        let mut input_file =
+            File::open(&bundle_json_path).expect("Unable to open the test schema bundle.");
+        let mut contents = String::new();
+        input_file
+            .read_to_string(&mut contents)
+            .expect("Unable to read the test schema bundle");
+        let generated_file =
+            generator::generate_code(schema_bundle::load_bundle(&contents).unwrap());
+        let mut output_file = File::create(codegen_out_path).unwrap();
+        output_file.write_all(generated_file.as_bytes()).unwrap();
+    }
+
     Ok(())
 }
 
@@ -146,6 +162,10 @@ struct Opt {
     /// Display detailed log output
     #[structopt(long, short)]
     verbose: bool,
+
+    /// Perform code generation and put the output in the specified file
+    #[structopt(long, short = "c", parse(from_os_str))]
+    codegen: Option<PathBuf>,
 
     /// The path the output directory for the project
     #[structopt(parse(from_os_str))]
