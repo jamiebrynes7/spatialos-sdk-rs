@@ -138,6 +138,7 @@ pub(crate) mod internal {
 
 // A data structure which represents all known component types. Used to generate an array of vtables to pass
 // to the connection object.
+#[derive(Default)]
 pub struct ComponentDatabase {
     component_vtables: Vec<worker::Worker_ComponentVtable>,
 }

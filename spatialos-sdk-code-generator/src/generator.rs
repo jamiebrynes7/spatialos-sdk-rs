@@ -78,6 +78,7 @@ struct Package {
     components: BTreeSet<String>,
 }
 
+#[allow(clippy::needless_bool)]
 impl Package {
     fn new(generated_code: Rc<RefCell<GeneratedCode>>, name: &str, path: Vec<String>) -> Package {
         Package {
@@ -109,24 +110,15 @@ impl Package {
     }
 
     fn get_enum_definition(&self, qualified_name: &str) -> EnumDefinition {
-        self.generated_code
-            .borrow()
-            .enums[&qualified_name.to_string()]
-            .clone()
+        self.generated_code.borrow().enums[&qualified_name.to_string()].clone()
     }
 
     fn get_type_definition(&self, qualified_name: &str) -> TypeDefinition {
-        self.generated_code
-            .borrow()
-            .types[&qualified_name.to_string()]
-            .clone()
+        self.generated_code.borrow().types[&qualified_name.to_string()].clone()
     }
 
     fn get_component_definition(&self, qualified_name: &str) -> ComponentDefinition {
-        self.generated_code
-            .borrow()
-            .components[&qualified_name.to_string()]
-            .clone()
+        self.generated_code.borrow().components[&qualified_name.to_string()].clone()
     }
 
     fn resolve_enum_reference(&self, reference: &EnumReference) -> EnumDefinition {

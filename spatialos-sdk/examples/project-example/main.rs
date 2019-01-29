@@ -3,7 +3,7 @@ use generated_code::example::Example;
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
-use spatialos_sdk::worker::component::{self, Component, ComponentDatabase};
+use spatialos_sdk::worker::component::{Component, ComponentDatabase};
 use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
 use spatialos_sdk::worker::entity::Entity;
 use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
@@ -15,7 +15,6 @@ mod generated_code;
 mod lib;
 
 use generated_code::example;
-use generated_code::improbable;
 
 fn main() {
     println!("Entered program");

@@ -235,6 +235,7 @@ pub trait SchemaBytesField {
 }
 
 // A string schema field.
+#[allow(clippy::ptr_arg)]
 pub trait SchemaStringField {
     fn get(&self) -> Option<String> {
         if self.count() == 0 {
@@ -272,7 +273,7 @@ pub trait SchemaObjectField {
 impl SchemaObject {
     pub fn field<T>(&self, field_id: ComponentId) -> SchemaFieldContainer<T> {
         SchemaFieldContainer {
-            field_id: field_id,
+            field_id,
             container: self,
             _phantom: PhantomData,
         }
