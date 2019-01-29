@@ -1,4 +1,6 @@
 use fs_extra::dir::{self, CopyOptions};
+use log::*;
+use simplelog::*;
 use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;
@@ -10,8 +12,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let Opt {
         spatial_lib_dir,
         schema_paths,
+        verbose,
         output_dir,
     } = Opt::from_args();
+
+    // Initialize the logger.
+    let verbosity = if verbose {
+        LevelFilter::Trace
+    } else {
+        LevelFilter::Warn
+    };
+    SimpleLogger::init(verbosity, Default::default()).expect("Failed to setup logger");
 
     let output_dir = normalize(output_dir);
 
@@ -58,7 +69,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Run the schema compiler for each of the schema files in std-lib/improbable.
     let schema_path_arg = OsString::from("--schema_path=").tap(|arg| arg.push(&std_lib_path));
     let proto_out_arg = OsString::from("--proto_out=").tap(|arg| arg.push(&tmp_path));
-    let bundle_json_arg = OsString::from("--bundle_json_out=").tap(|arg| arg.push(&bundle_json_path));
+    let bundle_json_arg =
+        OsString::from("--bundle_json_out=").tap(|arg| arg.push(&bundle_json_path));
     let descriptor_out_arg = OsString::from("--descriptor_set_out=")
         .tap(|arg| arg.push(normalize(output_dir.join("schema.descriptor"))));
     let mut command = Command::new(&schema_compiler_path);
@@ -70,7 +82,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .arg("--load_all_schema_on_schema_path");
 
     for schema_path in &schema_paths {
-        let arg = OsString::from("--schema_path=").tap(|arg| arg.push(schema_path));
+        let arg = OsString::from("--schema_path=").tap(|arg| arg.push(normalize(schema_path)));
         command.arg(&arg);
     }
 
@@ -88,6 +100,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    trace!("{:#?}", command);
     command
         .status()
         .map_err(|_| "Failed to compile schema files")?;
@@ -104,6 +117,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         command.arg(&entry);
     }
 
+    trace!("{:#?}", command);
     command.status().map_err(|_| "Failed to run protoc")?;
 
     // Remove the temp directory once the setup process has finished.
@@ -113,17 +127,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "setup", about = "Perform setup for a Rust SpatialOS project.")]
+#[structopt(
+    name = "setup",
+    rename_all = "kebab-case",
+    about = "Perform setup for a Rust SpatialOS project."
+)]
 struct Opt {
-    /// The path to your local installation of the SpatialOS SDK. If not specified,
-    /// the SPATIAL_OS_DIR environment variable instead.
-    #[structopt(long = "spatial-lib-dir", short = "l", parse(from_os_str))]
+    /// The path to your local installation of the SpatialOS SDK
+    ///
+    /// If not specified, uses the SPATIAL_OS_DIR environment variable instead. Will fail
+    /// with an error if neither is set.
+    #[structopt(long, short = "l", parse(from_os_str))]
     spatial_lib_dir: Option<PathBuf>,
 
     #[structopt(long = "schema-path", short = "s", parse(from_os_str))]
     schema_paths: Vec<PathBuf>,
 
-    /// The path the output directory for the project.
+    /// Display detailed log output
+    #[structopt(long, short)]
+    verbose: bool,
+
+    /// The path the output directory for the project
     #[structopt(parse(from_os_str))]
     output_dir: PathBuf,
 }
