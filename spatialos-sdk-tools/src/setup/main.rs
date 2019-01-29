@@ -156,6 +156,11 @@ struct Opt {
     #[structopt(long, short = "l", parse(from_os_str))]
     spatial_lib_dir: Option<PathBuf>,
 
+    /// A directory to search for schema files
+    ///
+    /// The directory will be searched recursively for all .schema files. Any schema files
+    /// found will be included in compilation. Can be specified multiple times, e.g.
+    /// `setup -s foo/schemas -s bar/schemas -o schemas/bin`.
     #[structopt(long = "schema-path", short = "s", parse(from_os_str))]
     schema_paths: Vec<PathBuf>,
 
@@ -164,11 +169,13 @@ struct Opt {
     verbose: bool,
 
     /// Perform code generation and put the output in the specified file
+    ///
+    /// If not specified, will not perform code generation.
     #[structopt(long, short = "c", parse(from_os_str))]
     codegen: Option<PathBuf>,
 
     /// The path the output directory for the project
-    #[structopt(parse(from_os_str))]
+    #[structopt(long, short, parse(from_os_str))]
     output_dir: PathBuf,
 }
 
