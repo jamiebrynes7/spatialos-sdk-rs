@@ -5,7 +5,7 @@ use spatialos_sdk_code_generator::{generator, schema_bundle};
 use std::ffi::OsString;
 use std::fs::{self, File};
 use std::io::prelude::*;
-use std::path::PathBuf;
+use std::path::*;
 use std::process::Command;
 use structopt::StructOpt;
 use tap::*;
@@ -187,5 +187,8 @@ struct Opt {
 // the same separators everywhere, ensuring that we can be robust regardless of
 // how the user specifies their paths.
 fn normalize<P: AsRef<std::path::Path>>(path: P) -> PathBuf {
-    path.as_ref().components().collect()
+    path.as_ref()
+        .components()
+        .filter(|&comp| comp != Component::CurDir)
+        .collect()
 }
