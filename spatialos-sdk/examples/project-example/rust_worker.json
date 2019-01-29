@@ -7,12 +7,15 @@
   },
   "entity_interest": {
     "range_entity_interest": {
-      "radius": 2
+      "radius": 100
     }
   },
   "componentDelivery": {
     "default": "RELIABLE_ORDERED",
     "checkout_all_initially": true
+  },
+  "permissions": {
+    "all": {}
   },
   "launchConfiguration": {
     "cloudDeployment": {

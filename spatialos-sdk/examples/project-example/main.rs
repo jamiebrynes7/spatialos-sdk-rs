@@ -1,34 +1,75 @@
-extern crate spatialos_sdk;
-
-mod lib;
 use crate::lib::{get_connection, get_worker_configuration};
-
+use generated_code::example::Example;
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
+use spatialos_sdk::worker::component::{Component, ComponentDatabase};
 use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
+use spatialos_sdk::worker::entity::Entity;
 use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
+use spatialos_sdk::worker::op::WorkerOp;
 use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+mod generated_code;
+mod lib;
+
+fn main() -> Result<(), Box<std::error::Error>> {
     println!("Entered program");
 
-    // Get the configuration for the app from the command line arguments, exiting
-    // with an error code if the arguments are invalid.
-    let config = get_worker_configuration()?;
-
-    // Attempt to establish a connection to SpatialOS.
-    let worker_connection = get_connection(config)?;
+    let components = ComponentDatabase::new()
+        .add_component::<generated_code::example::Example>()
+        .add_component::<generated_code::improbable::Position>();
+    let config = get_worker_configuration(components)?;
+    let mut worker_connection = get_connection(config)?;
 
     println!("Connected as: {}", worker_connection.get_worker_id());
 
-    exercise_connection_code_paths(worker_connection);
+    exercise_connection_code_paths(&mut worker_connection);
+    logic_loop(&mut worker_connection);
 
     Ok(())
 }
 
-fn exercise_connection_code_paths(mut c: WorkerConnection) {
+fn logic_loop(c: &mut WorkerConnection) {
+    let mut counter = 0;
+
+    loop {
+        let ops = c.get_op_list(0);
+
+        // Process ops.
+        for op in &ops {
+            println!("Received op: {:?}", op);
+            match op {
+                WorkerOp::AddComponent(add_component) => match add_component.component_id {
+                    Example::ID => {
+                        let component_data = add_component.get::<Example>().unwrap();
+                        println!("Received Example data: {:?}", component_data);
+                    }
+                    id => println!("Received unknown component: {}", id),
+                },
+                WorkerOp::ComponentUpdate(update) => match update.component_id {
+                    Example::ID => {
+                        let component_update = update.get::<Example>();
+                        println!("Received Example update: {:?}", component_update)
+                    }
+                    id => println!("Received unknown component: {}", id),
+                },
+                _ => {}
+            }
+        }
+
+        ::std::thread::sleep(::std::time::Duration::from_millis(500));
+
+        if counter % 20 == 0 {
+            println!("Sending reserve entity ids request");
+            c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
+        }
+        counter += 1;
+    }
+}
+
+fn exercise_connection_code_paths(c: &mut WorkerConnection) {
     c.send_log_message(LogLevel::Info, "main", "Connected successfully!", None);
     print_worker_attributes(&c);
     check_for_flag(&c, "my-flag");
@@ -37,7 +78,7 @@ fn exercise_connection_code_paths(mut c: WorkerConnection) {
     c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
     c.send_delete_entity_request(DeleteEntityRequest(EntityId::new(1)), None);
     // TODO: Send create entity command
-    send_query(&mut c);
+    send_query(c);
 
     let interested = vec![
         InterestOverride::new(1, true),
@@ -46,8 +87,19 @@ fn exercise_connection_code_paths(mut c: WorkerConnection) {
     c.send_component_interest(EntityId::new(1), &interested);
     c.send_authority_loss_imminent_acknowledgement(EntityId::new(1), 1337);
 
-    send_metrics(&mut c);
+    send_metrics(c);
     c.set_protocol_logging_enabled(false);
+
+    let mut entity = Entity::new();
+    entity.add(generated_code::improbable::Position {
+        coords: generated_code::improbable::Coordinates {
+            x: 10.0,
+            y: 12.0,
+            z: 0.0,
+        },
+    });
+    let create_request_id = c.send_create_entity_request(entity, None, None);
+    dbg!(create_request_id);
 
     println!("Testing completed");
 }

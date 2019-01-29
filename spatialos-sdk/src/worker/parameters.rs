@@ -1,6 +1,7 @@
 use std::ffi::CString;
 use std::ptr;
 
+use crate::worker::component::ComponentDatabase;
 use crate::worker::internal::utils::WrappedNativeStructWithString;
 use crate::worker::vtable;
 use spatialos_sdk_sys::worker::*;
@@ -15,11 +16,12 @@ pub struct ConnectionParameters {
     pub protocol_logging: ProtocolLoggingParameters,
     pub enable_protocol_logging_at_startup: bool,
     pub thread_affinity: ThreadAffinityParameters,
+    pub components: ComponentDatabase,
 }
 
 impl ConnectionParameters {
-    pub fn new<T: Into<String>>(worker_type: T) -> Self {
-        let mut params = ConnectionParameters::default();
+    pub fn new<T: Into<String>>(worker_type: T, components: ComponentDatabase) -> Self {
+        let mut params = ConnectionParameters::default(components);
         params.worker_type = worker_type.into();
         params
     }
@@ -67,7 +69,7 @@ impl ConnectionParameters {
         self
     }
 
-    pub fn default() -> Self {
+    pub fn default(components: ComponentDatabase) -> Self {
         ConnectionParameters {
             worker_type: "".to_owned(),
             network: NetworkParameters::default(),
@@ -79,6 +81,7 @@ impl ConnectionParameters {
             protocol_logging: ProtocolLoggingParameters::default(),
             enable_protocol_logging_at_startup: false,
             thread_affinity: ThreadAffinityParameters::default(),
+            components,
         }
     }
 
@@ -100,7 +103,7 @@ impl ConnectionParameters {
             thread_affinity: self.thread_affinity.to_worker_sdk(),
             component_vtable_count: 0,
             component_vtables: ptr::null(),
-            default_component_vtable: &vtable::PASSTHROUGH_VTABLE,
+            default_component_vtable: ptr::null(),
         };
         WrappedNativeStructWithString {
             native_struct: params,

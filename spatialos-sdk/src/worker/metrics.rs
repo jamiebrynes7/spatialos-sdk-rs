@@ -13,7 +13,7 @@ pub enum MetricsError {
     KeyAlreadyExists,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Metrics {
     pub load: Option<f64>,
     pub gauge_metrics: HashMap<String, f64>,
@@ -171,6 +171,7 @@ impl From<&Worker_Metrics> for Metrics {
     }
 }
 
+#[derive(Debug)]
 pub struct HistogramMetric {
     pub sum: f64,
     pub buckets: Vec<HistogramMetricBucket>,
@@ -257,6 +258,7 @@ impl From<&Worker_HistogramMetric> for HistogramMetric {
     }
 }
 
+#[derive(Debug)]
 pub struct HistogramMetricBucket {
     pub upper_bound: f64,
     pub samples: u32,

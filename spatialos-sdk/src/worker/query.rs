@@ -1,6 +1,7 @@
 use std::ptr;
 
-use crate::worker::{ComponentId, EntityId};
+use crate::worker::component::ComponentId;
+use crate::worker::EntityId;
 
 use spatialos_sdk_sys::worker::{
     Worker_AndConstraint, Worker_ComponentConstraint, Worker_Constraint,
@@ -14,6 +15,7 @@ use spatialos_sdk_sys::worker::{
     Worker_SphereConstraint,
 };
 
+#[derive(Debug)]
 pub enum ResultType {
     Count,
     Snapshot(Vec<ComponentId>),
@@ -28,6 +30,7 @@ impl ResultType {
     }
 }
 
+#[derive(Debug)]
 pub struct EntityQuery {
     pub constraint: QueryConstraint,
     pub result_type: ResultType,
@@ -82,7 +85,7 @@ pub(crate) struct WrappedEntityQuery<'a> {
     _underlying_constraint_data: Box<[Worker_Constraint]>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum QueryConstraint {
     EntityId(EntityId),
     Component(ComponentId),
