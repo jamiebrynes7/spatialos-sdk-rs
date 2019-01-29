@@ -126,6 +126,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Remove the temp directory once the setup process has finished.
     fs::remove_dir_all(&tmp_path).map_err(|_| "Failed to remove temp dir")?;
 
+    // If the user specified the `--codegen` flag, run code generation with the bundle file
+    // that we just generated.
     if let Some(codegen_out_path) = codegen {
         let mut input_file =
             File::open(&bundle_json_path).expect("Unable to open the test schema bundle.");
@@ -158,9 +160,9 @@ struct Opt {
 
     /// A directory to search for schema files
     ///
-    /// The directory will be searched recursively for all .schema files. Any schema files
-    /// found will be included in compilation. Can be specified multiple times, e.g.
-    /// `setup -s foo/schemas -s bar/schemas -o schemas/bin`.
+    /// The directory will be searched recursively for all .schema files. Any schema
+    /// files found will be included in compilation. Can be specified multiple times,
+    /// e.g. `setup -s foo/schemas -s bar/schemas -o schemas/bin`.
     #[structopt(long = "schema-path", short = "s", parse(from_os_str))]
     schema_paths: Vec<PathBuf>,
 
@@ -181,11 +183,16 @@ struct Opt {
 
 // HACK: Normalizes the separators in `path`.
 //
-// This is necessary in order to be robust on Windows. Currently,
+// This is necessary in order to be robust on Windows, as well as work around
+// some idiosyncrasies with schema_compiler and protoc. Currently,
 // schema_compiler and protoc get tripped up if you have paths with mixed path
-// separators (i.e. mixing `\` and `/`). This function normalizes paths to use
+// separators (i.e. mixing '\' and '/'). This function normalizes paths to use
 // the same separators everywhere, ensuring that we can be robust regardless of
-// how the user specifies their paths.
+// how the user specifies their paths. It also removes any current dir segments
+// ("./"), as they can trip up schema_compiler and protoc as well.
+//
+// Improbable has noted that they are aware of these issues and will fix them
+// at some point in the future.
 fn normalize<P: AsRef<std::path::Path>>(path: P) -> PathBuf {
     path.as_ref()
         .components()
