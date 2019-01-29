@@ -6,7 +6,9 @@ use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
 
 use crate::worker::commands::*;
-use crate::worker::component::ComponentUpdate;
+use crate::worker::component;
+use crate::worker::component::internal::{CommandRequest, CommandResponse, ComponentUpdate};
+use crate::worker::entity::Entity;
 use crate::worker::internal::utils::cstr_to_string;
 use crate::worker::locator::*;
 use crate::worker::metrics::Metrics;
@@ -68,7 +70,8 @@ pub trait Connection {
     ) -> RequestId<ReserveEntityIdsRequest>;
     fn send_create_entity_request(
         &mut self,
-        payload: CreateEntityRequest,
+        entity: Entity,
+        entity_id: Option<EntityId>,
         timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest>;
     fn send_delete_entity_request(
@@ -85,7 +88,7 @@ pub trait Connection {
     fn send_command_request(
         &mut self,
         entity_id: EntityId,
-        request: CommandRequest,
+        request: component::internal::CommandRequest,
         timeout_millis: Option<u32>,
         command_parameters: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest>;
@@ -93,7 +96,7 @@ pub trait Connection {
     fn send_command_response(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
-        response: CommandResponse,
+        response: component::internal::CommandResponse,
     );
 
     fn send_command_failure(
@@ -102,7 +105,11 @@ pub trait Connection {
         message: &str,
     );
 
-    fn send_component_update(&mut self, entity_id: EntityId, component_update: ComponentUpdate);
+    fn send_component_update(
+        &mut self,
+        entity_id: EntityId,
+        component_update: component::internal::ComponentUpdate,
+    );
     fn send_component_interest(
         &mut self,
         entity_id: EntityId,
@@ -156,7 +163,9 @@ impl WorkerConnection {
         let hostname_cstr = CString::new(hostname).expect("Received 0 byte in supplied hostname.");
         let worker_id_cstr =
             CString::new(worker_id).expect("Received 0 byte in supplied Worker ID");
-        let conn_params = params.to_worker_sdk();
+        let mut conn_params = params.to_worker_sdk();
+        conn_params.native_struct.component_vtables = params.components.to_worker_sdk();
+        conn_params.native_struct.component_vtable_count = params.components.len() as u32;
         let future_ptr = unsafe {
             Worker_ConnectAsync(
                 hostname_cstr.as_ptr(),
@@ -253,10 +262,30 @@ impl Connection for WorkerConnection {
 
     fn send_create_entity_request(
         &mut self,
-        _payload: CreateEntityRequest,
-        _timeout_millis: Option<u32>,
+        entity: Entity,
+        entity_id: Option<EntityId>,
+        timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest> {
-        unimplemented!()
+        let timeout = match timeout_millis {
+            Some(c) => &c,
+            None => ptr::null(),
+        };
+        let entity_id = match entity_id {
+            Some(e) => &e.id,
+            None => ptr::null(),
+        };
+        let component_data = entity.raw_component_data();
+        let id = unsafe {
+            Worker_Connection_SendCreateEntityRequest(
+                self.connection_ptr,
+                component_data.len() as _,
+                component_data.as_ptr(),
+                entity_id,
+                timeout,
+            )
+        };
+
+        RequestId::new(id)
     }
 
     fn send_delete_entity_request(

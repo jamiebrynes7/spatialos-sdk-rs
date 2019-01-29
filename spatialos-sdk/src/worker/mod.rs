@@ -1,8 +1,9 @@
-pub(crate) mod internal;
+pub mod internal;
 
 pub mod commands;
 pub mod component;
 pub mod connection;
+pub mod entity;
 pub mod entity_snapshot;
 pub mod locator;
 pub mod metrics;
@@ -12,11 +13,10 @@ pub mod query;
 pub mod snapshot;
 pub mod vtable;
 
+use component::ComponentId;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
-
-type ComponentId = u32;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct EntityId {
