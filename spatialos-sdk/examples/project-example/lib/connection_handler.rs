@@ -24,12 +24,21 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
 
     let worker_id = worker_id.unwrap_or_else(|| format!("{}-{}", &worker_type, Uuid::new_v4()));
     let mut future = match command {
-        Command::Receptionist { host, port } => WorkerConnection::connect_receptionist_async(
-            &worker_id,
-            &host.unwrap_or_else(|| "127.0.0.1".into()),
-            port.unwrap_or(7777),
-            &ConnectionParameters::new(worker_type, components).using_tcp(),
-        ),
+        Command::Receptionist {
+            host,
+            port,
+            connect_with_external_ip,
+        } => {
+            let params = ConnectionParameters::new(worker_type, components)
+                .using_tcp()
+                .using_external_ip(connect_with_external_ip);
+            WorkerConnection::connect_receptionist_async(
+                &worker_id,
+                &host.unwrap_or_else(|| "127.0.0.1".into()),
+                port.unwrap_or(7777),
+                &params,
+            )
+        }
 
         Command::Locator {
             token,

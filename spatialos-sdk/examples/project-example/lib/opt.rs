@@ -23,7 +23,13 @@ pub struct Opt {
 pub enum Command {
     #[structopt(name = "receptionist")]
     Receptionist {
+        #[structopt(long, short)]
+        connect_with_external_ip: bool,
+
+        #[structopt(long, short)]
         host: Option<String>,
+
+        #[structopt(long, short)]
         port: Option<u16>,
     },
 

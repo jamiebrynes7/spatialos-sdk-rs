@@ -89,7 +89,6 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
     let _ = c.get_op_list(0);
     c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
     c.send_delete_entity_request(DeleteEntityRequest(EntityId::new(1)), None);
-    // TODO: Send create entity command
     send_query(c);
 
     let interested = vec![
@@ -103,8 +102,8 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
     c.set_protocol_logging_enabled(false);
 
     let mut entity = Entity::new();
-    entity.add(generated_code::improbable::Position {
-        coords: generated_code::improbable::Coordinates {
+    entity.add(improbable::Position {
+        coords: improbable::Coordinates {
             x: 10.0,
             y: 12.0,
             z: 0.0,

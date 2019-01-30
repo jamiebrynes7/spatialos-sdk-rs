@@ -22,7 +22,6 @@ To run the example project, you will need to:
 
 1. Run the code generator - `./spatialos-sdk/examples/project-example/codegen.sh`
 2. Build a release version of the RustWorker - `cargo build --example project-example --release`
-3. Build the schema descriptor for Spatial - `./spatialos-sdk/examples/project-example/setup.sh`
 4. Navigate to `spatialos-sdk/examples/project-example/spatialos`
 5. Run `spatial local launch`
 
@@ -33,7 +32,7 @@ by opening the inspector (navigate to http://localhost:21000/inspector in your w
 want to manually launch another instance of the worker, run the following command:
 
 ```
-cargo run --example project-example -- --worker-id RustWorker999 --worker-type RustWorker receptionist 127.0.0.1 7777
+cargo run --example project-example -- --worker-id RustWorker999 --worker-type RustWorker receptionist
 ```
 
 This will allow you to see the log output of the worker as it runs.
