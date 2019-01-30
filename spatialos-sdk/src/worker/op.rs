@@ -183,7 +183,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     WorkerOp::RemoveEntity(remove_entity_op)
                 }
                 Worker_OpType_WORKER_OP_TYPE_ADD_COMPONENT => {
-                    let op = erased_op.add_component;
+                    let op = &erased_op.add_component;
                     let add_component_op = AddComponentOp {
                         entity_id: EntityId::new(op.entity_id),
                         component_id: op.data.component_id,
@@ -209,7 +209,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     WorkerOp::AuthorityChange(authority_change_op)
                 }
                 Worker_OpType_WORKER_OP_TYPE_COMPONENT_UPDATE => {
-                    let op = erased_op.component_update;
+                    let op = &erased_op.component_update;
                     let component_update_op = ComponentUpdateOp {
                         entity_id: EntityId::new(op.entity_id),
                         component_id: op.update.component_id,
@@ -545,8 +545,8 @@ pub struct ComponentUpdateOp<'a> {
 
 impl<'a> ComponentUpdateOp<'a> {
     pub fn get<C: Component>(&self) -> Option<&C::Update> {
+        // TODO: Deserialize schema_type if user_handle is null.
         if C::ID == self.component_update.component_id {
-            // TODO: Deserialize schema_type if user_handle is null.
             Some(unsafe { &*(self.component_update.user_handle as *const _ as *const _) })
         } else {
             None

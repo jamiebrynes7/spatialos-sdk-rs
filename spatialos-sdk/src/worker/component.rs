@@ -52,6 +52,7 @@ where
 pub(crate) mod internal {
     use crate::worker::internal::schema::*;
     use spatialos_sdk_sys::worker::*;
+    use std::marker::PhantomData;
 
     use crate::worker::component::ComponentId;
 
@@ -59,7 +60,12 @@ pub(crate) mod internal {
     pub struct ComponentData<'a> {
         pub component_id: ComponentId,
         pub schema_type: SchemaComponentData,
-        pub user_handle: &'a Worker_ComponentDataHandle,
+        pub user_handle: *const Worker_ComponentDataHandle,
+
+        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
+        // type-erased pointer that may be null, so we just mark that we're borrowing
+        // *something.
+        pub _marker: PhantomData<&'a ()>,
     }
 
     impl<'a> From<&'a Worker_ComponentData> for ComponentData<'a> {
@@ -70,7 +76,8 @@ pub(crate) mod internal {
                     component_id: data.component_id,
                     internal: data.schema_type,
                 },
-                user_handle: unsafe { &*data.user_handle },
+                user_handle: data.user_handle,
+                _marker: PhantomData,
             }
         }
     }
@@ -79,7 +86,12 @@ pub(crate) mod internal {
     pub struct ComponentUpdate<'a> {
         pub component_id: ComponentId,
         pub schema_type: SchemaComponentUpdate,
-        pub user_handle: &'a Worker_ComponentUpdateHandle,
+        pub user_handle: *const Worker_ComponentUpdateHandle,
+
+        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
+        // type-erased pointer that may be null, so we just mark that we're borrowing
+        // *something.
+        pub _marker: PhantomData<&'a ()>,
     }
 
     impl<'a> From<&'a Worker_ComponentUpdate> for ComponentUpdate<'a> {
@@ -90,7 +102,8 @@ pub(crate) mod internal {
                     component_id: update.component_id,
                     internal: update.schema_type,
                 },
-                user_handle: unsafe { &*update.user_handle },
+                user_handle: update.user_handle,
+                _marker: PhantomData,
             }
         }
     }
@@ -99,7 +112,12 @@ pub(crate) mod internal {
     pub struct CommandRequest<'a> {
         pub component_id: ComponentId,
         pub schema_type: SchemaCommandRequest,
-        pub user_handle: &'a Worker_CommandRequestHandle,
+        pub user_handle: *const Worker_CommandRequestHandle,
+
+        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
+        // type-erased pointer that may be null, so we just mark that we're borrowing
+        // *something.
+        pub _marker: PhantomData<&'a ()>,
     }
 
     impl<'a> From<&'a Worker_CommandRequest> for CommandRequest<'a> {
@@ -110,7 +128,8 @@ pub(crate) mod internal {
                     component_id: request.component_id,
                     internal: request.schema_type,
                 },
-                user_handle: unsafe { &*request.user_handle },
+                user_handle: request.user_handle,
+                _marker: PhantomData,
             }
         }
     }
@@ -119,7 +138,12 @@ pub(crate) mod internal {
     pub struct CommandResponse<'a> {
         pub component_id: ComponentId,
         pub schema_type: SchemaCommandResponse,
-        pub user_handle: &'a Worker_CommandResponseHandle,
+        pub user_handle: *const Worker_CommandResponseHandle,
+
+        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
+        // type-erased pointer that may be null, so we just mark that we're borrowing
+        // *something.
+        pub _marker: PhantomData<&'a ()>,
     }
 
     impl<'a> From<&'a Worker_CommandResponse> for CommandResponse<'a> {
@@ -130,7 +154,8 @@ pub(crate) mod internal {
                     component_id: response.component_id,
                     internal: response.schema_type,
                 },
-                user_handle: unsafe { &*response.user_handle },
+                user_handle: response.user_handle,
+                _marker: PhantomData,
             }
         }
     }
