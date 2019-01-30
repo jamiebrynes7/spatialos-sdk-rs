@@ -25,20 +25,6 @@ impl OpList {
         OpList { raw }
     }
 
-    /// Returns the number of ops in the list.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// # use spatialos_sdk::worker::connection::*;
-    /// # let connection: WorkerConnection = unimplemented!();
-    /// let op_list = connection.get_op_list(0);
-    /// println!("Number of ops received: {}", op_list.len());
-    /// ```
-    pub fn len(&self) -> usize {
-        self.raw().op_count as usize
-    }
-
     /// Returns an iterator over the list.
     ///
     /// # Examples
@@ -52,6 +38,11 @@ impl OpList {
     /// ```
     pub fn iter(&self) -> Iter<'_> {
         self.into_iter()
+    }
+
+    /// Returns the number of ops in the list.
+    fn len(&self) -> usize {
+        self.raw().op_count as usize
     }
 
     /// Returns a reference to the raw `Worker_OpList`.
@@ -105,6 +96,7 @@ pub enum StatusCode<T> {
     InternalError(String),
 }
 
+#[derive(Debug)]
 pub enum WorkerOp<'a> {
     Disconnect(DisconnectOp),
     FlagUpdate(FlagUpdateOp),
