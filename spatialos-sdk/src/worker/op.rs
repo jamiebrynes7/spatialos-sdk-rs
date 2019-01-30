@@ -546,8 +546,10 @@ pub struct ComponentUpdateOp<'a> {
 impl<'a> ComponentUpdateOp<'a> {
     pub fn get<C: Component>(&self) -> Option<&C::Update> {
         // TODO: Deserialize schema_type if user_handle is null.
-        if C::ID == self.component_update.component_id {
-            Some(unsafe { &*(self.component_update.user_handle as *const _ as *const _) })
+        if C::ID == self.component_update.component_id
+            && !self.component_update.user_handle.is_null()
+        {
+            Some(unsafe { &*(self.component_update.user_handle as *const _) })
         } else {
             None
         }
@@ -571,9 +573,9 @@ pub struct CommandRequestOp<'a> {
 
 impl<'a> CommandRequestOp<'a> {
     pub fn get<C: Component>(&self) -> Option<&C::CommandRequest> {
-        if C::ID == self.component_id {
-            // TODO: Deserialize schema_type if user_handle is null.
-            Some(unsafe { &*(self.request.user_handle as *const _ as *const _) })
+        // TODO: Deserialize schema_type if user_handle is null.
+        if C::ID == self.component_id && !self.request.user_handle.is_null() {
+            Some(unsafe { &*(self.request.user_handle as *const _) })
         } else {
             None
         }
@@ -598,9 +600,9 @@ pub struct CommandResponse<'a> {
 }
 
 impl<'a> CommandResponse<'a> {
-    pub fn get<C: Component>(&self) -> Option<&C::CommandRequest> {
-        if C::ID == self.response.component_id {
-            // TODO: Deserialize schema_type if user_handle is null.
+    pub fn get<C: Component>(&self) -> Option<&C::CommandResponse> {
+        // TODO: Deserialize schema_type if user_handle is null.
+        if C::ID == self.response.component_id && !self.response.user_handle.is_null() {
             Some(unsafe { &*(self.response.user_handle as *const _) })
         } else {
             None
