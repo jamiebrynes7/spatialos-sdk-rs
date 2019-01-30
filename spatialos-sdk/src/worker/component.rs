@@ -56,13 +56,13 @@ pub(crate) mod internal {
     use crate::worker::component::ComponentId;
 
     #[derive(Debug)]
-    pub struct ComponentData {
+    pub struct ComponentData<'a> {
         pub component_id: ComponentId,
         pub schema_type: SchemaComponentData,
-        pub user_handle: *mut Worker_ComponentDataHandle,
+        pub user_handle: &'a Worker_ComponentDataHandle,
     }
 
-    impl From<&Worker_ComponentData> for ComponentData {
+    impl<'a> From<&'a Worker_ComponentData> for ComponentData<'a> {
         fn from(data: &Worker_ComponentData) -> Self {
             ComponentData {
                 component_id: data.component_id,
@@ -70,19 +70,19 @@ pub(crate) mod internal {
                     component_id: data.component_id,
                     internal: data.schema_type,
                 },
-                user_handle: data.user_handle,
+                user_handle: unsafe { &*data.user_handle },
             }
         }
     }
 
     #[derive(Debug)]
-    pub struct ComponentUpdate {
+    pub struct ComponentUpdate<'a> {
         pub component_id: ComponentId,
         pub schema_type: SchemaComponentUpdate,
-        pub user_handle: *mut Worker_ComponentUpdateHandle,
+        pub user_handle: &'a Worker_ComponentUpdateHandle,
     }
 
-    impl From<&Worker_ComponentUpdate> for ComponentUpdate {
+    impl<'a> From<&'a Worker_ComponentUpdate> for ComponentUpdate<'a> {
         fn from(update: &Worker_ComponentUpdate) -> Self {
             ComponentUpdate {
                 component_id: update.component_id,
@@ -90,19 +90,19 @@ pub(crate) mod internal {
                     component_id: update.component_id,
                     internal: update.schema_type,
                 },
-                user_handle: update.user_handle,
+                user_handle: unsafe { &*update.user_handle },
             }
         }
     }
 
     #[derive(Debug)]
-    pub struct CommandRequest {
+    pub struct CommandRequest<'a> {
         pub component_id: ComponentId,
         pub schema_type: SchemaCommandRequest,
-        pub user_handle: *mut Worker_CommandRequestHandle,
+        pub user_handle: &'a Worker_CommandRequestHandle,
     }
 
-    impl From<&Worker_CommandRequest> for CommandRequest {
+    impl<'a> From<&'a Worker_CommandRequest> for CommandRequest<'a> {
         fn from(request: &Worker_CommandRequest) -> Self {
             CommandRequest {
                 component_id: request.component_id,
@@ -110,19 +110,19 @@ pub(crate) mod internal {
                     component_id: request.component_id,
                     internal: request.schema_type,
                 },
-                user_handle: request.user_handle,
+                user_handle: unsafe { &*request.user_handle },
             }
         }
     }
 
     #[derive(Debug)]
-    pub struct CommandResponse {
+    pub struct CommandResponse<'a> {
         pub component_id: ComponentId,
         pub schema_type: SchemaCommandResponse,
-        pub user_handle: *mut Worker_CommandResponseHandle,
+        pub user_handle: &'a Worker_CommandResponseHandle,
     }
 
-    impl From<&Worker_CommandResponse> for CommandResponse {
+    impl<'a> From<&'a Worker_CommandResponse> for CommandResponse<'a> {
         fn from(response: &Worker_CommandResponse) -> Self {
             CommandResponse {
                 component_id: response.component_id,
@@ -130,7 +130,7 @@ pub(crate) mod internal {
                     component_id: response.component_id,
                     internal: response.schema_type,
                 },
-                user_handle: response.user_handle,
+                user_handle: unsafe { &*response.user_handle },
             }
         }
     }

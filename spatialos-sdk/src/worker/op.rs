@@ -508,11 +508,11 @@ pub struct AddComponentOp<'a> {
     component_data: component::internal::ComponentData<'a>,
 }
 
-impl AddComponentOp {
+impl<'a> AddComponentOp<'a> {
     pub fn get<C: Component>(&self) -> Option<&C> {
         if C::ID == self.component_data.component_id {
             // TODO: Deserialize schema_type if user_handle is null.
-            Some(unsafe { &*(self.component_data.user_handle as *const _) })
+            Some(unsafe { &*(self.component_data.user_handle as *const _ as *const _) })
         } else {
             None
         }
@@ -539,14 +539,15 @@ pub struct AuthorityChangeOp {
 #[derive(Debug)]
 pub struct ComponentUpdateOp<'a> {
     pub entity_id: EntityId,
-    pub component_update: ComponentUpdate<'a>,
+    pub component_id: ComponentId,
+    pub component_update: component::internal::ComponentUpdate<'a>,
 }
 
-impl ComponentUpdateOp {
+impl<'a> ComponentUpdateOp<'a> {
     pub fn get<C: Component>(&self) -> Option<&C::Update> {
         if C::ID == self.component_update.component_id {
             // TODO: Deserialize schema_type if user_handle is null.
-            Some(unsafe { &*(self.component_update.user_handle as *const _) })
+            Some(unsafe { &*(self.component_update.user_handle as *const _ as *const _) })
         } else {
             None
         }
@@ -555,13 +556,6 @@ impl ComponentUpdateOp {
     fn schema(&self) -> &SchemaComponentUpdate {
         &self.component_update.schema_type
     }
-}
-
-#[derive(Debug)]
-pub struct CommandRequestOp<'a> {
-    pub entity_id: EntityId,
-    pub component_id: ComponentId,
-    component_update: component::internal::ComponentUpdate<'a>,
 }
 
 #[derive(Debug)]
@@ -575,11 +569,11 @@ pub struct CommandRequestOp<'a> {
     request: component::internal::CommandRequest<'a>,
 }
 
-impl CommandRequestOp {
+impl<'a> CommandRequestOp<'a> {
     pub fn get<C: Component>(&self) -> Option<&C::CommandRequest> {
         if C::ID == self.component_id {
             // TODO: Deserialize schema_type if user_handle is null.
-            Some(unsafe { &*(self.request.user_handle as *const _) })
+            Some(unsafe { &*(self.request.user_handle as *const _ as *const _) })
         } else {
             None
         }
@@ -603,7 +597,7 @@ pub struct CommandResponse<'a> {
     response: component::internal::CommandResponse<'a>,
 }
 
-impl CommandResponse {
+impl<'a> CommandResponse<'a> {
     pub fn get<C: Component>(&self) -> Option<&C::CommandRequest> {
         if C::ID == self.response.component_id {
             // TODO: Deserialize schema_type if user_handle is null.
