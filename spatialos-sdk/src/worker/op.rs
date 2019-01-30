@@ -512,7 +512,7 @@ impl<'a> AddComponentOp<'a> {
     pub fn get<C: Component>(&self) -> Option<&C> {
         if C::ID == self.component_data.component_id {
             // TODO: Deserialize schema_type if user_handle is null.
-            Some(unsafe { &*(self.component_data.user_handle as *const _ as *const _) })
+            Some(unsafe { &*(self.component_data.user_handle as *const _) })
         } else {
             None
         }
