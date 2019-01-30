@@ -64,7 +64,7 @@ pub(crate) mod internal {
 
         // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
         // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something.
+        // *something*.
         pub _marker: PhantomData<&'a ()>,
     }
 
@@ -90,7 +90,7 @@ pub(crate) mod internal {
 
         // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
         // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something.
+        // *something*.
         pub _marker: PhantomData<&'a ()>,
     }
 
@@ -116,7 +116,7 @@ pub(crate) mod internal {
 
         // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
         // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something.
+        // *something*.
         pub _marker: PhantomData<&'a ()>,
     }
 
@@ -142,7 +142,7 @@ pub(crate) mod internal {
 
         // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
         // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something.
+        // *something*.
         pub _marker: PhantomData<&'a ()>,
     }
 
