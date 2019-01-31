@@ -90,17 +90,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Add all schema files in the std lib.
-    let schema_glob = std_lib_path.join("improbable/*.schema");
-    for entry in glob::glob(schema_glob.to_str().unwrap())?.filter_map(Result::ok) {
-        command.arg(&entry);
-    }
+    add_schemas(&std_lib_path.join("improbable"), &mut command);
 
     // Add all user-provided schemas.
     for schema_path in &schema_paths {
-        let schema_glob = schema_path.join("**/*.schema");
-        for entry in glob::glob(schema_glob.to_str().unwrap())?.filter_map(Result::ok) {
-            command.arg(&entry);
-        }
+        add_schemas(schema_path, &mut command);
     }
 
     trace!("{:#?}", command);
@@ -181,21 +175,32 @@ struct Opt {
     output_dir: PathBuf,
 }
 
-// HACK: Normalizes the separators in `path`.
-//
-// This is necessary in order to be robust on Windows, as well as work around
-// some idiosyncrasies with schema_compiler and protoc. Currently,
-// schema_compiler and protoc get tripped up if you have paths with mixed path
-// separators (i.e. mixing '\' and '/'). This function normalizes paths to use
-// the same separators everywhere, ensuring that we can be robust regardless of
-// how the user specifies their paths. It also removes any current dir segments
-// ("./"), as they can trip up schema_compiler and protoc as well.
-//
-// Improbable has noted that they are aware of these issues and will fix them
-// at some point in the future.
+/// HACK: Normalizes the separators in `path`.
+///
+/// This is necessary in order to be robust on Windows, as well as work around
+/// some idiosyncrasies with schema_compiler and protoc. Currently,
+/// schema_compiler and protoc get tripped up if you have paths with mixed path
+/// separators (i.e. mixing '\' and '/'). This function normalizes paths to use
+/// the same separators everywhere, ensuring that we can be robust regardless of
+/// how the user specifies their paths. It also removes any current dir segments
+/// ("./"), as they can trip up schema_compiler and protoc as well.
+///
+/// Improbable has noted that they are aware of these issues and will fix them
+/// at some point in the future.
 fn normalize<P: AsRef<std::path::Path>>(path: P) -> PathBuf {
     path.as_ref()
         .components()
         .filter(|&comp| comp != Component::CurDir)
         .collect()
+}
+
+/// Recursively searches `path` for `.schema` files and adds them to `command`.
+fn add_schemas(path: &PathBuf, command: &mut Command) {
+    let schema_glob = path.join("**/*.schema");
+    for entry in glob::glob(schema_glob.to_str().unwrap())
+        .unwrap()
+        .filter_map(Result::ok)
+    {
+        command.arg(&entry);
+    }
 }
