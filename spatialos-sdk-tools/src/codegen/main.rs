@@ -78,16 +78,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // If the user specified the `--codegen` flag, run code generation with the bundle file
     // that we just generated.
     if let Some(codegen_out_path) = codegen {
+        // Load bundle.json, which describes the schema definitions for all components.
         let mut input_file =
-            File::open(&bundle_json_path).expect("Unable to open the test schema bundle.");
+            File::open(&bundle_json_path).map_err(|_| "Failed to open bundle.json")?;
         let mut contents = String::new();
         input_file
             .read_to_string(&mut contents)
-            .expect("Unable to read the test schema bundle");
-        let generated_file =
-            generator::generate_code(schema_bundle::load_bundle(&contents).unwrap());
-        let mut output_file = File::create(codegen_out_path).unwrap();
-        output_file.write_all(generated_file.as_bytes()).unwrap();
+            .map_err(|_| "Failed to read contents of bundle.json")?;
+
+        // Run code generation.
+        let bundle = schema_bundle::load_bundle(&contents)
+            .map_err(|_| "Failed to parse contents of bundle.json")?;
+        let generated_file = generator::generate_code(bundle);
+
+        // Write the generated code to the output file.
+        File::create(codegen_out_path)
+            .map_err(|_| "Unable to create codegen output file")?
+            .write_all(generated_file.as_bytes())
+            .map_err(|_| "Failed to write generated code to file")?;
     }
 
     Ok(())
