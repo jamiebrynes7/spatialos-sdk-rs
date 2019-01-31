@@ -53,7 +53,7 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
                 &deployment,
                 &ConnectionParameters::new(worker_type, components)
                     .using_tcp()
-                    .using_external_ip(),
+                    .using_external_ip(true),
                 queue_status_callback,
             )
         }
