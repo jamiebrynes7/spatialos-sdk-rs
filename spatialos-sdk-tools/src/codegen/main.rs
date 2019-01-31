@@ -1,4 +1,3 @@
-use fs_extra::dir::{self, CopyOptions};
 use log::*;
 use simplelog::*;
 use spatialos_sdk_code_generator::{generator, schema_bundle};
@@ -36,42 +35,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Determine the paths the the schema compiler and protoc relative the the lib
     // dir path.
     let schema_compiler_path = normalize(spatial_lib_dir.join("schema-compiler/schema_compiler"));
-    let protoc_path = normalize(spatial_lib_dir.join("schema-compiler/protoc"));
     let std_lib_path = normalize(spatial_lib_dir.join("std-lib"));
 
     // Calculate the various output directories relative to `output_dir`.
-    let tmp_path = output_dir.join("tmp");
     let bundle_json_path = output_dir.join("bundle.json");
 
     // Create the output directories if they don't already exist.
     fs::create_dir_all(&output_dir)
         .map_err(|_| format!("Failed to create {}", output_dir.display()))?;
-    fs::create_dir_all(&tmp_path)
-        .map_err(|_| format!("Failed to create {}", tmp_path.display()))?;
-
-    // Copy the contents of the schema-compiler/proto dir into the temp dir.
-    let proto_dir_glob = spatial_lib_dir.join("schema-compiler/proto/*");
-    for entry in glob::glob(proto_dir_glob.to_str().unwrap())?.filter_map(Result::ok) {
-        dir::copy(
-            &entry,
-            &tmp_path,
-            &CopyOptions {
-                overwrite: true,
-                ..CopyOptions::new()
-            },
-        )
-        .map_err(|_| {
-            format!(
-                "Failed to copy {} to {}",
-                entry.display(),
-                tmp_path.display()
-            )
-        })?;
-    }
 
     // Run the schema compiler for each of the schema files in std-lib/improbable.
     let schema_path_arg = OsString::from("--schema_path=").tap(|arg| arg.push(&std_lib_path));
-    let proto_out_arg = OsString::from("--proto_out=").tap(|arg| arg.push(&tmp_path));
     let bundle_json_arg =
         OsString::from("--bundle_json_out=").tap(|arg| arg.push(&bundle_json_path));
     let descriptor_out_arg = OsString::from("--descriptor_set_out=")
@@ -79,7 +53,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut command = Command::new(&schema_compiler_path);
     command
         .arg(&schema_path_arg)
-        .arg(&proto_out_arg)
         .arg(&bundle_json_arg)
         .arg(&descriptor_out_arg)
         .arg("--load_all_schema_on_schema_path");
@@ -101,24 +74,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     command
         .status()
         .map_err(|_| "Failed to compile schema files")?;
-
-    // Run protoc on all the generated proto files.
-    let proto_path_arg = OsString::from("--proto_path=").tap(|arg| arg.push(&tmp_path));
-    let mut command = Command::new(&protoc_path);
-    command
-        .arg(&proto_path_arg)
-        .arg(&descriptor_out_arg)
-        .arg("--include_imports");
-    let proto_glob = tmp_path.join("**/*.proto");
-    for entry in glob::glob(proto_glob.to_str().unwrap())?.filter_map(Result::ok) {
-        command.arg(&entry);
-    }
-
-    trace!("{:#?}", command);
-    command.status().map_err(|_| "Failed to run protoc")?;
-
-    // Remove the temp directory once the setup process has finished.
-    fs::remove_dir_all(&tmp_path).map_err(|_| "Failed to remove temp dir")?;
 
     // If the user specified the `--codegen` flag, run code generation with the bundle file
     // that we just generated.
