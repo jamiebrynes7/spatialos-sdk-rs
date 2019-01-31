@@ -71,9 +71,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     trace!("{:#?}", command);
-    command
+    let status = command
         .status()
         .map_err(|_| "Failed to compile schema files")?;
+
+    if !status.success() {
+        return Err("Failed to run schema compilation")?;
+    }
 
     // If the user specified the `--codegen` flag, run code generation with the bundle file
     // that we just generated.
