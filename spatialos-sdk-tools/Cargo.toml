@@ -13,8 +13,8 @@ name = "generate_bindings"
 path = "src/generate_bindings/main.rs"
 
 [[bin]]
-name = "setup"
-path = "src/setup/main.rs"
+name = "cargo-spatial-codegen"
+path = "src/codegen/main.rs"
 
 [dependencies]
 zip = "0.5"

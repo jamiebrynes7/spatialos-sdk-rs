@@ -20,9 +20,9 @@ If these steps complete successfully, the `spatialos-sdk` crate has been built a
 
 To run the example project, you will need to:
 
-1. Install the setup tool: `cargo install --path ./spatialos-sdk-tools --bin setup`
+1. Install the setup tool: `cargo install --path ./spatialos-sdk-tools --bin cargo-spatial-codegen`
 2. Navigate to `spatialos-sdk/examples/project-example/spatialos`
-3. Run the setup process: `setup -s ./schema -c ../generated_code.rs -o ./schema/bin`
+3. Run the setup process: `cargo spatial-codegen -s ./schema -c ../generated_code.rs -o ./schema/bin`
 4. Build a release version of the RustWorker: `cargo build --example project-example --release`
 5. In two terminals:
    - Start spatial: `spatial local launch`

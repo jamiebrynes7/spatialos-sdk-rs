@@ -146,9 +146,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[derive(Debug, StructOpt)]
 #[structopt(
-    name = "setup",
+    name = "cargo-spatial-codegen",
     rename_all = "kebab-case",
-    about = "Perform setup for a Rust SpatialOS project."
+    about = "Perform schema compilation and code generation for a Rust SpatialOS project."
 )]
 struct Opt {
     /// The path to your local installation of the SpatialOS SDK
