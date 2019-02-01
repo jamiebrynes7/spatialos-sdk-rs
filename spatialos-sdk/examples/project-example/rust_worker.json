@@ -2,7 +2,7 @@
   "workerType": "RustWorker",
   "attributeSet": {
     "attributes": [
-      "rusty-worker"
+      "rusty"
     ]
   },
   "entity_interest": {
@@ -23,9 +23,13 @@
         "localBuildDirectory": "../../../target/release/examples/",
         "command": "project-example",
         "arguments": [
+          "--worker-id",
+          "${IMPROBABLE_WORKER_ID}",
+          "--worker-type",
+          "RustWorker",
+          "receptionist",
           "${IMPROBABLE_RECEPTIONIST_HOST}",
-          "${IMPROBABLE_RECEPTIONIST_PORT}",
-          "${IMPROBABLE_WORKER_ID}"
+          "${IMPROBABLE_RECEPTIONIST_PORT}"
         ]
       }
     },
@@ -34,27 +38,39 @@
         "localBuildDirectory": "../../../target/release/examples/",
         "command": "project-example",
         "arguments": [
+          "--worker-id",
+          "${IMPROBABLE_WORKER_ID}",
+          "--worker-type",
+          "RustWorker",
+          "receptionist",
           "${IMPROBABLE_RECEPTIONIST_HOST}",
-          "${IMPROBABLE_RECEPTIONIST_PORT}",
-          "${IMPROBABLE_WORKER_ID}"
+          "${IMPROBABLE_RECEPTIONIST_PORT}"
         ]
       },
       "linux": {
         "localBuildDirectory": "../../../target/release/examples/",
         "command": "project-example",
         "arguments": [
+          "--worker-id",
+          "${IMPROBABLE_WORKER_ID}",
+          "--worker-type",
+          "RustWorker",
+          "receptionist",
           "${IMPROBABLE_RECEPTIONIST_HOST}",
-          "${IMPROBABLE_RECEPTIONIST_PORT}",
-          "${IMPROBABLE_WORKER_ID}"
+          "${IMPROBABLE_RECEPTIONIST_PORT}"
         ]
       },
       "windows": {
         "localBuildDirectory": "../../../target/release/examples/",
-        "command": "project-example",
+        "command": "project-example.exe",
         "arguments": [
+          "--worker-id",
+          "${IMPROBABLE_WORKER_ID}",
+          "--worker-type",
+          "RustWorker",
+          "receptionist",
           "${IMPROBABLE_RECEPTIONIST_HOST}",
-          "${IMPROBABLE_RECEPTIONIST_PORT}",
-          "${IMPROBABLE_WORKER_ID}"
+          "${IMPROBABLE_RECEPTIONIST_PORT}"
         ]
       }
     }

@@ -7,12 +7,12 @@
 
 This is still heavily WIP and should be treated as such. Progress can be seen in the `Projects` boards which define milestones and progress toward those milestones. When this reaches feature parity with the C API and has basic code generation in which all user facing APIs are safe, a crate will be published to `crates.io`.
 
-## Setup 
+## Setup
 
 1. Clone this repository.
 2. Run `cargo run --bin download_sdk -- -d dependencies -s 13.5.1` to download the C API dependencies.
 3. Set the `SPATIAL_LIB_DIR` environment variable to the location of the dependencies: `export SPATIAL_LIB_DIR=$(pwd)/dependencies`.
-4. Run `cargo build` 
+4. Run `cargo build`
 
 If these steps complete successfully, the `spatialos-sdk` crate has been built and linked successfully and can be used in user code.
 
@@ -21,10 +21,21 @@ If these steps complete successfully, the `spatialos-sdk` crate has been built a
 To run the example project, you will need to:
 
 1. Run the code generator - `./spatialos-sdk/examples/project-example/codegen.sh`
-2. Build a release version of the RustWorker - `cargo build --example project-example --release`.
-3. In two terminals:
-   - Navigate to the `spatialos` directory and start spatial: `cd spatialos-sdk/examples/project-example/spatialos/ && spatial local launch`
-   - Run the example project worker - `cargo run --example project-example -- receptionist --worker_type RustWorker`
+2. Build a release version of the RustWorker - `cargo build --example project-example --release`
+4. Navigate to `spatialos-sdk/examples/project-example/spatialos`
+5. Run `spatial local launch`
+
+This will start a local deployment of SpatialOS with one entity. The entity will have the `Example`
+component described in `spatialos-sdk/examples/project-example/spatialos/schema/example.schema`.
+SpatialOS will automatically launch an instance of the worker you just built, which you can verify
+by opening the inspector (navigate to http://localhost:21000/inspector in your web browser). If you
+want to manually launch another instance of the worker, run the following command:
+
+```
+cargo run --example project-example -- --worker-id RustWorker999 --worker-type RustWorker receptionist
+```
+
+This will allow you to see the log output of the worker as it runs.
 
 ## Testing the code generator
 
