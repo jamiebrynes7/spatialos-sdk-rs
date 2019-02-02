@@ -1,7 +1,6 @@
 use crate::connection_handler::*;
 use crate::opt::*;
 use generated::example::Example;
-use generated::improbable;
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
@@ -17,10 +16,14 @@ use structopt::StructOpt;
 use tap::*;
 
 mod connection_handler;
-mod generated;
 mod opt;
 
-use generated::example;
+// HACK: Include `generated.rs` directly rather than treating it like a regular
+// module file because it internally declares a module named `generated`, which
+// causes clippy to complain about nested modules with the same name. We'll
+// likely end up using `include!` if we switch to doing code generation in a
+// build script, but the generated code will be at a more reasonable place.
+include!("generated.rs");
 
 fn main() {
     println!("Entered program");
