@@ -1,55 +1,69 @@
 use futures::{Async, Future};
 
+use crate::lib::{Command, Opt};
+use spatialos_sdk::worker::{
+    component::ComponentDatabase,
+    connection::{WorkerConnection, WorkerConnectionFuture},
+    locator::{Locator, LocatorCredentials, LocatorParameters},
+    parameters::ConnectionParameters,
+};
 use uuid::Uuid;
-
-use spatialos_sdk::worker::connection::WorkerConnection;
-use spatialos_sdk::worker::connection::WorkerConnectionFuture;
-use spatialos_sdk::worker::locator::Locator;
-
-use crate::lib::argument_parsing::ConnectionType;
-use crate::lib::argument_parsing::WorkerConfiguration;
 
 static LOCATOR_HOSTNAME: &str = "locator.improbable.io";
 
 static POLL_NUM_ATTEMPTS: u32 = 5;
 static POLL_TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 3000;
 
-pub fn get_connection(configuration: WorkerConfiguration) -> Result<WorkerConnection, String> {
-    let worker_id = get_worker_id(&configuration);
+pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerConnection, String> {
+    let Opt {
+        worker_type,
+        worker_id,
+        connect_with_poll,
+        command,
+    } = opt;
 
-    let mut future = match configuration.connection_type {
-        ConnectionType::Receptionist(host, port) => WorkerConnection::connect_receptionist_async(
-            &worker_id,
-            &host,
+    let worker_id = worker_id.unwrap_or_else(|| format!("{}-{}", &worker_type, Uuid::new_v4()));
+    let mut future = match command {
+        Command::Receptionist {
+            host,
             port,
-            &configuration.connection_params,
-        ),
-        ConnectionType::Locator(params) => {
+            connect_with_external_ip,
+        } => {
+            let params = ConnectionParameters::new(worker_type, components)
+                .using_tcp()
+                .using_external_ip(connect_with_external_ip);
+            WorkerConnection::connect_receptionist_async(
+                &worker_id,
+                &host.unwrap_or_else(|| "127.0.0.1".into()),
+                port.unwrap_or(7777),
+                &params,
+            )
+        }
+
+        Command::Locator {
+            token,
+            project_name,
+        } => {
+            let params =
+                LocatorParameters::new(project_name, LocatorCredentials::LoginToken(token));
             let locator = Locator::new(LOCATOR_HOSTNAME, &params);
             let deployment = get_deployment(&locator)?;
             WorkerConnection::connect_locator_async(
                 &locator,
                 &deployment,
-                &configuration.connection_params,
+                &ConnectionParameters::new(worker_type, components)
+                    .using_tcp()
+                    .using_external_ip(true),
                 queue_status_callback,
             )
         }
     };
 
-    if configuration.connect_with_poll {
+    if connect_with_poll {
         get_connection_poll(&mut future)
     } else {
         future.wait()
     }
-}
-
-fn get_worker_id(config: &WorkerConfiguration) -> String {
-    let worker_uuid = Uuid::new_v4();
-    format!(
-        "{}-{}",
-        config.connection_params.worker_type,
-        worker_uuid.to_string()
-    )
 }
 
 fn queue_status_callback(_queue_status: &Result<u32, String>) -> bool {

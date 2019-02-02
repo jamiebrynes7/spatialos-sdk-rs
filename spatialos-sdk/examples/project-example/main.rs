@@ -1,5 +1,6 @@
-use crate::lib::{get_connection, get_worker_configuration};
+use crate::lib::{get_connection, Opt};
 use generated_code::example::Example;
+use generated_code::improbable;
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
@@ -10,6 +11,9 @@ use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
 use spatialos_sdk::worker::op::WorkerOp;
 use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
+use std::collections::BTreeMap;
+use structopt::StructOpt;
+use tap::*;
 
 mod generated_code;
 mod lib;
@@ -18,10 +22,15 @@ fn main() -> Result<(), Box<std::error::Error>> {
     println!("Entered program");
 
     let components = ComponentDatabase::new()
-        .add_component::<generated_code::example::Example>()
-        .add_component::<generated_code::improbable::Position>();
-    let config = get_worker_configuration(components)?;
-    let mut worker_connection = get_connection(config)?;
+        .add_component::<Example>()
+        .add_component::<improbable::EntityAcl>()
+        .add_component::<improbable::Persistence>()
+        .add_component::<improbable::Metadata>()
+        .add_component::<improbable::Interest>()
+        .add_component::<improbable::Position>();
+
+    let opt = Opt::from_args();
+    let mut worker_connection = get_connection(opt, components)?;
 
     println!("Connected as: {}", worker_connection.get_worker_id());
 
@@ -77,7 +86,6 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
     let _ = c.get_op_list(0);
     c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
     c.send_delete_entity_request(DeleteEntityRequest(EntityId::new(1)), None);
-    // TODO: Send create entity command
     send_query(c);
 
     let interested = vec![
@@ -91,15 +99,32 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
     c.set_protocol_logging_enabled(false);
 
     let mut entity = Entity::new();
-    entity.add(generated_code::improbable::Position {
-        coords: generated_code::improbable::Coordinates {
+    entity.add(improbable::Position {
+        coords: improbable::Coordinates {
             x: 10.0,
             y: 12.0,
             z: 0.0,
         },
     });
+    entity.add(improbable::EntityAcl {
+        read_acl: improbable::WorkerRequirementSet {
+            attribute_set: vec![improbable::WorkerAttributeSet {
+                attribute: vec!["rusty".into()],
+            }],
+        },
+        component_write_acl: BTreeMap::new().tap(|writes| {
+            writes.insert(
+                improbable::Position::ID,
+                improbable::WorkerRequirementSet {
+                    attribute_set: vec![improbable::WorkerAttributeSet {
+                        attribute: vec!["rusty".into()],
+                    }],
+                },
+            );
+        }),
+    });
     let create_request_id = c.send_create_entity_request(entity, None, None);
-    dbg!(create_request_id);
+    println!("Create entity request ID: {:?}", create_request_id);
 
     println!("Testing completed");
 }

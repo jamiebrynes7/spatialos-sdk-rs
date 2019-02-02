@@ -59,8 +59,8 @@ impl ConnectionParameters {
         self
     }
 
-    pub fn using_external_ip(mut self) -> Self {
-        self.network.use_external_ip = true;
+    pub fn using_external_ip(mut self, use_external_ip: bool) -> Self {
+        self.network.use_external_ip = use_external_ip;
         self
     }
 

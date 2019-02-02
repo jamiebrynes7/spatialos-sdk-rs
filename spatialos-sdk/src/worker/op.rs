@@ -16,40 +16,72 @@ use crate::worker::internal::utils::*;
 use spatialos_sdk_sys::worker::*;
 
 pub struct OpList {
-    ops: Vec<WorkerOp>,
-    internal_ptr: *mut Worker_OpList,
+    raw: *mut Worker_OpList,
 }
 
 impl OpList {
-    pub(crate) fn new(raw_ops_list_ptr: *mut Worker_OpList) -> Self {
-        unsafe {
-            let worker_op_list = *raw_ops_list_ptr;
-            let ops = slice::from_raw_parts(worker_op_list.ops, worker_op_list.op_count as usize)
-                .iter()
-                .map(WorkerOp::from)
-                .collect::<Vec<WorkerOp>>();
+    pub(crate) fn new(raw: *mut Worker_OpList) -> Self {
+        assert!(!raw.is_null());
+        OpList { raw }
+    }
 
-            OpList {
-                ops,
-                internal_ptr: raw_ops_list_ptr,
-            }
-        }
+    /// Returns an iterator over the list.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use spatialos_sdk::worker::connection::*;
+    /// # let connection: WorkerConnection = unimplemented!();
+    /// for op in connection.get_op_list(0).iter() {
+    ///     // Process `op`.
+    /// }
+    /// ```
+    pub fn iter(&self) -> Iter<'_> {
+        self.into_iter()
+    }
+
+    /// Returns the number of ops in the list.
+    fn len(&self) -> usize {
+        self.raw().op_count as usize
+    }
+
+    /// Returns a reference to the raw `Worker_OpList`.
+    ///
+    /// This is a simple helper to reduce the `unsafe` boilerplate in all the
+    /// places where we need to access data on the raw op list.
+    fn raw(&self) -> &Worker_OpList {
+        unsafe { &*self.raw }
     }
 }
 
 impl<'a> IntoIterator for &'a OpList {
-    type Item = &'a WorkerOp;
-    type IntoIter = slice::Iter<'a, WorkerOp>;
+    type Item = WorkerOp<'a>;
+    type IntoIter = Iter<'a>;
 
-    fn into_iter(self) -> <Self as IntoIterator>::IntoIter {
-        self.ops.iter()
+    fn into_iter(self) -> Self::IntoIter {
+        let slice = unsafe { slice::from_raw_parts(self.raw().ops, self.len()) };
+        Iter { iter: slice.iter() }
     }
 }
 
 impl Drop for OpList {
     fn drop(&mut self) {
-        assert!(!self.internal_ptr.is_null());
-        unsafe { Worker_OpList_Destroy(self.internal_ptr) }
+        assert!(!self.raw.is_null());
+        unsafe {
+            Worker_OpList_Destroy(self.raw);
+        }
+    }
+}
+
+pub struct Iter<'a> {
+    iter: slice::Iter<'a, Worker_Op>,
+}
+
+impl<'a> Iterator for Iter<'a> {
+    type Item = WorkerOp<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(WorkerOp::from)
     }
 }
 
@@ -65,7 +97,7 @@ pub enum StatusCode<T> {
 }
 
 #[derive(Debug)]
-pub enum WorkerOp {
+pub enum WorkerOp<'a> {
     Disconnect(DisconnectOp),
     FlagUpdate(FlagUpdateOp),
     LogMessage(LogMessageOp),
@@ -73,22 +105,22 @@ pub enum WorkerOp {
     CriticalSection(CriticalSectionOp),
     AddEntity(AddEntityOp),
     RemoveEntity(RemoveEntityOp),
-    AddComponent(AddComponentOp),
+    AddComponent(AddComponentOp<'a>),
     RemoveComponent(RemoveComponentOp),
-    ComponentUpdate(ComponentUpdateOp),
+    ComponentUpdate(ComponentUpdateOp<'a>),
     AuthorityChange(AuthorityChangeOp),
-    CommandRequest(CommandRequestOp),
-    CommandResponse(CommandResponseOp),
+    CommandRequest(CommandRequestOp<'a>),
+    CommandResponse(CommandResponseOp<'a>),
     ReserveEntityIdsResponse(ReserveEntityIdsResponseOp),
     CreateEntityResponse(CreateEntityResponseOp),
     DeleteEntityResponse(DeleteEntityResponseOp),
     EntityQueryResponse(EntityQueryResponseOp),
 }
 
-impl From<&Worker_Op> for WorkerOp {
-    fn from(op: &Worker_Op) -> Self {
+impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
+    fn from(op: &'a Worker_Op) -> Self {
         unsafe {
-            let erased_op = op.__bindgen_anon_1;
+            let erased_op = &op.__bindgen_anon_1;
             let op_type = u32::from(op.op_type);
             match op_type {
                 Worker_OpType_WORKER_OP_TYPE_DISCONNECT => {
@@ -143,7 +175,7 @@ impl From<&Worker_Op> for WorkerOp {
                     WorkerOp::RemoveEntity(remove_entity_op)
                 }
                 Worker_OpType_WORKER_OP_TYPE_ADD_COMPONENT => {
-                    let op = erased_op.add_component;
+                    let op = &erased_op.add_component;
                     let add_component_op = AddComponentOp {
                         entity_id: EntityId::new(op.entity_id),
                         component_id: op.data.component_id,
@@ -169,7 +201,7 @@ impl From<&Worker_Op> for WorkerOp {
                     WorkerOp::AuthorityChange(authority_change_op)
                 }
                 Worker_OpType_WORKER_OP_TYPE_COMPONENT_UPDATE => {
-                    let op = erased_op.component_update;
+                    let op = &erased_op.component_update;
                     let component_update_op = ComponentUpdateOp {
                         entity_id: EntityId::new(op.entity_id),
                         component_id: op.update.component_id,
@@ -178,7 +210,7 @@ impl From<&Worker_Op> for WorkerOp {
                     WorkerOp::ComponentUpdate(component_update_op)
                 }
                 Worker_OpType_WORKER_OP_TYPE_COMMAND_REQUEST => {
-                    let op = erased_op.command_request;
+                    let op = &erased_op.command_request;
                     let attribute_set = cstr_array_to_vec_string(
                         op.caller_attribute_set.attributes,
                         op.caller_attribute_set.attribute_count,
@@ -196,7 +228,7 @@ impl From<&Worker_Op> for WorkerOp {
                     WorkerOp::CommandRequest(command_request_op)
                 }
                 Worker_OpType_WORKER_OP_TYPE_COMMAND_RESPONSE => {
-                    let op = erased_op.command_response;
+                    let op = &erased_op.command_response;
                     let status_code = match u32::from(op.status_code) {
                         Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                             StatusCode::Success(CommandResponse {
@@ -462,13 +494,13 @@ pub struct EntityQueryResponseOp {
 }
 
 #[derive(Debug)]
-pub struct AddComponentOp {
+pub struct AddComponentOp<'a> {
     pub entity_id: EntityId,
     pub component_id: ComponentId,
-    component_data: component::internal::ComponentData,
+    component_data: component::internal::ComponentData<'a>,
 }
 
-impl AddComponentOp {
+impl<'a> AddComponentOp<'a> {
     pub fn get<C: Component>(&self) -> Option<&C> {
         if C::ID == self.component_data.component_id {
             // TODO: Deserialize schema_type if user_handle is null.
@@ -497,16 +529,18 @@ pub struct AuthorityChangeOp {
 }
 
 #[derive(Debug)]
-pub struct ComponentUpdateOp {
+pub struct ComponentUpdateOp<'a> {
     pub entity_id: EntityId,
     pub component_id: ComponentId,
-    component_update: component::internal::ComponentUpdate,
+    pub component_update: component::internal::ComponentUpdate<'a>,
 }
 
-impl ComponentUpdateOp {
+impl<'a> ComponentUpdateOp<'a> {
     pub fn get<C: Component>(&self) -> Option<&C::Update> {
-        if C::ID == self.component_update.component_id {
-            // TODO: Deserialize schema_type if user_handle is null.
+        // TODO: Deserialize schema_type if user_handle is null.
+        if C::ID == self.component_update.component_id
+            && !self.component_update.user_handle.is_null()
+        {
             Some(unsafe { &*(self.component_update.user_handle as *const _) })
         } else {
             None
@@ -519,20 +553,20 @@ impl ComponentUpdateOp {
 }
 
 #[derive(Debug)]
-pub struct CommandRequestOp {
+pub struct CommandRequestOp<'a> {
     pub request_id: RequestId<IncomingCommandRequest>,
     pub entity_id: EntityId,
     pub timeout_millis: u32,
     pub caller_worker_id: String,
     pub caller_attribute_set: Vec<String>,
     pub component_id: ComponentId,
-    request: component::internal::CommandRequest,
+    request: component::internal::CommandRequest<'a>,
 }
 
-impl CommandRequestOp {
+impl<'a> CommandRequestOp<'a> {
     pub fn get<C: Component>(&self) -> Option<&C::CommandRequest> {
-        if C::ID == self.component_id {
-            // TODO: Deserialize schema_type if user_handle is null.
+        // TODO: Deserialize schema_type if user_handle is null.
+        if C::ID == self.component_id && !self.request.user_handle.is_null() {
             Some(unsafe { &*(self.request.user_handle as *const _) })
         } else {
             None
@@ -545,22 +579,22 @@ impl CommandRequestOp {
 }
 
 #[derive(Debug)]
-pub struct CommandResponseOp {
+pub struct CommandResponseOp<'a> {
     pub request_id: RequestId<OutgoingCommandRequest>,
     pub entity_id: EntityId,
     pub component_id: ComponentId,
-    pub response: StatusCode<CommandResponse>,
+    pub response: StatusCode<CommandResponse<'a>>,
 }
 
 #[derive(Debug)]
-pub struct CommandResponse {
-    response: component::internal::CommandResponse,
+pub struct CommandResponse<'a> {
+    response: component::internal::CommandResponse<'a>,
 }
 
-impl CommandResponse {
-    pub fn get<C: Component>(&self) -> Option<&C::CommandRequest> {
-        if C::ID == self.response.component_id {
-            // TODO: Deserialize schema_type if user_handle is null.
+impl<'a> CommandResponse<'a> {
+    pub fn get<C: Component>(&self) -> Option<&C::CommandResponse> {
+        // TODO: Deserialize schema_type if user_handle is null.
+        if C::ID == self.response.component_id && !self.response.user_handle.is_null() {
             Some(unsafe { &*(self.response.user_handle as *const _) })
         } else {
             None
