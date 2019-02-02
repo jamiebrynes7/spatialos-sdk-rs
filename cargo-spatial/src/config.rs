@@ -26,17 +26,17 @@ pub struct Config {
     /// Defaults to `./build`.
     pub build_dir: String,
 
-    /// The directory to use as output for the schema compiler.
-    ///
-    /// The built schema descriptor and bundle file will be put here. Defaults to
-    /// `build_dir`/schema if not specified.
-    schema_build_dir: Option<String>,
-
     /// The directory where the SpatialOS SDK should be downloaded.
     ///
     /// If not specified, the SPATIAL_LIB_DIR environment variable will be used
     /// instead.
     pub spatial_lib_dir: Option<String>,
+
+    /// The directory to use as output for the schema compiler.
+    ///
+    /// The built schema descriptor and bundle file will be put here. Defaults to
+    /// `build_dir`/schema if not specified.
+    schema_build_dir: Option<String>,
 }
 
 impl Default for Config {
@@ -69,6 +69,6 @@ impl Config {
     pub fn schema_build_dir(&self) -> String {
         self.schema_build_dir
             .clone()
-            .unwrap_or_else(|| self.build_dir + "/schema")
+            .unwrap_or_else(|| self.build_dir.clone() + "/schema")
     }
 }
