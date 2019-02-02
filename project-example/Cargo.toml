@@ -1,0 +1,15 @@
+[package]
+name = "project-example"
+version = "0.0.0"
+authors = [
+    "Jamie Brynes <jamiebrynes7@gmail.com>",
+    "David Avedissian <git@dga.me.uk>"
+]
+edition = "2018"
+
+[dependencies]
+spatialos-sdk = { path = "../spatialos-sdk"}
+futures = "0.1.25"
+uuid = { version = "0.7", features = ["v4"] }
+structopt = "0.2.14"
+tap = "0.3.0"
