@@ -8,7 +8,7 @@ use std::path::*;
 use std::process::Command;
 use tap::*;
 
-pub(crate) fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
     let output_dir = normalize(config.schema_build_dir());
 
     let spatial_lib_dir = config.spatial_lib_dir

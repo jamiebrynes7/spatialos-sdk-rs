@@ -1,5 +1,5 @@
+use crate::config::Config;
 use crate::opt::*;
-use crate::Config;
 use std::ffi::OsString;
 use std::path::*;
 use std::process;

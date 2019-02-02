@@ -1,12 +1,6 @@
-use crate::config::Config;
-use crate::opt::*;
+use cargo_spatial::{codegen, config::Config, local, opt::*};
 use simplelog::*;
 use structopt::StructOpt;
-
-mod codegen;
-mod config;
-mod local;
-mod opt;
 
 fn main() {
     let opt = Opt::from_args();
@@ -31,27 +25,8 @@ fn main() {
 
         Command::Generate { command } => match command {
             Generate::ComponentId => {
-                println!("Component ID: {}", generate_component_id());
+                println!("Component ID: {}", cargo_spatial::generate_component_id());
             }
         },
-    }
-}
-
-/// Generates a random, valid component ID.
-///
-/// Component IDs are `i32` values that must be:
-///
-/// * Greater than 100.
-/// * Less than 536,870,911.
-/// * Not in the range 190,000 to 199999.
-fn generate_component_id() -> i32 {
-    use rand::Rng;
-
-    let mut rng = rand::thread_rng();
-    loop {
-        let num = rng.gen();
-        if num > 100 && (num < 190_000 || num > 199_999) && num < 536_870_911 {
-            return num;
-        }
     }
 }
