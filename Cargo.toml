@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "cargo-spatial",
     "spatialos-sdk",
     "spatialos-sdk-code-generator",
     "spatialos-sdk-sys",
