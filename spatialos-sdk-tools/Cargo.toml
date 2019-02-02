@@ -17,8 +17,3 @@ zip = "0.5"
 clap = "2.32.0"
 glob = "0.2"
 bindgen = "0.42"
-structopt = "0.2.14"
-tap = "0.3.0"
-log = "0.4.1"
-simplelog = "0.5.3"
-spatialos-sdk-code-generator = { path = "../spatialos-sdk-code-generator" }
