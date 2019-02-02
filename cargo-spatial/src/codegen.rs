@@ -1,4 +1,4 @@
-use crate::Config;
+use crate::config::Config;
 use log::*;
 use spatialos_sdk_code_generator::{generator, schema_bundle};
 use std::ffi::OsString;
