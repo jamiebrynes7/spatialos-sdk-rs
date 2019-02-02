@@ -22,6 +22,10 @@ pub struct Opt {
     #[structopt(parse(from_os_str))]
     pub log_directory: Option<PathBuf>,
 
+    /// Print verbose logs while running
+    #[structopt(long, short)]
+    pub verbose: bool,
+
     #[structopt(subcommand)]
     pub command: Command,
 }

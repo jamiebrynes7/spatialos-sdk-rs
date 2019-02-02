@@ -1,19 +1,28 @@
 use crate::opt::*;
 use cargo_metadata::MetadataCommand;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::process;
+use simplelog::*;
 use structopt::StructOpt;
 
+mod codegen;
 mod local;
 mod opt;
 
 fn main() {
     let opt = Opt::from_args();
+
+    // Initialize the logger.
+    let verbosity = if opt.verbose {
+        LevelFilter::Trace
+    } else {
+        LevelFilter::Warn
+    };
+    SimpleLogger::init(verbosity, Default::default()).expect("Failed to setup logger");
+
     match &opt.command {
         Command::Codegen => {
             let config = Config::load().expect("Failed to load config");
-            codegen(&config).expect("Failed to run codegen");
+            codegen::run_codegen(&config).expect("Failed to run codegen");
         }
 
         Command::Local(local) => match local {
@@ -61,15 +70,27 @@ struct Config {
     /// Defaults to `src/generated.rs`.
     codegen_out: String,
 
-    /// The directory containing schema files for the project.
+    /// The directories containing schema files for the project.
     ///
     /// Defaults to `./schema`.
-    schema_dir: String,
+    schema_paths: Vec<String>,
 
     /// The directory where built workers are put.
     ///
     /// Defaults to `./build`.
     build_dir: String,
+
+    /// The directory to use as output for the schema compiler.
+    ///
+    /// The built schema descriptor and bundle file will be put here. Defaults to
+    /// `build_dir`/schema if not specified.
+    schema_build_dir: Option<String>,
+
+    /// The directory where the SpatialOS SDK should be downloaded.
+    ///
+    /// If not specified, the SPATIAL_LIB_DIR environment variable will be used
+    /// instead.
+    spatial_lib_dir: Option<String>,
 }
 
 impl Default for Config {
@@ -77,8 +98,10 @@ impl Default for Config {
         Config {
             workers: vec![".".into()],
             codegen_out: "src/generated.rs".into(),
-            schema_dir: "./schema".into(),
+            schema_paths: vec!["./schema".into()],
             build_dir: "./build".into(),
+            schema_build_dir: None,
+            spatial_lib_dir: None,
         }
     }
 }
@@ -106,24 +129,4 @@ impl Config {
             .and_then(|val| serde_json::from_value(val.clone()).ok())
             .unwrap_or_default())
     }
-}
-
-fn codegen(config: &Config) -> Result<(), String> {
-    // TODO: Use the spatialos-sdk-tools crate directly rather than invoking the CLI.
-    let codegen_out = PathBuf::from(&config.schema_dir).join("bin");
-    let status = process::Command::new("setup")
-        .arg("-s")
-        .arg(&config.schema_dir)
-        .arg("-c")
-        .arg(&config.codegen_out)
-        .arg("-o")
-        .arg(&codegen_out)
-        .status()
-        .expect("Failed to run setup script");
-
-    if !status.success() {
-        return Err("Failed to run codegen".into());
-    }
-
-    Ok(())
 }

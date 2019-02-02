@@ -10,7 +10,7 @@ pub fn launch(_opt: &Opt, _local: &Local, launch: &LocalLaunch) {
     let config = Config::load().expect("Failed to load configuration");
 
     // Run codegen and such.
-    crate::codegen(&config).expect("Failed to run codegen");
+    crate::codegen::run_codegen(&config).expect("Failed to run codegen");
 
     // Use `cargo install` to build workers and copy the exectuables to the build
     // directory.
