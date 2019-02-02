@@ -9,11 +9,7 @@ use std::process::Command;
 use tap::*;
 
 pub(crate) fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
-    let output_dir = config
-        .schema_build_dir
-        .as_ref()
-        .map(normalize)
-        .unwrap_or_else(|| normalize(&config.build_dir).join("/schema"));
+    let output_dir = normalize(config.schema_build_dir());
 
     let spatial_lib_dir = config.spatial_lib_dir
         .as_ref()
