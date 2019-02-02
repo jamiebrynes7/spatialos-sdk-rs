@@ -11,10 +11,6 @@ edition = "2018"
 spatialos-sdk-sys = { path = "../spatialos-sdk-sys"}
 futures = "0.1.25"
 
-[[example]]
-name = "project-example"
-path = "./examples/project-example/main.rs"
-
 [dev-dependencies]
 uuid = { version = "0.7", features = ["v4"] }
 structopt = "0.2.14"

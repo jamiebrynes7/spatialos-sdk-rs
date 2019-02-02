@@ -1,3 +1,5 @@
+use crate::connection_handler::*;
+use crate::opt::*;
 use generated::example::Example;
 use generated::improbable;
 use spatialos_sdk::worker::commands::{
@@ -13,13 +15,10 @@ use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 use std::collections::BTreeMap;
 use structopt::StructOpt;
 use tap::*;
-use crate::connection_handler::*;
-use crate::opt::*;
 
-mod generated;
 mod connection_handler;
+mod generated;
 mod opt;
-
 
 use generated::example;
 
