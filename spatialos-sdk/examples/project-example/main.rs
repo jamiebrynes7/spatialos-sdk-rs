@@ -18,7 +18,9 @@ use tap::*;
 mod generated_code;
 mod lib;
 
-fn main() -> Result<(), Box<std::error::Error>> {
+use generated_code::example;
+
+fn main() {
     println!("Entered program");
 
     let components = ComponentDatabase::new()
@@ -30,14 +32,15 @@ fn main() -> Result<(), Box<std::error::Error>> {
         .add_component::<improbable::Position>();
 
     let opt = Opt::from_args();
-    let mut worker_connection = get_connection(opt, components)?;
+    let mut worker_connection = match get_connection(opt, components) {
+        Ok(c) => c,
+        Err(e) => panic!("{}", e),
+    };
 
     println!("Connected as: {}", worker_connection.get_worker_id());
 
     exercise_connection_code_paths(&mut worker_connection);
     logic_loop(&mut worker_connection);
-
-    Ok(())
 }
 
 fn logic_loop(c: &mut WorkerConnection) {
@@ -51,14 +54,14 @@ fn logic_loop(c: &mut WorkerConnection) {
             println!("Received op: {:?}", op);
             match op {
                 WorkerOp::AddComponent(add_component) => match add_component.component_id {
-                    Example::ID => {
+                    example::Example::ID => {
                         let component_data = add_component.get::<Example>().unwrap();
                         println!("Received Example data: {:?}", component_data);
                     }
                     id => println!("Received unknown component: {}", id),
                 },
                 WorkerOp::ComponentUpdate(update) => match update.component_id {
-                    Example::ID => {
+                    example::Example::ID => {
                         let component_update = update.get::<Example>();
                         println!("Received Example update: {:?}", component_update)
                     }
