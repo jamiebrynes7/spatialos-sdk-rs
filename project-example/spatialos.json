@@ -1,11 +1,8 @@
 {
   "configurationVersion": "0.1",
   "projectName": "xxx",
-  "schemaDescriptor": "./schema/bin/schema.descriptor",
+  "schemaDescriptor": "./build/schema/schema.descriptor",
   "serverWorkers": [
-    "../rust_worker.json"
-  ],
-  "clientWorkers": [
-    "../rust_client.json"
+    "./rust_worker.json"
   ]
 }

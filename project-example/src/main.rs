@@ -1,6 +1,5 @@
-use crate::lib::{get_connection, Opt};
-use generated_code::example::Example;
-use generated_code::improbable;
+use generated::example::Example;
+use generated::improbable;
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
@@ -14,11 +13,15 @@ use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 use std::collections::BTreeMap;
 use structopt::StructOpt;
 use tap::*;
+use crate::connection_handler::*;
+use crate::opt::*;
 
-mod generated_code;
-mod lib;
+mod generated;
+mod connection_handler;
+mod opt;
 
-use generated_code::example;
+
+use generated::example;
 
 fn main() {
     println!("Entered program");

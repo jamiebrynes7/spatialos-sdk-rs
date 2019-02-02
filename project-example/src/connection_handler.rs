@@ -1,6 +1,6 @@
 use futures::{Async, Future};
 
-use crate::lib::{Command, Opt};
+use crate::opt::{Command, Opt};
 use spatialos_sdk::worker::{
     component::ComponentDatabase,
     connection::{WorkerConnection, WorkerConnectionFuture},
