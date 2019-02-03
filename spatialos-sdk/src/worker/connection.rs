@@ -548,7 +548,7 @@ impl Future for WorkerConnectionFuture {
     type Item = WorkerConnection;
     type Error = String;
 
-    fn poll(&mut self) -> Result<Async<WorkerConnection>, String> {
+    fn poll(&mut self) -> Result<Async<<Self as Future>::Item>, <Self as Future>::Error> {
         if self.was_consumed {
             return Err("WorkerConnectionFuture has already been consumed.".to_owned());
         }
@@ -571,7 +571,7 @@ impl Future for WorkerConnectionFuture {
         Err(status.detail)
     }
 
-    fn wait(self) -> Result<WorkerConnection, String>
+    fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
     where
         Self: Sized,
     {

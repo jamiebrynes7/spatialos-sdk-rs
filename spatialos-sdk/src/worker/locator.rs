@@ -27,8 +27,8 @@ impl Locator {
             let future_ptr = Worker_Locator_GetDeploymentListAsync(self.locator);
             assert!(!future_ptr.is_null());
             DeploymentListFuture {
-                future: future_ptr,
-                was_consumed: false,
+                internal: future_ptr,
+                consumed: false,
             }
         }
     }
@@ -162,8 +162,8 @@ impl Deployment {
 }
 
 pub struct DeploymentListFuture {
-    future: *mut Worker_DeploymentListFuture,
-    was_consumed: bool,
+    internal: *mut Worker_DeploymentListFuture,
+    consumed: bool,
 }
 
 impl DeploymentListFuture {
@@ -197,68 +197,54 @@ impl Future for DeploymentListFuture {
     type Error = String;
 
     fn poll(&mut self) -> Result<Async<<Self as Future>::Item>, <Self as Future>::Error> {
-        if self.was_consumed {
+        if self.consumed {
             return Err("DeploymentListFuture has already been consumed".to_owned());
         }
 
-        assert!(!self.future.is_null());
+        assert!(!self.internal.is_null());
         let mut data: Option<Result<Vec<Deployment>, String>> = None;
         unsafe {
             Worker_DeploymentListFuture_Get(
-                self.future,
+                self.internal,
                 &0,
                 &mut data as *mut _ as *mut ::std::os::raw::c_void,
                 Some(DeploymentListFuture::callback_handler),
             );
         }
 
-        match data {
-            Some(result) => {
-                self.was_consumed = true;
-                match result {
-                    Ok(deployments) => Ok(Async::Ready(deployments)),
-                    Err(e) => Err(e),
-                }
-            }
-            None => Ok(Async::NotReady),
-        }
+        data.map_or(Ok(Async::NotReady), |result| {
+            self.consumed = true;
+            result.map(|depls| Async::Ready(depls))
+        })
     }
 
     fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
     where
         Self: Sized,
     {
-        if self.was_consumed {
+        if self.consumed {
             return Err("DeploymentListFuture has already been consumed".to_owned());
         }
 
-        assert!(!self.future.is_null());
+        assert!(!self.internal.is_null());
         let mut data: Option<Result<Vec<Deployment>, String>> = None;
         unsafe {
             Worker_DeploymentListFuture_Get(
-                self.future,
+                self.internal,
                 ::std::ptr::null(),
                 &mut data as *mut _ as *mut ::std::os::raw::c_void,
                 Some(DeploymentListFuture::callback_handler),
             );
         }
 
-        match data {
-            Some(result) => match result {
-                Ok(deployments) => Ok(deployments),
-                Err(e) => Err(e),
-            },
-            None => {
-                panic!("Blocking call to Worker_DeploymentListFuture_Get did not trigger callback")
-            }
-        }
+        data.expect("Blocking call to Worker_DeploymentListFuture_Get did not trigger callback")
     }
 }
 
 impl Drop for DeploymentListFuture {
     fn drop(&mut self) {
-        if !self.future.is_null() {
-            unsafe { Worker_DeploymentListFuture_Destroy(self.future) }
+        if !self.internal.is_null() {
+            unsafe { Worker_DeploymentListFuture_Destroy(self.internal) }
         }
     }
 }
