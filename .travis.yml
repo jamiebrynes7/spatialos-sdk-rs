@@ -27,7 +27,7 @@ matrix:
     - os: windows
       rust: stable
 
-  allow_failures: 
+  allow_failures:
     - os: windows
     - rust: nightly
 
@@ -38,5 +38,6 @@ install:
 - "./ci/install.sh"
 
 script:
+- (cd project-example && cargo spatial codegen)
 - "./ci/lint.sh"
 - "./ci/build-test.sh"
