@@ -1,4 +1,5 @@
 use cargo_spatial::{codegen, config::Config, local, opt::*};
+use log::*;
 use simplelog::*;
 use structopt::StructOpt;
 
@@ -17,6 +18,8 @@ fn main() {
     match &opt.command {
         Command::Codegen => {
             let config = Config::load().expect("Failed to load config");
+            trace!("Loaded config: {:#?}", config);
+
             codegen::run_codegen(&config).expect("Failed to run codegen");
         }
 

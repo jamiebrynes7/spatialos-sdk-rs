@@ -30,6 +30,7 @@ pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
     // Create the output directory if it doesn't already exist.
     fs::create_dir_all(&output_dir)
         .map_err(|_| format!("Failed to create {}", output_dir.display()))?;
+    trace!("Created schema output dir: {}", output_dir.display());
 
     // Prepare initial flags for the schema compiler.
     let schema_path_arg = OsString::from("--schema_path=").tap(|arg| arg.push(&std_lib_path));
