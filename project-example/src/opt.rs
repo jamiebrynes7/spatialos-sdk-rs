@@ -41,4 +41,10 @@ pub enum Command {
         #[structopt(name = "PROJECT_NAME", long = "project-name", short = "n")]
         project_name: String,
     },
+
+    #[structopt(name = "dev-auth")]
+    DevelopmentAuthentication {
+        #[structopt(name = "DEV_AUTH_TOKEN", long = "dev-auth-token", short = "t")]
+        dev_auth_token: String
+    }
 }

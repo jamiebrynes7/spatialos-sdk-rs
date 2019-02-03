@@ -1,7 +1,8 @@
 use futures::{Async, Future};
 
-use crate::opt::{Command, Opt};
+use crate::lib::{Command, Opt};
 use spatialos_sdk::worker::{
+    alpha_locator::{AlphaLocator, PlayerIdentityTokenRequest},
     component::ComponentDatabase,
     connection::{WorkerConnection, WorkerConnectionFuture},
     locator::{Locator, LocatorCredentials, LocatorParameters},
@@ -9,10 +10,11 @@ use spatialos_sdk::worker::{
 };
 use uuid::Uuid;
 
-static LOCATOR_HOSTNAME: &str = "locator.improbable.io";
+const LOCATOR_HOSTNAME: &str = "locator.improbable.io";
+const LOCATOR_HOST: u16 = 444;
 
-static POLL_NUM_ATTEMPTS: u32 = 5;
-static POLL_TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 3000;
+const POLL_NUM_ATTEMPTS: u32 = 5;
+const POLL_TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 3000;
 
 pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerConnection, String> {
     let Opt {
@@ -56,6 +58,19 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
                     .using_external_ip(true),
                 queue_status_callback,
             )
+        },
+        Command::DevelopmentAuthentication {
+            dev_auth_token
+        } => {
+            let request = PlayerIdentityTokenRequest::new(dev_auth_token, "player-id");
+            let future = AlphaLocator::create_development_player_identity_token(LOCATOR_HOSTNAME, LOCATOR_HOST, &request);
+
+            match future.wait() {
+                Ok(resp) => println!("{}", resp.player_identity_token),
+                Err(e) => eprintln!("{}", e)
+            }
+
+            panic!("Testing done!")
         }
     };
 
