@@ -16,7 +16,7 @@ impl AlphaLocator {
     pub fn create_development_player_identity_token(
         hostname: &str,
         port: u16,
-        params: &PlayerIdentityTokenRequest,
+        params: &mut PlayerIdentityTokenRequest,
     ) -> PlayerIdentityTokenFuture {
         unsafe {
             let cstr = CString::new(hostname).unwrap();
@@ -58,27 +58,28 @@ impl PlayerIdentityTokenRequest {
         }
     }
 
-    pub fn with_duration_secs(&mut self, seconds: u32) -> &Self {
+    pub fn with_duration_secs(mut self, seconds: u32) -> Self {
         self.duration_seconds = Some(seconds);
         self
     }
 
-    pub fn with_display_name<S: Into<String>>(&mut self, display_name: S) -> &Self {
+    pub fn with_display_name<S: Into<String>>(mut self, display_name: S) -> Self {
         self.display_name = Some(display_name.into());
         self
     }
 
-    pub fn with_metadata<S: Into<String>>(&mut self, metadata: S) -> &Self {
+    pub fn with_metadata<S: Into<String>>(mut self, metadata: S) -> Self {
         self.metadata = Some(metadata.into());
         self
     }
 
-    pub fn with_insecure_connection(&mut self) -> &Self {
+    pub fn with_insecure_connection(mut self) -> Self {
         self.use_insecure_connection = true;
         self
     }
 
-    fn to_worker_sdk(&self) -> (Worker_Alpha_PlayerIdentityTokenRequest, Vec<CString>) {
+    // TODO: Only reason this is `mut` is because that the duration_seconds is a non-const reference.
+    fn to_worker_sdk(&mut self) -> (Worker_Alpha_PlayerIdentityTokenRequest, Vec<CString>) {
         unsafe {
             let mut underlying_data = vec![
                 CString::new(self.dev_auth_token.as_str()).unwrap(),
@@ -98,7 +99,10 @@ impl PlayerIdentityTokenRequest {
             let request = Worker_Alpha_PlayerIdentityTokenRequest {
                 development_authentication_token_id: underlying_data[0].as_ptr(),
                 player_id: underlying_data[1].as_ptr(),
-                duration_seconds: ::std::ptr::null_mut(),
+                duration_seconds: match self.duration_seconds {
+                    Some(ref mut value) => value as *mut u32,
+                    None => ::std::ptr::null_mut()
+                },
                 display_name: match self.display_name {
                     Some(_) => underlying_data[2].as_ptr(),
                     None => ::std::ptr::null(),
@@ -199,7 +203,7 @@ impl Future for PlayerIdentityTokenFuture {
         unsafe {
             Worker_Alpha_PlayerIdentityTokenResponseFuture_Get(
                 self.internal,
-                &0,
+                ::std::ptr::null(),
                 &mut data as *mut _ as *mut ::std::os::raw::c_void,
                 Some(PlayerIdentityTokenFuture::callback_handler),
             );

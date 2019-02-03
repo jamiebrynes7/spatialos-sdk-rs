@@ -62,8 +62,9 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
         Command::DevelopmentAuthentication {
             dev_auth_token
         } => {
-            let request = PlayerIdentityTokenRequest::new(dev_auth_token, "player-id");
-            let future = AlphaLocator::create_development_player_identity_token(LOCATOR_HOSTNAME, LOCATOR_HOST, &request);
+            let mut request = PlayerIdentityTokenRequest::new(dev_auth_token, "player-id")
+                .with_display_name("My Player");
+            let future = AlphaLocator::create_development_player_identity_token(LOCATOR_HOSTNAME, LOCATOR_HOST, &mut request);
 
             match future.wait() {
                 Ok(resp) => println!("{}", resp.player_identity_token),
