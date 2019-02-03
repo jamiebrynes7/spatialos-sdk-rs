@@ -38,6 +38,5 @@ install:
 - "./ci/install.sh"
 
 script:
-- (cd project-example && cargo spatial --verbose codegen)
 - "./ci/lint.sh"
 - "./ci/build-test.sh"

@@ -58,3 +58,7 @@ rustup component add rustfmt-preview
 rustup component add clippy-preview
 
 cargo install --path cargo-spatial --force
+
+cd project-example
+cargo spatial --verbose codegen
+cd ..
