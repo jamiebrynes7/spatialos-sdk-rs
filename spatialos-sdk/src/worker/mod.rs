@@ -1,5 +1,6 @@
 pub mod internal;
 
+pub mod alpha_locator;
 pub mod commands;
 pub mod component;
 pub mod connection;
@@ -156,6 +157,42 @@ impl InterestOverride {
         Worker_InterestOverride {
             is_interested: self.is_interested as u8,
             component_id: self.component_id,
+        }
+    }
+}
+
+#[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
+pub enum ConnectionStatusCode {
+    Success,
+    InternalError,
+    InvalidArgument,
+    NetworkError,
+    Timeout,
+    Cancelled,
+    Rejected,
+    PlayerIdentityTokenExpired,
+    LoginTokenExpired,
+    CapacityExceeded,
+    RateExceeded,
+    ServerShutdown,
+}
+
+impl From<u8> for ConnectionStatusCode {
+    fn from(value: u8) -> Self {
+        match u32::from(value) {
+            1 => ConnectionStatusCode::Success,
+            2 => ConnectionStatusCode::InternalError,
+            3 => ConnectionStatusCode::InvalidArgument,
+            4 => ConnectionStatusCode::NetworkError,
+            5 => ConnectionStatusCode::Timeout,
+            6 => ConnectionStatusCode::Cancelled,
+            7 => ConnectionStatusCode::Rejected,
+            8 => ConnectionStatusCode::PlayerIdentityTokenExpired,
+            9 => ConnectionStatusCode::LoginTokenExpired,
+            10 => ConnectionStatusCode::CapacityExceeded,
+            11 => ConnectionStatusCode::RateExceeded,
+            12 => ConnectionStatusCode::ServerShutdown,
+            _ => panic!(format!("Unknown connection status code: {}", value)),
         }
     }
 }
