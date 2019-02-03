@@ -13,6 +13,7 @@ fn main() {
     };
     SimpleLogger::init(verbosity, Default::default()).expect("Failed to setup logger");
 
+    // Perform the operation selected by the user.
     match &opt.command {
         Command::Codegen => {
             let config = Config::load().expect("Failed to load config");

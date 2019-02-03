@@ -3,7 +3,7 @@ name = "project-example"
 version = "0.0.0"
 authors = [
     "Jamie Brynes <jamiebrynes7@gmail.com>",
-    "David Avedissian <git@dga.me.uk>"
+    "David Avedissian <git@dga.me.uk>",
 ]
 edition = "2018"
 

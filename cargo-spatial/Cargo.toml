@@ -5,7 +5,6 @@ authors = ["David LeGare <dlegare.1001@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-cargo_metadata = "0.7.1"
 glob = "0.2.11"
 log = "0.4.1"
 rand = "0.6.5"

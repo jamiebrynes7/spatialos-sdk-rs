@@ -5,7 +5,11 @@ use std::path::*;
 use std::process;
 use tap::*;
 
-/// Builds workers and then runs `spatial local launch`.
+/// Prepares and launches a local deployment.
+///
+/// Before launching the deployment, this will first run code generation and build
+/// workers in the project. Assumes that the current working directory is the root
+/// directory of the project, i.e. the directory that has the `Spatial.toml` file.
 pub fn launch(_opt: &Opt, _local: &Local, launch: &LocalLaunch) {
     let config = Config::load().expect("Failed to load configuration");
 

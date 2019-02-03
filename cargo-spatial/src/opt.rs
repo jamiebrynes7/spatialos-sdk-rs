@@ -64,9 +64,11 @@ pub struct LocalLaunch {
     #[structopt(long, short)]
     pub no_build: bool,
 
+    /// Launch configuration file to pass to `spatial local launch`
     #[structopt(long, short = "c")]
     pub launch_config: Option<PathBuf>,
 }
+
 #[derive(StructOpt)]
 #[structopt(rename_all = "kebab-case")]
 pub enum Generate {

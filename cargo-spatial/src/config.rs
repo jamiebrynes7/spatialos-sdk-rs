@@ -30,7 +30,7 @@ pub struct Config {
     ///
     /// If not specified, the SPATIAL_LIB_DIR environment variable will be used
     /// instead.
-    pub spatial_lib_dir: Option<String>,
+    spatial_lib_dir: Option<String>,
 
     /// The directory to use as output for the schema compiler.
     ///
@@ -66,9 +66,18 @@ impl Config {
             .map_err(|err| format!("Failed to deserialize Spatial.toml: {}", err))
     }
 
+    /// Returns the path to the output directory to be used for schema compilation.
     pub fn schema_build_dir(&self) -> String {
         self.schema_build_dir
             .clone()
             .unwrap_or_else(|| self.build_dir.clone() + "/schema")
+    }
+
+    /// Returns the path to the spatial SDK directory, or `None` if the path hasn't
+    /// been configured.
+    pub fn spatial_lib_dir(&self) -> Option<String> {
+        self.spatial_lib_dir
+            .clone()
+            .or_else(|| std::env::var("SPATIAL_LIB_DIR").ok())
     }
 }

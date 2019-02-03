@@ -8,14 +8,15 @@ use std::path::*;
 use std::process::Command;
 use tap::*;
 
+/// Performs code generation for the project described by `config`.
+///
+/// Assumes that the current working directory is the root directory of the project,
+/// i.e. the directory that has the `Spatial.toml` file.
 pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
-    let output_dir = normalize(config.schema_build_dir());
-
-    let spatial_lib_dir = config.spatial_lib_dir
-        .as_ref()
+    // Ensure that the path to the Spatial SDK has been specified.
+    let spatial_lib_dir = config.spatial_lib_dir()
         .map(normalize)
-        .or_else(|| std::env::var("SPATIAL_LIB_DIR").map(normalize).ok())
-        .ok_or("spatial_lib_dir value must be set in the config or the SPATIAL_LIB_DIR environment variable must be set")?;
+        .ok_or("spatial_lib_dir value must be set in the config, or the SPATIAL_LIB_DIR environment variable must be set")?;
 
     // Determine the paths the the schema compiler and protoc relative the the lib
     // dir path.
@@ -23,18 +24,26 @@ pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
     let std_lib_path = normalize(spatial_lib_dir.join("std-lib"));
 
     // Calculate the various output directories relative to `output_dir`.
+    let output_dir = normalize(config.schema_build_dir());
     let bundle_json_path = output_dir.join("bundle.json");
 
-    // Create the output directories if they don't already exist.
+    // Create the output directory if it doesn't already exist.
     fs::create_dir_all(&output_dir)
         .map_err(|_| format!("Failed to create {}", output_dir.display()))?;
 
-    // Run the schema compiler for each of the schema files in std-lib/improbable.
+    // Prepare initial flags for the schema compiler.
     let schema_path_arg = OsString::from("--schema_path=").tap(|arg| arg.push(&std_lib_path));
     let bundle_json_arg =
         OsString::from("--bundle_json_out=").tap(|arg| arg.push(&bundle_json_path));
     let descriptor_out_arg = OsString::from("--descriptor_set_out=")
         .tap(|arg| arg.push(normalize(output_dir.join("schema.descriptor"))));
+
+    // Run the schema compiler for all schema files in the project.
+    //
+    // This will generated the schema descriptor file that SpatialOS loads directly, as
+    // well as the schema bundle file that's used for code generation. All schema files
+    // in the project are included, as well as the schema files in the standard schema
+    // library
     let mut command = Command::new(&schema_compiler_path);
     command
         .arg(&schema_path_arg)
@@ -42,6 +51,7 @@ pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
         .arg(&descriptor_out_arg)
         .arg("--load_all_schema_on_schema_path");
 
+    // Add all the root schema paths.
     for schema_path in &config.schema_paths {
         let arg = OsString::from("--schema_path=").tap(|arg| arg.push(normalize(schema_path)));
         command.arg(&arg);
