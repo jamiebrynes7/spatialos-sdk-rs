@@ -31,7 +31,7 @@ elif isMacOS; then
   SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/mac"
 elif isLinux; then
   SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/linux"
-else 
+else
   echo "Unsupported platform"
   exit 1
 fi
@@ -56,3 +56,5 @@ rm -rf "./temp"
 
 rustup component add rustfmt-preview
 rustup component add clippy-preview
+
+cargo install --path cargo-spatial --force

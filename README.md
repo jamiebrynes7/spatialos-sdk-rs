@@ -31,7 +31,7 @@ by opening the inspector (navigate to http://localhost:21000/inspector in your w
 want to manually launch another instance of the worker, run the following command:
 
 ```
-cargo run --example project-example -- --worker-id RustWorker999 --worker-type RustWorker receptionist
+cargo run -- --worker-id RustWorker999 --worker-type RustWorker receptionist
 ```
 
 This will allow you to see the log output of the worker as it runs.
