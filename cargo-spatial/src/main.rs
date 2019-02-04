@@ -3,7 +3,7 @@ use log::*;
 use simplelog::*;
 use structopt::StructOpt;
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::from_args();
 
     // Initialize the logger.
@@ -14,17 +14,15 @@ fn main() {
     };
     SimpleLogger::init(verbosity, Default::default()).expect("Failed to setup logger");
 
+    let config = Config::load()?;
+    trace!("Loaded config: {:#?}", config);
+
     // Perform the operation selected by the user.
     match &opt.command {
-        Command::Codegen => {
-            let config = Config::load().expect("Failed to load config");
-            trace!("Loaded config: {:#?}", config);
-
-            codegen::run_codegen(&config).expect("Failed to run codegen");
-        }
+        Command::Codegen => codegen::run_codegen(&config)?,
 
         Command::Local(local) => match local {
-            Local::Launch(launch) => local::launch(&opt, local, launch),
+            Local::Launch(launch) => local::launch(&config, launch)?,
         },
 
         Command::Generate { command } => match command {
@@ -33,4 +31,6 @@ fn main() {
             }
         },
     }
+
+    Ok(())
 }

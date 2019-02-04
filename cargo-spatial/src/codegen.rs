@@ -13,6 +13,11 @@ use tap::*;
 /// Assumes that the current working directory is the root directory of the project,
 /// i.e. the directory that has the `Spatial.toml` file.
 pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
+    assert!(
+        crate::current_dir_is_root(),
+        "Current directory should be the project root"
+    );
+
     // Ensure that the path to the Spatial SDK has been specified.
     let spatial_lib_dir = config.spatial_lib_dir()
         .map(normalize)

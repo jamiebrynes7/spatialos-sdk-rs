@@ -26,6 +26,11 @@ pub struct Config {
     /// Defaults to `./build`.
     pub build_dir: String,
 
+    /// The build profile to use when building local workers.
+    ///
+    /// Defaults to `BuildProfile::Debug`.
+    pub local_build_profile: BuildProfile,
+
     /// The directory where the SpatialOS SDK should be downloaded.
     ///
     /// If not specified, the SPATIAL_LIB_DIR environment variable will be used
@@ -48,22 +53,24 @@ impl Default for Config {
             build_dir: "./build".into(),
             schema_build_dir: None,
             spatial_lib_dir: None,
+            local_build_profile: BuildProfile::Debug,
         }
     }
 }
 
 impl Config {
     /// Attempts to load the project configuration from a `Spatial.toml` file.
-    pub fn load() -> Result<Self, String> {
+    pub fn load() -> Result<Self, Box<dyn std::error::Error>> {
         // TODO: Traverse up the directory hierarchy until a `Spatial.toml` file is
         // found or the root directory is reached.
 
-        let mut file = File::open("Spatial.toml").map_err(|_| "Couldn't open Spatial.toml")?;
+        let mut file = File::open("Spatial.toml")
+            .map_err(|_| "Could not find a `Spatial.toml` in current directory")?;
         let mut contents = String::new();
         file.read_to_string(&mut contents)
             .map_err(|_| "Failed to read contents of Spatial.toml")?;
         toml::from_str(&contents)
-            .map_err(|err| format!("Failed to deserialize Spatial.toml: {}", err))
+            .map_err(|err| format!("Failed to deserialize Spatial.toml: {}", err).into())
     }
 
     /// Returns the path to the output directory to be used for schema compilation.
@@ -80,4 +87,11 @@ impl Config {
             .clone()
             .or_else(|| std::env::var("SPATIAL_LIB_DIR").ok())
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum BuildProfile {
+    Debug,
+    Release,
 }

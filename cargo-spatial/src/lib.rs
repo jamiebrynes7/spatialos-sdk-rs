@@ -21,3 +21,9 @@ pub fn generate_component_id() -> i32 {
         }
     }
 }
+
+/// Returns true if the current working directory is the project root (i.e. has the
+/// `Spatial.toml` file).
+pub fn current_dir_is_root() -> bool {
+    std::path::Path::new("./Spatial.toml").exists()
+}
