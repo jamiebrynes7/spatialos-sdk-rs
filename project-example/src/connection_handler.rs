@@ -2,7 +2,7 @@ use futures::{Async, Future};
 
 use crate::lib::{Command, Opt};
 use spatialos_sdk::worker::{
-    alpha_locator::{AlphaLocator, PlayerIdentityTokenRequest},
+    alpha_locator::{AlphaLocator, PlayerIdentityTokenRequest, LoginTokensRequest},
     component::ComponentDatabase,
     connection::{WorkerConnection, WorkerConnectionFuture},
     locator::{Locator, LocatorCredentials, LocatorParameters},
@@ -68,10 +68,16 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
                 &mut request,
             );
 
-            match future.wait() {
-                Ok(resp) => println!("{}", resp.player_identity_token),
-                Err(e) => eprintln!("{}", e),
-            }
+            let pit = future.wait()?;
+            let mut request = LoginTokensRequest::new(pit.player_identity_token, worker_type);
+            let future = AlphaLocator::create_development_login_tokens(
+                LOCATOR_HOSTNAME,
+                LOCATOR_HOST,
+                &mut request
+            );
+
+            let response = future.wait()?;
+            println!("Got {} login tokens", response.login_tokens.len());
 
             panic!("Testing done!")
         }
