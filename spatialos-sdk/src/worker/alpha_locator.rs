@@ -4,9 +4,7 @@ use futures::{Async, Future};
 
 use spatialos_sdk_sys::worker::*;
 
-use crate::worker::{
-    internal::utils::cstr_to_string, parameters::ProtocolLoggingParameters, ConnectionStatusCode,
-};
+use crate::worker::{internal::utils::cstr_to_string, parameters::ProtocolLoggingParameters};
 
 pub struct AlphaLocator {}
 
@@ -18,7 +16,7 @@ impl AlphaLocator {
     ) -> PlayerIdentityTokenFuture {
         unsafe {
             let cstr = CString::new(hostname).unwrap();
-            let (mut params, data) = request.to_worker_sdk();
+            let (mut params, _data) = request.to_worker_sdk();
             PlayerIdentityTokenFuture::new(Worker_Alpha_CreateDevelopmentPlayerIdentityTokenAsync(
                 cstr.as_ptr(),
                 port,
@@ -34,7 +32,7 @@ impl AlphaLocator {
     ) -> LoginTokensFuture {
         unsafe {
             let cstr = CString::new(hostname).unwrap();
-            let (mut params, data) = request.to_worker_sdk();
+            let (mut params, _data) = request.to_worker_sdk();
             LoginTokensFuture::new(Worker_Alpha_CreateDevelopmentLoginTokensAsync(
                 cstr.as_ptr(),
                 port,
@@ -97,43 +95,42 @@ impl PlayerIdentityTokenRequest {
     }
 
     // TODO: Only reason this is `mut` is because that the duration_seconds is a non-const reference.
+    #[allow(clippy::wrong_self_convention)]
     fn to_worker_sdk(&mut self) -> (Worker_Alpha_PlayerIdentityTokenRequest, Vec<CString>) {
-        unsafe {
-            let mut underlying_data = vec![
-                CString::new(self.dev_auth_token.as_str()).unwrap(),
-                CString::new(self.player_id.as_str()).unwrap(),
-            ];
-            let mut metadata_index: usize = 2;
+        let mut underlying_data = vec![
+            CString::new(self.dev_auth_token.as_str()).unwrap(),
+            CString::new(self.player_id.as_str()).unwrap(),
+        ];
+        let mut metadata_index: usize = 2;
 
-            if let Some(ref display_name) = self.display_name {
-                underlying_data.push(CString::new(display_name.as_str()).unwrap());
-                metadata_index += 1;
-            };
+        if let Some(ref display_name) = self.display_name {
+            underlying_data.push(CString::new(display_name.as_str()).unwrap());
+            metadata_index += 1;
+        };
 
-            if let Some(ref metadata) = self.metadata {
-                underlying_data.push(CString::new(metadata.as_str()).unwrap());
-            }
-
-            let request = Worker_Alpha_PlayerIdentityTokenRequest {
-                development_authentication_token_id: underlying_data[0].as_ptr(),
-                player_id: underlying_data[1].as_ptr(),
-                duration_seconds: match self.duration_seconds {
-                    Some(ref mut value) => value as *mut u32,
-                    None => ::std::ptr::null_mut(),
-                },
-                display_name: match self.display_name {
-                    Some(_) => underlying_data[2].as_ptr(),
-                    None => ::std::ptr::null(),
-                },
-                metadata: match self.metadata {
-                    Some(_) => underlying_data[metadata_index].as_ptr(),
-                    None => ::std::ptr::null(),
-                },
-                use_insecure_connection: self.use_insecure_connection as u8,
-            };
-
-            (request, underlying_data)
+        if let Some(ref metadata) = self.metadata {
+            underlying_data.push(CString::new(metadata.as_str()).unwrap());
         }
+
+        let request = Worker_Alpha_PlayerIdentityTokenRequest {
+            development_authentication_token_id: underlying_data[0].as_ptr(),
+            player_id: underlying_data[1].as_ptr(),
+            duration_seconds: match self.duration_seconds {
+                Some(ref mut value) => value as *mut u32,
+                None => ::std::ptr::null_mut(),
+            },
+            display_name: match self.display_name {
+                Some(_) => underlying_data[2].as_ptr(),
+                None => ::std::ptr::null(),
+            },
+            metadata: match self.metadata {
+                Some(_) => underlying_data[metadata_index].as_ptr(),
+                None => ::std::ptr::null(),
+            },
+            use_insecure_connection: self.use_insecure_connection as u8,
+        };
+
+        (request, underlying_data)
     }
 }
 
@@ -214,7 +211,7 @@ impl Future for PlayerIdentityTokenFuture {
         self.get_future(Some(0))
             .map_or(Ok(Async::NotReady), |result| {
                 self.consumed = true;
-                result.map(|resp| Async::Ready(resp))
+                result.map(Async::Ready)
             })
     }
 
@@ -265,25 +262,25 @@ impl LoginTokensRequest {
         self
     }
 
+    // TODO: Only reason this is `mut` is because that the duration_seconds is a non-const reference.
+    #[allow(clippy::wrong_self_convention)]
     fn to_worker_sdk(&mut self) -> (Worker_Alpha_LoginTokensRequest, Vec<CString>) {
-        unsafe {
-            let underlying_data = vec![
-                CString::new(self.player_identity_token.as_str()).unwrap(),
-                CString::new(self.worker_type.as_str()).unwrap(),
-            ];
+        let underlying_data = vec![
+            CString::new(self.player_identity_token.as_str()).unwrap(),
+            CString::new(self.worker_type.as_str()).unwrap(),
+        ];
 
-            let request = Worker_Alpha_LoginTokensRequest {
-                player_identity_token: underlying_data[0].as_ptr(),
-                worker_type: underlying_data[1].as_ptr(),
-                duration_seconds: match self.duration_seconds {
-                    Some(ref mut value) => value as *mut u32,
-                    None => ::std::ptr::null_mut(),
-                },
-                use_insecure_connection: self.use_insecure_connection as u8,
-            };
+        let request = Worker_Alpha_LoginTokensRequest {
+            player_identity_token: underlying_data[0].as_ptr(),
+            worker_type: underlying_data[1].as_ptr(),
+            duration_seconds: match self.duration_seconds {
+                Some(ref mut value) => value as *mut u32,
+                None => ::std::ptr::null_mut(),
+            },
+            use_insecure_connection: self.use_insecure_connection as u8,
+        };
 
-            (request, underlying_data)
-        }
+        (request, underlying_data)
     }
 }
 
@@ -395,7 +392,7 @@ impl Future for LoginTokensFuture {
         self.get_future(Some(0))
             .map_or(Ok(Async::NotReady), |result| {
                 self.consumed = true;
-                result.map(|resp| Async::Ready(resp))
+                result.map(Async::Ready)
             })
     }
 

@@ -214,7 +214,7 @@ impl Future for DeploymentListFuture {
 
         data.map_or(Ok(Async::NotReady), |result| {
             self.consumed = true;
-            result.map(|depls| Async::Ready(depls))
+            result.map(Async::Ready)
         })
     }
 
