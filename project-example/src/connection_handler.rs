@@ -58,17 +58,19 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
                     .using_external_ip(true),
                 queue_status_callback,
             )
-        },
-        Command::DevelopmentAuthentication {
-            dev_auth_token
-        } => {
+        }
+        Command::DevelopmentAuthentication { dev_auth_token } => {
             let mut request = PlayerIdentityTokenRequest::new(dev_auth_token, "player-id")
                 .with_display_name("My Player");
-            let future = AlphaLocator::create_development_player_identity_token(LOCATOR_HOSTNAME, LOCATOR_HOST, &mut request);
+            let future = AlphaLocator::create_development_player_identity_token(
+                LOCATOR_HOSTNAME,
+                LOCATOR_HOST,
+                &mut request,
+            );
 
             match future.wait() {
                 Ok(resp) => println!("{}", resp.player_identity_token),
-                Err(e) => eprintln!("{}", e)
+                Err(e) => eprintln!("{}", e),
             }
 
             panic!("Testing done!")
