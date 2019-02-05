@@ -14,12 +14,28 @@ impl AlphaLocator {
     pub fn create_development_player_identity_token(
         hostname: &str,
         port: u16,
-        params: &mut PlayerIdentityTokenRequest,
+        request: &mut PlayerIdentityTokenRequest,
     ) -> PlayerIdentityTokenFuture {
         unsafe {
             let cstr = CString::new(hostname).unwrap();
-            let (mut params, data) = params.to_worker_sdk();
+            let (mut params, data) = request.to_worker_sdk();
             PlayerIdentityTokenFuture::new(Worker_Alpha_CreateDevelopmentPlayerIdentityTokenAsync(
+                cstr.as_ptr(),
+                port,
+                &mut params as *mut _,
+            ))
+        }
+    }
+
+    pub fn create_development_login_tokens(
+        hostname: &str,
+        port: u16,
+        request: &mut LoginTokensRequest,
+    ) -> LoginTokensFuture {
+        unsafe {
+            let cstr = CString::new(hostname).unwrap();
+            let (mut params, data) = request.to_worker_sdk();
+            LoginTokensFuture::new(Worker_Alpha_CreateDevelopmentLoginTokensAsync(
                 cstr.as_ptr(),
                 port,
                 &mut params as *mut _,
