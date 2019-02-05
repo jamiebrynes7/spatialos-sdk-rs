@@ -11,7 +11,7 @@ use spatialos_sdk::worker::{
 use uuid::Uuid;
 
 const LOCATOR_HOSTNAME: &str = "locator.improbable.io";
-const LOCATOR_HOST: u16 = 444;
+const LOCATOR_PORT: u16 = 444;
 
 const POLL_NUM_ATTEMPTS: u32 = 5;
 const POLL_TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 3000;
@@ -64,7 +64,7 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
                 .with_display_name("My Player");
             let future = AlphaLocator::create_development_player_identity_token(
                 LOCATOR_HOSTNAME,
-                LOCATOR_HOST,
+                LOCATOR_PORT,
                 &mut request,
             );
 
@@ -72,7 +72,7 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
             let mut request = LoginTokensRequest::new(pit.player_identity_token, worker_type);
             let future = AlphaLocator::create_development_login_tokens(
                 LOCATOR_HOSTNAME,
-                LOCATOR_HOST,
+                LOCATOR_PORT,
                 &mut request
             );
 
