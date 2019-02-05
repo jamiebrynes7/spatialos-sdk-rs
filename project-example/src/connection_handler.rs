@@ -2,7 +2,7 @@ use futures::{Async, Future};
 
 use crate::lib::{Command, Opt};
 use spatialos_sdk::worker::{
-    alpha_locator::{AlphaLocator, PlayerIdentityTokenRequest, LoginTokensRequest},
+    alpha_locator::{AlphaLocator, LoginTokensRequest, PlayerIdentityTokenRequest},
     component::ComponentDatabase,
     connection::{WorkerConnection, WorkerConnectionFuture},
     locator::{Locator, LocatorCredentials, LocatorParameters},
@@ -73,7 +73,7 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
             let future = AlphaLocator::create_development_login_tokens(
                 LOCATOR_HOSTNAME,
                 LOCATOR_PORT,
-                &mut request
+                &mut request,
             );
 
             let response = future.wait()?;
