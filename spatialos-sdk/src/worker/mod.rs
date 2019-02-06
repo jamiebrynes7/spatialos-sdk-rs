@@ -14,7 +14,9 @@ pub mod snapshot;
 pub mod vtable;
 
 use component::ComponentId;
+use derivative::Derivative;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
+use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 
@@ -37,10 +39,30 @@ impl EntityId {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialOrd, Ord)]
+#[derive(Derivative)]
+#[derivative(
+    Debug(bound = ""),
+    Copy(bound = ""),
+    Clone(bound = ""),
+    PartialEq(bound = ""),
+    Eq(bound = ""),
+    Hash(bound = "")
+)]
 pub struct RequestId<T> {
     id: u32,
     _type: PhantomData<*const T>,
+}
+
+impl<T> Ord for RequestId<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.id.cmp(&other.id)
+    }
+}
+
+impl<T> PartialOrd for RequestId<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 // SAFE: `RequestId<T>` is a type-safe wrapper around a single integer value, and is
@@ -54,18 +76,6 @@ impl<T> RequestId<T> {
             id,
             _type: PhantomData,
         }
-    }
-}
-
-impl<T> PartialEq for RequestId<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
-}
-
-impl<T> Hash for RequestId<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
     }
 }
 
