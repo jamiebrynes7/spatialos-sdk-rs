@@ -1,6 +1,6 @@
 use crate::connection_handler::*;
 use crate::opt::*;
-use generated::example::Example;
+use generated_code::{example, improbable};
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
@@ -16,20 +16,14 @@ use structopt::StructOpt;
 use tap::*;
 
 mod connection_handler;
+mod generated_code;
 mod opt;
-
-// HACK: Include `generated.rs` directly rather than treating it like a regular
-// module file because it internally declares a module named `generated`, which
-// causes clippy to complain about nested modules with the same name. We'll
-// likely end up using `include!` if we switch to doing code generation in a
-// build script, but the generated code will be at a more reasonable place.
-include!("generated.rs");
 
 fn main() {
     println!("Entered program");
 
     let components = ComponentDatabase::new()
-        .add_component::<Example>()
+        .add_component::<example::Example>()
         .add_component::<improbable::EntityAcl>()
         .add_component::<improbable::Persistence>()
         .add_component::<improbable::Metadata>()
@@ -60,14 +54,14 @@ fn logic_loop(c: &mut WorkerConnection) {
             match op {
                 WorkerOp::AddComponent(add_component) => match add_component.component_id {
                     example::Example::ID => {
-                        let component_data = add_component.get::<Example>().unwrap();
+                        let component_data = add_component.get::<example::Example>().unwrap();
                         println!("Received Example data: {:?}", component_data);
                     }
                     id => println!("Received unknown component: {}", id),
                 },
                 WorkerOp::ComponentUpdate(update) => match update.component_id {
                     example::Example::ID => {
-                        let component_update = update.get::<Example>();
+                        let component_update = update.get::<example::Example>();
                         println!("Received Example update: {:?}", component_update)
                     }
                     id => println!("Received unknown component: {}", id),
