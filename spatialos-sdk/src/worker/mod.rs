@@ -40,12 +40,11 @@ impl EntityId {
 #[derive(Debug, Copy, Clone, Eq, PartialOrd, Ord)]
 pub struct RequestId<T> {
     id: u32,
-    _type: PhantomData<T>,
+    _type: PhantomData<*const T>,
 }
 
 // SAFE: `RequestId<T>` is a type-safe wrapper around a single integer value, and is
-// completely thread-safe. The manual impls here are only needed to ensure that the
-// implementation isn't bounded on `T: Send`/`T: Sync`.
+// therefore completely thread-safe.
 unsafe impl<T> Send for RequestId<T> {}
 unsafe impl<T> Sync for RequestId<T> {}
 
