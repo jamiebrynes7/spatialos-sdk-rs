@@ -40,8 +40,14 @@ impl EntityId {
 #[derive(Debug, Copy, Clone, Eq, PartialOrd, Ord)]
 pub struct RequestId<T> {
     id: u32,
-    _type: PhantomData<*const T>,
+    _type: PhantomData<T>,
 }
+
+// SAFE: `RequestId<T>` is a type-safe wrapper around a single integer value, and is
+// completely thread-safe. The manual impls here are only needed to ensure that the
+// implementation isn't bounded on `T: Send`/`T: Sync`.
+unsafe impl<T> Send for RequestId<T> {}
+unsafe impl<T> Sync for RequestId<T> {}
 
 impl<T> RequestId<T> {
     pub fn new(id: u32) -> RequestId<T> {
@@ -49,10 +55,6 @@ impl<T> RequestId<T> {
             id,
             _type: PhantomData,
         }
-    }
-
-    pub fn to_string(&self) -> String {
-        format!("RequestId: {}", self.id)
     }
 }
 
