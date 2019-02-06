@@ -6,8 +6,8 @@ use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
 
 use crate::worker::commands::*;
-use crate::worker::component;
 use crate::worker::component::internal::{CommandRequest, CommandResponse, ComponentUpdate};
+use crate::worker::component::{self, Component};
 use crate::worker::entity::Entity;
 use crate::worker::internal::utils::cstr_to_string;
 use crate::worker::locator::*;
@@ -85,18 +85,18 @@ pub trait Connection {
         timeout_millis: Option<u32>,
     ) -> RequestId<EntityQueryRequest>;
 
-    fn send_command_request(
+    fn send_command_request<C: Component>(
         &mut self,
         entity_id: EntityId,
-        request: component::internal::CommandRequest,
+        request: C::CommandRequest,
         timeout_millis: Option<u32>,
         command_parameters: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest>;
 
-    fn send_command_response(
+    fn send_command_response<C: Component>(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
-        response: component::internal::CommandResponse,
+        response: C::CommandResponse,
     );
 
     fn send_command_failure(
@@ -328,22 +328,58 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn send_command_request(
+    fn send_command_request<C: Component>(
         &mut self,
-        _entity_id: EntityId,
-        _request: CommandRequest,
-        _timeout_millis: Option<u32>,
-        _command_parameters: CommandParameters,
+        entity_id: EntityId,
+        request: C::CommandRequest,
+        timeout_millis: Option<u32>,
+        command_parameters: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest> {
-        unimplemented!()
+        let timeout = match timeout_millis {
+            Some(c) => &c,
+            None => ptr::null(),
+        };
+
+        let command_request = Worker_CommandRequest {
+            reserved: ptr::null_mut(),
+            component_id: C::ID,
+            schema_type: ptr::null_mut(),
+            user_handle: component::handle_allocate(request),
+        };
+
+        let request_id = unsafe {
+            Worker_Connection_SendCommandRequest(
+                self.connection_ptr,
+                entity_id.id,
+                &command_request,
+                0,
+                timeout,
+                &command_parameters.to_worker_sdk(),
+            )
+        };
+
+        RequestId::new(request_id)
     }
 
-    fn send_command_response(
+    fn send_command_response<C: Component>(
         &mut self,
-        _request_id: RequestId<IncomingCommandRequest>,
-        _response: CommandResponse,
+        request_id: RequestId<IncomingCommandRequest>,
+        response: C::CommandResponse,
     ) {
-        unimplemented!()
+        unsafe {
+            let raw_response = Worker_CommandResponse {
+                reserved: ptr::null_mut(),
+                component_id: C::ID,
+                schema_type: ptr::null_mut(),
+                user_handle: component::handle_allocate(response),
+            };
+
+            Worker_Connection_SendCommandResponse(
+                self.connection_ptr,
+                request_id.id,
+                &raw_response,
+            );
+        }
     }
 
     fn send_command_failure(
