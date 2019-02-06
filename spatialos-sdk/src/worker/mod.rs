@@ -17,7 +17,6 @@ use component::ComponentId;
 use derivative::Derivative;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::cmp::Ordering;
-use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
