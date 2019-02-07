@@ -389,19 +389,12 @@ impl ThreadAffinityParameters {
     }
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct CommandParameters {
     allow_short_circuit: bool,
 }
 
 impl CommandParameters {
-    const SHORT_CIRCUIT: CommandParameters = CommandParameters {
-        allow_short_circuit: true,
-    };
-
-    const DEFAULT: CommandParameters = CommandParameters {
-        allow_short_circuit: false,
-    };
-
     pub fn new(should_short_circuit: bool) -> CommandParameters {
         CommandParameters {
             allow_short_circuit: should_short_circuit,
