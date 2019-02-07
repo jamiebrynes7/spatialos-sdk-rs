@@ -124,21 +124,25 @@ pub trait Connection {
 
     fn set_protocol_logging_enabled(&mut self, enabled: bool);
 
-    #[deprecated(note = "Use get_connection_status_code == ConnectionStatusCode::Success instead.")]
-    fn is_connected(&self) -> bool;
+    fn get_connection_status_code(&mut self) -> ConnectionStatusCode;
 
-    fn get_connection_status_code(&self) -> ConnectionStatusCode;
-    fn get_connection_status_detail(&self) -> String;
-    fn get_worker_id(&self) -> &str;
-    fn get_worker_attributes(&self) -> Vec<String>;
-    fn get_worker_flag(&self, name: &str) -> Option<String>;
+    fn get_connection_status_detail(&mut self) -> String;
+
+    fn get_worker_flag(&mut self, name: &str) -> Option<String>;
 
     fn get_op_list(&mut self, timeout_millis: u32) -> OpList;
+
+    fn get_worker_id(&self) -> &str;
+
+    fn get_worker_attributes(&self) -> &[String];
 }
 
 pub struct WorkerConnection {
     connection_ptr: *mut Worker_Connection,
-    worker_id: String,
+
+    // Cached copies of static connection data. These are stored internally so that we can guarantee it will be safe to access this data through `&self`.
+    id: String,
+    attributes: Vec<String>,
 }
 
 impl WorkerConnection {
@@ -147,9 +151,19 @@ impl WorkerConnection {
             let worker_id = Worker_Connection_GetWorkerId(connection_ptr);
             let cstr = CStr::from_ptr(worker_id);
 
+            let sdk_attr = Worker_Connection_GetWorkerAttributes(connection_ptr);
+            let attributes = ::std::slice::from_raw_parts(
+                (*sdk_attr).attributes,
+                (*sdk_attr).attribute_count as usize,
+            )
+            .iter()
+            .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
+            .collect();
+
             WorkerConnection {
                 connection_ptr,
-                worker_id: cstr.to_string_lossy().to_string(),
+                id: cstr.to_string_lossy().to_string(),
+                attributes,
             }
         }
     }
@@ -403,12 +417,7 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn is_connected(&self) -> bool {
-        assert!(!self.connection_ptr.is_null());
-        self.get_connection_status_code() == ConnectionStatusCode::Success
-    }
-
-    fn get_connection_status_code(&self) -> ConnectionStatusCode {
+    fn get_connection_status_code(&mut self) -> ConnectionStatusCode {
         assert!(!self.connection_ptr.is_null());
         unsafe {
             ConnectionStatusCode::from(Worker_Connection_GetConnectionStatusCode(
@@ -417,7 +426,7 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn get_connection_status_detail(&self) -> String {
+    fn get_connection_status_detail(&mut self) -> String {
         assert!(!self.connection_ptr.is_null());
         unsafe {
             cstr_to_string(Worker_Connection_GetConnectionStatusDetailString(
@@ -427,24 +436,14 @@ impl Connection for WorkerConnection {
     }
 
     fn get_worker_id(&self) -> &str {
-        &self.worker_id
+        &self.id
     }
 
-    fn get_worker_attributes(&self) -> Vec<String> {
-        assert!(!self.connection_ptr.is_null());
-        unsafe {
-            let sdk_attr = Worker_Connection_GetWorkerAttributes(self.connection_ptr);
-            ::std::slice::from_raw_parts(
-                (*sdk_attr).attributes,
-                (*sdk_attr).attribute_count as usize,
-            )
-            .iter()
-            .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
-            .collect()
-        }
+    fn get_worker_attributes(&self) -> &[String] {
+        &self.attributes
     }
 
-    fn get_worker_flag(&self, name: &str) -> Option<String> {
+    fn get_worker_flag(&mut self, name: &str) -> Option<String> {
         let flag_name = CString::new(name).unwrap();
 
         extern "C" fn worker_flag_handler(
@@ -492,6 +491,7 @@ impl Drop for WorkerConnection {
 
 // SAFE: The worker connection object is safe to send between threads.
 unsafe impl Send for WorkerConnection {}
+unsafe impl Sync for WorkerConnection {}
 
 pub struct WorkerConnectionFuture {
     future_ptr: *mut Worker_ConnectionFuture,
@@ -539,7 +539,7 @@ impl Future for WorkerConnectionFuture {
         }
 
         self.was_consumed = true;
-        let connection = WorkerConnection::new(connection_ptr);
+        let mut connection = WorkerConnection::new(connection_ptr);
 
         if connection.get_connection_status_code() == ConnectionStatusCode::Success {
             return Ok(Async::Ready(connection));
@@ -558,7 +558,7 @@ impl Future for WorkerConnectionFuture {
 
         assert!(!self.future_ptr.is_null());
         let connection_ptr = unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ptr::null()) };
-        let connection = WorkerConnection::new(connection_ptr);
+        let mut connection = WorkerConnection::new(connection_ptr);
 
         if connection.get_connection_status_code() == ConnectionStatusCode::Success {
             return Ok(connection);
