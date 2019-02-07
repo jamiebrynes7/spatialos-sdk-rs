@@ -16,6 +16,7 @@ use structopt::StructOpt;
 use tap::*;
 
 mod connection_handler;
+#[rustfmt::skip]
 mod generated_code;
 mod opt;
 
