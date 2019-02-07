@@ -490,6 +490,9 @@ impl Drop for WorkerConnection {
     }
 }
 
+// SAFE: The worker connection object is safe to send between threads.
+unsafe impl Send for WorkerConnection {}
+
 pub struct WorkerConnectionFuture {
     future_ptr: *mut Worker_ConnectionFuture,
     was_consumed: bool,
