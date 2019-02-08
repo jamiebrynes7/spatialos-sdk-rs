@@ -1,9 +1,6 @@
-extern crate spatialos_sdk;
-
 use std::env;
 use std::path::PathBuf;
 
-use spatialos_sdk::worker::parameters::SnapshotParameters;
 use spatialos_sdk::worker::snapshot::*;
 
 fn main() {
@@ -23,5 +20,5 @@ fn main() {
     let snapshot_path = path_buf.to_str().unwrap();
     println!("Creating empty snapshot at: {}", snapshot_path);
 
-    let _stream = SnapshotOutputStream::new(snapshot_path, &SnapshotParameters {});
+    let _stream = SnapshotOutputStream::new(snapshot_path);
 }
