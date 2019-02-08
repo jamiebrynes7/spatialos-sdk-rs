@@ -56,12 +56,34 @@ impl AlphaLocator {
 }
 
 pub struct AlphaLocatorParameters {
-    pub player_identity: PlayerIdentityCredentials,
-    pub use_insecure_connection: bool,
-    pub logging: Option<ProtocolLoggingParameters>,
+    player_identity: PlayerIdentityCredentials,
+    use_insecure_connection: bool,
+    logging: Option<ProtocolLoggingParameters>,
 }
 
 impl AlphaLocatorParameters {
+    pub fn new(credentials: PlayerIdentityCredentials) -> Self {
+        AlphaLocatorParameters {
+            player_identity: credentials,
+            use_insecure_connection: false,
+            logging: None,
+        }
+    }
+
+    pub fn with_insecure_connection(mut self) -> Self {
+        self.use_insecure_connection = true;
+        self
+    }
+
+    pub fn with_logging(self) -> Self {
+        self.with_logging_params(ProtocolLoggingParameters::default())
+    }
+
+    pub fn with_logging_params(mut self, params: ProtocolLoggingParameters) -> Self {
+        self.logging = Some(params);
+        self
+    }
+
     fn to_worker_sdk(&self) -> (Worker_Alpha_LocatorParameters, Vec<CString>) {
         let (credentials, cstrs) = self.player_identity.to_worker_sdk();
 
@@ -80,11 +102,18 @@ impl AlphaLocatorParameters {
 }
 
 pub struct PlayerIdentityCredentials {
-    pub player_identity_token: String,
-    pub login_token: String,
+    player_identity_token: String,
+    login_token: String,
 }
 
 impl PlayerIdentityCredentials {
+    pub fn new<S: Into<String>, T: Into<String>>(pit: S, token: T) -> Self {
+        PlayerIdentityCredentials {
+            player_identity_token: pit.into(),
+            login_token: token.into(),
+        }
+    }
+
     fn to_worker_sdk(&self) -> (Worker_Alpha_PlayerIdentityCredentials, Vec<CString>) {
         let pit_cstr = CString::new(self.player_identity_token.as_str()).unwrap();
         let login_token_cstr = CString::new(self.login_token.as_str()).unwrap();

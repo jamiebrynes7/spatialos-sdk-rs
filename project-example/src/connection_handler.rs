@@ -73,7 +73,7 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
 
             let pit = future.wait()?;
             let mut request =
-                LoginTokensRequest::new(pit.player_identity_token.clone(), worker_type.clone());
+                LoginTokensRequest::new(pit.player_identity_token.as_str(), worker_type.as_str());
             let future = AlphaLocator::create_development_login_tokens(
                 LOCATOR_HOSTNAME,
                 LOCATOR_PORT,
@@ -87,17 +87,15 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
             }
 
             let token = &response.login_tokens[0];
-
-            let locator_params = AlphaLocatorParameters {
-                player_identity: PlayerIdentityCredentials {
-                    login_token: token.login_token.clone(),
-                    player_identity_token: pit.player_identity_token.clone(),
-                },
-                use_insecure_connection: false,
-                logging: None,
-            };
-
-            let alpha_locator = AlphaLocator::new(LOCATOR_HOSTNAME, LOCATOR_PORT, &locator_params);
+            let credentials = PlayerIdentityCredentials::new(
+                pit.player_identity_token.as_str(),
+                token.login_token.as_str(),
+            );
+            let alpha_locator = AlphaLocator::new(
+                LOCATOR_HOSTNAME,
+                LOCATOR_PORT,
+                &AlphaLocatorParameters::new(credentials),
+            );
 
             WorkerConnection::connect_alpha_locator_async(
                 &alpha_locator,
