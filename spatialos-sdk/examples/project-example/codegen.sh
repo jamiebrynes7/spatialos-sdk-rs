@@ -19,7 +19,7 @@ mkdir -p "spatialos/schema/bin"
     spatialos/schema/*.schema
 
 SCHEMA_BUNDLE="$(pwd)/spatialos/schema/bin/bundle.json"
-GENERATED_CODE="$(pwd)/generated_code.rs"
+GENERATED_CODE="$(pwd)/generated.rs"
 pushd ../../..
-cargo run -p spatialos-sdk-code-generator $SCHEMA_BUNDLE $GENERATED_CODE
+cargo run -p spatialos-sdk-code-generator "${SCHEMA_BUNDLE}" "${GENERATED_CODE}"
 popd

@@ -6,14 +6,14 @@ use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
 
 use crate::worker::commands::*;
-use crate::worker::component;
-use crate::worker::component::internal::{CommandRequest, CommandResponse, ComponentUpdate};
+use crate::worker::component::internal::{CommandRequest, CommandResponse};
+use crate::worker::component::{self, Component};
 use crate::worker::entity::Entity;
 use crate::worker::internal::utils::cstr_to_string;
 use crate::worker::locator::*;
 use crate::worker::metrics::Metrics;
 use crate::worker::op::OpList;
-use crate::worker::parameters::{CommandParameters, ConnectionParameters};
+use crate::worker::parameters::{CommandParameters, ConnectionParameters, UpdateParameters};
 use crate::worker::{EntityId, InterestOverride, LogLevel, RequestId};
 
 #[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
@@ -105,11 +105,13 @@ pub trait Connection {
         message: &str,
     );
 
-    fn send_component_update(
+    fn send_component_update<C: Component>(
         &mut self,
         entity_id: EntityId,
-        component_update: component::internal::ComponentUpdate,
+        update: C::Update,
+        parameters: UpdateParameters,
     );
+
     fn send_component_interest(
         &mut self,
         entity_id: EntityId,
@@ -354,8 +356,28 @@ impl Connection for WorkerConnection {
         unimplemented!()
     }
 
-    fn send_component_update(&mut self, _entity_id: EntityId, _component_update: ComponentUpdate) {
-        unimplemented!()
+    fn send_component_update<C: Component>(
+        &mut self,
+        entity_id: EntityId,
+        update: C::Update,
+        parameters: UpdateParameters,
+    ) {
+        let component_update = Worker_ComponentUpdate {
+            reserved: ptr::null_mut(),
+            component_id: C::ID,
+            schema_type: ptr::null_mut(),
+            user_handle: component::handle_allocate(update),
+        };
+
+        let params = parameters.to_worker_sdk();
+        unsafe {
+            Worker_Alpha_Connection_SendComponentUpdate(
+                self.connection_ptr,
+                entity_id.id,
+                &component_update,
+                &params,
+            );
+        }
     }
 
     fn send_component_interest(

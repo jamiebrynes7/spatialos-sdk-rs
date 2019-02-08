@@ -1,6 +1,6 @@
 use crate::lib::{get_connection, Opt};
-use generated_code::example::Example;
-use generated_code::improbable;
+use generated::example;
+use generated::improbable;
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
@@ -8,23 +8,23 @@ use spatialos_sdk::worker::component::{Component, ComponentDatabase};
 use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
 use spatialos_sdk::worker::entity::Entity;
 use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
-use spatialos_sdk::worker::op::WorkerOp;
+use spatialos_sdk::worker::op::{StatusCode, WorkerOp};
+use spatialos_sdk::worker::parameters::UpdateParameters;
 use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
 use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
 use std::collections::BTreeMap;
+use std::f64;
 use structopt::StructOpt;
 use tap::*;
 
-mod generated_code;
+mod generated;
 mod lib;
-
-use generated_code::example;
 
 fn main() {
     println!("Entered program");
 
     let components = ComponentDatabase::new()
-        .add_component::<Example>()
+        .add_component::<example::Example>()
         .add_component::<improbable::EntityAcl>()
         .add_component::<improbable::Persistence>()
         .add_component::<improbable::Metadata>()
@@ -45,24 +45,83 @@ fn main() {
 
 fn logic_loop(c: &mut WorkerConnection) {
     let mut counter = 0;
+    let mut entity_id: Option<EntityId> = None;
 
     loop {
         let ops = c.get_op_list(0);
 
+        // Move entity (if it exists).
+        if let Some(ref entity_id) = entity_id {
+            // Counter == 20 is one full circle.
+            let angle = (counter as f64) * (f64::consts::PI * 2.0 / 20.0);
+            c.send_component_update::<improbable::Position>(
+                entity_id.clone(),
+                improbable::PositionUpdate {
+                    coords: Some(improbable::Coordinates {
+                        x: angle.sin() * 10.0,
+                        y: 0.0,
+                        z: angle.cos() * 10.0,
+                    }),
+                },
+                UpdateParameters { loopback: true },
+            );
+            println!("Sending component update for improbable::Position to entity {:?}.", entity_id);
+        }
+
         // Process ops.
         for op in &ops {
-            println!("Received op: {:?}", op);
+            if let WorkerOp::Metrics(_) = op {
+                println!("Received metrics.");
+            } else {
+                println!("Received op: {:?}", op);
+            }
             match op {
+                WorkerOp::ReserveEntityIdsResponse(response) => {
+                    if let StatusCode::Success(response_data) = response.status_code {
+                        let mut entity = Entity::new();
+                        entity.add(improbable::Position {
+                            coords: improbable::Coordinates {
+                                x: 10.0,
+                                y: 12.0,
+                                z: 0.0,
+                            },
+                        });
+                        entity.add(improbable::EntityAcl {
+                            read_acl: improbable::WorkerRequirementSet {
+                                attribute_set: vec![improbable::WorkerAttributeSet {
+                                    attribute: vec!["rusty".into()],
+                                }],
+                            },
+                            component_write_acl: BTreeMap::new().tap(|writes| {
+                                writes.insert(
+                                    improbable::Position::ID,
+                                    improbable::WorkerRequirementSet {
+                                        attribute_set: vec![improbable::WorkerAttributeSet {
+                                            attribute: vec!["rusty".into()],
+                                        }],
+                                    },
+                                );
+                            }),
+                        });
+                        let create_request_id = c.send_create_entity_request(entity, Some(response_data.first_entity_id), None);
+                        println!("Create entity request ID: {:?}", create_request_id);
+                    }
+                }
+                WorkerOp::CreateEntityResponse(create_entity_response) => {
+                    if let StatusCode::Success(id) = create_entity_response.status_code {
+                        entity_id = Some(id);
+                    }
+                },
                 WorkerOp::AddComponent(add_component) => match add_component.component_id {
                     example::Example::ID => {
-                        let component_data = add_component.get::<Example>().unwrap();
+                        let component_data = add_component.get::<example::Example>().unwrap();
                         println!("Received Example data: {:?}", component_data);
                     }
                     id => println!("Received unknown component: {}", id),
                 },
                 WorkerOp::ComponentUpdate(update) => match update.component_id {
                     example::Example::ID => {
-                        let component_update = update.get::<Example>();
+                        let component_update = update.get::<example::Example>();
                         println!("Received Example update: {:?}", component_update)
                     }
                     id => println!("Received unknown component: {}", id),
@@ -72,11 +131,6 @@ fn logic_loop(c: &mut WorkerConnection) {
         }
 
         ::std::thread::sleep(::std::time::Duration::from_millis(500));
-
-        if counter % 20 == 0 {
-            println!("Sending reserve entity ids request");
-            c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
-        }
         counter += 1;
     }
 }
@@ -88,7 +142,7 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
 
     let _ = c.get_op_list(0);
     c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
-    c.send_delete_entity_request(DeleteEntityRequest(EntityId::new(1)), None);
+    //c.send_delete_entity_request(DeleteEntityRequest(EntityId::new(1)), None);
     send_query(c);
 
     let interested = vec![
@@ -100,34 +154,6 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
 
     send_metrics(c);
     c.set_protocol_logging_enabled(false);
-
-    let mut entity = Entity::new();
-    entity.add(improbable::Position {
-        coords: improbable::Coordinates {
-            x: 10.0,
-            y: 12.0,
-            z: 0.0,
-        },
-    });
-    entity.add(improbable::EntityAcl {
-        read_acl: improbable::WorkerRequirementSet {
-            attribute_set: vec![improbable::WorkerAttributeSet {
-                attribute: vec!["rusty".into()],
-            }],
-        },
-        component_write_acl: BTreeMap::new().tap(|writes| {
-            writes.insert(
-                improbable::Position::ID,
-                improbable::WorkerRequirementSet {
-                    attribute_set: vec![improbable::WorkerAttributeSet {
-                        attribute: vec!["rusty".into()],
-                    }],
-                },
-            );
-        }),
-    });
-    let create_request_id = c.send_create_entity_request(entity, None, None);
-    println!("Create entity request ID: {:?}", create_request_id);
 
     println!("Testing completed");
 }

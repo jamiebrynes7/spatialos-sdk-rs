@@ -358,7 +358,7 @@ impl ProtocolLoggingParameters {
             CString::new(self.log_prefix.clone()).expect("Received 0 byte in supplied log prefix.");
 
         Worker_ProtocolLoggingParameters {
-            log_prefix: log_prefix_cstr.as_ptr(),
+            log_prefix: "protocol-log-".as_ptr() as _,//log_prefix_cstr.as_ptr(),
             max_log_files: self.max_log_files,
             max_log_file_size_bytes: self.max_log_file_size_bytes,
         }
@@ -385,6 +385,18 @@ impl ThreadAffinityParameters {
             receive_threads_affinity_mask: self.receive_threads_affinity_mask,
             send_threads_affinity_mask: self.send_threads_affinity_mask,
             temporary_threads_affinity_mask: self.temporary_threads_affinity_mask,
+        }
+    }
+}
+
+pub struct UpdateParameters {
+    pub loopback: bool,
+}
+
+impl UpdateParameters {
+    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_UpdateParameters {
+        Worker_Alpha_UpdateParameters {
+            loopback: self.loopback as _,
         }
     }
 }
