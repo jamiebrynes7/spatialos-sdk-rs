@@ -332,6 +332,8 @@ impl Connection for WorkerConnection {
         timeout_millis: Option<u32>,
         allow_short_circuit: bool,
     ) -> RequestId<OutgoingCommandRequest> {
+        let command_index = C::get_request_command_index(&request);
+
         let timeout = match timeout_millis {
             Some(c) => &c,
             None => ptr::null(),
@@ -353,7 +355,7 @@ impl Connection for WorkerConnection {
                 self.connection_ptr,
                 entity_id.id,
                 &command_request,
-                0,
+                command_index,
                 timeout,
                 &params,
             )

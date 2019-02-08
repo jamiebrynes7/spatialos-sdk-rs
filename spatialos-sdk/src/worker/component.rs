@@ -43,9 +43,14 @@ where
     ) -> Result<Self::CommandResponse, String>;
 
     fn to_data(data: &Self) -> Result<schema::SchemaComponentData, String>;
-    fn to_update(data: &Self::Update) -> Result<schema::SchemaComponentUpdate, String>;
-    fn to_request(data: &Self::CommandRequest) -> Result<schema::SchemaCommandRequest, String>;
-    fn to_response(data: &Self::CommandResponse) -> Result<schema::SchemaCommandResponse, String>;
+    fn to_update(update: &Self::Update) -> Result<schema::SchemaComponentUpdate, String>;
+    fn to_request(request: &Self::CommandRequest) -> Result<schema::SchemaCommandRequest, String>;
+    fn to_response(
+        response: &Self::CommandResponse,
+    ) -> Result<schema::SchemaCommandResponse, String>;
+
+    fn get_request_command_index(request: &Self::CommandRequest) -> u32;
+    fn get_response_command_index(response: &Self::CommandResponse) -> u32;
 }
 
 // Internal untyped component data objects.
