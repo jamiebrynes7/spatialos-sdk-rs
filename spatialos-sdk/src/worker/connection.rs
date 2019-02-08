@@ -1,5 +1,6 @@
 use crate::ptr::MutPtr;
 use crate::worker::{
+    alpha_locator::AlphaLocator,
     commands::*,
     component::{self, internal::ComponentUpdate, Component},
     entity::Entity,
@@ -201,6 +202,22 @@ impl WorkerConnection {
                 was_consumed: false,
                 queue_status_callback: Some(callback_ptr),
             }
+        }
+    }
+
+    pub fn connect_alpha_locator_async(
+        locator: &AlphaLocator,
+        params: &ConnectionParameters,
+    ) -> WorkerConnectionFuture {
+        let connection_params = params.to_worker_sdk();
+
+        unsafe {
+            let ptr = Worker_Alpha_Locator_ConnectAsync(
+                locator.internal,
+                &connection_params.native_struct,
+            );
+
+            WorkerConnectionFuture::new(ptr)
         }
     }
 }

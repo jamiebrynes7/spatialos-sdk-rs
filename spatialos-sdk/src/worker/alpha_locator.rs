@@ -6,7 +6,9 @@ use spatialos_sdk_sys::worker::*;
 
 use crate::worker::{internal::utils::cstr_to_string, parameters::ProtocolLoggingParameters};
 
-pub struct AlphaLocator {}
+pub struct AlphaLocator {
+    pub(crate) internal: *mut Worker_Alpha_Locator,
+}
 
 impl AlphaLocator {
     pub fn create_development_player_identity_token(
@@ -40,6 +42,17 @@ impl AlphaLocator {
             ))
         }
     }
+
+    pub fn new(hostname: &str, port: u16, params: &AlphaLocatorParameters) -> Self {
+        let hostname = CString::new(hostname).unwrap();
+        let (cparams, _data) = params.to_worker_sdk();
+
+        unsafe {
+            let ptr = Worker_Alpha_Locator_Create(hostname.as_ptr(), port, &cparams);
+
+            AlphaLocator { internal: ptr }
+        }
+    }
 }
 
 pub struct AlphaLocatorParameters {
@@ -48,9 +61,43 @@ pub struct AlphaLocatorParameters {
     pub logging: Option<ProtocolLoggingParameters>,
 }
 
+impl AlphaLocatorParameters {
+    fn to_worker_sdk(&self) -> (Worker_Alpha_LocatorParameters, Vec<CString>) {
+        let (credentials, cstrs) = self.player_identity.to_worker_sdk();
+
+        let params = Worker_Alpha_LocatorParameters {
+            player_identity: credentials,
+            use_insecure_connection: self.use_insecure_connection as u8,
+            enable_logging: self.logging.is_some() as u8,
+            logging: match self.logging {
+                Some(ref params) => params.to_worker_sdk(),
+                None => ProtocolLoggingParameters::default().to_worker_sdk(),
+            },
+        };
+
+        (params, cstrs)
+    }
+}
+
 pub struct PlayerIdentityCredentials {
     pub player_identity_token: String,
     pub login_token: String,
+}
+
+impl PlayerIdentityCredentials {
+    fn to_worker_sdk(&self) -> (Worker_Alpha_PlayerIdentityCredentials, Vec<CString>) {
+        let pit_cstr = CString::new(self.player_identity_token.as_str()).unwrap();
+        let login_token_cstr = CString::new(self.login_token.as_str()).unwrap();
+
+        let cstrs = vec![pit_cstr, login_token_cstr];
+
+        let credentials = Worker_Alpha_PlayerIdentityCredentials {
+            player_identity_token: cstrs[0].as_ptr(),
+            login_token: cstrs[1].as_ptr(),
+        };
+
+        (credentials, cstrs)
+    }
 }
 
 pub struct PlayerIdentityTokenRequest {
