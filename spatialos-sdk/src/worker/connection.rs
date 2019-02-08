@@ -6,7 +6,7 @@ use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
 
 use crate::worker::commands::*;
-use crate::worker::component::internal::{CommandRequest, CommandResponse, ComponentUpdate};
+use crate::worker::component::internal::ComponentUpdate;
 use crate::worker::component::{self, Component};
 use crate::worker::entity::Entity;
 use crate::worker::internal::utils::cstr_to_string;
