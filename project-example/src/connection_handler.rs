@@ -2,7 +2,10 @@ use futures::{Async, Future};
 
 use crate::lib::{Command, Opt};
 use spatialos_sdk::worker::{
-    alpha_locator::{AlphaLocator, LoginTokensRequest, PlayerIdentityTokenRequest},
+    alpha_locator::{
+        AlphaLocator, AlphaLocatorParameters, LoginTokensRequest, PlayerIdentityCredentials,
+        PlayerIdentityTokenRequest,
+    },
     component::ComponentDatabase,
     connection::{WorkerConnection, WorkerConnectionFuture},
     locator::{Locator, LocatorCredentials, LocatorParameters},
@@ -69,7 +72,8 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
             );
 
             let pit = future.wait()?;
-            let mut request = LoginTokensRequest::new(pit.player_identity_token, worker_type);
+            let mut request =
+                LoginTokensRequest::new(pit.player_identity_token.clone(), worker_type.clone());
             let future = AlphaLocator::create_development_login_tokens(
                 LOCATOR_HOSTNAME,
                 LOCATOR_PORT,
@@ -77,9 +81,30 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
             );
 
             let response = future.wait()?;
-            println!("Got {} login tokens", response.login_tokens.len());
 
-            panic!("Testing done!")
+            if response.login_tokens.is_empty() {
+                return Err("No login tokens retrieved".to_owned());
+            }
+
+            let token = &response.login_tokens[0];
+
+            let locator_params = AlphaLocatorParameters {
+                player_identity: PlayerIdentityCredentials {
+                    login_token: token.login_token.clone(),
+                    player_identity_token: pit.player_identity_token.clone(),
+                },
+                use_insecure_connection: false,
+                logging: None,
+            };
+
+            let alpha_locator = AlphaLocator::new(LOCATOR_HOSTNAME, LOCATOR_PORT, &locator_params);
+
+            WorkerConnection::connect_alpha_locator_async(
+                &alpha_locator,
+                &ConnectionParameters::new(worker_type, components)
+                    .using_tcp()
+                    .using_external_ip(true),
+            )
         }
     };
 
