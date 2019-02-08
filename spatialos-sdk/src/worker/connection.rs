@@ -5,6 +5,7 @@ use futures::{Async, Future};
 
 use spatialos_sdk_sys::worker::*;
 
+use crate::ptr::MutPtr;
 use crate::worker::commands::*;
 use crate::worker::component;
 use crate::worker::component::internal::{CommandRequest, CommandResponse, ComponentUpdate};
@@ -15,7 +16,6 @@ use crate::worker::metrics::Metrics;
 use crate::worker::op::OpList;
 use crate::worker::parameters::{CommandParameters, ConnectionParameters};
 use crate::worker::{EntityId, InterestOverride, LogLevel, RequestId};
-use crate::ptr::MutPtr;
 
 #[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
 pub enum ConnectionStatusCode {
