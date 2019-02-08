@@ -6,7 +6,7 @@ use crate::worker::internal::utils::cstr_to_string;
 use crate::worker::locator::*;
 use crate::worker::metrics::Metrics;
 use crate::worker::op::OpList;
-use crate::worker::parameters::{CommandParameters, ConnectionParameters};
+use crate::worker::parameters::ConnectionParameters;
 use crate::worker::{EntityId, InterestOverride, LogLevel, RequestId};
 use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
@@ -87,7 +87,7 @@ pub trait Connection {
         entity_id: EntityId,
         request: C::CommandRequest,
         timeout_millis: Option<u32>,
-        command_parameters: CommandParameters,
+        allow_short_circuit: bool,
     ) -> RequestId<OutgoingCommandRequest>;
 
     fn send_command_response<C: Component>(
@@ -330,7 +330,7 @@ impl Connection for WorkerConnection {
         entity_id: EntityId,
         request: C::CommandRequest,
         timeout_millis: Option<u32>,
-        command_parameters: CommandParameters,
+        allow_short_circuit: bool,
     ) -> RequestId<OutgoingCommandRequest> {
         let timeout = match timeout_millis {
             Some(c) => &c,
@@ -344,6 +344,10 @@ impl Connection for WorkerConnection {
             user_handle: component::handle_allocate(request),
         };
 
+        let params = Worker_CommandParameters {
+            allow_short_circuit: allow_short_circuit as _,
+        };
+
         let request_id = unsafe {
             Worker_Connection_SendCommandRequest(
                 self.connection_ptr,
@@ -351,7 +355,7 @@ impl Connection for WorkerConnection {
                 &command_request,
                 0,
                 timeout,
-                &command_parameters.to_worker_sdk(),
+                &params,
             )
         };
 

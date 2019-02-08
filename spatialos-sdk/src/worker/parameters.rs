@@ -389,25 +389,6 @@ impl ThreadAffinityParameters {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct CommandParameters {
-    allow_short_circuit: bool,
-}
-
-impl CommandParameters {
-    pub fn new(should_short_circuit: bool) -> CommandParameters {
-        CommandParameters {
-            allow_short_circuit: should_short_circuit,
-        }
-    }
-
-    pub(crate) fn to_worker_sdk(&self) -> Worker_CommandParameters {
-        Worker_CommandParameters {
-            allow_short_circuit: self.allow_short_circuit as u8,
-        }
-    }
-}
-
 pub struct SnapshotParameters {}
 
 impl SnapshotParameters {
