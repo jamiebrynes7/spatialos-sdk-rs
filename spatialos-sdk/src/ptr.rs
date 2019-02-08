@@ -1,5 +1,8 @@
 //! Utilities for handling raw pointers.
 
+use derivative::Derivative;
+use std::cmp::Ordering;
+
 /// Wrapper around a raw pointer that ensures the pointer can only be accessed
 /// through a mutable reference.
 ///
@@ -12,7 +15,29 @@
 /// `MutPtr` wraps wraps a raw pointer and only allows the raw value to be accessed
 /// through a mutable reference, statically ensuring that the thread-safety
 /// requirements aren't violated.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+///
+/// # Safety
+///
+/// This wrapper doesn't enforce any safety guarantees. Notably:
+///
+/// * It doesn't require that the wrapped pointer be non-null.
+/// * [`get`] directly returns a copy of the raw pointer, which can then be copied
+///   and used in unsafe ways.
+/// * The raw pointer can be copied before creating the `MutPtr` wrapper, and the
+///   copy can still be used in an unsafe way.
+///
+/// `MutPtr` only acts as a helper to avoid accidentally using the pointer through
+/// a shared reference, but any code using it must still take care to correctly
+/// enforce safety invariants.
+///
+/// [`get`]: #method.get
+#[derive(Derivative)]
+#[derivative(
+    Debug(bound = ""),
+    PartialEq(bound = ""),
+    Eq(bound = ""),
+    Hash(bound = "")
+)]
 pub struct MutPtr<T> {
     ptr: *mut T,
 }
@@ -37,5 +62,17 @@ impl<T> MutPtr<T> {
     /// [`is_null`]: https://doc.rust-lang.org/std/primitive.pointer.html
     pub fn is_null(&self) -> bool {
         self.ptr.is_null()
+    }
+}
+
+impl<T> Ord for MutPtr<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.ptr.cmp(&other.ptr)
+    }
+}
+
+impl<T> PartialOrd for MutPtr<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
