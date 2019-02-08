@@ -1,10 +1,3 @@
-use std::ffi::{CStr, CString};
-use std::ptr;
-
-use futures::{Async, Future};
-
-use spatialos_sdk_sys::worker::*;
-
 use crate::worker::commands::*;
 use crate::worker::component::internal::ComponentUpdate;
 use crate::worker::component::{self, Component};
@@ -15,6 +8,10 @@ use crate::worker::metrics::Metrics;
 use crate::worker::op::OpList;
 use crate::worker::parameters::{CommandParameters, ConnectionParameters};
 use crate::worker::{EntityId, InterestOverride, LogLevel, RequestId};
+use futures::{Async, Future};
+use spatialos_sdk_sys::worker::*;
+use std::ffi::{CStr, CString, NulError};
+use std::ptr;
 
 #[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
 pub enum ConnectionStatusCode {
@@ -103,7 +100,7 @@ pub trait Connection {
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
         message: &str,
-    );
+    ) -> Result<(), NulError>;
 
     fn send_component_update(
         &mut self,
@@ -384,10 +381,19 @@ impl Connection for WorkerConnection {
 
     fn send_command_failure(
         &mut self,
-        _request_id: RequestId<IncomingCommandRequest>,
-        _message: &str,
-    ) {
-        unimplemented!()
+        request_id: RequestId<IncomingCommandRequest>,
+        message: &str,
+    ) -> Result<(), NulError> {
+        let message = CString::new(message)?;
+        unsafe {
+            Worker_Connection_SendCommandFailure(
+                self.connection_ptr,
+                request_id.id,
+                message.as_ptr(),
+            );
+        }
+
+        Ok(())
     }
 
     fn send_component_update(&mut self, _entity_id: EntityId, _component_update: ComponentUpdate) {
