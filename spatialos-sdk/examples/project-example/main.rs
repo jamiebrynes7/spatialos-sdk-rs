@@ -84,7 +84,7 @@ fn logic_loop(c: &mut WorkerConnection) {
 fn exercise_connection_code_paths(c: &mut WorkerConnection) {
     c.send_log_message(LogLevel::Info, "main", "Connected successfully!", None);
     print_worker_attributes(&c);
-    check_for_flag(&c, "my-flag");
+    check_for_flag(c, "my-flag");
 
     let _ = c.get_op_list(0);
     c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
@@ -140,7 +140,7 @@ fn print_worker_attributes(connection: &WorkerConnection) {
     }
 }
 
-fn check_for_flag(connection: &WorkerConnection, flag_name: &str) {
+fn check_for_flag(connection: &mut WorkerConnection, flag_name: &str) {
     let flag = connection.get_worker_flag(flag_name);
     match flag {
         Some(f) => println!("Found flag value: {}", f),

@@ -1,3 +1,4 @@
+use crate::ptr::MutPtr;
 use crate::worker::commands::*;
 use crate::worker::component::internal::ComponentUpdate;
 use crate::worker::component::{self, Component};
@@ -13,7 +14,19 @@ use spatialos_sdk_sys::worker::*;
 use std::ffi::{CStr, CString, NulError};
 use std::ptr;
 
-#[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
+/// Information about the status of a worker connection or network request.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ConnectionStatus {
+    /// The status of the connection or request.
+    pub code: ConnectionStatusCode,
+
+    /// Detailed, human-readable description of the connection status.
+    ///
+    /// Will be "OK" if no error occurred.
+    pub detail: String,
+}
+
+#[derive(Copy, Clone, PartialOrd, PartialEq, Eq, Debug)]
 pub enum ConnectionStatusCode {
     Success,
     InternalError,
@@ -121,21 +134,32 @@ pub trait Connection {
 
     fn set_protocol_logging_enabled(&mut self, enabled: bool);
 
-    #[deprecated(note = "Use get_connection_status_code == ConnectionStatusCode::Success instead.")]
-    fn is_connected(&self) -> bool;
+    fn get_connection_status(&mut self) -> ConnectionStatus;
 
-    fn get_connection_status_code(&self) -> ConnectionStatusCode;
-    fn get_connection_status_detail(&self) -> String;
-    fn get_worker_id(&self) -> &str;
-    fn get_worker_attributes(&self) -> Vec<String>;
-    fn get_worker_flag(&self, name: &str) -> Option<String>;
+    fn get_worker_flag(&mut self, name: &str) -> Option<String>;
 
     fn get_op_list(&mut self, timeout_millis: u32) -> OpList;
+
+    fn get_worker_id(&self) -> &str;
+
+    fn get_worker_attributes(&self) -> &[String];
 }
 
 pub struct WorkerConnection {
-    connection_ptr: *mut Worker_Connection,
-    worker_id: String,
+    // NOTE: The `Worker_Connection` pointer is wrapped in a `MutPtr` to ensure
+    // that we only attempt to use the connection pointer in methods that take
+    // `&mut self`. This enforces the thread-safety requirements of
+    // `Worker_Connection`. See this forum post for more information:
+    // https://forums.improbable.io/t/thread-safety-of-worker-connection-object/5358/2
+    //
+    // TODO: Replace the forum post URL with the actual relevant C API docs, once
+    // the docs have been updated to clarify the thread-safety requirements of
+    // the worker connection object.
+    connection_ptr: MutPtr<Worker_Connection>,
+
+    // Cached copies of static connection data. These are stored internally so that we can guarantee it will be safe to access this data through `&self`.
+    id: String,
+    attributes: Vec<String>,
 }
 
 impl WorkerConnection {
@@ -144,9 +168,19 @@ impl WorkerConnection {
             let worker_id = Worker_Connection_GetWorkerId(connection_ptr);
             let cstr = CStr::from_ptr(worker_id);
 
+            let sdk_attr = Worker_Connection_GetWorkerAttributes(connection_ptr);
+            let attributes = ::std::slice::from_raw_parts(
+                (*sdk_attr).attributes,
+                (*sdk_attr).attribute_count as usize,
+            )
+            .iter()
+            .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
+            .collect();
+
             WorkerConnection {
-                connection_ptr,
-                worker_id: cstr.to_string_lossy().to_string(),
+                connection_ptr: MutPtr::new(connection_ptr),
+                id: cstr.to_string_lossy().to_string(),
+                attributes,
             }
         }
     }
@@ -228,14 +262,14 @@ impl Connection for WorkerConnection {
                 },
             };
 
-            Worker_Connection_SendLogMessage(self.connection_ptr, &log_message);
+            Worker_Connection_SendLogMessage(self.connection_ptr.get(), &log_message);
         }
     }
 
     fn send_metrics(&mut self, metrics: &Metrics) {
         assert!(!self.connection_ptr.is_null());
         let worker_metrics = metrics.to_worker_sdk();
-        unsafe { Worker_Connection_SendMetrics(self.connection_ptr, &worker_metrics.metrics) }
+        unsafe { Worker_Connection_SendMetrics(self.connection_ptr.get(), &worker_metrics.metrics) }
     }
 
     fn send_reserve_entity_ids_request(
@@ -249,7 +283,7 @@ impl Connection for WorkerConnection {
                 None => ptr::null(),
             };
             let id = Worker_Connection_SendReserveEntityIdsRequest(
-                self.connection_ptr,
+                self.connection_ptr.get(),
                 payload.0,
                 timeout,
             );
@@ -274,7 +308,7 @@ impl Connection for WorkerConnection {
         let component_data = entity.raw_component_data();
         let id = unsafe {
             Worker_Connection_SendCreateEntityRequest(
-                self.connection_ptr,
+                self.connection_ptr.get(),
                 component_data.len() as _,
                 component_data.as_ptr(),
                 entity_id,
@@ -296,7 +330,7 @@ impl Connection for WorkerConnection {
                 None => ptr::null(),
             };
             let id = Worker_Connection_SendDeleteEntityRequest(
-                self.connection_ptr,
+                self.connection_ptr.get(),
                 payload.0.id,
                 timeout,
             );
@@ -317,7 +351,7 @@ impl Connection for WorkerConnection {
 
             let worker_query = payload.0.to_worker_sdk();
             let id = Worker_Connection_SendEntityQueryRequest(
-                self.connection_ptr,
+                self.connection_ptr.get(),
                 &worker_query.query,
                 timeout,
             );
@@ -348,7 +382,7 @@ impl Connection for WorkerConnection {
 
         let request_id = unsafe {
             Worker_Connection_SendCommandRequest(
-                self.connection_ptr,
+                self.connection_ptr.get(),
                 entity_id.id,
                 &command_request,
                 command_index,
@@ -374,7 +408,7 @@ impl Connection for WorkerConnection {
             };
 
             Worker_Connection_SendCommandResponse(
-                self.connection_ptr,
+                self.connection_ptr.get(),
                 request_id.id,
                 &raw_response,
             );
@@ -389,7 +423,7 @@ impl Connection for WorkerConnection {
         let message = CString::new(message)?;
         unsafe {
             Worker_Connection_SendCommandFailure(
-                self.connection_ptr,
+                self.connection_ptr.get(),
                 request_id.id,
                 message.as_ptr(),
             );
@@ -415,7 +449,7 @@ impl Connection for WorkerConnection {
 
         unsafe {
             Worker_Connection_SendComponentInterest(
-                self.connection_ptr,
+                self.connection_ptr.get(),
                 entity_id.id,
                 worker_sdk_overrides.as_ptr(),
                 worker_sdk_overrides.len() as u32,
@@ -432,7 +466,7 @@ impl Connection for WorkerConnection {
 
         unsafe {
             Worker_Connection_SendAuthorityLossImminentAcknowledgement(
-                self.connection_ptr,
+                self.connection_ptr.get(),
                 entity_id.id,
                 component_id,
             );
@@ -443,52 +477,28 @@ impl Connection for WorkerConnection {
         assert!(!self.connection_ptr.is_null());
 
         unsafe {
-            Worker_Connection_SetProtocolLoggingEnabled(self.connection_ptr, enabled as u8);
+            Worker_Connection_SetProtocolLoggingEnabled(self.connection_ptr.get(), enabled as u8);
         }
     }
 
-    fn is_connected(&self) -> bool {
-        assert!(!self.connection_ptr.is_null());
-        self.get_connection_status_code() == ConnectionStatusCode::Success
-    }
-
-    fn get_connection_status_code(&self) -> ConnectionStatusCode {
-        assert!(!self.connection_ptr.is_null());
+    fn get_connection_status(&mut self) -> ConnectionStatus {
+        let ptr = self.connection_ptr.get();
         unsafe {
-            ConnectionStatusCode::from(Worker_Connection_GetConnectionStatusCode(
-                self.connection_ptr,
-            ))
-        }
-    }
-
-    fn get_connection_status_detail(&self) -> String {
-        assert!(!self.connection_ptr.is_null());
-        unsafe {
-            cstr_to_string(Worker_Connection_GetConnectionStatusDetailString(
-                self.connection_ptr,
-            ))
+            let code = ConnectionStatusCode::from(Worker_Connection_GetConnectionStatusCode(ptr));
+            let detail = cstr_to_string(Worker_Connection_GetConnectionStatusDetailString(ptr));
+            ConnectionStatus { code, detail }
         }
     }
 
     fn get_worker_id(&self) -> &str {
-        &self.worker_id
+        &self.id
     }
 
-    fn get_worker_attributes(&self) -> Vec<String> {
-        assert!(!self.connection_ptr.is_null());
-        unsafe {
-            let sdk_attr = Worker_Connection_GetWorkerAttributes(self.connection_ptr);
-            ::std::slice::from_raw_parts(
-                (*sdk_attr).attributes,
-                (*sdk_attr).attribute_count as usize,
-            )
-            .iter()
-            .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
-            .collect()
-        }
+    fn get_worker_attributes(&self) -> &[String] {
+        &self.attributes
     }
 
-    fn get_worker_flag(&self, name: &str) -> Option<String> {
+    fn get_worker_flag(&mut self, name: &str) -> Option<String> {
         let flag_name = CString::new(name).unwrap();
 
         extern "C" fn worker_flag_handler(
@@ -508,7 +518,7 @@ impl Connection for WorkerConnection {
         let mut data: Option<String> = None;
         unsafe {
             Worker_Connection_GetFlag(
-                self.connection_ptr,
+                self.connection_ptr.get(),
                 flag_name.as_ptr(),
                 (&mut data as *mut Option<String>) as *mut ::std::os::raw::c_void,
                 Some(worker_flag_handler),
@@ -521,7 +531,7 @@ impl Connection for WorkerConnection {
     fn get_op_list(&mut self, timeout_millis: u32) -> OpList {
         assert!(!self.connection_ptr.is_null());
         let raw_op_list =
-            unsafe { Worker_Connection_GetOpList(self.connection_ptr, timeout_millis) };
+            unsafe { Worker_Connection_GetOpList(self.connection_ptr.get(), timeout_millis) };
         assert!(!raw_op_list.is_null());
         OpList::new(raw_op_list)
     }
@@ -530,9 +540,13 @@ impl Connection for WorkerConnection {
 impl Drop for WorkerConnection {
     fn drop(&mut self) {
         assert!(!self.connection_ptr.is_null());
-        unsafe { Worker_Connection_Destroy(self.connection_ptr) };
+        unsafe { Worker_Connection_Destroy(self.connection_ptr.get()) };
     }
 }
+
+// SAFE: The worker connection object is safe to send between threads.
+unsafe impl Send for WorkerConnection {}
+unsafe impl Sync for WorkerConnection {}
 
 pub struct WorkerConnectionFuture {
     future_ptr: *mut Worker_ConnectionFuture,
@@ -580,13 +594,14 @@ impl Future for WorkerConnectionFuture {
         }
 
         self.was_consumed = true;
-        let connection = WorkerConnection::new(connection_ptr);
+        let mut connection = WorkerConnection::new(connection_ptr);
 
-        if connection.get_connection_status_code() == ConnectionStatusCode::Success {
+        let status = connection.get_connection_status();
+        if status.code == ConnectionStatusCode::Success {
             return Ok(Async::Ready(connection));
         }
 
-        Err(connection.get_connection_status_detail())
+        Err(status.detail)
     }
 
     fn wait(self) -> Result<WorkerConnection, String>
@@ -599,12 +614,13 @@ impl Future for WorkerConnectionFuture {
 
         assert!(!self.future_ptr.is_null());
         let connection_ptr = unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ptr::null()) };
-        let connection = WorkerConnection::new(connection_ptr);
+        let mut connection = WorkerConnection::new(connection_ptr);
 
-        if connection.get_connection_status_code() == ConnectionStatusCode::Success {
+        let status = connection.get_connection_status();
+        if status.code == ConnectionStatusCode::Success {
             return Ok(connection);
         }
 
-        Err(connection.get_connection_status_detail())
+        Err(status.detail)
     }
 }
