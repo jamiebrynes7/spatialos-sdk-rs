@@ -17,7 +17,19 @@ use crate::worker::op::OpList;
 use crate::worker::parameters::{CommandParameters, ConnectionParameters};
 use crate::worker::{EntityId, InterestOverride, LogLevel, RequestId};
 
-#[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
+/// Information about the status of a worker connection or network request.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ConnectionStatus {
+    /// The status of the connection or request.
+    pub code: ConnectionStatusCode,
+
+    /// Detailed, human-readable description of the connection status.
+    ///
+    /// Will be "OK" if no error occurred.
+    pub detail: String,
+}
+
+#[derive(Copy, Clone, PartialOrd, PartialEq, Eq, Debug)]
 pub enum ConnectionStatusCode {
     Success,
     InternalError,
@@ -125,9 +137,7 @@ pub trait Connection {
 
     fn set_protocol_logging_enabled(&mut self, enabled: bool);
 
-    fn get_connection_status_code(&mut self) -> ConnectionStatusCode;
-
-    fn get_connection_status_detail(&mut self) -> String;
+    fn get_connection_status(&mut self) -> ConnectionStatus;
 
     fn get_worker_flag(&mut self, name: &str) -> Option<String>;
 
@@ -427,21 +437,12 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn get_connection_status_code(&mut self) -> ConnectionStatusCode {
-        assert!(!self.connection_ptr.is_null());
+    fn get_connection_status(&mut self) -> ConnectionStatus {
+        let ptr = self.connection_ptr.get();
         unsafe {
-            ConnectionStatusCode::from(Worker_Connection_GetConnectionStatusCode(
-                self.connection_ptr.get(),
-            ))
-        }
-    }
-
-    fn get_connection_status_detail(&mut self) -> String {
-        assert!(!self.connection_ptr.is_null());
-        unsafe {
-            cstr_to_string(Worker_Connection_GetConnectionStatusDetailString(
-                self.connection_ptr.get(),
-            ))
+            let code = ConnectionStatusCode::from(Worker_Connection_GetConnectionStatusCode(ptr));
+            let detail = cstr_to_string(Worker_Connection_GetConnectionStatusDetailString(ptr));
+            ConnectionStatus { code, detail }
         }
     }
 
@@ -551,11 +552,12 @@ impl Future for WorkerConnectionFuture {
         self.was_consumed = true;
         let mut connection = WorkerConnection::new(connection_ptr);
 
-        if connection.get_connection_status_code() == ConnectionStatusCode::Success {
+        let status = connection.get_connection_status();
+        if status.code == ConnectionStatusCode::Success {
             return Ok(Async::Ready(connection));
         }
 
-        Err(connection.get_connection_status_detail())
+        Err(status.detail)
     }
 
     fn wait(self) -> Result<WorkerConnection, String>
@@ -570,10 +572,11 @@ impl Future for WorkerConnectionFuture {
         let connection_ptr = unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ptr::null()) };
         let mut connection = WorkerConnection::new(connection_ptr);
 
-        if connection.get_connection_status_code() == ConnectionStatusCode::Success {
+        let status = connection.get_connection_status();
+        if status.code == ConnectionStatusCode::Success {
             return Ok(connection);
         }
 
-        Err(connection.get_connection_status_detail())
+        Err(status.detail)
     }
 }
