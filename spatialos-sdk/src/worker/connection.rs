@@ -87,7 +87,7 @@ pub trait Connection {
         entity_id: EntityId,
         request: C::CommandRequest,
         timeout_millis: Option<u32>,
-        allow_short_circuit: bool,
+        params: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest>;
 
     fn send_command_response<C: Component>(
@@ -330,7 +330,7 @@ impl Connection for WorkerConnection {
         entity_id: EntityId,
         request: C::CommandRequest,
         timeout_millis: Option<u32>,
-        allow_short_circuit: bool,
+        params: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest> {
         let command_index = C::get_request_command_index(&request);
 
@@ -346,10 +346,6 @@ impl Connection for WorkerConnection {
             user_handle: component::handle_allocate(request),
         };
 
-        let params = Worker_CommandParameters {
-            allow_short_circuit: allow_short_circuit as _,
-        };
-
         let request_id = unsafe {
             Worker_Connection_SendCommandRequest(
                 self.connection_ptr,
@@ -357,7 +353,7 @@ impl Connection for WorkerConnection {
                 &command_request,
                 command_index,
                 timeout,
-                &params,
+                &params.to_worker_sdk(),
             )
         };
 
