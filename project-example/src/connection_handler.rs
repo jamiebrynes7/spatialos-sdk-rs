@@ -8,13 +8,11 @@ use spatialos_sdk::worker::{
     },
     component::ComponentDatabase,
     connection::{WorkerConnection, WorkerConnectionFuture},
+    constants::{LOCATOR_HOSTNAME, LOCATOR_PORT, RECEPTIONIST_PORT},
     locator::{Locator, LocatorCredentials, LocatorParameters},
     parameters::ConnectionParameters,
 };
 use uuid::Uuid;
-
-const LOCATOR_HOSTNAME: &str = "locator.improbable.io";
-const LOCATOR_PORT: u16 = 444;
 
 const POLL_NUM_ATTEMPTS: u32 = 5;
 const POLL_TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 3000;
@@ -40,7 +38,7 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
             WorkerConnection::connect_receptionist_async(
                 &worker_id,
                 &host.unwrap_or_else(|| "127.0.0.1".into()),
-                port.unwrap_or(7777),
+                port.unwrap_or(RECEPTIONIST_PORT),
                 &params,
             )
         }
