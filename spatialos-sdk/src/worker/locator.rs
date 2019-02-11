@@ -121,7 +121,6 @@ impl LocatorCredentials {
                 WrappedNativeData {
                     native_data: data,
                     underlying_data: cstrs,
-                    _marker: PhantomData,
                 }
             }
             LocatorCredentials::Steam(steam_credentials) => {
@@ -143,7 +142,6 @@ impl LocatorCredentials {
                 WrappedNativeData {
                     native_data: data,
                     underlying_data: cstrs,
-                    _marker: PhantomData,
                 }
             }
         }

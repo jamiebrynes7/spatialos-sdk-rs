@@ -104,7 +104,6 @@ impl AlphaLocatorParameters {
         WrappedNativeData {
             native_data: params,
             underlying_data: credentials.underlying_data,
-            _marker: PhantomData,
         }
     }
 }
@@ -138,7 +137,6 @@ impl PlayerIdentityCredentials {
         WrappedNativeData {
             native_data: credentials,
             underlying_data: cstrs,
-            _marker: PhantomData,
         }
     }
 }
@@ -223,7 +221,6 @@ impl PlayerIdentityTokenRequest {
         WrappedNativeData {
             native_data: request,
             underlying_data,
-            _marker: PhantomData,
         }
     }
 }
@@ -375,7 +372,6 @@ impl LoginTokensRequest {
         WrappedNativeData {
             native_data: request,
             underlying_data,
-            _marker: PhantomData,
         }
     }
 }

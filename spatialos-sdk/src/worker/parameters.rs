@@ -106,7 +106,6 @@ impl ConnectionParameters {
         WrappedNativeData {
             native_data: params,
             underlying_data: worker_type_cstr,
-            _marker: PhantomData,
         }
     }
 }
