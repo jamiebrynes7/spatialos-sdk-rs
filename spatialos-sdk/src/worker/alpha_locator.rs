@@ -4,7 +4,8 @@ use futures::{Async, Future};
 
 use spatialos_sdk_sys::worker::*;
 
-use crate::worker::{internal::utils::cstr_to_string, parameters::ProtocolLoggingParameters};
+use crate::worker::{internal::utils::{cstr_to_string, WrappedNativeData}, parameters::ProtocolLoggingParameters};
+use std::marker::PhantomData;
 
 pub struct AlphaLocator {
     pub(crate) internal: *mut Worker_Alpha_Locator,
@@ -18,11 +19,11 @@ impl AlphaLocator {
     ) -> PlayerIdentityTokenFuture {
         unsafe {
             let cstr = CString::new(hostname).unwrap();
-            let (mut params, _data) = request.to_worker_sdk();
+            let mut params= request.to_worker_sdk();
             PlayerIdentityTokenFuture::new(Worker_Alpha_CreateDevelopmentPlayerIdentityTokenAsync(
                 cstr.as_ptr(),
                 port,
-                &mut params as *mut _,
+                &mut params.native_data as *mut _,
             ))
         }
     }
@@ -34,21 +35,21 @@ impl AlphaLocator {
     ) -> LoginTokensFuture {
         unsafe {
             let cstr = CString::new(hostname).unwrap();
-            let (mut params, _data) = request.to_worker_sdk();
+            let mut params = request.to_worker_sdk();
             LoginTokensFuture::new(Worker_Alpha_CreateDevelopmentLoginTokensAsync(
                 cstr.as_ptr(),
                 port,
-                &mut params as *mut _,
+                &mut params.native_data as *mut _,
             ))
         }
     }
 
     pub fn new(hostname: &str, port: u16, params: &AlphaLocatorParameters) -> Self {
         let hostname = CString::new(hostname).unwrap();
-        let (cparams, _data) = params.to_worker_sdk();
+        let cparams= params.to_worker_sdk();
 
         unsafe {
-            let ptr = Worker_Alpha_Locator_Create(hostname.as_ptr(), port, &cparams);
+            let ptr = Worker_Alpha_Locator_Create(hostname.as_ptr(), port, &cparams.native_data);
 
             AlphaLocator { internal: ptr }
         }
@@ -84,11 +85,11 @@ impl AlphaLocatorParameters {
         self
     }
 
-    fn to_worker_sdk(&self) -> (Worker_Alpha_LocatorParameters, Vec<CString>) {
-        let (credentials, cstrs) = self.player_identity.to_worker_sdk();
+    fn to_worker_sdk(&self) -> WrappedNativeData<Worker_Alpha_LocatorParameters, Vec<CString>> {
+        let credentials = self.player_identity.to_worker_sdk();
 
         let params = Worker_Alpha_LocatorParameters {
-            player_identity: credentials,
+            player_identity: credentials.native_data,
             use_insecure_connection: self.use_insecure_connection as u8,
             enable_logging: self.logging.is_some() as u8,
             logging: match self.logging {
@@ -97,7 +98,11 @@ impl AlphaLocatorParameters {
             },
         };
 
-        (params, cstrs)
+        WrappedNativeData {
+            native_data: params,
+            underlying_data: credentials.underlying_data,
+            _marker: PhantomData
+        }
     }
 }
 
@@ -114,7 +119,7 @@ impl PlayerIdentityCredentials {
         }
     }
 
-    fn to_worker_sdk(&self) -> (Worker_Alpha_PlayerIdentityCredentials, Vec<CString>) {
+    fn to_worker_sdk(&self) -> WrappedNativeData<Worker_Alpha_PlayerIdentityCredentials, Vec<CString>> {
         let pit_cstr = CString::new(self.player_identity_token.as_str()).unwrap();
         let login_token_cstr = CString::new(self.login_token.as_str()).unwrap();
 
@@ -125,7 +130,11 @@ impl PlayerIdentityCredentials {
             login_token: cstrs[1].as_ptr(),
         };
 
-        (credentials, cstrs)
+        WrappedNativeData {
+            native_data: credentials,
+            underlying_data: cstrs,
+            _marker: PhantomData
+        }
     }
 }
 
@@ -170,9 +179,7 @@ impl PlayerIdentityTokenRequest {
         self
     }
 
-    // TODO: Only reason this is `mut` is because that the duration_seconds is a non-const reference.
-    #[allow(clippy::wrong_self_convention)]
-    fn to_worker_sdk(&mut self) -> (Worker_Alpha_PlayerIdentityTokenRequest, Vec<CString>) {
+    fn to_worker_sdk(&self) ->  WrappedNativeData<Worker_Alpha_PlayerIdentityTokenRequest, Vec<CString>> {
         let mut underlying_data = vec![
             CString::new(self.dev_auth_token.as_str()).unwrap(),
             CString::new(self.player_id.as_str()).unwrap(),
@@ -192,7 +199,7 @@ impl PlayerIdentityTokenRequest {
             development_authentication_token_id: underlying_data[0].as_ptr(),
             player_id: underlying_data[1].as_ptr(),
             duration_seconds: match self.duration_seconds {
-                Some(ref mut value) => value as *mut u32,
+                Some(ref value) => value as *const _ as *mut u32, // TODO: Remove double cast when C SDK is fixed.
                 None => ::std::ptr::null_mut(),
             },
             display_name: match self.display_name {
@@ -206,7 +213,11 @@ impl PlayerIdentityTokenRequest {
             use_insecure_connection: self.use_insecure_connection as u8,
         };
 
-        (request, underlying_data)
+        WrappedNativeData {
+            native_data: request,
+            underlying_data,
+            _marker: PhantomData
+        }
     }
 }
 
@@ -338,9 +349,7 @@ impl LoginTokensRequest {
         self
     }
 
-    // TODO: Only reason this is `mut` is because that the duration_seconds is a non-const reference.
-    #[allow(clippy::wrong_self_convention)]
-    fn to_worker_sdk(&mut self) -> (Worker_Alpha_LoginTokensRequest, Vec<CString>) {
+    fn to_worker_sdk(&self) -> WrappedNativeData<Worker_Alpha_LoginTokensRequest, Vec<CString>> {
         let underlying_data = vec![
             CString::new(self.player_identity_token.as_str()).unwrap(),
             CString::new(self.worker_type.as_str()).unwrap(),
@@ -350,13 +359,17 @@ impl LoginTokensRequest {
             player_identity_token: underlying_data[0].as_ptr(),
             worker_type: underlying_data[1].as_ptr(),
             duration_seconds: match self.duration_seconds {
-                Some(ref mut value) => value as *mut u32,
+                Some(ref value) => value as *const _ as *mut u32,
                 None => ::std::ptr::null_mut(),
             },
             use_insecure_connection: self.use_insecure_connection as u8,
         };
 
-        (request, underlying_data)
+        WrappedNativeData {
+            native_data: request,
+            underlying_data,
+            _marker: PhantomData
+        }
     }
 }
 
