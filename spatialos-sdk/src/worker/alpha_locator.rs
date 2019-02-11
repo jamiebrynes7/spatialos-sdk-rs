@@ -4,7 +4,10 @@ use futures::{Async, Future};
 
 use spatialos_sdk_sys::worker::*;
 
-use crate::worker::{internal::utils::{cstr_to_string, WrappedNativeData}, parameters::ProtocolLoggingParameters};
+use crate::worker::{
+    internal::utils::{cstr_to_string, WrappedNativeData},
+    parameters::ProtocolLoggingParameters,
+};
 use std::marker::PhantomData;
 
 pub struct AlphaLocator {
@@ -19,7 +22,7 @@ impl AlphaLocator {
     ) -> PlayerIdentityTokenFuture {
         unsafe {
             let cstr = CString::new(hostname).unwrap();
-            let mut params= request.to_worker_sdk();
+            let mut params = request.to_worker_sdk();
             PlayerIdentityTokenFuture::new(Worker_Alpha_CreateDevelopmentPlayerIdentityTokenAsync(
                 cstr.as_ptr(),
                 port,
@@ -46,7 +49,7 @@ impl AlphaLocator {
 
     pub fn new(hostname: &str, port: u16, params: &AlphaLocatorParameters) -> Self {
         let hostname = CString::new(hostname).unwrap();
-        let cparams= params.to_worker_sdk();
+        let cparams = params.to_worker_sdk();
 
         unsafe {
             let ptr = Worker_Alpha_Locator_Create(hostname.as_ptr(), port, &cparams.native_data);
@@ -101,7 +104,7 @@ impl AlphaLocatorParameters {
         WrappedNativeData {
             native_data: params,
             underlying_data: credentials.underlying_data,
-            _marker: PhantomData
+            _marker: PhantomData,
         }
     }
 }
@@ -119,7 +122,9 @@ impl PlayerIdentityCredentials {
         }
     }
 
-    fn to_worker_sdk(&self) -> WrappedNativeData<Worker_Alpha_PlayerIdentityCredentials, Vec<CString>> {
+    fn to_worker_sdk(
+        &self,
+    ) -> WrappedNativeData<Worker_Alpha_PlayerIdentityCredentials, Vec<CString>> {
         let pit_cstr = CString::new(self.player_identity_token.as_str()).unwrap();
         let login_token_cstr = CString::new(self.login_token.as_str()).unwrap();
 
@@ -133,7 +138,7 @@ impl PlayerIdentityCredentials {
         WrappedNativeData {
             native_data: credentials,
             underlying_data: cstrs,
-            _marker: PhantomData
+            _marker: PhantomData,
         }
     }
 }
@@ -179,7 +184,9 @@ impl PlayerIdentityTokenRequest {
         self
     }
 
-    fn to_worker_sdk(&self) ->  WrappedNativeData<Worker_Alpha_PlayerIdentityTokenRequest, Vec<CString>> {
+    fn to_worker_sdk(
+        &self,
+    ) -> WrappedNativeData<Worker_Alpha_PlayerIdentityTokenRequest, Vec<CString>> {
         let mut underlying_data = vec![
             CString::new(self.dev_auth_token.as_str()).unwrap(),
             CString::new(self.player_id.as_str()).unwrap(),
@@ -216,7 +223,7 @@ impl PlayerIdentityTokenRequest {
         WrappedNativeData {
             native_data: request,
             underlying_data,
-            _marker: PhantomData
+            _marker: PhantomData,
         }
     }
 }
@@ -368,7 +375,7 @@ impl LoginTokensRequest {
         WrappedNativeData {
             native_data: request,
             underlying_data,
-            _marker: PhantomData
+            _marker: PhantomData,
         }
     }
 }

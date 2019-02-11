@@ -5,7 +5,9 @@ use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
 
 use crate::worker::internal::utils::cstr_to_string;
+use crate::worker::internal::utils::WrappedNativeData;
 use crate::worker::parameters::ProtocolLoggingParameters;
+use std::marker::PhantomData;
 
 pub struct Locator {
     pub(crate) locator: *mut Worker_Locator,
@@ -51,16 +53,18 @@ pub struct LocatorParameters {
 
 impl LocatorParameters {
     fn to_worker_sdk(&self) -> (Worker_LocatorParameters, Vec<CString>) {
-        let project_name_cstr = CString::new(self.project_name.as_str()).unwrap();
-        let (credentials_type, login_token_credentials, steam_credentials, mut underlying_data) =
-            self.credentials.to_worker_sdk();
-        underlying_data.push(project_name_cstr);
+        let credentials = self.credentials.to_worker_sdk();
+        let (credentials_type, login_token, steam) = credentials.native_data;
+
+        let mut underlying_data = credentials.underlying_data;
+        underlying_data.push(CString::new(self.project_name.as_str()).unwrap());
+
         (
             Worker_LocatorParameters {
                 project_name: underlying_data[underlying_data.len() - 1].as_ptr(),
                 credentials_type,
-                login_token: login_token_credentials,
-                steam: steam_credentials,
+                login_token,
+                steam,
                 logging: self.logging.to_worker_sdk(),
                 enable_logging: self.enable_logging as u8,
             },
@@ -96,41 +100,51 @@ pub enum LocatorCredentials {
 impl LocatorCredentials {
     fn to_worker_sdk(
         &self,
-    ) -> (
-        u8,
-        Worker_LoginTokenCredentials,
-        Worker_SteamCredentials,
-        Vec<CString>,
-    ) {
+    ) -> WrappedNativeData<(u8, Worker_LoginTokenCredentials, Worker_SteamCredentials), Vec<CString>>
+    {
         match self {
             LocatorCredentials::LoginToken(token) => {
-                let token_cstr = CString::new(token.as_str()).unwrap();
-                (
+                let mut cstrs = Vec::with_capacity(2);
+                cstrs.push(CString::new(token.as_str()).unwrap());
+
+                let data = (
                     Worker_LocatorCredentialsTypes_WORKER_LOCATOR_LOGIN_TOKEN_CREDENTIALS as u8,
                     Worker_LoginTokenCredentials {
-                        token: token_cstr.as_ptr(),
+                        token: cstrs[0].as_ptr(),
                     },
                     Worker_SteamCredentials {
                         ticket: ::std::ptr::null(),
                         deployment_tag: ::std::ptr::null(),
                     },
-                    vec![token_cstr],
-                )
+                );
+
+                WrappedNativeData {
+                    native_data: data,
+                    underlying_data: cstrs,
+                    _marker: PhantomData,
+                }
             }
             LocatorCredentials::Steam(steam_credentials) => {
-                let ticket_cstr = CString::new(steam_credentials.ticket.as_str()).unwrap();
-                let tag_cstr = CString::new(steam_credentials.deployment_tag.as_str()).unwrap();
-                (
+                let mut cstrs = Vec::with_capacity(3);
+                cstrs.push(CString::new(steam_credentials.ticket.as_str()).unwrap());
+                cstrs.push(CString::new(steam_credentials.deployment_tag.as_str()).unwrap());
+
+                let data = (
                     Worker_LocatorCredentialsTypes_WORKER_LOCATOR_STEAM_CREDENTIALS as u8,
                     Worker_LoginTokenCredentials {
                         token: ::std::ptr::null(),
                     },
                     Worker_SteamCredentials {
-                        ticket: ticket_cstr.as_ptr(),
-                        deployment_tag: tag_cstr.as_ptr(),
+                        ticket: cstrs[0].as_ptr(),
+                        deployment_tag: cstrs[1].as_ptr(),
                     },
-                    vec![ticket_cstr, tag_cstr],
-                )
+                );
+
+                WrappedNativeData {
+                    native_data: data,
+                    underlying_data: cstrs,
+                    _marker: PhantomData,
+                }
             }
         }
     }

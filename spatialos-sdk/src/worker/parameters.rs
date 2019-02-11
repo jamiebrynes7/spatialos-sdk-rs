@@ -1,10 +1,6 @@
-use std::ffi::CString;
-use std::ptr;
-
-use crate::worker::component::ComponentDatabase;
-use crate::worker::internal::utils::WrappedNativeStructWithString;
-use crate::worker::vtable;
+use crate::worker::{component::ComponentDatabase, internal::utils::WrappedNativeData, vtable};
 use spatialos_sdk_sys::worker::*;
+use std::{ffi::CString, marker::PhantomData, ptr};
 
 pub struct ConnectionParameters {
     pub worker_type: String,
@@ -87,9 +83,11 @@ impl ConnectionParameters {
 
     pub(crate) fn to_worker_sdk(
         &self,
-    ) -> WrappedNativeStructWithString<Worker_ConnectionParameters> {
-        let worker_type_cstr = CString::new(self.worker_type.clone())
-            .expect("Received 0 byte in supplied worker_type.");
+    ) -> WrappedNativeData<Worker_ConnectionParameters, Box<CString>> {
+        let worker_type_cstr = Box::new(
+            CString::new(self.worker_type.clone())
+                .expect("Received 0 byte in supplied worker_type."),
+        );
         let ptr = worker_type_cstr.as_ptr();
         let params = Worker_ConnectionParameters {
             worker_type: ptr,
@@ -105,9 +103,10 @@ impl ConnectionParameters {
             component_vtables: ptr::null(),
             default_component_vtable: ptr::null(),
         };
-        WrappedNativeStructWithString {
-            native_struct: params,
-            native_string_ref: worker_type_cstr,
+        WrappedNativeData {
+            native_data: params,
+            underlying_data: worker_type_cstr,
+            _marker: PhantomData,
         }
     }
 }
