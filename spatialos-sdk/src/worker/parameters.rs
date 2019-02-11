@@ -1,6 +1,6 @@
 use crate::worker::{component::ComponentDatabase, internal::utils::WrappedNativeData, vtable};
 use spatialos_sdk_sys::worker::*;
-use std::{ffi::CString, marker::PhantomData, ptr};
+use std::{ffi::CString, ptr};
 
 pub struct ConnectionParameters {
     pub worker_type: String,

@@ -8,7 +8,6 @@ use crate::worker::{
     internal::utils::{cstr_to_string, WrappedNativeData},
     parameters::ProtocolLoggingParameters,
 };
-use std::marker::PhantomData;
 
 pub struct AlphaLocator {
     pub(crate) internal: *mut Worker_Alpha_Locator,

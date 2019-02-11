@@ -7,7 +7,6 @@ use spatialos_sdk_sys::worker::*;
 use crate::worker::internal::utils::cstr_to_string;
 use crate::worker::internal::utils::WrappedNativeData;
 use crate::worker::parameters::ProtocolLoggingParameters;
-use std::marker::PhantomData;
 
 pub struct Locator {
     pub(crate) locator: *mut Worker_Locator,

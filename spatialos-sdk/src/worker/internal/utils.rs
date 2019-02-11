@@ -1,4 +1,4 @@
-use std::{ffi::CStr, marker::PhantomData};
+use std::ffi::CStr;
 
 pub fn cstr_to_string(ptr: *const std::os::raw::c_char) -> String {
     assert!(!ptr.is_null());
