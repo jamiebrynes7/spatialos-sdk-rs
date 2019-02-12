@@ -171,11 +171,8 @@ mod generated {
             fn to_request(
                 request: &generated::example::ExampleCommandRequest,
             ) -> Result<SchemaCommandRequest, String> {
-                let command_index = match request {
-                    ExampleCommandRequest::TestCommand(_) => 1,
-                    _ => unreachable!(),
-                };
-                let mut serialized_request = SchemaCommandRequest::new(Self::ID, command_index);
+                let mut serialized_request =
+                    SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
                 match request {
                     ExampleCommandRequest::TestCommand(ref data) => {
                         <generated::example::CommandData as TypeConversion>::to_type(
@@ -191,11 +188,10 @@ mod generated {
             fn to_response(
                 response: &generated::example::ExampleCommandResponse,
             ) -> Result<SchemaCommandResponse, String> {
-                let command_index = match response {
-                    ExampleCommandResponse::TestCommand(_) => 1,
-                    _ => unreachable!(),
-                };
-                let mut serialized_response = SchemaCommandResponse::new(Self::ID, command_index);
+                let mut serialized_response = SchemaCommandResponse::new(
+                    Self::ID,
+                    Self::get_response_command_index(response),
+                );
                 match response {
                     ExampleCommandResponse::TestCommand(ref data) => {
                         <generated::example::CommandData as TypeConversion>::to_type(
@@ -206,6 +202,24 @@ mod generated {
                     _ => unreachable!(),
                 }
                 Ok(serialized_response)
+            }
+
+            fn get_request_command_index(
+                request: &generated::example::ExampleCommandRequest,
+            ) -> u32 {
+                match request {
+                    ExampleCommandRequest::TestCommand(_) => 1,
+                    _ => unreachable!(),
+                }
+            }
+
+            fn get_response_command_index(
+                response: &generated::example::ExampleCommandResponse,
+            ) -> u32 {
+                match response {
+                    ExampleCommandResponse::TestCommand(_) => 1,
+                    _ => unreachable!(),
+                }
             }
         }
 
@@ -857,10 +871,8 @@ mod generated {
             fn to_request(
                 request: &generated::improbable::EntityAclCommandRequest,
             ) -> Result<SchemaCommandRequest, String> {
-                let command_index = match request {
-                    _ => unreachable!(),
-                };
-                let mut serialized_request = SchemaCommandRequest::new(Self::ID, command_index);
+                let mut serialized_request =
+                    SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
                 match request {
                     _ => unreachable!(),
                 }
@@ -870,14 +882,30 @@ mod generated {
             fn to_response(
                 response: &generated::improbable::EntityAclCommandResponse,
             ) -> Result<SchemaCommandResponse, String> {
-                let command_index = match response {
-                    _ => unreachable!(),
-                };
-                let mut serialized_response = SchemaCommandResponse::new(Self::ID, command_index);
+                let mut serialized_response = SchemaCommandResponse::new(
+                    Self::ID,
+                    Self::get_response_command_index(response),
+                );
                 match response {
                     _ => unreachable!(),
                 }
                 Ok(serialized_response)
+            }
+
+            fn get_request_command_index(
+                request: &generated::improbable::EntityAclCommandRequest,
+            ) -> u32 {
+                match request {
+                    _ => unreachable!(),
+                }
+            }
+
+            fn get_response_command_index(
+                response: &generated::improbable::EntityAclCommandResponse,
+            ) -> u32 {
+                match response {
+                    _ => unreachable!(),
+                }
             }
         }
 
@@ -1033,10 +1061,8 @@ mod generated {
             fn to_request(
                 request: &generated::improbable::InterestCommandRequest,
             ) -> Result<SchemaCommandRequest, String> {
-                let command_index = match request {
-                    _ => unreachable!(),
-                };
-                let mut serialized_request = SchemaCommandRequest::new(Self::ID, command_index);
+                let mut serialized_request =
+                    SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
                 match request {
                     _ => unreachable!(),
                 }
@@ -1046,14 +1072,30 @@ mod generated {
             fn to_response(
                 response: &generated::improbable::InterestCommandResponse,
             ) -> Result<SchemaCommandResponse, String> {
-                let command_index = match response {
-                    _ => unreachable!(),
-                };
-                let mut serialized_response = SchemaCommandResponse::new(Self::ID, command_index);
+                let mut serialized_response = SchemaCommandResponse::new(
+                    Self::ID,
+                    Self::get_response_command_index(response),
+                );
                 match response {
                     _ => unreachable!(),
                 }
                 Ok(serialized_response)
+            }
+
+            fn get_request_command_index(
+                request: &generated::improbable::InterestCommandRequest,
+            ) -> u32 {
+                match request {
+                    _ => unreachable!(),
+                }
+            }
+
+            fn get_response_command_index(
+                response: &generated::improbable::InterestCommandResponse,
+            ) -> u32 {
+                match response {
+                    _ => unreachable!(),
+                }
             }
         }
 
@@ -1177,10 +1219,8 @@ mod generated {
             fn to_request(
                 request: &generated::improbable::MetadataCommandRequest,
             ) -> Result<SchemaCommandRequest, String> {
-                let command_index = match request {
-                    _ => unreachable!(),
-                };
-                let mut serialized_request = SchemaCommandRequest::new(Self::ID, command_index);
+                let mut serialized_request =
+                    SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
                 match request {
                     _ => unreachable!(),
                 }
@@ -1190,14 +1230,30 @@ mod generated {
             fn to_response(
                 response: &generated::improbable::MetadataCommandResponse,
             ) -> Result<SchemaCommandResponse, String> {
-                let command_index = match response {
-                    _ => unreachable!(),
-                };
-                let mut serialized_response = SchemaCommandResponse::new(Self::ID, command_index);
+                let mut serialized_response = SchemaCommandResponse::new(
+                    Self::ID,
+                    Self::get_response_command_index(response),
+                );
                 match response {
                     _ => unreachable!(),
                 }
                 Ok(serialized_response)
+            }
+
+            fn get_request_command_index(
+                request: &generated::improbable::MetadataCommandRequest,
+            ) -> u32 {
+                match request {
+                    _ => unreachable!(),
+                }
+            }
+
+            fn get_response_command_index(
+                response: &generated::improbable::MetadataCommandResponse,
+            ) -> u32 {
+                match response {
+                    _ => unreachable!(),
+                }
             }
         }
 
@@ -1298,10 +1354,8 @@ mod generated {
             fn to_request(
                 request: &generated::improbable::PersistenceCommandRequest,
             ) -> Result<SchemaCommandRequest, String> {
-                let command_index = match request {
-                    _ => unreachable!(),
-                };
-                let mut serialized_request = SchemaCommandRequest::new(Self::ID, command_index);
+                let mut serialized_request =
+                    SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
                 match request {
                     _ => unreachable!(),
                 }
@@ -1311,14 +1365,30 @@ mod generated {
             fn to_response(
                 response: &generated::improbable::PersistenceCommandResponse,
             ) -> Result<SchemaCommandResponse, String> {
-                let command_index = match response {
-                    _ => unreachable!(),
-                };
-                let mut serialized_response = SchemaCommandResponse::new(Self::ID, command_index);
+                let mut serialized_response = SchemaCommandResponse::new(
+                    Self::ID,
+                    Self::get_response_command_index(response),
+                );
                 match response {
                     _ => unreachable!(),
                 }
                 Ok(serialized_response)
+            }
+
+            fn get_request_command_index(
+                request: &generated::improbable::PersistenceCommandRequest,
+            ) -> u32 {
+                match request {
+                    _ => unreachable!(),
+                }
+            }
+
+            fn get_response_command_index(
+                response: &generated::improbable::PersistenceCommandResponse,
+            ) -> u32 {
+                match response {
+                    _ => unreachable!(),
+                }
             }
         }
 
@@ -1454,10 +1524,8 @@ mod generated {
             fn to_request(
                 request: &generated::improbable::PositionCommandRequest,
             ) -> Result<SchemaCommandRequest, String> {
-                let command_index = match request {
-                    _ => unreachable!(),
-                };
-                let mut serialized_request = SchemaCommandRequest::new(Self::ID, command_index);
+                let mut serialized_request =
+                    SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
                 match request {
                     _ => unreachable!(),
                 }
@@ -1467,14 +1535,30 @@ mod generated {
             fn to_response(
                 response: &generated::improbable::PositionCommandResponse,
             ) -> Result<SchemaCommandResponse, String> {
-                let command_index = match response {
-                    _ => unreachable!(),
-                };
-                let mut serialized_response = SchemaCommandResponse::new(Self::ID, command_index);
+                let mut serialized_response = SchemaCommandResponse::new(
+                    Self::ID,
+                    Self::get_response_command_index(response),
+                );
                 match response {
                     _ => unreachable!(),
                 }
                 Ok(serialized_response)
+            }
+
+            fn get_request_command_index(
+                request: &generated::improbable::PositionCommandRequest,
+            ) -> u32 {
+                match request {
+                    _ => unreachable!(),
+                }
+            }
+
+            fn get_response_command_index(
+                response: &generated::improbable::PositionCommandResponse,
+            ) -> u32 {
+                match response {
+                    _ => unreachable!(),
+                }
             }
         }
 

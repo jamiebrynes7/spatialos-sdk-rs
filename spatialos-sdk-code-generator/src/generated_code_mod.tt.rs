@@ -186,13 +186,7 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
     }
 
     fn to_request(request: &<#= self.rust_fqname(&component.identifier) #>CommandRequest) -> Result<SchemaCommandRequest, String> {
-        let command_index = match request {<#
-            for command in &component.command_definitions {
-            #>
-            <#= self.rust_name(&component.identifier) #>CommandRequest::<#= command.identifier.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
-            _ => unreachable!()
-        };
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, command_index);
+        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
         match request {<#
             for command in &component.command_definitions {
             #>
@@ -205,13 +199,7 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
     }
 
     fn to_response(response: &<#= self.rust_fqname(&component.identifier) #>CommandResponse) -> Result<SchemaCommandResponse, String> {
-        let command_index = match response {<#
-            for command in &component.command_definitions {
-            #>
-            <#= self.rust_name(&component.identifier) #>CommandResponse::<#= command.identifier.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
-            _ => unreachable!()
-        };
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, command_index);
+        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
         match response {<#
             for command in &component.command_definitions {
             #>
@@ -221,6 +209,24 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
             _ => unreachable!()
         }
         Ok(serialized_response)
+    }
+
+    fn get_request_command_index(request: &<#= self.rust_fqname(&component.identifier) #>CommandRequest) -> u32 {
+        match request {<#
+            for command in &component.command_definitions {
+            #>
+            <#= self.rust_name(&component.identifier) #>CommandRequest::<#= command.identifier.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_response_command_index(response: &<#= self.rust_fqname(&component.identifier) #>CommandResponse) -> u32 {
+        match response {<#
+            for command in &component.command_definitions {
+            #>
+            <#= self.rust_name(&component.identifier) #>CommandResponse::<#= command.identifier.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
+            _ => unreachable!(),
+        }
     }
 }
 <# } #>
