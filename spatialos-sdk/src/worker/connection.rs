@@ -1,18 +1,21 @@
 use crate::ptr::MutPtr;
-use crate::worker::commands::*;
-use crate::worker::component::internal::ComponentUpdate;
-use crate::worker::component::{self, Component};
-use crate::worker::entity::Entity;
-use crate::worker::internal::utils::cstr_to_string;
-use crate::worker::locator::*;
-use crate::worker::metrics::Metrics;
-use crate::worker::op::OpList;
-use crate::worker::parameters::ConnectionParameters;
-use crate::worker::{EntityId, InterestOverride, LogLevel, RequestId};
+use crate::worker::{
+    commands::*,
+    component::{self, internal::ComponentUpdate, Component},
+    entity::Entity,
+    internal::utils::cstr_to_string,
+    locator::*,
+    metrics::Metrics,
+    op::OpList,
+    parameters::ConnectionParameters,
+    {EntityId, InterestOverride, LogLevel, RequestId},
+};
 use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
-use std::ffi::{CStr, CString, NulError};
-use std::ptr;
+use std::{
+    ffi::{CStr, CString, NulError},
+    ptr,
+};
 
 /// Information about the status of a worker connection or network request.
 #[derive(Debug, Clone, PartialEq, Eq)]

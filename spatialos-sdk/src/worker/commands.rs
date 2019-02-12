@@ -16,7 +16,7 @@ use spatialos_sdk_sys::worker::Worker_CommandParameters;
 /// * `allow_short_circuit: false` allow the command to skip being routed through SpatialOS if
 ///   the worker is sending a command to itself. This avoids a round trip, but
 ///   SpatialOS cannot guarantee that the command will be fully delivered and executed.
-///   [See the docs for mroe information.][short-circuit]
+///   [See the docs for more information.][short-circuit]
 ///
 /// # Examples
 ///
