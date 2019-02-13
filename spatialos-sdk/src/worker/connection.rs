@@ -1,21 +1,21 @@
-use std::ffi::{CStr, CString};
-use std::ptr;
-
-use futures::{Async, Future};
-
-use spatialos_sdk_sys::worker::*;
-
 use crate::ptr::MutPtr;
-use crate::worker::commands::*;
-use crate::worker::component;
-use crate::worker::component::internal::{CommandRequest, CommandResponse, ComponentUpdate};
-use crate::worker::entity::Entity;
-use crate::worker::internal::utils::cstr_to_string;
-use crate::worker::locator::*;
-use crate::worker::metrics::Metrics;
-use crate::worker::op::OpList;
-use crate::worker::parameters::{CommandParameters, ConnectionParameters};
-use crate::worker::{EntityId, InterestOverride, LogLevel, RequestId};
+use crate::worker::{
+    commands::*,
+    component::{self, internal::ComponentUpdate, Component},
+    entity::Entity,
+    internal::utils::cstr_to_string,
+    locator::*,
+    metrics::Metrics,
+    op::OpList,
+    parameters::ConnectionParameters,
+    {EntityId, InterestOverride, LogLevel, RequestId},
+};
+use futures::{Async, Future};
+use spatialos_sdk_sys::worker::*;
+use std::{
+    ffi::{CStr, CString, NulError},
+    ptr,
+};
 
 /// Information about the status of a worker connection or network request.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -98,25 +98,25 @@ pub trait Connection {
         timeout_millis: Option<u32>,
     ) -> RequestId<EntityQueryRequest>;
 
-    fn send_command_request(
+    fn send_command_request<C: Component>(
         &mut self,
         entity_id: EntityId,
-        request: component::internal::CommandRequest,
+        request: C::CommandRequest,
         timeout_millis: Option<u32>,
-        command_parameters: CommandParameters,
+        params: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest>;
 
-    fn send_command_response(
+    fn send_command_response<C: Component>(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
-        response: component::internal::CommandResponse,
+        response: C::CommandResponse,
     );
 
     fn send_command_failure(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
         message: &str,
-    );
+    ) -> Result<(), NulError>;
 
     fn send_component_update(
         &mut self,
@@ -362,30 +362,77 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn send_command_request(
+    fn send_command_request<C: Component>(
         &mut self,
-        _entity_id: EntityId,
-        _request: CommandRequest,
-        _timeout_millis: Option<u32>,
-        _command_parameters: CommandParameters,
+        entity_id: EntityId,
+        request: C::CommandRequest,
+        timeout_millis: Option<u32>,
+        params: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest> {
-        unimplemented!()
+        let command_index = C::get_request_command_index(&request);
+
+        let timeout = match timeout_millis {
+            Some(c) => &c,
+            None => ptr::null(),
+        };
+
+        let command_request = Worker_CommandRequest {
+            reserved: ptr::null_mut(),
+            component_id: C::ID,
+            schema_type: ptr::null_mut(),
+            user_handle: component::handle_allocate(request),
+        };
+
+        let request_id = unsafe {
+            Worker_Connection_SendCommandRequest(
+                self.connection_ptr.get(),
+                entity_id.id,
+                &command_request,
+                command_index,
+                timeout,
+                &params.to_worker_sdk(),
+            )
+        };
+
+        RequestId::new(request_id)
     }
 
-    fn send_command_response(
+    fn send_command_response<C: Component>(
         &mut self,
-        _request_id: RequestId<IncomingCommandRequest>,
-        _response: CommandResponse,
+        request_id: RequestId<IncomingCommandRequest>,
+        response: C::CommandResponse,
     ) {
-        unimplemented!()
+        unsafe {
+            let raw_response = Worker_CommandResponse {
+                reserved: ptr::null_mut(),
+                component_id: C::ID,
+                schema_type: ptr::null_mut(),
+                user_handle: component::handle_allocate(response),
+            };
+
+            Worker_Connection_SendCommandResponse(
+                self.connection_ptr.get(),
+                request_id.id,
+                &raw_response,
+            );
+        }
     }
 
     fn send_command_failure(
         &mut self,
-        _request_id: RequestId<IncomingCommandRequest>,
-        _message: &str,
-    ) {
-        unimplemented!()
+        request_id: RequestId<IncomingCommandRequest>,
+        message: &str,
+    ) -> Result<(), NulError> {
+        let message = CString::new(message)?;
+        unsafe {
+            Worker_Connection_SendCommandFailure(
+                self.connection_ptr.get(),
+                request_id.id,
+                message.as_ptr(),
+            );
+        }
+
+        Ok(())
     }
 
     fn send_component_update(&mut self, _entity_id: EntityId, _component_update: ComponentUpdate) {
