@@ -1,11 +1,17 @@
 {
-  "configurationVersion": "0.1",
-  "projectName": "xxx",
-  "schemaDescriptor": "./schema/bin/schema.descriptor",
-  "serverWorkers": [
-    "../rust_worker.json"
-  ],
-  "clientWorkers": [
-    "../rust_client.json"
-  ]
+  "workerType": "RustClient",
+  "attributeSet": {
+    "attributes": [
+      "rusty-client"
+    ]
+  },
+  "entity_interest": {
+    "range_entity_interest": {
+      "radius": 2
+    }
+  },
+  "componentDelivery": {
+    "default": "RELIABLE_ORDERED",
+    "checkout_all_initially": true
+  }
 }
