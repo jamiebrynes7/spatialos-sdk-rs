@@ -20,7 +20,7 @@
   "launchConfiguration": {
     "cloudDeployment": {
       "linux": {
-        "localBuildDirectory": "../../../target/release/examples/",
+        "localBuildDirectory": "./build/release",
         "command": "project-example",
         "arguments": [
           "--worker-id",
@@ -35,7 +35,7 @@
     },
     "localDeployment": {
       "macos": {
-        "localBuildDirectory": "../../../target/release/examples/",
+        "localBuildDirectory": "./build/debug",
         "command": "project-example",
         "arguments": [
           "--worker-id",
@@ -48,7 +48,7 @@
         ]
       },
       "linux": {
-        "localBuildDirectory": "../../../target/release/examples/",
+        "localBuildDirectory": "./build/debug",
         "command": "project-example",
         "arguments": [
           "--worker-id",
@@ -61,7 +61,7 @@
         ]
       },
       "windows": {
-        "localBuildDirectory": "../../../target/release/examples/",
+        "localBuildDirectory": "./build/debug",
         "command": "project-example.exe",
         "arguments": [
           "--worker-id",
