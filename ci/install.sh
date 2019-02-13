@@ -59,6 +59,10 @@ rustup component add clippy-preview
 
 cargo install --path cargo-spatial --force
 
-cd project-example
+# HACK: It doesn't make sense to do codegen in the install step, but it needs
+# to be done before we attempt to build since it doesn't happen automatically.
+# Issue #56 should resolve this such that codegen can happen automatically as
+# part of the build script.
+pushd project-example
 cargo spatial --verbose codegen
-cd ..
+popd
