@@ -1,9 +1,19 @@
 {
-  "dimensionsInWorldUnits" : {
+  "dimensionsInWorldUnits": {
     "x": 1000,
     "z": 1000
   },
-  "loadBalancing": {},
+  "loadBalancing": {
+    "layerConfigurations": [
+      {
+        "layer": "rusty",
+        "rectangle_grid": {
+          "cols": 2,
+          "rows": 2
+        }
+      }
+    ]
+  },
   "snapshot": {
     "takeSnapshotIntervalSeconds": 600,
     "startDeploymentFromSnapshotFile": "./snapshots/default.snapshot"
@@ -12,7 +22,10 @@
     {
       "workerType": "RustWorker",
       "flags": [
-        {"name": "my-flag", "value": "super-cool-value"}
+        {
+          "name": "my-flag",
+          "value": "super-cool-value"
+        }
       ]
     }
   ]
