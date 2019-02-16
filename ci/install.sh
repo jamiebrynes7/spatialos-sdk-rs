@@ -31,7 +31,7 @@ elif isMacOS; then
   SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/mac"
 elif isLinux; then
   SPATIAL_URL="https://console.improbable.io/toolbelt/download/latest/linux"
-else 
+else
   echo "Unsupported platform"
   exit 1
 fi
@@ -56,3 +56,13 @@ rm -rf "./temp"
 
 rustup component add rustfmt-preview
 rustup component add clippy-preview
+
+cargo install --path cargo-spatial --force
+
+# HACK: It doesn't make sense to do codegen in the install step, but it needs
+# to be done before we attempt to build since it doesn't happen automatically.
+# Issue #56 should resolve this such that codegen can happen automatically as
+# part of the build script.
+pushd project-example
+cargo spatial --verbose codegen
+popd

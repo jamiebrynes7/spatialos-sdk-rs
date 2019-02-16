@@ -1,6 +1,6 @@
-use crate::lib::{get_connection, Opt};
-use generated::example;
-use generated::improbable;
+use crate::connection_handler::*;
+use crate::opt::*;
+use generated::{example, improbable};
 use spatialos_sdk::worker::commands::{
     DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
 };
@@ -17,8 +17,10 @@ use std::f64;
 use structopt::StructOpt;
 use tap::*;
 
+mod connection_handler;
+#[rustfmt::skip]
 mod generated;
-mod lib;
+mod opt;
 
 fn main() {
     println!("Entered program");
@@ -65,7 +67,10 @@ fn logic_loop(c: &mut WorkerConnection) {
                 },
                 UpdateParameters { loopback: true },
             );
-            println!("Sending component update for improbable::Position to entity {:?}.", entity_id);
+            println!(
+                "Sending component update for improbable::Position to entity {:?}.",
+                entity_id
+            );
         }
 
         // Process ops.
@@ -103,7 +108,11 @@ fn logic_loop(c: &mut WorkerConnection) {
                                 );
                             }),
                         });
-                        let create_request_id = c.send_create_entity_request(entity, Some(response_data.first_entity_id), None);
+                        let create_request_id = c.send_create_entity_request(
+                            entity,
+                            Some(response_data.first_entity_id),
+                            None,
+                        );
                         println!("Create entity request ID: {:?}", create_request_id);
                     }
                 }
@@ -111,7 +120,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                     if let StatusCode::Success(id) = create_entity_response.status_code {
                         entity_id = Some(id);
                     }
-                },
+                }
                 WorkerOp::AddComponent(add_component) => match add_component.component_id {
                     example::Example::ID => {
                         let component_data = add_component.get::<example::Example>().unwrap();
@@ -138,7 +147,7 @@ fn logic_loop(c: &mut WorkerConnection) {
 fn exercise_connection_code_paths(c: &mut WorkerConnection) {
     c.send_log_message(LogLevel::Info, "main", "Connected successfully!", None);
     print_worker_attributes(&c);
-    check_for_flag(&c, "my-flag");
+    check_for_flag(c, "my-flag");
 
     let _ = c.get_op_list(0);
     c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
@@ -166,7 +175,7 @@ fn print_worker_attributes(connection: &WorkerConnection) {
     }
 }
 
-fn check_for_flag(connection: &WorkerConnection, flag_name: &str) {
+fn check_for_flag(connection: &mut WorkerConnection, flag_name: &str) {
     let flag = connection.get_worker_flag(flag_name);
     match flag {
         Some(f) => println!("Found flag value: {}", f),

@@ -358,7 +358,7 @@ impl ProtocolLoggingParameters {
             CString::new(self.log_prefix.clone()).expect("Received 0 byte in supplied log prefix.");
 
         Worker_ProtocolLoggingParameters {
-            log_prefix: "protocol-log-".as_ptr() as _,//log_prefix_cstr.as_ptr(),
+            log_prefix: "protocol-log-".as_ptr() as _, //log_prefix_cstr.as_ptr(),
             max_log_files: self.max_log_files,
             max_log_file_size_bytes: self.max_log_file_size_bytes,
         }
@@ -397,32 +397,6 @@ impl UpdateParameters {
     pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_UpdateParameters {
         Worker_Alpha_UpdateParameters {
             loopback: self.loopback as _,
-        }
-    }
-}
-
-pub struct CommandParameters {
-    allow_short_circuit: bool,
-}
-
-impl CommandParameters {
-    const SHORT_CIRCUIT: CommandParameters = CommandParameters {
-        allow_short_circuit: true,
-    };
-
-    const DEFAULT: CommandParameters = CommandParameters {
-        allow_short_circuit: false,
-    };
-
-    pub fn new(should_short_circuit: bool) -> CommandParameters {
-        CommandParameters {
-            allow_short_circuit: should_short_circuit,
-        }
-    }
-
-    pub(crate) fn to_worker_sdk(&self) -> Worker_CommandParameters {
-        Worker_CommandParameters {
-            allow_short_circuit: self.allow_short_circuit as u8,
         }
     }
 }

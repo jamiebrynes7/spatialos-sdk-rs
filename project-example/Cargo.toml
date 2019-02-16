@@ -1,18 +1,15 @@
 [package]
-name = "spatialos-sdk"
+name = "project-example"
 version = "0.0.0"
 authors = [
     "Jamie Brynes <jamiebrynes7@gmail.com>",
-    "David Avedissian <git@dga.me.uk>"
+    "David Avedissian <git@dga.me.uk>",
 ]
 edition = "2018"
 
 [dependencies]
-derivative = "1.0.2"
-spatialos-sdk-sys = { path = "../spatialos-sdk-sys"}
+spatialos-sdk = { path = "../spatialos-sdk"}
 futures = "0.1.25"
-
-[dev-dependencies]
 uuid = { version = "0.7", features = ["v4"] }
 structopt = "0.2.14"
 tap = "0.3.0"

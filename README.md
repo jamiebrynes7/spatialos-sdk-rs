@@ -20,19 +20,19 @@ If these steps complete successfully, the `spatialos-sdk` crate has been built a
 
 To run the example project, you will need to:
 
-1. Run the code generator - `./spatialos-sdk/examples/project-example/codegen.sh`
-2. Build a release version of the RustWorker - `cargo build --example project-example --release`
-4. Navigate to `spatialos-sdk/examples/project-example/spatialos`
-5. Run `spatial local launch`
+1. Install cargo-spatial: `cargo install --path ./cargo-spatial`
+2. Navigate to `project-example`
+3. Run `cargo spatial local launch`
 
 This will start a local deployment of SpatialOS with one entity. The entity will have the `Example`
-component described in `spatialos-sdk/examples/project-example/spatialos/schema/example.schema`.
+component described in `project-example/schema/example.schema`.
 SpatialOS will automatically launch an instance of the worker you just built, which you can verify
 by opening the inspector (navigate to http://localhost:21000/inspector in your web browser). If you
-want to manually launch another instance of the worker, run the following command:
+want to manually launch another instance of the worker, run the following command from the
+`project-example` directory:
 
 ```
-cargo run --example project-example -- --worker-id RustWorker999 --worker-type RustWorker receptionist
+cargo run -- --worker-id RustWorker999 --worker-type RustWorker receptionist
 ```
 
 This will allow you to see the log output of the worker as it runs.
