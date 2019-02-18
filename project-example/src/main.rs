@@ -6,7 +6,7 @@ use spatialos_sdk::worker::{
     connection::{Connection, WorkerConnection},
     entity::Entity,
     metrics::{HistogramMetric, Metrics},
-    op::{StatusCode, WorkerOp},
+    op::WorkerOp,
     parameters::UpdateParameters,
     query::{EntityQuery, QueryConstraint, ResultType},
     {EntityId, InterestOverride, LogLevel},
@@ -19,6 +19,7 @@ use structopt::StructOpt;
 use tap::*;
 
 mod connection_handler;
+#[rustfmt::skip]
 mod generated;
 mod opt;
 
@@ -48,6 +49,51 @@ fn main() {
 
 fn logic_loop(c: &mut WorkerConnection) {
     let mut world = HashMap::new();
+
+    // Create an entity with a `Rotate` component in order to demonstrate tracking and
+    // updating entities.
+    let mut entity = Entity::new();
+    entity.add(improbable::Position {
+        coords: improbable::Coordinates {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        },
+    });
+    entity.add(example::Rotate {
+        angle: 0.0,
+        radius: 10.0,
+        center_x: -7.0,
+        center_y: 0.0,
+        center_z: 13.0,
+    });
+    entity.add(improbable::EntityAcl {
+        read_acl: improbable::WorkerRequirementSet {
+            attribute_set: vec![improbable::WorkerAttributeSet {
+                attribute: vec!["rusty".into()],
+            }],
+        },
+        component_write_acl: BTreeMap::new().tap(|writes| {
+            writes.insert(
+                improbable::Position::ID,
+                improbable::WorkerRequirementSet {
+                    attribute_set: vec![improbable::WorkerAttributeSet {
+                        attribute: vec!["rusty".into()],
+                    }],
+                },
+            );
+            writes.insert(
+                example::Rotate::ID,
+                improbable::WorkerRequirementSet {
+                    attribute_set: vec![improbable::WorkerAttributeSet {
+                        attribute: vec!["rusty".into()],
+                    }],
+                },
+            );
+        }),
+    });
+    let create_request_id = c.send_create_entity_request(entity, None, None);
+    println!("Create entity request ID: {:?}", create_request_id);
 
     loop {
         let ops = c.get_op_list(0);
@@ -82,7 +128,7 @@ fn logic_loop(c: &mut WorkerConnection) {
 
                 WorkerOp::AuthorityChange(authority_change) => {
                     if authority_change.component_id == example::Rotate::ID {
-                        eprintln!(
+                        println!(
                             "Authority change for {}: {:?}",
                             c.get_worker_id(),
                             authority_change
@@ -102,57 +148,6 @@ fn logic_loop(c: &mut WorkerConnection) {
                     id => println!("Received unknown component: {}", id),
                 },
 
-                WorkerOp::ReserveEntityIdsResponse(response) => {
-                    if let StatusCode::Success(response_data) = response.status_code {
-                        let mut entity = Entity::new();
-                        entity.add(improbable::Position {
-                            coords: improbable::Coordinates {
-                                x: 0.0,
-                                y: 0.0,
-                                z: 0.0,
-                            },
-                        });
-                        entity.add(example::Rotate {
-                            angle: 0.0,
-                            radius: 10.0,
-                            center_x: -7.0,
-                            center_y: 0.0,
-                            center_z: 13.0,
-                        });
-                        entity.add(improbable::EntityAcl {
-                            read_acl: improbable::WorkerRequirementSet {
-                                attribute_set: vec![improbable::WorkerAttributeSet {
-                                    attribute: vec!["rusty".into()],
-                                }],
-                            },
-                            component_write_acl: BTreeMap::new().tap(|writes| {
-                                writes.insert(
-                                    improbable::Position::ID,
-                                    improbable::WorkerRequirementSet {
-                                        attribute_set: vec![improbable::WorkerAttributeSet {
-                                            attribute: vec!["rusty".into()],
-                                        }],
-                                    },
-                                );
-                                writes.insert(
-                                    example::Rotate::ID,
-                                    improbable::WorkerRequirementSet {
-                                        attribute_set: vec![improbable::WorkerAttributeSet {
-                                            attribute: vec!["rusty".into()],
-                                        }],
-                                    },
-                                );
-                            }),
-                        });
-                        let create_request_id = c.send_create_entity_request(
-                            entity,
-                            Some(response_data.first_entity_id),
-                            None,
-                        );
-                        println!("Create entity request ID: {:?}", create_request_id);
-                    }
-                }
-
                 _ => {}
             }
         }
@@ -166,8 +161,7 @@ fn logic_loop(c: &mut WorkerConnection) {
 
             // Only update entities that have a `Rotate` component.
             if let Some(rotate) = &mut entity_state.rotate {
-                rotate.angle += f64::consts::PI * 2.0 / 20.0;
-                eprintln!("{} - {}", c.get_worker_id(), rotate.angle);
+                rotate.angle += f64::consts::PI * 2.0 / 200.0;
 
                 c.send_component_update::<example::Rotate>(
                     entity_id,
@@ -190,14 +184,9 @@ fn logic_loop(c: &mut WorkerConnection) {
                     UpdateParameters { loopback: true },
                 );
             }
-
-            println!(
-                "Sending component update for improbable::Position to entity {:?}.",
-                entity_id
-            );
         }
 
-        ::std::thread::sleep(::std::time::Duration::from_millis(500));
+        ::std::thread::sleep(::std::time::Duration::from_millis(30));
     }
 }
 
