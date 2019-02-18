@@ -381,14 +381,24 @@ impl ProtocolLoggingParameters {
         Default::default()
     }
 
+    /// Sets the prefix string to be used for log file names.
+    ///
+    /// # Panics
+    ///
+    /// This will panic if `prefix` contains a 0 byte. This is a requirement imposed
+    /// by the underlying SpatialOS API.
     pub fn set_prefix<T: AsRef<str>>(&mut self, prefix: T) {
         self.log_prefix = CString::new(prefix.as_ref()).expect("`prefix` contained a null byte");
     }
 
+    /// Sets the maximum number of log files to keep.
     pub fn set_max_log_files(&mut self, max_log_files: u32) {
         self.max_log_files = max_log_files;
     }
 
+    /// Sets the maximum size in bytes that a single log file can be.
+    ///
+    /// Once an individual log file exceeds this size, a new file will be created.
     pub fn set_max_log_file_size(&mut self, max_file_size: u32) {
         self.max_log_file_size_bytes = max_file_size;
     }
