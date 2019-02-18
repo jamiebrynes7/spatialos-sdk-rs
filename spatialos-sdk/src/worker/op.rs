@@ -273,7 +273,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                         Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                             StatusCode::Success(ReservedEntityIdRange {
                                 first_entity_id: EntityId::new(op.first_entity_id),
-                                number_of_entity_ids: op.number_of_entity_ids
+                                number_of_entity_ids: op.number_of_entity_ids,
                             })
                         }
                         Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
