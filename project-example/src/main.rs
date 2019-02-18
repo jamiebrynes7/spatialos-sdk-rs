@@ -1,5 +1,6 @@
 use crate::{connection_handler::*, opt::*};
 use generated::{example, improbable};
+use rand::Rng;
 use spatialos_sdk::worker::{
     commands::{EntityQueryRequest, ReserveEntityIdsRequest},
     component::{Component, ComponentData, ComponentDatabase},
@@ -50,6 +51,8 @@ fn main() {
 fn logic_loop(c: &mut WorkerConnection) {
     let mut world = HashMap::new();
 
+    let mut rng = rand::thread_rng();
+
     // Create an entity with a `Rotate` component in order to demonstrate tracking and
     // updating entities.
     let mut entity = Entity::new();
@@ -61,11 +64,11 @@ fn logic_loop(c: &mut WorkerConnection) {
         },
     });
     entity.add(example::Rotate {
-        angle: 0.0,
-        radius: 10.0,
-        center_x: -7.0,
+        angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
+        radius: rng.gen_range(20.0, 100.0),
+        center_x: rng.gen_range(-50.0, 50.0),
         center_y: 0.0,
-        center_z: 13.0,
+        center_z: rng.gen_range(-50.0, 50.0),
     });
     entity.add(improbable::EntityAcl {
         read_acl: improbable::WorkerRequirementSet {
