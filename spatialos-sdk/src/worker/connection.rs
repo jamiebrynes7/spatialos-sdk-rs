@@ -1,7 +1,7 @@
 use crate::ptr::MutPtr;
 use crate::worker::{
     commands::*,
-    component::{self, internal::ComponentUpdate, Component},
+    component::{self, Component},
     entity::Entity,
     internal::utils::cstr_to_string,
     locator::*,
