@@ -3,12 +3,11 @@ use generated::{example, improbable};
 use rand::Rng;
 use spatialos_sdk::worker::{
     commands::{EntityQueryRequest, ReserveEntityIdsRequest},
-    component::{Component, ComponentData, ComponentDatabase},
+    component::{Component, ComponentData, ComponentDatabase, UpdateParameters},
     connection::{Connection, WorkerConnection},
     entity::Entity,
     metrics::{HistogramMetric, Metrics},
     op::WorkerOp,
-    parameters::UpdateParameters,
     query::{EntityQuery, QueryConstraint, ResultType},
     {EntityId, InterestOverride, LogLevel},
 };
@@ -210,7 +209,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                         angle: Some(rotate.angle),
                         ..Default::default()
                     },
-                    UpdateParameters { loopback: true },
+                    UpdateParameters::default(),
                 );
 
                 // Update the entity's position based on the current state of the `Rotate`
@@ -224,7 +223,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                             z: rotate.angle.cos() * rotate.radius + rotate.center_z,
                         }),
                     },
-                    UpdateParameters { loopback: true },
+                    UpdateParameters::default(),
                 );
             }
         }

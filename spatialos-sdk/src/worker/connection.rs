@@ -1,13 +1,13 @@
 use crate::ptr::MutPtr;
 use crate::worker::{
     commands::*,
-    component::{self, Component},
+    component::{self, Component, UpdateParameters},
     entity::Entity,
     internal::utils::cstr_to_string,
     locator::*,
     metrics::Metrics,
     op::OpList,
-    parameters::{ConnectionParameters, UpdateParameters},
+    parameters::ConnectionParameters,
     {EntityId, InterestOverride, LogLevel, RequestId},
 };
 use futures::{Async, Future};

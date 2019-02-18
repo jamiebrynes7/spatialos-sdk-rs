@@ -1,5 +1,5 @@
 use crate::worker::internal::schema;
-use spatialos_sdk_sys::worker;
+use spatialos_sdk_sys::worker::*;
 use std::os::raw;
 use std::sync::Arc;
 use std::{mem, ptr};
@@ -51,6 +51,60 @@ where
 
     fn get_request_command_index(request: &Self::CommandRequest) -> u32;
     fn get_response_command_index(response: &Self::CommandResponse) -> u32;
+}
+
+/// Additional parameters for sending component updates.
+///
+/// Additional parameters passed to [`Connection::send_component_update`]. Note that
+/// all parameters are kept private and the struct can only be initialized with
+/// default values in order to make it possible to add new parameters without a
+/// breaking change.
+///
+/// If you would like to use a method-chaining style when initializing the parameters,
+/// the [tap] crate is recommended. The examples below demonstrate this.
+///
+/// # Parameters
+///
+/// * `loopback: false` allow the update to be sent back to the worker without waiting
+///   to be routed through SpatialOS. This allows the worker to receive the update op
+///   faster, but risks that the worker won't know if the update actually failed. [See
+///   the docs for more information.][short-circuit]
+///
+/// # Examples
+///
+/// ```
+/// use spatialos_sdk::worker::component::UpdateParameters;
+/// use tap::*;
+///
+/// let params = UpdateParameters::new()
+///     .tap(UpdateParameters::allow_loopback);
+/// ```
+///
+/// [short-circuit]: https://docs.improbable.io/reference/13.5/shared/design/commands#properties
+/// [tap]: https://crates.io/crates/tap
+#[derive(Debug, Clone, Default)]
+pub struct UpdateParameters {
+    loopback: bool,
+}
+
+impl UpdateParameters {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn allow_loopback(&mut self) {
+        self.loopback = true;
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_UpdateParameters {
+        Worker_Alpha_UpdateParameters {
+            loopback: if self.loopback {
+                Worker_Alpha_ComponentUpdateLoopback_WORKER_COMPONENT_UPDATE_LOOPBACK_SHORT_CIRCUITED as _
+            } else {
+                Worker_Alpha_ComponentUpdateLoopback_WORKER_COMPONENT_UPDATE_LOOPBACK_NONE as _
+            },
+        }
+    }
 }
 
 // Internal untyped component data objects.
@@ -170,7 +224,7 @@ pub(crate) mod internal {
 // to the connection object.
 #[derive(Default)]
 pub struct ComponentDatabase {
-    component_vtables: Vec<worker::Worker_ComponentVtable>,
+    component_vtables: Vec<Worker_ComponentVtable>,
 }
 
 impl ComponentDatabase {
@@ -185,7 +239,7 @@ impl ComponentDatabase {
         self
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> *const worker::Worker_ComponentVtable {
+    pub(crate) fn to_worker_sdk(&self) -> *const Worker_ComponentVtable {
         self.component_vtables.as_ptr()
     }
 
@@ -210,8 +264,8 @@ pub(crate) unsafe fn handle_copy<T>(handle: *mut raw::c_void) -> *mut raw::c_voi
 }
 
 // Vtable implementation functions.
-fn create_component_vtable<C: Component>() -> worker::Worker_ComponentVtable {
-    worker::Worker_ComponentVtable {
+fn create_component_vtable<C: Component>() -> Worker_ComponentVtable {
+    Worker_ComponentVtable {
         component_id: C::ID,
         user_data: ptr::null_mut(),
         command_request_free: Some(vtable_command_request_free::<C>),
@@ -252,8 +306,8 @@ unsafe extern "C" fn vtable_component_data_copy<C: Component>(
 unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     _: u32,
     _: *mut raw::c_void,
-    data: *mut worker::Schema_ComponentData,
-    handle_out: *mut *mut worker::Worker_ComponentDataHandle,
+    data: *mut Schema_ComponentData,
+    handle_out: *mut *mut Worker_ComponentDataHandle,
 ) -> u8 {
     let schema_data = schema::SchemaComponentData {
         component_id: C::ID,
@@ -272,7 +326,7 @@ unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
     _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
-    data: *mut *mut worker::Schema_ComponentData,
+    data: *mut *mut Schema_ComponentData,
 ) {
     let client_data = &*(handle as *const C);
     if let Ok(schema_data) = C::to_data(client_data) {
@@ -301,8 +355,8 @@ unsafe extern "C" fn vtable_component_update_copy<C: Component>(
 unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     _: u32,
     _: *mut raw::c_void,
-    update: *mut worker::Schema_ComponentUpdate,
-    handle_out: *mut *mut worker::Worker_ComponentUpdateHandle,
+    update: *mut Schema_ComponentUpdate,
+    handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
     let schema_update = schema::SchemaComponentUpdate {
         component_id: C::ID,
@@ -321,7 +375,7 @@ unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
     _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
-    update: *mut *mut worker::Schema_ComponentUpdate,
+    update: *mut *mut Schema_ComponentUpdate,
 ) {
     let data = &*(handle as *const _);
     let schema_result = C::to_update(data);
@@ -351,8 +405,8 @@ unsafe extern "C" fn vtable_command_request_copy<C: Component>(
 unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
     _: u32,
     _: *mut raw::c_void,
-    request: *mut worker::Schema_CommandRequest,
-    handle_out: *mut *mut worker::Worker_CommandRequestHandle,
+    request: *mut Schema_CommandRequest,
+    handle_out: *mut *mut Worker_CommandRequestHandle,
 ) -> u8 {
     let schema_request = schema::SchemaCommandRequest {
         component_id: C::ID,
@@ -371,7 +425,7 @@ unsafe extern "C" fn vtable_command_request_serialize<C: Component>(
     _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
-    request: *mut *mut worker::Schema_CommandRequest,
+    request: *mut *mut Schema_CommandRequest,
 ) {
     let data = &*(handle as *const _);
     let schema_result = C::to_request(data);
@@ -401,8 +455,8 @@ unsafe extern "C" fn vtable_command_response_copy<C: Component>(
 unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(
     _: u32,
     _: *mut raw::c_void,
-    response: *mut worker::Schema_CommandResponse,
-    handle_out: *mut *mut worker::Worker_CommandRequestHandle,
+    response: *mut Schema_CommandResponse,
+    handle_out: *mut *mut Worker_CommandRequestHandle,
 ) -> u8 {
     let schema_response = schema::SchemaCommandResponse {
         component_id: C::ID,
@@ -421,7 +475,7 @@ unsafe extern "C" fn vtable_command_response_serialize<C: Component>(
     _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
-    response: *mut *mut worker::Schema_CommandResponse,
+    response: *mut *mut Schema_CommandResponse,
 ) {
     let data = &*(handle as *const _);
     let schema_result = C::to_response(data);

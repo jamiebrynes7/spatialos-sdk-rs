@@ -454,18 +454,6 @@ impl ThreadAffinityParameters {
     }
 }
 
-pub struct UpdateParameters {
-    pub loopback: bool,
-}
-
-impl UpdateParameters {
-    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_UpdateParameters {
-        Worker_Alpha_UpdateParameters {
-            loopback: self.loopback as _,
-        }
-    }
-}
-
 pub struct SnapshotParameters {}
 
 impl SnapshotParameters {
