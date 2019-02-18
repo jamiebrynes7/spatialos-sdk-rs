@@ -2,7 +2,7 @@ use crate::{connection_handler::*, opt::*};
 use generated::{example, improbable};
 use spatialos_sdk::worker::{
     commands::{EntityQueryRequest, ReserveEntityIdsRequest},
-    component::{Component, ComponentDatabase},
+    component::{Component, ComponentData, ComponentDatabase},
     connection::{Connection, WorkerConnection},
     entity::Entity,
     metrics::{HistogramMetric, Metrics},
@@ -92,6 +92,16 @@ fn logic_loop(c: &mut WorkerConnection) {
                     }
                 }
 
+                WorkerOp::ComponentUpdate(update) => match update.component_id {
+                    example::Rotate::ID => {
+                        let component_update = update.get::<example::Rotate>().unwrap();
+                        let state = world.get_mut(&update.entity_id).unwrap();
+                        let rotate = state.rotate.as_mut().unwrap();
+                        rotate.merge(component_update.clone());
+                    }
+                    id => println!("Received unknown component: {}", id),
+                },
+
                 WorkerOp::ReserveEntityIdsResponse(response) => {
                     if let StatusCode::Success(response_data) = response.status_code {
                         let mut entity = Entity::new();
@@ -142,13 +152,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                         println!("Create entity request ID: {:?}", create_request_id);
                     }
                 }
-                WorkerOp::ComponentUpdate(update) => match update.component_id {
-                    example::Example::ID => {
-                        let component_update = update.get::<example::Example>();
-                        println!("Received Example update: {:?}", component_update)
-                    }
-                    id => println!("Received unknown component: {}", id),
-                },
+
                 _ => {}
             }
         }
