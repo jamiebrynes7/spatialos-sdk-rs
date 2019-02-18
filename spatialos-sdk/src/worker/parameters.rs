@@ -393,6 +393,12 @@ impl ProtocolLoggingParameters {
         self.max_log_file_size_bytes = max_file_size;
     }
 
+    /// Converts the logging parameters into the equivalent C API type.
+    ///
+    /// # Safety
+    ///
+    /// The returned `Worker_ProtocolLoggingParameters` borrows data owned by `self`,
+    /// and therefore must not outlive `self`.
     pub(crate) fn to_worker_sdk(&self) -> Worker_ProtocolLoggingParameters {
         Worker_ProtocolLoggingParameters {
             log_prefix: self.log_prefix.as_ptr(),
