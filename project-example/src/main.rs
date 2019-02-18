@@ -1,24 +1,24 @@
-use crate::connection_handler::*;
-use crate::opt::*;
+use crate::{connection_handler::*, opt::*};
 use generated::{example, improbable};
-use spatialos_sdk::worker::commands::{
-    DeleteEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest,
+use spatialos_sdk::worker::{
+    commands::{EntityQueryRequest, ReserveEntityIdsRequest},
+    component::{Component, ComponentDatabase},
+    connection::{Connection, WorkerConnection},
+    entity::Entity,
+    metrics::{HistogramMetric, Metrics},
+    op::{StatusCode, WorkerOp},
+    parameters::UpdateParameters,
+    query::{EntityQuery, QueryConstraint, ResultType},
+    {EntityId, InterestOverride, LogLevel},
 };
-use spatialos_sdk::worker::component::{Component, ComponentDatabase};
-use spatialos_sdk::worker::connection::{Connection, WorkerConnection};
-use spatialos_sdk::worker::entity::Entity;
-use spatialos_sdk::worker::metrics::{HistogramMetric, Metrics};
-use spatialos_sdk::worker::op::{StatusCode, WorkerOp};
-use spatialos_sdk::worker::parameters::UpdateParameters;
-use spatialos_sdk::worker::query::{EntityQuery, QueryConstraint, ResultType};
-use spatialos_sdk::worker::{EntityId, InterestOverride, LogLevel};
-use std::collections::BTreeMap;
-use std::f64;
+use std::{
+    collections::{BTreeMap, HashMap},
+    f64,
+};
 use structopt::StructOpt;
 use tap::*;
 
 mod connection_handler;
-#[rustfmt::skip]
 mod generated;
 mod opt;
 
@@ -27,6 +27,7 @@ fn main() {
 
     let components = ComponentDatabase::new()
         .add_component::<example::Example>()
+        .add_component::<example::Rotate>()
         .add_component::<improbable::EntityAcl>()
         .add_component::<improbable::Persistence>()
         .add_component::<improbable::Metadata>()
@@ -46,32 +47,10 @@ fn main() {
 }
 
 fn logic_loop(c: &mut WorkerConnection) {
-    let mut counter = 0;
-    let mut entity_id: Option<EntityId> = None;
+    let mut world = HashMap::new();
 
     loop {
         let ops = c.get_op_list(0);
-
-        // Move entity (if it exists).
-        if let Some(ref entity_id) = entity_id {
-            // Counter == 20 is one full circle.
-            let angle = (counter as f64) * (f64::consts::PI * 2.0 / 20.0);
-            c.send_component_update::<improbable::Position>(
-                entity_id.clone(),
-                improbable::PositionUpdate {
-                    coords: Some(improbable::Coordinates {
-                        x: angle.sin() * 10.0,
-                        y: 0.0,
-                        z: angle.cos() * 10.0,
-                    }),
-                },
-                UpdateParameters { loopback: true },
-            );
-            println!(
-                "Sending component update for improbable::Position to entity {:?}.",
-                entity_id
-            );
-        }
 
         // Process ops.
         for op in &ops {
@@ -80,16 +59,55 @@ fn logic_loop(c: &mut WorkerConnection) {
             } else {
                 println!("Received op: {:?}", op);
             }
+
             match op {
+                WorkerOp::AddEntity(add_entity_op) => {
+                    world.insert(add_entity_op.entity_id, EntityState::default());
+                }
+
+                WorkerOp::RemoveEntity(remove_entity_op) => {
+                    world.remove(&remove_entity_op.entity_id);
+                }
+
+                WorkerOp::AddComponent(add_component) => match add_component.component_id {
+                    example::Rotate::ID => {
+                        let rotate = add_component.get::<example::Rotate>().unwrap();
+                        let entity_state = world
+                            .get_mut(&add_component.entity_id)
+                            .expect("Entity wasn't present in local world");
+                        entity_state.rotate = Some(rotate.clone());
+                    }
+                    id => println!("Received unknown component: {}", id),
+                },
+
+                WorkerOp::AuthorityChange(authority_change) => {
+                    if authority_change.component_id == example::Rotate::ID {
+                        eprintln!(
+                            "Authority change for {}: {:?}",
+                            c.get_worker_id(),
+                            authority_change
+                        );
+                        let state = world.get_mut(&authority_change.entity_id).unwrap();
+                        state.has_authority = authority_change.authority.has_authority();
+                    }
+                }
+
                 WorkerOp::ReserveEntityIdsResponse(response) => {
                     if let StatusCode::Success(response_data) = response.status_code {
                         let mut entity = Entity::new();
                         entity.add(improbable::Position {
                             coords: improbable::Coordinates {
-                                x: 10.0,
-                                y: 12.0,
+                                x: 0.0,
+                                y: 0.0,
                                 z: 0.0,
                             },
+                        });
+                        entity.add(example::Rotate {
+                            angle: 0.0,
+                            radius: 10.0,
+                            center_x: -7.0,
+                            center_y: 0.0,
+                            center_z: 13.0,
                         });
                         entity.add(improbable::EntityAcl {
                             read_acl: improbable::WorkerRequirementSet {
@@ -106,6 +124,14 @@ fn logic_loop(c: &mut WorkerConnection) {
                                         }],
                                     },
                                 );
+                                writes.insert(
+                                    example::Rotate::ID,
+                                    improbable::WorkerRequirementSet {
+                                        attribute_set: vec![improbable::WorkerAttributeSet {
+                                            attribute: vec!["rusty".into()],
+                                        }],
+                                    },
+                                );
                             }),
                         });
                         let create_request_id = c.send_create_entity_request(
@@ -116,18 +142,6 @@ fn logic_loop(c: &mut WorkerConnection) {
                         println!("Create entity request ID: {:?}", create_request_id);
                     }
                 }
-                WorkerOp::CreateEntityResponse(create_entity_response) => {
-                    if let StatusCode::Success(id) = create_entity_response.status_code {
-                        entity_id = Some(id);
-                    }
-                }
-                WorkerOp::AddComponent(add_component) => match add_component.component_id {
-                    example::Example::ID => {
-                        let component_data = add_component.get::<example::Example>().unwrap();
-                        println!("Received Example data: {:?}", component_data);
-                    }
-                    id => println!("Received unknown component: {}", id),
-                },
                 WorkerOp::ComponentUpdate(update) => match update.component_id {
                     example::Example::ID => {
                         let component_update = update.get::<example::Example>();
@@ -139,8 +153,47 @@ fn logic_loop(c: &mut WorkerConnection) {
             }
         }
 
+        // Update the rotation of all rotation components that we have control over.
+        for (&entity_id, entity_state) in &mut world {
+            // Ignore any entities where we don't have authority over the `Rotate` component.
+            if !entity_state.has_authority {
+                continue;
+            }
+
+            // Only update entities that have a `Rotate` component.
+            if let Some(rotate) = &mut entity_state.rotate {
+                rotate.angle += f64::consts::PI * 2.0 / 20.0;
+                eprintln!("{} - {}", c.get_worker_id(), rotate.angle);
+
+                c.send_component_update::<example::Rotate>(
+                    entity_id,
+                    example::RotateUpdate {
+                        angle: Some(rotate.angle),
+                        ..Default::default()
+                    },
+                    UpdateParameters { loopback: true },
+                );
+
+                c.send_component_update::<improbable::Position>(
+                    entity_id,
+                    improbable::PositionUpdate {
+                        coords: Some(improbable::Coordinates {
+                            x: rotate.angle.sin() * rotate.radius + rotate.center_x,
+                            y: rotate.center_y,
+                            z: rotate.angle.cos() * rotate.radius + rotate.center_z,
+                        }),
+                    },
+                    UpdateParameters { loopback: true },
+                );
+            }
+
+            println!(
+                "Sending component update for improbable::Position to entity {:?}.",
+                entity_id
+            );
+        }
+
         ::std::thread::sleep(::std::time::Duration::from_millis(500));
-        counter += 1;
     }
 }
 
@@ -218,4 +271,10 @@ fn send_metrics(c: &mut WorkerConnection) {
     histogram_metric.add_sample(0.5);
 
     c.send_metrics(&m);
+}
+
+#[derive(Debug, Default)]
+struct EntityState {
+    has_authority: bool,
+    rotate: Option<example::Rotate>,
 }
