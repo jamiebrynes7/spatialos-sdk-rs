@@ -65,10 +65,12 @@ where
 ///
 /// # Parameters
 ///
-/// * `loopback: false` allow the update to be sent back to the worker without waiting
-///   to be routed through SpatialOS. This allows the worker to receive the update op
-///   faster, but risks that the worker won't know if the update actually failed. [See
-///   the docs for more information.][short-circuit]
+///
+/// * `loopback` (disabled by default) - Allow the update to be sent back to the worker
+///   without waiting to be routed through SpatialOS. This allows the worker to receive
+///   the update op faster, but risks that the worker will receive the update when the
+///   the update actually failed (due to the worker losing authority). [See the docs for
+///   more information.][short-circuit]
 ///
 /// # Examples
 ///
