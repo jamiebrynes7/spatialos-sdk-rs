@@ -94,6 +94,11 @@ impl UpdateParameters {
         Default::default()
     }
 
+    /// Enables loopback short-circuiting for the component update message.
+    ///
+    /// [See the docs for more information.][short-circuit]
+    ///
+    /// [short-circuit]: https://docs.improbable.io/reference/13.5/shared/design/commands#properties
     pub fn allow_loopback(&mut self) {
         self.loopback = true;
     }
