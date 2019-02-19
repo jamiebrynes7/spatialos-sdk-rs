@@ -5,7 +5,7 @@ use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
 
 use crate::worker::{
-    internal::utils::{cstr_to_string, WrappedNativeData},
+    internal::utils::cstr_to_string,
     parameters::ProtocolLoggingParameters,
 };
 
@@ -25,7 +25,7 @@ impl Locator {
             PlayerIdentityTokenFuture::new(Worker_Alpha_CreateDevelopmentPlayerIdentityTokenAsync(
                 cstr.as_ptr(),
                 port,
-                &mut params.native_data as *mut _,
+                &mut params as *mut _,
             ))
         }
     }
@@ -41,7 +41,7 @@ impl Locator {
             LoginTokensFuture::new(Worker_Alpha_CreateDevelopmentLoginTokensAsync(
                 cstr.as_ptr(),
                 port,
-                &mut params.native_data as *mut _,
+                &mut params as *mut _,
             ))
         }
     }
@@ -51,7 +51,7 @@ impl Locator {
         let cparams = params.to_worker_sdk();
 
         unsafe {
-            let ptr = Worker_Alpha_Locator_Create(hostname.as_ptr(), port, &cparams.native_data);
+            let ptr = Worker_Alpha_Locator_Create(hostname.as_ptr(), port, &cparams);
 
             Locator { internal: ptr }
         }
@@ -87,73 +87,58 @@ impl LocatorParameters {
         self
     }
 
-    fn to_worker_sdk(&self) -> WrappedNativeData<Worker_Alpha_LocatorParameters, Vec<CString>> {
+    fn to_worker_sdk(&self) -> Worker_Alpha_LocatorParameters {
         let credentials = self.player_identity.to_worker_sdk();
 
-        let params = Worker_Alpha_LocatorParameters {
-            player_identity: credentials.native_data,
+        Worker_Alpha_LocatorParameters {
+            player_identity: credentials,
             use_insecure_connection: self.use_insecure_connection as u8,
             enable_logging: self.logging.is_some() as u8,
             logging: match self.logging {
                 Some(ref params) => params.to_worker_sdk(),
                 None => ProtocolLoggingParameters::default().to_worker_sdk(),
             },
-        };
-
-        WrappedNativeData {
-            native_data: params,
-            underlying_data: credentials.underlying_data,
         }
     }
 }
 
 pub struct PlayerIdentityCredentials {
-    player_identity_token: String,
-    login_token: String,
+    player_identity_token: CString,
+    login_token: CString,
 }
 
 impl PlayerIdentityCredentials {
-    pub fn new<S: Into<String>, T: Into<String>>(pit: S, token: T) -> Self {
+    pub fn new<S: AsRef<str>, T: AsRef<str>>(pit: S, token: T) -> Self {
         PlayerIdentityCredentials {
-            player_identity_token: pit.into(),
-            login_token: token.into(),
+            player_identity_token: CString::new(pit.as_ref()).expect("`pit` contained a null byte"),
+            login_token: CString::new(token.as_ref()).expect("`token` contained a null byte"),
         }
     }
 
     fn to_worker_sdk(
         &self,
-    ) -> WrappedNativeData<Worker_Alpha_PlayerIdentityCredentials, Vec<CString>> {
-        let pit_cstr = CString::new(self.player_identity_token.as_str()).unwrap();
-        let login_token_cstr = CString::new(self.login_token.as_str()).unwrap();
-
-        let cstrs = vec![pit_cstr, login_token_cstr];
-
-        let credentials = Worker_Alpha_PlayerIdentityCredentials {
-            player_identity_token: cstrs[0].as_ptr(),
-            login_token: cstrs[1].as_ptr(),
-        };
-
-        WrappedNativeData {
-            native_data: credentials,
-            underlying_data: cstrs,
+    ) -> Worker_Alpha_PlayerIdentityCredentials {
+        Worker_Alpha_PlayerIdentityCredentials {
+            player_identity_token: self.player_identity_token.as_ptr(),
+            login_token: self.login_token.as_ptr(),
         }
     }
 }
 
 pub struct PlayerIdentityTokenRequest {
-    pub dev_auth_token: String,
-    pub player_id: String,
+    pub dev_auth_token: CString,
+    pub player_id: CString,
     pub duration_seconds: Option<u32>,
-    pub display_name: Option<String>,
-    pub metadata: Option<String>,
+    pub display_name: Option<CString>,
+    pub metadata: Option<CString>,
     pub use_insecure_connection: bool,
 }
 
 impl PlayerIdentityTokenRequest {
-    pub fn new<S: Into<String>, T: Into<String>>(dev_auth_token: S, player_id: T) -> Self {
+    pub fn new<S: AsRef<str>, T: AsRef<str>>(dev_auth_token: S, player_id: T) -> Self {
         PlayerIdentityTokenRequest {
-            dev_auth_token: dev_auth_token.into(),
-            player_id: player_id.into(),
+            dev_auth_token: CString::new(dev_auth_token.as_ref()).expect("`dev_auth_token` contained a null byte"),
+            player_id: CString::new(player_id.as_ref()).expect("`player_id` contained a null byte"),
             duration_seconds: None,
             display_name: None,
             metadata: None,
@@ -166,13 +151,13 @@ impl PlayerIdentityTokenRequest {
         self
     }
 
-    pub fn with_display_name<S: Into<String>>(mut self, display_name: S) -> Self {
-        self.display_name = Some(display_name.into());
+    pub fn with_display_name<S: AsRef<str>>(mut self, display_name: S) -> Self {
+        self.display_name = Some(CString::new(display_name.as_ref()).expect("`display_name` contained a null byte"));
         self
     }
 
-    pub fn with_metadata<S: Into<String>>(mut self, metadata: S) -> Self {
-        self.metadata = Some(metadata.into());
+    pub fn with_metadata<S: AsRef<str>>(mut self, metadata: S) -> Self {
+        self.metadata = Some(CString::new(metadata.as_ref()).expect("`metadata` contained a null bytes"));
         self
     }
 
@@ -183,43 +168,24 @@ impl PlayerIdentityTokenRequest {
 
     fn to_worker_sdk(
         &self,
-    ) -> WrappedNativeData<Worker_Alpha_PlayerIdentityTokenRequest, Vec<CString>> {
-        let mut underlying_data = vec![
-            CString::new(self.dev_auth_token.as_str()).unwrap(),
-            CString::new(self.player_id.as_str()).unwrap(),
-        ];
-        let mut metadata_index: usize = 2;
+    ) -> Worker_Alpha_PlayerIdentityTokenRequest {
 
-        if let Some(ref display_name) = self.display_name {
-            underlying_data.push(CString::new(display_name.as_str()).unwrap());
-            metadata_index += 1;
-        };
-
-        if let Some(ref metadata) = self.metadata {
-            underlying_data.push(CString::new(metadata.as_str()).unwrap());
-        }
-
-        let request = Worker_Alpha_PlayerIdentityTokenRequest {
-            development_authentication_token_id: underlying_data[0].as_ptr(),
-            player_id: underlying_data[1].as_ptr(),
+        Worker_Alpha_PlayerIdentityTokenRequest {
+            development_authentication_token_id: self.dev_auth_token.as_ptr(),
+            player_id: self.player_id.as_ptr(),
             duration_seconds: match self.duration_seconds {
                 Some(ref value) => value as *const _ as *mut u32, // TODO: Remove double cast when C SDK is fixed.
                 None => ::std::ptr::null_mut(),
             },
             display_name: match self.display_name {
-                Some(_) => underlying_data[2].as_ptr(),
+                Some(ref cstr) => cstr.as_ptr(),
                 None => ::std::ptr::null(),
             },
             metadata: match self.metadata {
-                Some(_) => underlying_data[metadata_index].as_ptr(),
+                Some(ref cstr) => cstr.as_ptr(),
                 None => ::std::ptr::null(),
             },
             use_insecure_connection: self.use_insecure_connection as u8,
-        };
-
-        WrappedNativeData {
-            native_data: request,
-            underlying_data,
         }
     }
 }
@@ -326,17 +292,17 @@ impl Drop for PlayerIdentityTokenFuture {
 }
 
 pub struct LoginTokensRequest {
-    pub player_identity_token: String,
-    pub worker_type: String,
+    pub player_identity_token: CString,
+    pub worker_type: CString,
     pub duration_seconds: Option<u32>,
     pub use_insecure_connection: bool,
 }
 
 impl LoginTokensRequest {
-    pub fn new<S: Into<String>, T: Into<String>>(player_identity_token: S, worker_type: T) -> Self {
+    pub fn new<S: AsRef<str>, T: AsRef<str>>(player_identity_token: S, worker_type: T) -> Self {
         LoginTokensRequest {
-            player_identity_token: player_identity_token.into(),
-            worker_type: worker_type.into(),
+            player_identity_token: CString::new(player_identity_token.as_ref()).expect("`player_identity_token` contained a null byte"),
+            worker_type: CString::new(worker_type.as_ref()).expect("`worker_type` contained a null byte"),
             duration_seconds: None,
             use_insecure_connection: false,
         }
@@ -352,25 +318,15 @@ impl LoginTokensRequest {
         self
     }
 
-    fn to_worker_sdk(&self) -> WrappedNativeData<Worker_Alpha_LoginTokensRequest, Vec<CString>> {
-        let underlying_data = vec![
-            CString::new(self.player_identity_token.as_str()).unwrap(),
-            CString::new(self.worker_type.as_str()).unwrap(),
-        ];
-
-        let request = Worker_Alpha_LoginTokensRequest {
-            player_identity_token: underlying_data[0].as_ptr(),
-            worker_type: underlying_data[1].as_ptr(),
+    fn to_worker_sdk(&self) -> Worker_Alpha_LoginTokensRequest {
+        Worker_Alpha_LoginTokensRequest {
+            player_identity_token: self.player_identity_token.as_ptr(),
+            worker_type: self.worker_type.as_ptr(),
             duration_seconds: match self.duration_seconds {
                 Some(ref value) => value as *const _ as *mut u32,
                 None => ::std::ptr::null_mut(),
             },
             use_insecure_connection: self.use_insecure_connection as u8,
-        };
-
-        WrappedNativeData {
-            native_data: request,
-            underlying_data,
         }
     }
 }

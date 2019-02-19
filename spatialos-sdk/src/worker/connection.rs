@@ -199,15 +199,13 @@ impl WorkerConnection {
         let hostname_cstr = CString::new(hostname).expect("Received 0 byte in supplied hostname.");
         let worker_id_cstr =
             CString::new(worker_id).expect("Received 0 byte in supplied Worker ID");
-        let mut conn_params = params.to_worker_sdk();
-        conn_params.native_data.component_vtables = params.components.to_worker_sdk();
-        conn_params.native_data.component_vtable_count = params.components.len() as u32;
+        let conn_params = params.to_worker_sdk();
         let future_ptr = unsafe {
             Worker_ConnectAsync(
                 hostname_cstr.as_ptr(),
                 port,
                 worker_id_cstr.as_ptr(),
-                &conn_params.native_data,
+                &conn_params,
             )
         };
         assert!(!future_ptr.is_null());
@@ -230,7 +228,7 @@ impl WorkerConnection {
             let ptr = Worker_Locator_ConnectAsync(
                 locator.locator,
                 deployment_name_cstr.as_ptr(),
-                &connection_params.native_data,
+                &connection_params,
                 callback_ptr,
                 Some(queue_status_callback_handler),
             );
@@ -250,7 +248,7 @@ impl WorkerConnection {
 
         unsafe {
             let ptr =
-                Worker_Alpha_Locator_ConnectAsync(locator.internal, &connection_params.native_data);
+                Worker_Alpha_Locator_ConnectAsync(locator.internal, &connection_params);
 
             WorkerConnectionFuture::new(ptr)
         }

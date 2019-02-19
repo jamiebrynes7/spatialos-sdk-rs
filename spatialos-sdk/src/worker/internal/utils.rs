@@ -24,8 +24,3 @@ pub fn cstr_array_to_vec_string(
     }
     strings
 }
-
-pub struct WrappedNativeData<T, U> {
-    pub native_data: T,
-    pub underlying_data: U,
-}

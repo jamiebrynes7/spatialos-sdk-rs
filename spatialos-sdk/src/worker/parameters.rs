@@ -1,9 +1,9 @@
-use crate::worker::{component::ComponentDatabase, internal::utils::WrappedNativeData, vtable};
+use crate::worker::{component::ComponentDatabase, vtable};
 use spatialos_sdk_sys::worker::*;
 use std::{ffi::CString, ptr};
 
 pub struct ConnectionParameters {
-    pub worker_type: String,
+    pub worker_type: CString,
     pub network: NetworkParameters,
     pub send_queue_capacity: u32,
     pub receive_queue_capacity: u32,
@@ -16,9 +16,9 @@ pub struct ConnectionParameters {
 }
 
 impl ConnectionParameters {
-    pub fn new<T: Into<String>>(worker_type: T, components: ComponentDatabase) -> Self {
+    pub fn new<T: AsRef<str>>(worker_type: T, components: ComponentDatabase) -> Self {
         let mut params = ConnectionParameters::default(components);
-        params.worker_type = worker_type.into();
+        params.worker_type = CString::new(worker_type.as_ref()).expect("`worker_type` contains a null byte");
         params
     }
 
@@ -67,7 +67,7 @@ impl ConnectionParameters {
 
     pub fn default(components: ComponentDatabase) -> Self {
         ConnectionParameters {
-            worker_type: "".to_owned(),
+            worker_type: CString::new("").unwrap(),
             network: NetworkParameters::default(),
             send_queue_capacity: WORKER_DEFAULTS_SEND_QUEUE_CAPACITY,
             receive_queue_capacity: WORKER_DEFAULTS_RECEIVE_QUEUE_CAPACITY,
@@ -83,14 +83,9 @@ impl ConnectionParameters {
 
     pub(crate) fn to_worker_sdk(
         &self,
-    ) -> WrappedNativeData<Worker_ConnectionParameters, Box<CString>> {
-        let worker_type_cstr = Box::new(
-            CString::new(self.worker_type.clone())
-                .expect("Received 0 byte in supplied worker_type."),
-        );
-        let ptr = worker_type_cstr.as_ptr();
-        let params = Worker_ConnectionParameters {
-            worker_type: ptr,
+    ) -> Worker_ConnectionParameters {
+        Worker_ConnectionParameters {
+            worker_type: self.worker_type.as_ptr(),
             network: self.network.to_worker_sdk(),
             send_queue_capacity: self.send_queue_capacity,
             receive_queue_capacity: self.receive_queue_capacity,
@@ -99,13 +94,9 @@ impl ConnectionParameters {
             protocol_logging: self.protocol_logging.to_worker_sdk(),
             enable_protocol_logging_at_startup: self.enable_protocol_logging_at_startup as u8,
             thread_affinity: self.thread_affinity.to_worker_sdk(),
-            component_vtable_count: 0,
-            component_vtables: ptr::null(),
+            component_vtable_count: self.components.len() as u32,
+            component_vtables: self.components.to_worker_sdk(),
             default_component_vtable: ptr::null(),
-        };
-        WrappedNativeData {
-            native_data: params,
-            underlying_data: worker_type_cstr,
         }
     }
 }

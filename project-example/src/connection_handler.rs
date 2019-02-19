@@ -48,7 +48,7 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
             project_name,
         } => {
             let params =
-                LocatorParameters::new(project_name, LocatorCredentials::LoginToken(token));
+                LocatorParameters::new(project_name, LocatorCredentials::login_token(token));
             let locator = Locator::new(LOCATOR_HOSTNAME, &params);
             let deployment = get_deployment(&locator)?;
             WorkerConnection::connect_locator_async(

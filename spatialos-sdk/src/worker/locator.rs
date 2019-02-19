@@ -5,7 +5,6 @@ use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
 
 use crate::worker::internal::utils::cstr_to_string;
-use crate::worker::internal::utils::WrappedNativeData;
 use crate::worker::parameters::ProtocolLoggingParameters;
 
 pub struct Locator {
@@ -16,7 +15,7 @@ impl Locator {
     pub fn new<T: Into<Vec<u8>>>(hostname: T, params: &LocatorParameters) -> Self {
         unsafe {
             let hostname = CString::new(hostname).unwrap();
-            let (worker_params, _underlying_data) = params.to_worker_sdk();
+            let worker_params = params.to_worker_sdk();
             let ptr = Worker_Locator_Create(hostname.as_ptr(), &worker_params);
             assert!(!ptr.is_null());
             Locator { locator: ptr }
@@ -44,36 +43,30 @@ impl Drop for Locator {
 }
 
 pub struct LocatorParameters {
-    pub project_name: String,
+    pub project_name: CString,
     pub credentials: LocatorCredentials,
     pub logging: ProtocolLoggingParameters,
     pub enable_logging: bool,
 }
 
 impl LocatorParameters {
-    fn to_worker_sdk(&self) -> (Worker_LocatorParameters, Vec<CString>) {
+    fn to_worker_sdk(&self) -> Worker_LocatorParameters {
         let credentials = self.credentials.to_worker_sdk();
-        let (credentials_type, login_token, steam) = credentials.native_data;
+        let (credentials_type, login_token, steam) = credentials;
 
-        let mut underlying_data = credentials.underlying_data;
-        underlying_data.push(CString::new(self.project_name.as_str()).unwrap());
-
-        (
-            Worker_LocatorParameters {
-                project_name: underlying_data[underlying_data.len() - 1].as_ptr(),
-                credentials_type,
-                login_token,
-                steam,
-                logging: self.logging.to_worker_sdk(),
-                enable_logging: self.enable_logging as u8,
-            },
-            underlying_data,
-        )
+        Worker_LocatorParameters {
+            project_name: self.project_name.as_ptr(),
+            credentials_type,
+            login_token,
+            steam,
+            logging: self.logging.to_worker_sdk(),
+            enable_logging: self.enable_logging as u8,
+        }
     }
 
-    pub fn new<T: Into<String>>(project_name: T, credentials: LocatorCredentials) -> Self {
+    pub fn new<T: AsRef<str>>(project_name: T, credentials: LocatorCredentials) -> Self {
         LocatorParameters {
-            project_name: project_name.into(),
+            project_name: CString::new(project_name.as_ref()).expect("`project_name` contains a null byte"),
             credentials,
             logging: ProtocolLoggingParameters::default(),
             enable_logging: false,
@@ -92,64 +85,62 @@ impl LocatorParameters {
 }
 
 pub enum LocatorCredentials {
-    LoginToken(String),
+    LoginToken(CString),
     Steam(SteamCredentials),
+}
+
+impl LocatorCredentials {
+    pub fn login_token<S: AsRef<str>>(token: S) -> Self {
+        LocatorCredentials::LoginToken(CString::new(token.as_ref()).expect("`token` contained null byte"))
+    }
 }
 
 impl LocatorCredentials {
     fn to_worker_sdk(
         &self,
-    ) -> WrappedNativeData<(u8, Worker_LoginTokenCredentials, Worker_SteamCredentials), Vec<CString>>
+    ) -> (u8, Worker_LoginTokenCredentials, Worker_SteamCredentials)
     {
         match self {
             LocatorCredentials::LoginToken(token) => {
-                let mut cstrs = Vec::with_capacity(2);
-                cstrs.push(CString::new(token.as_str()).unwrap());
-
-                let data = (
+                (
                     Worker_LocatorCredentialsTypes_WORKER_LOCATOR_LOGIN_TOKEN_CREDENTIALS as u8,
                     Worker_LoginTokenCredentials {
-                        token: cstrs[0].as_ptr(),
+                        token: token.as_ptr(),
                     },
                     Worker_SteamCredentials {
                         ticket: ::std::ptr::null(),
                         deployment_tag: ::std::ptr::null(),
                     },
-                );
-
-                WrappedNativeData {
-                    native_data: data,
-                    underlying_data: cstrs,
-                }
+                )
             }
             LocatorCredentials::Steam(steam_credentials) => {
-                let mut cstrs = Vec::with_capacity(3);
-                cstrs.push(CString::new(steam_credentials.ticket.as_str()).unwrap());
-                cstrs.push(CString::new(steam_credentials.deployment_tag.as_str()).unwrap());
-
-                let data = (
+                (
                     Worker_LocatorCredentialsTypes_WORKER_LOCATOR_STEAM_CREDENTIALS as u8,
                     Worker_LoginTokenCredentials {
                         token: ::std::ptr::null(),
                     },
                     Worker_SteamCredentials {
-                        ticket: cstrs[0].as_ptr(),
-                        deployment_tag: cstrs[1].as_ptr(),
+                        ticket: steam_credentials.ticket.as_ptr(),
+                        deployment_tag: steam_credentials.deployment_tag.as_ptr(),
                     },
-                );
-
-                WrappedNativeData {
-                    native_data: data,
-                    underlying_data: cstrs,
-                }
+                )
             }
         }
     }
 }
 
 pub struct SteamCredentials {
-    pub ticket: String,
-    pub deployment_tag: String,
+    pub ticket: CString,
+    pub deployment_tag: CString,
+}
+
+impl SteamCredentials {
+    pub fn new<S: AsRef<str>, T: AsRef<str>>(ticket: S, deployment_tag: T) -> Self {
+        SteamCredentials {
+            ticket: CString::new(ticket.as_ref()).expect("`ticket` contained null byte"),
+            deployment_tag: CString::new(deployment_tag.as_ref()).expect("`deployment_tag` contained null byte")
+        }
+    }
 }
 
 pub struct Deployment {
