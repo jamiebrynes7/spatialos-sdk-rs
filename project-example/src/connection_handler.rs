@@ -1,6 +1,6 @@
 use futures::{Async, Future};
 
-use crate::lib::{Command, Opt};
+use crate::{Command, Opt};
 use spatialos_sdk::worker::{
     alpha_locator::{
         AlphaLocator, AlphaLocatorParameters, LoginTokensRequest, PlayerIdentityCredentials,

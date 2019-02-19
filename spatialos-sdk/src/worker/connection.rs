@@ -9,7 +9,7 @@ use crate::worker::{
     metrics::Metrics,
     op::OpList,
     parameters::ConnectionParameters,
-    {ConnectionStatusCode, EntityId, InterestOverride, LogLevel, RequestId},
+    {EntityId, InterestOverride, LogLevel, RequestId},
 };
 use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
@@ -29,6 +29,43 @@ pub struct ConnectionStatus {
     /// Will be "OK" if no error occurred.
     pub detail: String,
 }
+
+#[derive(Copy, Clone, PartialOrd, PartialEq, Eq, Debug)]
+pub enum ConnectionStatusCode {
+    Success,
+    InternalError,
+    InvalidArgument,
+    NetworkError,
+    Timeout,
+    Cancelled,
+    Rejected,
+    PlayerIdentityTokenExpired,
+    LoginTokenExpired,
+    CapacityExceeded,
+    RateExceeded,
+    ServerShutdown,
+}
+
+impl From<u8> for ConnectionStatusCode {
+    fn from(value: u8) -> Self {
+        match u32::from(value) {
+            1 => ConnectionStatusCode::Success,
+            2 => ConnectionStatusCode::InternalError,
+            3 => ConnectionStatusCode::InvalidArgument,
+            4 => ConnectionStatusCode::NetworkError,
+            5 => ConnectionStatusCode::Timeout,
+            6 => ConnectionStatusCode::Cancelled,
+            7 => ConnectionStatusCode::Rejected,
+            8 => ConnectionStatusCode::PlayerIdentityTokenExpired,
+            9 => ConnectionStatusCode::LoginTokenExpired,
+            10 => ConnectionStatusCode::CapacityExceeded,
+            11 => ConnectionStatusCode::RateExceeded,
+            12 => ConnectionStatusCode::ServerShutdown,
+            _ => panic!(format!("Unknown connection status code: {}", value)),
+        }
+    }
+}
+
 
 /// Connection trait to allow for mocking the connection.
 pub trait Connection {
