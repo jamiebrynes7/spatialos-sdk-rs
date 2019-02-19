@@ -1,6 +1,6 @@
 pub mod internal;
 
-pub mod alpha_locator;
+pub mod alpha;
 pub mod commands;
 pub mod component;
 pub mod connection;

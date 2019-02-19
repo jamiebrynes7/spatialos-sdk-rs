@@ -9,11 +9,11 @@ use crate::worker::{
     parameters::ProtocolLoggingParameters,
 };
 
-pub struct AlphaLocator {
+pub struct Locator {
     pub(crate) internal: *mut Worker_Alpha_Locator,
 }
 
-impl AlphaLocator {
+impl Locator {
     pub fn create_development_player_identity_token(
         hostname: &str,
         port: u16,
@@ -46,27 +46,27 @@ impl AlphaLocator {
         }
     }
 
-    pub fn new(hostname: &str, port: u16, params: &AlphaLocatorParameters) -> Self {
+    pub fn new(hostname: &str, port: u16, params: &LocatorParameters) -> Self {
         let hostname = CString::new(hostname).unwrap();
         let cparams = params.to_worker_sdk();
 
         unsafe {
             let ptr = Worker_Alpha_Locator_Create(hostname.as_ptr(), port, &cparams.native_data);
 
-            AlphaLocator { internal: ptr }
+            Locator { internal: ptr }
         }
     }
 }
 
-pub struct AlphaLocatorParameters {
+pub struct LocatorParameters {
     player_identity: PlayerIdentityCredentials,
     use_insecure_connection: bool,
     logging: Option<ProtocolLoggingParameters>,
 }
 
-impl AlphaLocatorParameters {
+impl LocatorParameters {
     pub fn new(credentials: PlayerIdentityCredentials) -> Self {
-        AlphaLocatorParameters {
+        LocatorParameters {
             player_identity: credentials,
             use_insecure_connection: false,
             logging: None,
@@ -306,8 +306,8 @@ impl Future for PlayerIdentityTokenFuture {
     }
 
     fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
-    where
-        Self: Sized,
+        where
+            Self: Sized,
     {
         if self.consumed {
             return Err("PlayerIdentityTokenFuture has already been consumed".to_owned());
@@ -386,9 +386,9 @@ impl LoginTokensResponse {
                 response.login_tokens,
                 response.login_token_count as usize,
             )
-            .iter()
-            .map(|token| LoginTokenDetails::from_worker_sdk(token))
-            .collect::<Vec<LoginTokenDetails>>();
+                .iter()
+                .map(|token| LoginTokenDetails::from_worker_sdk(token))
+                .collect::<Vec<LoginTokenDetails>>();
 
             LoginTokensResponse {
                 login_tokens: tokens,
@@ -488,8 +488,8 @@ impl Future for LoginTokensFuture {
     }
 
     fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
-    where
-        Self: Sized,
+        where
+            Self: Sized,
     {
         if self.consumed {
             return Err("LoginTokensFuture has already been consumed".to_owned());

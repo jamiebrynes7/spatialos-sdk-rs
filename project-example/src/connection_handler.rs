@@ -1,9 +1,9 @@
 use futures::{Async, Future};
-
-use crate::{Command, Opt};
+use uuid::Uuid;
 use spatialos_sdk::worker::{
-    alpha_locator::{
-        AlphaLocator, AlphaLocatorParameters, LoginTokensRequest, PlayerIdentityCredentials,
+    alpha::{
+        self,
+        LoginTokensRequest, PlayerIdentityCredentials,
         PlayerIdentityTokenRequest,
     },
     component::ComponentDatabase,
@@ -12,7 +12,7 @@ use spatialos_sdk::worker::{
     locator::{Locator, LocatorCredentials, LocatorParameters},
     parameters::ConnectionParameters,
 };
-use uuid::Uuid;
+use crate::{Command, Opt};
 
 const POLL_NUM_ATTEMPTS: u32 = 5;
 const POLL_TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 3000;
@@ -63,7 +63,7 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
         Command::DevelopmentAuthentication { dev_auth_token } => {
             let mut request = PlayerIdentityTokenRequest::new(dev_auth_token, "player-id")
                 .with_display_name("My Player");
-            let future = AlphaLocator::create_development_player_identity_token(
+            let future = alpha::Locator::create_development_player_identity_token(
                 LOCATOR_HOSTNAME,
                 LOCATOR_PORT,
                 &mut request,
@@ -72,7 +72,7 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
             let pit = future.wait()?;
             let mut request =
                 LoginTokensRequest::new(pit.player_identity_token.as_str(), worker_type.as_str());
-            let future = AlphaLocator::create_development_login_tokens(
+            let future = alpha::Locator::create_development_login_tokens(
                 LOCATOR_HOSTNAME,
                 LOCATOR_PORT,
                 &mut request,
@@ -89,10 +89,10 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
                 pit.player_identity_token.as_str(),
                 token.login_token.as_str(),
             );
-            let alpha_locator = AlphaLocator::new(
+            let alpha_locator = alpha::Locator::new(
                 LOCATOR_HOSTNAME,
                 LOCATOR_PORT,
-                &AlphaLocatorParameters::new(credentials),
+                &alpha::LocatorParameters::new(credentials),
             );
 
             WorkerConnection::connect_alpha_locator_async(
