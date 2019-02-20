@@ -18,7 +18,8 @@ pub struct ConnectionParameters {
 impl ConnectionParameters {
     pub fn new<T: AsRef<str>>(worker_type: T, components: ComponentDatabase) -> Self {
         let mut params = ConnectionParameters::default(components);
-        params.worker_type = CString::new(worker_type.as_ref()).expect("`worker_type` contains a null byte");
+        params.worker_type =
+            CString::new(worker_type.as_ref()).expect("`worker_type` contains a null byte");
         params
     }
 
@@ -82,9 +83,7 @@ impl ConnectionParameters {
         }
     }
 
-    pub(crate) fn to_worker_sdk(
-        &self,
-    ) -> Worker_ConnectionParameters {
+    pub(crate) fn to_worker_sdk(&self) -> Worker_ConnectionParameters {
         Worker_ConnectionParameters {
             worker_type: self.worker_type.as_ptr(),
             network: self.network.to_worker_sdk(),

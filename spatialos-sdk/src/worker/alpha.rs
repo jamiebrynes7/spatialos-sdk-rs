@@ -4,10 +4,7 @@ use futures::{Async, Future};
 
 use spatialos_sdk_sys::worker::*;
 
-use crate::worker::{
-    internal::utils::cstr_to_string,
-    parameters::ProtocolLoggingParameters,
-};
+use crate::worker::{internal::utils::cstr_to_string, parameters::ProtocolLoggingParameters};
 
 pub struct Locator {
     pub(crate) internal: *mut Worker_Alpha_Locator,
@@ -115,9 +112,7 @@ impl PlayerIdentityCredentials {
         }
     }
 
-    fn to_worker_sdk(
-        &self,
-    ) -> Worker_Alpha_PlayerIdentityCredentials {
+    fn to_worker_sdk(&self) -> Worker_Alpha_PlayerIdentityCredentials {
         Worker_Alpha_PlayerIdentityCredentials {
             player_identity_token: self.player_identity_token.as_ptr(),
             login_token: self.login_token.as_ptr(),
@@ -137,7 +132,8 @@ pub struct PlayerIdentityTokenRequest {
 impl PlayerIdentityTokenRequest {
     pub fn new<S: AsRef<str>, T: AsRef<str>>(dev_auth_token: S, player_id: T) -> Self {
         PlayerIdentityTokenRequest {
-            dev_auth_token: CString::new(dev_auth_token.as_ref()).expect("`dev_auth_token` contained a null byte"),
+            dev_auth_token: CString::new(dev_auth_token.as_ref())
+                .expect("`dev_auth_token` contained a null byte"),
             player_id: CString::new(player_id.as_ref()).expect("`player_id` contained a null byte"),
             duration_seconds: None,
             display_name: None,
@@ -152,12 +148,15 @@ impl PlayerIdentityTokenRequest {
     }
 
     pub fn with_display_name<S: AsRef<str>>(mut self, display_name: S) -> Self {
-        self.display_name = Some(CString::new(display_name.as_ref()).expect("`display_name` contained a null byte"));
+        self.display_name = Some(
+            CString::new(display_name.as_ref()).expect("`display_name` contained a null byte"),
+        );
         self
     }
 
     pub fn with_metadata<S: AsRef<str>>(mut self, metadata: S) -> Self {
-        self.metadata = Some(CString::new(metadata.as_ref()).expect("`metadata` contained a null bytes"));
+        self.metadata =
+            Some(CString::new(metadata.as_ref()).expect("`metadata` contained a null bytes"));
         self
     }
 
@@ -166,10 +165,7 @@ impl PlayerIdentityTokenRequest {
         self
     }
 
-    fn to_worker_sdk(
-        &self,
-    ) -> Worker_Alpha_PlayerIdentityTokenRequest {
-
+    fn to_worker_sdk(&self) -> Worker_Alpha_PlayerIdentityTokenRequest {
         Worker_Alpha_PlayerIdentityTokenRequest {
             development_authentication_token_id: self.dev_auth_token.as_ptr(),
             player_id: self.player_id.as_ptr(),
@@ -272,8 +268,8 @@ impl Future for PlayerIdentityTokenFuture {
     }
 
     fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
-        where
-            Self: Sized,
+    where
+        Self: Sized,
     {
         if self.consumed {
             return Err("PlayerIdentityTokenFuture has already been consumed".to_owned());
@@ -301,8 +297,10 @@ pub struct LoginTokensRequest {
 impl LoginTokensRequest {
     pub fn new<S: AsRef<str>, T: AsRef<str>>(player_identity_token: S, worker_type: T) -> Self {
         LoginTokensRequest {
-            player_identity_token: CString::new(player_identity_token.as_ref()).expect("`player_identity_token` contained a null byte"),
-            worker_type: CString::new(worker_type.as_ref()).expect("`worker_type` contained a null byte"),
+            player_identity_token: CString::new(player_identity_token.as_ref())
+                .expect("`player_identity_token` contained a null byte"),
+            worker_type: CString::new(worker_type.as_ref())
+                .expect("`worker_type` contained a null byte"),
             duration_seconds: None,
             use_insecure_connection: false,
         }
@@ -342,9 +340,9 @@ impl LoginTokensResponse {
                 response.login_tokens,
                 response.login_token_count as usize,
             )
-                .iter()
-                .map(|token| LoginTokenDetails::from_worker_sdk(token))
-                .collect::<Vec<LoginTokenDetails>>();
+            .iter()
+            .map(|token| LoginTokenDetails::from_worker_sdk(token))
+            .collect::<Vec<LoginTokenDetails>>();
 
             LoginTokensResponse {
                 login_tokens: tokens,
@@ -444,8 +442,8 @@ impl Future for LoginTokensFuture {
     }
 
     fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
-        where
-            Self: Sized,
+    where
+        Self: Sized,
     {
         if self.consumed {
             return Err("LoginTokensFuture has already been consumed".to_owned());

@@ -66,7 +66,8 @@ impl LocatorParameters {
 
     pub fn new<T: AsRef<str>>(project_name: T, credentials: LocatorCredentials) -> Self {
         LocatorParameters {
-            project_name: CString::new(project_name.as_ref()).expect("`project_name` contains a null byte"),
+            project_name: CString::new(project_name.as_ref())
+                .expect("`project_name` contains a null byte"),
             credentials,
             logging: ProtocolLoggingParameters::default(),
             enable_logging: false,
@@ -91,40 +92,35 @@ pub enum LocatorCredentials {
 
 impl LocatorCredentials {
     pub fn login_token<S: AsRef<str>>(token: S) -> Self {
-        LocatorCredentials::LoginToken(CString::new(token.as_ref()).expect("`token` contained null byte"))
+        LocatorCredentials::LoginToken(
+            CString::new(token.as_ref()).expect("`token` contained null byte"),
+        )
     }
 }
 
 impl LocatorCredentials {
-    fn to_worker_sdk(
-        &self,
-    ) -> (u8, Worker_LoginTokenCredentials, Worker_SteamCredentials)
-    {
+    fn to_worker_sdk(&self) -> (u8, Worker_LoginTokenCredentials, Worker_SteamCredentials) {
         match self {
-            LocatorCredentials::LoginToken(token) => {
-                (
-                    Worker_LocatorCredentialsTypes_WORKER_LOCATOR_LOGIN_TOKEN_CREDENTIALS as u8,
-                    Worker_LoginTokenCredentials {
-                        token: token.as_ptr(),
-                    },
-                    Worker_SteamCredentials {
-                        ticket: ::std::ptr::null(),
-                        deployment_tag: ::std::ptr::null(),
-                    },
-                )
-            }
-            LocatorCredentials::Steam(steam_credentials) => {
-                (
-                    Worker_LocatorCredentialsTypes_WORKER_LOCATOR_STEAM_CREDENTIALS as u8,
-                    Worker_LoginTokenCredentials {
-                        token: ::std::ptr::null(),
-                    },
-                    Worker_SteamCredentials {
-                        ticket: steam_credentials.ticket.as_ptr(),
-                        deployment_tag: steam_credentials.deployment_tag.as_ptr(),
-                    },
-                )
-            }
+            LocatorCredentials::LoginToken(token) => (
+                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_LOGIN_TOKEN_CREDENTIALS as u8,
+                Worker_LoginTokenCredentials {
+                    token: token.as_ptr(),
+                },
+                Worker_SteamCredentials {
+                    ticket: ::std::ptr::null(),
+                    deployment_tag: ::std::ptr::null(),
+                },
+            ),
+            LocatorCredentials::Steam(steam_credentials) => (
+                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_STEAM_CREDENTIALS as u8,
+                Worker_LoginTokenCredentials {
+                    token: ::std::ptr::null(),
+                },
+                Worker_SteamCredentials {
+                    ticket: steam_credentials.ticket.as_ptr(),
+                    deployment_tag: steam_credentials.deployment_tag.as_ptr(),
+                },
+            ),
         }
     }
 }
@@ -138,7 +134,8 @@ impl SteamCredentials {
     pub fn new<S: AsRef<str>, T: AsRef<str>>(ticket: S, deployment_tag: T) -> Self {
         SteamCredentials {
             ticket: CString::new(ticket.as_ref()).expect("`ticket` contained null byte"),
-            deployment_tag: CString::new(deployment_tag.as_ref()).expect("`deployment_tag` contained null byte")
+            deployment_tag: CString::new(deployment_tag.as_ref())
+                .expect("`deployment_tag` contained null byte"),
         }
     }
 }

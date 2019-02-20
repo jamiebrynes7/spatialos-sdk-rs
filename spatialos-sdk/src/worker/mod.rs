@@ -177,7 +177,6 @@ pub enum ConnectionStatusCode {
     ServerShutdown,
 }
 
-
 pub mod constants {
     pub const LOCATOR_HOSTNAME: &str = "locator.improbable.io";
     pub const LOCATOR_PORT: u16 = 444;

@@ -66,7 +66,6 @@ impl From<u8> for ConnectionStatusCode {
     }
 }
 
-
 /// Connection trait to allow for mocking the connection.
 pub trait Connection {
     fn send_log_message(
@@ -249,8 +248,7 @@ impl WorkerConnection {
         let connection_params = params.to_worker_sdk();
 
         unsafe {
-            let ptr =
-                Worker_Alpha_Locator_ConnectAsync(locator.internal, &connection_params);
+            let ptr = Worker_Alpha_Locator_ConnectAsync(locator.internal, &connection_params);
 
             WorkerConnectionFuture::new(ptr)
         }

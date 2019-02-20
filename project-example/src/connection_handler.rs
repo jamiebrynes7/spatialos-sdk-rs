@@ -1,18 +1,14 @@
+use crate::{Command, Opt};
 use futures::{Async, Future};
-use uuid::Uuid;
 use spatialos_sdk::worker::{
-    alpha::{
-        self,
-        LoginTokensRequest, PlayerIdentityCredentials,
-        PlayerIdentityTokenRequest,
-    },
+    alpha::{self, LoginTokensRequest, PlayerIdentityCredentials, PlayerIdentityTokenRequest},
     component::ComponentDatabase,
     connection::{WorkerConnection, WorkerConnectionFuture},
     constants::{LOCATOR_HOSTNAME, LOCATOR_PORT, RECEPTIONIST_PORT},
     locator::{Locator, LocatorCredentials, LocatorParameters},
     parameters::ConnectionParameters,
 };
-use crate::{Command, Opt};
+use uuid::Uuid;
 
 const POLL_NUM_ATTEMPTS: u32 = 5;
 const POLL_TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 3000;
