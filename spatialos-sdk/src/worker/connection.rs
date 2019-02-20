@@ -2,7 +2,7 @@ use crate::ptr::MutPtr;
 use crate::worker::{
     alpha,
     commands::*,
-    component::{self, internal::ComponentUpdate, Component},
+    component::{self, Component, UpdateParameters},
     entity::Entity,
     internal::utils::cstr_to_string,
     locator::*,
@@ -120,11 +120,13 @@ pub trait Connection {
         message: &str,
     ) -> Result<(), NulError>;
 
-    fn send_component_update(
+    fn send_component_update<C: Component>(
         &mut self,
         entity_id: EntityId,
-        component_update: component::internal::ComponentUpdate,
+        update: C::Update,
+        parameters: UpdateParameters,
     );
+
     fn send_component_interest(
         &mut self,
         entity_id: EntityId,
@@ -449,8 +451,28 @@ impl Connection for WorkerConnection {
         Ok(())
     }
 
-    fn send_component_update(&mut self, _entity_id: EntityId, _component_update: ComponentUpdate) {
-        unimplemented!()
+    fn send_component_update<C: Component>(
+        &mut self,
+        entity_id: EntityId,
+        update: C::Update,
+        parameters: UpdateParameters,
+    ) {
+        let component_update = Worker_ComponentUpdate {
+            reserved: ptr::null_mut(),
+            component_id: C::ID,
+            schema_type: ptr::null_mut(),
+            user_handle: component::handle_allocate(update),
+        };
+
+        let params = parameters.to_worker_sdk();
+        unsafe {
+            Worker_Alpha_Connection_SendComponentUpdate(
+                self.connection_ptr.get(),
+                entity_id.id,
+                &component_update,
+                &params,
+            );
+        }
     }
 
     fn send_component_interest(

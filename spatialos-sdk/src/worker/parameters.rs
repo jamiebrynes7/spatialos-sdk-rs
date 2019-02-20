@@ -22,9 +22,10 @@ impl ConnectionParameters {
         params
     }
 
-    pub fn with_protocol_logging<T: Into<String>>(mut self, log_prefix: T) -> Self {
+    pub fn with_protocol_logging<T: AsRef<str>>(mut self, log_prefix: T) -> Self {
         self.enable_protocol_logging_at_startup = true;
-        self.protocol_logging.log_prefix = log_prefix.into();
+        self.protocol_logging.log_prefix =
+            CString::new(log_prefix.as_ref()).expect("`log_prefix` contained a null byte");
         self
     }
 
@@ -327,29 +328,93 @@ impl HeartbeatParameters {
     }
 }
 
+/// Parameters for configuring protocol logging. If enabled, logs all protocol
+/// messages sent and received.
+///
+/// Note that all parameters are kept private and the struct can only be initialized
+/// with default values in order to make it possible to add new parameters without a
+/// breaking change.
+///
+/// If you would like to use a method-chaining style when initializing the parameters,
+/// the [tap] crate is recommended. The examples below demonstrate this.
+///
+/// # Parameters
+///
+/// * `log_prefx: WORKER_DEFAULTS_LOG_PREFIX` - Log file names are prefixed with
+///   this prefix, are numbered, and have the extension `.log`.
+/// * `max_log_files: WORKER_DEFAULTS_MAX_LOG_FILES` - Maximum number of log files
+///   to keep. Note that logs from any previous protocol logging sessions will be
+///   overwritten.
+/// * `max_log_file_size: WORKER_DEFAULTS_MAX_LOG_FILE_SIZE_BYTES` - Once the size
+///   of a log file reaches this size, a new log file is created.
+///
+/// # Examples
+///
+/// ```
+/// use spatialos_sdk::worker::parameters::ProtocolLoggingParameters;
+/// use tap::*;
+///
+/// let params = ProtocolLoggingParameters::new()
+///     .tap(|params| params.set_prefix("log-prefix-"))
+///     .tap(|params| params.set_max_log_files(10));
+/// ```
+#[derive(Debug, Clone)]
 pub struct ProtocolLoggingParameters {
-    pub log_prefix: String,
-    pub max_log_files: u32,
-    pub max_log_file_size_bytes: u32,
+    log_prefix: CString,
+    max_log_files: u32,
+    max_log_file_size_bytes: u32,
 }
 
 impl ProtocolLoggingParameters {
-    pub fn default() -> Self {
-        ProtocolLoggingParameters {
-            log_prefix: "".to_owned(),
-            max_log_files: WORKER_DEFAULTS_MAX_LOG_FILES,
-            max_log_file_size_bytes: WORKER_DEFAULTS_MAX_LOG_FILE_SIZE_BYTES,
-        }
+    pub fn new() -> Self {
+        Default::default()
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_ProtocolLoggingParameters {
-        let log_prefix_cstr =
-            CString::new(self.log_prefix.clone()).expect("Received 0 byte in supplied log prefix.");
+    /// Sets the prefix string to be used for log file names.
+    ///
+    /// # Panics
+    ///
+    /// This will panic if `prefix` contains a 0 byte. This is a requirement imposed
+    /// by the underlying SpatialOS API.
+    pub fn set_prefix<T: AsRef<str>>(&mut self, prefix: T) {
+        self.log_prefix = CString::new(prefix.as_ref()).expect("`prefix` contained a null byte");
+    }
 
+    /// Sets the maximum number of log files to keep.
+    pub fn set_max_log_files(&mut self, max_log_files: u32) {
+        self.max_log_files = max_log_files;
+    }
+
+    /// Sets the maximum size in bytes that a single log file can be.
+    ///
+    /// Once an individual log file exceeds this size, a new file will be created.
+    pub fn set_max_log_file_size(&mut self, max_file_size: u32) {
+        self.max_log_file_size_bytes = max_file_size;
+    }
+
+    /// Converts the logging parameters into the equivalent C API type.
+    ///
+    /// # Safety
+    ///
+    /// The returned `Worker_ProtocolLoggingParameters` borrows data owned by `self`,
+    /// and therefore must not outlive `self`.
+    pub(crate) fn to_worker_sdk(&self) -> Worker_ProtocolLoggingParameters {
         Worker_ProtocolLoggingParameters {
-            log_prefix: log_prefix_cstr.as_ptr(),
+            log_prefix: self.log_prefix.as_ptr(),
             max_log_files: self.max_log_files,
             max_log_file_size_bytes: self.max_log_file_size_bytes,
+        }
+    }
+}
+
+impl Default for ProtocolLoggingParameters {
+    fn default() -> Self {
+        ProtocolLoggingParameters {
+            log_prefix: CStr::from_bytes_with_nul(&WORKER_DEFAULTS_LOG_PREFIX[..])
+                .unwrap()
+                .to_owned(),
+            max_log_files: WORKER_DEFAULTS_MAX_LOG_FILES,
+            max_log_file_size_bytes: WORKER_DEFAULTS_MAX_LOG_FILE_SIZE_BYTES,
         }
     }
 }

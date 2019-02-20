@@ -1,5 +1,5 @@
 # Generated bindings to SpatialOS components, shouldn't be committed.
-src/generated_code.rs
+src/generated.rs
 
 # SpatialOS generated
 .improbable/

@@ -271,7 +271,10 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     let op = erased_op.reserve_entity_ids_response;
                     let status_code = match u32::from(op.status_code) {
                         Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
-                            StatusCode::Success(EntityId::new(op.first_entity_id))
+                            StatusCode::Success(ReservedEntityIdRange {
+                                first_entity_id: EntityId::new(op.first_entity_id),
+                                number_of_entity_ids: op.number_of_entity_ids,
+                            })
                         }
                         Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
                             StatusCode::Timeout(cstr_to_string(op.message))
@@ -299,7 +302,6 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
 
                     let reserve_entity_ids_response_op = ReserveEntityIdsResponseOp {
                         request_id: RequestId::new(op.request_id),
-                        number_of_entity_ids: op.number_of_entity_ids,
                         status_code,
                     };
                     WorkerOp::ReserveEntityIdsResponse(reserve_entity_ids_response_op)
@@ -464,7 +466,12 @@ pub struct RemoveEntityOp {
 #[derive(Debug)]
 pub struct ReserveEntityIdsResponseOp {
     pub request_id: RequestId<ReserveEntityIdsRequest>,
-    pub status_code: StatusCode<EntityId>,
+    pub status_code: StatusCode<ReservedEntityIdRange>,
+}
+
+#[derive(Debug)]
+pub struct ReservedEntityIdRange {
+    pub first_entity_id: EntityId,
     pub number_of_entity_ids: u32,
 }
 
