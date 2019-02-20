@@ -22,7 +22,7 @@ impl Locator {
             PlayerIdentityTokenFuture::new(Worker_Alpha_CreateDevelopmentPlayerIdentityTokenAsync(
                 cstr.as_ptr(),
                 port,
-                &mut params as *mut _,
+                &mut params,
             ))
         }
     }
@@ -38,7 +38,7 @@ impl Locator {
             LoginTokensFuture::new(Worker_Alpha_CreateDevelopmentLoginTokensAsync(
                 cstr.as_ptr(),
                 port,
-                &mut params as *mut _,
+                &mut params,
             ))
         }
     }
@@ -52,6 +52,12 @@ impl Locator {
 
             Locator { internal: ptr }
         }
+    }
+}
+
+impl Drop for Locator {
+    fn drop(&mut self) {
+        unsafe { Worker_Alpha_Locator_Destroy(self.internal) }
     }
 }
 
@@ -281,9 +287,7 @@ impl Future for PlayerIdentityTokenFuture {
 
 impl Drop for PlayerIdentityTokenFuture {
     fn drop(&mut self) {
-        if !self.internal.is_null() {
-            unsafe { Worker_Alpha_PlayerIdentityTokenResponseFuture_Destroy(self.internal) }
-        }
+        unsafe { Worker_Alpha_PlayerIdentityTokenResponseFuture_Destroy(self.internal) }
     }
 }
 
@@ -456,8 +460,6 @@ impl Future for LoginTokensFuture {
 
 impl Drop for LoginTokensFuture {
     fn drop(&mut self) {
-        if !self.internal.is_null() {
-            unsafe { Worker_Alpha_LoginTokensResponseFuture_Destroy(self.internal) }
-        }
+        unsafe { Worker_Alpha_LoginTokensResponseFuture_Destroy(self.internal) }
     }
 }
