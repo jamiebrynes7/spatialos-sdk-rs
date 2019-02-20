@@ -49,7 +49,7 @@ impl Locator {
 
         unsafe {
             let ptr = Worker_Alpha_Locator_Create(hostname.as_ptr(), port, &cparams);
-
+            assert!(!ptr.is_null());
             Locator { internal: ptr }
         }
     }
@@ -211,6 +211,7 @@ pub struct PlayerIdentityTokenFuture {
 
 impl PlayerIdentityTokenFuture {
     fn new(ptr: *mut Worker_Alpha_PlayerIdentityTokenResponseFuture) -> Self {
+        assert!(!ptr.is_null());
         PlayerIdentityTokenFuture {
             internal: ptr,
             consumed: false,
@@ -388,6 +389,7 @@ pub struct LoginTokensFuture {
 
 impl LoginTokensFuture {
     fn new(ptr: *mut Worker_Alpha_LoginTokensResponseFuture) -> Self {
+        assert!(!ptr.is_null());
         LoginTokensFuture {
             internal: ptr,
             consumed: false,
