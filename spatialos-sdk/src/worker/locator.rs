@@ -15,7 +15,7 @@ impl Locator {
     pub fn new<T: Into<Vec<u8>>>(hostname: T, params: &LocatorParameters) -> Self {
         unsafe {
             let hostname = CString::new(hostname).unwrap();
-            let (worker_params, _underlying_data) = params.to_worker_sdk();
+            let worker_params = params.to_worker_sdk();
             let ptr = Worker_Locator_Create(hostname.as_ptr(), &worker_params);
             assert!(!ptr.is_null());
             Locator { locator: ptr }
@@ -27,8 +27,8 @@ impl Locator {
             let future_ptr = Worker_Locator_GetDeploymentListAsync(self.locator);
             assert!(!future_ptr.is_null());
             DeploymentListFuture {
-                future: future_ptr,
-                was_consumed: false,
+                internal: future_ptr,
+                consumed: false,
             }
         }
     }
@@ -43,34 +43,31 @@ impl Drop for Locator {
 }
 
 pub struct LocatorParameters {
-    pub project_name: String,
+    pub project_name: CString,
     pub credentials: LocatorCredentials,
     pub logging: ProtocolLoggingParameters,
     pub enable_logging: bool,
 }
 
 impl LocatorParameters {
-    fn to_worker_sdk(&self) -> (Worker_LocatorParameters, Vec<CString>) {
-        let project_name_cstr = CString::new(self.project_name.as_str()).unwrap();
-        let (credentials_type, login_token_credentials, steam_credentials, mut underlying_data) =
-            self.credentials.to_worker_sdk();
-        underlying_data.push(project_name_cstr);
-        (
-            Worker_LocatorParameters {
-                project_name: underlying_data[underlying_data.len() - 1].as_ptr(),
-                credentials_type,
-                login_token: login_token_credentials,
-                steam: steam_credentials,
-                logging: self.logging.to_worker_sdk(),
-                enable_logging: self.enable_logging as u8,
-            },
-            underlying_data,
-        )
+    fn to_worker_sdk(&self) -> Worker_LocatorParameters {
+        let credentials = self.credentials.to_worker_sdk();
+        let (credentials_type, login_token, steam) = credentials;
+
+        Worker_LocatorParameters {
+            project_name: self.project_name.as_ptr(),
+            credentials_type,
+            login_token,
+            steam,
+            logging: self.logging.to_worker_sdk(),
+            enable_logging: self.enable_logging as u8,
+        }
     }
 
-    pub fn new<T: Into<String>>(project_name: T, credentials: LocatorCredentials) -> Self {
+    pub fn new<T: AsRef<str>>(project_name: T, credentials: LocatorCredentials) -> Self {
         LocatorParameters {
-            project_name: project_name.into(),
+            project_name: CString::new(project_name.as_ref())
+                .expect("`project_name` contains a null byte"),
             credentials,
             logging: ProtocolLoggingParameters::default(),
             enable_logging: false,
@@ -89,56 +86,58 @@ impl LocatorParameters {
 }
 
 pub enum LocatorCredentials {
-    LoginToken(String),
+    LoginToken(CString),
     Steam(SteamCredentials),
 }
 
 impl LocatorCredentials {
-    fn to_worker_sdk(
-        &self,
-    ) -> (
-        u8,
-        Worker_LoginTokenCredentials,
-        Worker_SteamCredentials,
-        Vec<CString>,
-    ) {
+    pub fn login_token<S: AsRef<str>>(token: S) -> Self {
+        LocatorCredentials::LoginToken(
+            CString::new(token.as_ref()).expect("`token` contained null byte"),
+        )
+    }
+}
+
+impl LocatorCredentials {
+    fn to_worker_sdk(&self) -> (u8, Worker_LoginTokenCredentials, Worker_SteamCredentials) {
         match self {
-            LocatorCredentials::LoginToken(token) => {
-                let token_cstr = CString::new(token.as_str()).unwrap();
-                (
-                    Worker_LocatorCredentialsTypes_WORKER_LOCATOR_LOGIN_TOKEN_CREDENTIALS as u8,
-                    Worker_LoginTokenCredentials {
-                        token: token_cstr.as_ptr(),
-                    },
-                    Worker_SteamCredentials {
-                        ticket: ::std::ptr::null(),
-                        deployment_tag: ::std::ptr::null(),
-                    },
-                    vec![token_cstr],
-                )
-            }
-            LocatorCredentials::Steam(steam_credentials) => {
-                let ticket_cstr = CString::new(steam_credentials.ticket.as_str()).unwrap();
-                let tag_cstr = CString::new(steam_credentials.deployment_tag.as_str()).unwrap();
-                (
-                    Worker_LocatorCredentialsTypes_WORKER_LOCATOR_STEAM_CREDENTIALS as u8,
-                    Worker_LoginTokenCredentials {
-                        token: ::std::ptr::null(),
-                    },
-                    Worker_SteamCredentials {
-                        ticket: ticket_cstr.as_ptr(),
-                        deployment_tag: tag_cstr.as_ptr(),
-                    },
-                    vec![ticket_cstr, tag_cstr],
-                )
-            }
+            LocatorCredentials::LoginToken(token) => (
+                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_LOGIN_TOKEN_CREDENTIALS as u8,
+                Worker_LoginTokenCredentials {
+                    token: token.as_ptr(),
+                },
+                Worker_SteamCredentials {
+                    ticket: ::std::ptr::null(),
+                    deployment_tag: ::std::ptr::null(),
+                },
+            ),
+            LocatorCredentials::Steam(steam_credentials) => (
+                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_STEAM_CREDENTIALS as u8,
+                Worker_LoginTokenCredentials {
+                    token: ::std::ptr::null(),
+                },
+                Worker_SteamCredentials {
+                    ticket: steam_credentials.ticket.as_ptr(),
+                    deployment_tag: steam_credentials.deployment_tag.as_ptr(),
+                },
+            ),
         }
     }
 }
 
 pub struct SteamCredentials {
-    pub ticket: String,
-    pub deployment_tag: String,
+    pub ticket: CString,
+    pub deployment_tag: CString,
+}
+
+impl SteamCredentials {
+    pub fn new<S: AsRef<str>, T: AsRef<str>>(ticket: S, deployment_tag: T) -> Self {
+        SteamCredentials {
+            ticket: CString::new(ticket.as_ref()).expect("`ticket` contained null byte"),
+            deployment_tag: CString::new(deployment_tag.as_ref())
+                .expect("`deployment_tag` contained null byte"),
+        }
+    }
 }
 
 pub struct Deployment {
@@ -162,8 +161,8 @@ impl Deployment {
 }
 
 pub struct DeploymentListFuture {
-    future: *mut Worker_DeploymentListFuture,
-    was_consumed: bool,
+    internal: *mut Worker_DeploymentListFuture,
+    consumed: bool,
 }
 
 impl DeploymentListFuture {
@@ -197,68 +196,54 @@ impl Future for DeploymentListFuture {
     type Error = String;
 
     fn poll(&mut self) -> Result<Async<<Self as Future>::Item>, <Self as Future>::Error> {
-        if self.was_consumed {
+        if self.consumed {
             return Err("DeploymentListFuture has already been consumed".to_owned());
         }
 
-        assert!(!self.future.is_null());
+        assert!(!self.internal.is_null());
         let mut data: Option<Result<Vec<Deployment>, String>> = None;
         unsafe {
             Worker_DeploymentListFuture_Get(
-                self.future,
+                self.internal,
                 &0,
                 &mut data as *mut _ as *mut ::std::os::raw::c_void,
                 Some(DeploymentListFuture::callback_handler),
             );
         }
 
-        match data {
-            Some(result) => {
-                self.was_consumed = true;
-                match result {
-                    Ok(deployments) => Ok(Async::Ready(deployments)),
-                    Err(e) => Err(e),
-                }
-            }
-            None => Ok(Async::NotReady),
-        }
+        data.map_or(Ok(Async::NotReady), |result| {
+            self.consumed = true;
+            result.map(Async::Ready)
+        })
     }
 
     fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
     where
         Self: Sized,
     {
-        if self.was_consumed {
+        if self.consumed {
             return Err("DeploymentListFuture has already been consumed".to_owned());
         }
 
-        assert!(!self.future.is_null());
+        assert!(!self.internal.is_null());
         let mut data: Option<Result<Vec<Deployment>, String>> = None;
         unsafe {
             Worker_DeploymentListFuture_Get(
-                self.future,
+                self.internal,
                 ::std::ptr::null(),
                 &mut data as *mut _ as *mut ::std::os::raw::c_void,
                 Some(DeploymentListFuture::callback_handler),
             );
         }
 
-        match data {
-            Some(result) => match result {
-                Ok(deployments) => Ok(deployments),
-                Err(e) => Err(e),
-            },
-            None => {
-                panic!("Blocking call to Worker_DeploymentListFuture_Get did not trigger callback")
-            }
-        }
+        data.expect("Blocking call to Worker_DeploymentListFuture_Get did not trigger callback")
     }
 }
 
 impl Drop for DeploymentListFuture {
     fn drop(&mut self) {
-        if !self.future.is_null() {
-            unsafe { Worker_DeploymentListFuture_Destroy(self.future) }
+        if !self.internal.is_null() {
+            unsafe { Worker_DeploymentListFuture_Destroy(self.internal) }
         }
     }
 }

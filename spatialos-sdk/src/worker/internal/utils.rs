@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 
 pub fn cstr_to_string(ptr: *const std::os::raw::c_char) -> String {
     assert!(!ptr.is_null());
@@ -23,9 +23,4 @@ pub fn cstr_array_to_vec_string(
         }
     }
     strings
-}
-
-pub struct WrappedNativeStructWithString<T> {
-    pub native_struct: T,
-    pub native_string_ref: CString,
 }

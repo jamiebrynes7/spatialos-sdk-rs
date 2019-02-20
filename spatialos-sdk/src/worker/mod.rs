@@ -1,5 +1,6 @@
 pub mod internal;
 
+pub mod alpha;
 pub mod commands;
 pub mod component;
 pub mod connection;
@@ -158,4 +159,27 @@ impl InterestOverride {
             component_id: self.component_id,
         }
     }
+}
+
+#[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
+pub enum ConnectionStatusCode {
+    Success,
+    InternalError,
+    InvalidArgument,
+    NetworkError,
+    Timeout,
+    Cancelled,
+    Rejected,
+    PlayerIdentityTokenExpired,
+    LoginTokenExpired,
+    CapacityExceeded,
+    RateExceeded,
+    ServerShutdown,
+}
+
+pub mod constants {
+    pub const LOCATOR_HOSTNAME: &str = "locator.improbable.io";
+    pub const LOCATOR_PORT: u16 = 444;
+
+    pub const RECEPTIONIST_PORT: u16 = 7777;
 }

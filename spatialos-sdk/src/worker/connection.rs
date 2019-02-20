@@ -1,5 +1,6 @@
 use crate::ptr::MutPtr;
 use crate::worker::{
+    alpha,
     commands::*,
     component::{self, Component, UpdateParameters},
     entity::Entity,
@@ -199,15 +200,13 @@ impl WorkerConnection {
         let hostname_cstr = CString::new(hostname).expect("Received 0 byte in supplied hostname.");
         let worker_id_cstr =
             CString::new(worker_id).expect("Received 0 byte in supplied Worker ID");
-        let mut conn_params = params.to_worker_sdk();
-        conn_params.native_struct.component_vtables = params.components.to_worker_sdk();
-        conn_params.native_struct.component_vtable_count = params.components.len() as u32;
+        let conn_params = params.to_worker_sdk();
         let future_ptr = unsafe {
             Worker_ConnectAsync(
                 hostname_cstr.as_ptr(),
                 port,
                 worker_id_cstr.as_ptr(),
-                &conn_params.native_struct,
+                &conn_params,
             )
         };
         assert!(!future_ptr.is_null());
@@ -230,7 +229,7 @@ impl WorkerConnection {
             let ptr = Worker_Locator_ConnectAsync(
                 locator.locator,
                 deployment_name_cstr.as_ptr(),
-                &connection_params.native_struct,
+                &connection_params,
                 callback_ptr,
                 Some(queue_status_callback_handler),
             );
@@ -239,6 +238,19 @@ impl WorkerConnection {
                 was_consumed: false,
                 queue_status_callback: Some(callback_ptr),
             }
+        }
+    }
+
+    pub fn connect_alpha_locator_async(
+        locator: &alpha::Locator,
+        params: &ConnectionParameters,
+    ) -> WorkerConnectionFuture {
+        let connection_params = params.to_worker_sdk();
+
+        unsafe {
+            let ptr = Worker_Alpha_Locator_ConnectAsync(locator.internal, &connection_params);
+
+            WorkerConnectionFuture::new(ptr)
         }
     }
 }
@@ -606,7 +618,7 @@ impl Future for WorkerConnectionFuture {
     type Item = WorkerConnection;
     type Error = String;
 
-    fn poll(&mut self) -> Result<Async<WorkerConnection>, String> {
+    fn poll(&mut self) -> Result<Async<<Self as Future>::Item>, <Self as Future>::Error> {
         if self.was_consumed {
             return Err("WorkerConnectionFuture has already been consumed.".to_owned());
         }
@@ -629,7 +641,7 @@ impl Future for WorkerConnectionFuture {
         Err(status.detail)
     }
 
-    fn wait(self) -> Result<WorkerConnection, String>
+    fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
     where
         Self: Sized,
     {

@@ -1,5 +1,6 @@
 {
-  "dimensionsInWorldUnits": {
+  "template": "small",
+  "dimensionsInWorldUnits" : {
     "x": 1000,
     "z": 1000
   },
