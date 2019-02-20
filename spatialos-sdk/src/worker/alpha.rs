@@ -227,8 +227,10 @@ impl PlayerIdentityTokenFuture {
             let response = *response;
             let data =
                 &mut *(user_data as *mut Option<Result<PlayerIdentityTokenResponse, String>>);
-            if !response.error.is_null() {
-                let err = cstr_to_string(response.error);
+            if i32::from(response.status.code)
+                != Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SUCCESS
+            {
+                let err = cstr_to_string(response.status.detail);
                 *data = Some(Err(err));
                 return;
             }
@@ -404,8 +406,10 @@ impl LoginTokensFuture {
         unsafe {
             let response = *response;
             let data = &mut *(user_data as *mut Option<Result<LoginTokensResponse, String>>);
-            if !response.error.is_null() {
-                let err = cstr_to_string(response.error);
+            if i32::from(response.status.code)
+                != Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SUCCESS
+            {
+                let err = cstr_to_string(response.status.detail);
                 *data = Some(Err(err));
                 return;
             }
