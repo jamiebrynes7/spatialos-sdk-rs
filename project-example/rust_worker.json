@@ -1,10 +1,6 @@
 {
   "workerType": "RustWorker",
-  "attributeSet": {
-    "attributes": [
-      "rusty"
-    ]
-  },
+  "layer": "rusty",
   "entity_interest": {
     "range_entity_interest": {
       "radius": 100
@@ -20,7 +16,7 @@
   "launchConfiguration": {
     "cloudDeployment": {
       "linux": {
-        "localBuildDirectory": "./build/release",
+        "localBuildDirectory": "./build/release/bin",
         "command": "project-example",
         "arguments": [
           "--worker-id",
@@ -28,14 +24,16 @@
           "--worker-type",
           "RustWorker",
           "receptionist",
+          "--host",
           "${IMPROBABLE_RECEPTIONIST_HOST}",
+          "--port",
           "${IMPROBABLE_RECEPTIONIST_PORT}"
         ]
       }
     },
     "localDeployment": {
       "macos": {
-        "localBuildDirectory": "./build/debug",
+        "localBuildDirectory": "./build/debug/bin",
         "command": "project-example",
         "arguments": [
           "--worker-id",
@@ -43,12 +41,14 @@
           "--worker-type",
           "RustWorker",
           "receptionist",
+          "--host",
           "${IMPROBABLE_RECEPTIONIST_HOST}",
+          "--port",
           "${IMPROBABLE_RECEPTIONIST_PORT}"
         ]
       },
       "linux": {
-        "localBuildDirectory": "./build/debug",
+        "localBuildDirectory": "./build/debug/bin",
         "command": "project-example",
         "arguments": [
           "--worker-id",
@@ -56,12 +56,14 @@
           "--worker-type",
           "RustWorker",
           "receptionist",
+          "--host",
           "${IMPROBABLE_RECEPTIONIST_HOST}",
+          "--port",
           "${IMPROBABLE_RECEPTIONIST_PORT}"
         ]
       },
       "windows": {
-        "localBuildDirectory": "./build/debug",
+        "localBuildDirectory": "./build/debug/bin",
         "command": "project-example.exe",
         "arguments": [
           "--worker-id",
@@ -69,7 +71,9 @@
           "--worker-type",
           "RustWorker",
           "receptionist",
+          "--host",
           "${IMPROBABLE_RECEPTIONIST_HOST}",
+          "--port",
           "${IMPROBABLE_RECEPTIONIST_PORT}"
         ]
       }

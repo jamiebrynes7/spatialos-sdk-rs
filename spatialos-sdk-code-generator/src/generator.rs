@@ -502,28 +502,16 @@ fn generate_module(package: &Package) -> String {
     // The only package with a depth of 0 is the root package.
     if package.depth() == 0 {
         let allow_warnings = vec![
-            "#[allow(unused_imports)]",
-            "#[allow(unreachable_code)]",
-            "#[allow(unreachable_patterns)]",
-            "#[allow(unused_variables)]",
-            "#[allow(dead_code)]",
-            "#[allow(non_camel_case_types)]",
-            "#[allow(unused_mut)]",
+            "#![allow(unused_imports)]",
+            "#![allow(unreachable_code)]",
+            "#![allow(unreachable_patterns)]",
+            "#![allow(unused_variables)]",
+            "#![allow(dead_code)]",
+            "#![allow(non_camel_case_types)]",
+            "#![allow(unused_mut)]",
         ]
         .join("\n");
-        // The root module places everything in "mod generated", and each inner module has an alias for this mod
-        // (such as `use super::super::generated as generated`), so we can get fully qualified names without
-        // making symbols global.
-        let reexport_statements = package
-            .subpackages
-            .keys()
-            .map(|package| format!("pub use self::generated::{} as {};", package, package))
-            .collect::<Vec<String>>()
-            .join("\n");
-        format!(
-            "{}\nmod generated {{\n{}}}\n\n{}",
-            allow_warnings, module_contents, reexport_statements
-        )
+        format!("{}\n\n{}", allow_warnings, module_contents)
     } else {
         format!("pub mod {} {{\n{}}}\n", package.name, module_contents)
     }

@@ -9,3 +9,21 @@ component Example {
     float x = 1;
     command CommandData test_command(CommandData);
 }
+
+/// Indicates that an entity should rotate in a circle around the specified center point.
+component Rotate {
+    id = 1001;
+
+    /// The current angle (in radians) offset from the base.
+    double angle = 1;
+
+    /// The radius of the rotation.
+    double radius = 5;
+
+    /// The center point of the rotation.
+    // TODO: Use `improbable.Vector3d` here. Currently can't be used due to issues
+    // with the code generation logic.
+    double center_x = 2;
+    double center_y = 3;
+    double center_z = 4;
+}

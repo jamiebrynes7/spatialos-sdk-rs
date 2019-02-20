@@ -5,12 +5,12 @@ use std::collections::BTreeMap;
 use <#= vec!["super".to_string(); self.depth() + 1].join("::") #>::generated as generated;
 
 /* Enums. */<# for enum_name in &self.enums { let enum_def = self.get_enum_definition(enum_name); #>
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum <#= self.rust_name(&enum_def.identifier) #> {
 }
 <# } #>
 /* Types. */<# for type_name in &self.types { let type_def = self.get_type_definition(type_name); #>
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct <#= self.rust_name(&type_def.identifier) #> {<#
     for field in &type_def.field_definitions {
     #>
@@ -41,7 +41,7 @@ impl TypeConversion for <#= self.rust_name(&type_def.identifier) #> {
 /* Components. */ <# for component_name in &self.components {
     let component = self.get_component_definition(component_name);
     let component_fields = self.get_component_fields(&component); #>
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct <#= self.rust_name(&component.identifier) #> {<#
     for field in &component_fields {
     #>
@@ -76,7 +76,7 @@ impl ComponentData<<#= self.rust_name(&component.identifier) #>> for <#= self.ru
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct <#= self.rust_name(&component.identifier) #>Update {<#
     for field in &component_fields {
     #>
@@ -120,14 +120,14 @@ impl ComponentUpdate<<#= self.rust_name(&component.identifier) #>> for <#= self.
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum <#= self.rust_name(&component.identifier) #>CommandRequest {<#
     for command in &component.command_definitions {
     #>
     <#= command.identifier.name.to_camel_case() #>(<#= self.generate_value_type_reference(&command.request_type) #>),<# } #>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum <#= self.rust_name(&component.identifier) #>CommandResponse {<#
     for command in &component.command_definitions {
     #>
