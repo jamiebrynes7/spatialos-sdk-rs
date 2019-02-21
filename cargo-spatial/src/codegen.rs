@@ -63,14 +63,6 @@ pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
         command.arg(&arg);
     }
 
-    // Add all schema files in the std lib.
-    add_schemas(&std_lib_path.join("improbable"), &mut command);
-
-    // Add all user-provided schemas.
-    for schema_path in &config.schema_paths {
-        add_schemas(schema_path, &mut command);
-    }
-
     trace!("{:#?}", command);
     let status = command
         .status()
@@ -118,15 +110,4 @@ fn normalize<P: AsRef<std::path::Path>>(path: P) -> PathBuf {
         .components()
         .filter(|&comp| comp != Component::CurDir)
         .collect()
-}
-
-/// Recursively searches `path` for `.schema` files and adds them to `command`.
-fn add_schemas<P: AsRef<Path>>(path: P, command: &mut Command) {
-    let schema_glob = path.as_ref().join("**/*.schema");
-    for entry in glob::glob(schema_glob.to_str().unwrap())
-        .unwrap()
-        .filter_map(Result::ok)
-    {
-        command.arg(&entry);
-    }
 }

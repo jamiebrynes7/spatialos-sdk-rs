@@ -117,7 +117,7 @@ impl ProtocolType {
         u8,
         Worker_RakNetNetworkParameters,
         Worker_TcpNetworkParameters,
-        Worker_Alpha_KcpNetworkParameters,
+        Worker_KcpNetworkParameters,
     ) {
         match self {
             ProtocolType::Tcp(params) => {
@@ -241,7 +241,8 @@ pub struct KcpNetworkParameters {
     pub multiplex_level: u32,
     pub update_interval_millis: u32,
     pub min_rto_millis: u32,
-    pub window_size: u32,
+    pub send_window_size: u32,
+    pub receive_window_size: u32,
     pub erasure_codec: Option<ErasureCodecParameters>,
     pub heartbeat_params: HeartbeatParameters,
 }
@@ -255,7 +256,8 @@ impl KcpNetworkParameters {
             multiplex_level: WORKER_DEFAULTS_KCP_MULTIPLEX_LEVEL,
             update_interval_millis: WORKER_DEFAULTS_KCP_UPDATE_INTERVAL_MILLIS,
             min_rto_millis: WORKER_DEFAULTS_KCP_MIN_RTO_MILLIS,
-            window_size: WORKER_DEFAULTS_KCP_WINDOW_SIZE,
+            send_window_size: WORKER_DEFAULTS_KCP_SEND_WINDOW_SIZE,
+            receive_window_size: WORKER_DEFAULTS_KCP_RECV_WINDOW_SIZE,
             erasure_codec: if WORKER_DEFAULTS_KCP_ENABLE_ERASURE_CODEC != 0 {
                 Some(ErasureCodecParameters::default())
             } else {
@@ -265,15 +267,16 @@ impl KcpNetworkParameters {
         }
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_KcpNetworkParameters {
-        Worker_Alpha_KcpNetworkParameters {
+    pub(crate) fn to_worker_sdk(&self) -> Worker_KcpNetworkParameters {
+        Worker_KcpNetworkParameters {
             fast_retransmission: self.fast_transmission as u8,
             early_retransmission: self.early_retransmission as u8,
             non_concessional_flow_control: self.non_concessional_flow_control as u8,
             multiplex_level: self.multiplex_level,
             update_interval_millis: self.update_interval_millis,
             min_rto_millis: self.min_rto_millis,
-            window_size: self.window_size,
+            send_window_size: self.send_window_size,
+            recv_window_size: self.receive_window_size,
             enable_erasure_codec: self.erasure_codec.is_some() as u8,
             erasure_codec: self
                 .erasure_codec
@@ -300,8 +303,8 @@ impl ErasureCodecParameters {
         }
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_ErasureCodecParameters {
-        Worker_Alpha_ErasureCodecParameters {
+    pub(crate) fn to_worker_sdk(&self) -> Worker_ErasureCodecParameters {
+        Worker_ErasureCodecParameters {
             original_packet_count: self.original_packet_count,
             recovery_packet_count: self.recovery_packet_count,
             window_size: self.window_size,
@@ -322,8 +325,8 @@ impl HeartbeatParameters {
         }
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_HeartbeatParameters {
-        Worker_Alpha_HeartbeatParameters {
+    pub(crate) fn to_worker_sdk(&self) -> Worker_HeartbeatParameters {
+        Worker_HeartbeatParameters {
             interval_millis: self.interval_millis,
             timeout_millis: self.timeout_millis,
         }
