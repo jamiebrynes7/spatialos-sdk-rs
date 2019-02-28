@@ -30,6 +30,7 @@ matrix:
   allow_failures:
     - os: windows
     - rust: nightly
+    - rust: beta
 
 before_install:
 - set -e
