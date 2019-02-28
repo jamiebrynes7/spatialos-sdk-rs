@@ -1,10 +1,6 @@
 {
   "workerType": "RustClient",
-  "attributeSet": {
-    "attributes": [
-      "rusty-client"
-    ]
-  },
+  "layer": "client",
   "entity_interest": {
     "range_entity_interest": {
       "radius": 2
