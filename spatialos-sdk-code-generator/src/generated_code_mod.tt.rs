@@ -229,4 +229,6 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
         }
     }
 }
+
+inventory::submit!(WrappedVTable::new(create_component_vtable::<<#= self.rust_name(&component.identifier) #>>()));
 <# } #>

@@ -228,6 +228,8 @@ pub(crate) mod internal {
     }
 }
 
+inventory::collect!(WrappedVTable);
+
 // A data structure which represents all known component types. Used to generate an array of vtables to pass
 // to the connection object.
 #[derive(Default)]
@@ -237,14 +239,15 @@ pub struct ComponentDatabase {
 
 impl ComponentDatabase {
     pub fn new() -> Self {
-        ComponentDatabase {
-            component_vtables: Vec::new(),
+        let mut vtables = Vec::new();
+        for table in inventory::iter::<WrappedVTable> {
+            vtables.push(table.vtable)
         }
-    }
 
-    pub fn add_component<C: Component>(mut self) -> Self {
-        self.component_vtables.push(create_component_vtable::<C>());
-        self
+        ComponentDatabase {
+            component_vtables: vtables,
+        }
+
     }
 
     pub(crate) fn to_worker_sdk(&self) -> *const Worker_ComponentVtable {
@@ -271,8 +274,20 @@ pub(crate) unsafe fn handle_copy<T>(handle: *mut raw::c_void) -> *mut raw::c_voi
     Arc::into_raw(copy) as *mut _
 }
 
+pub struct WrappedVTable {
+    vtable: Worker_ComponentVtable
+}
+
+impl WrappedVTable {
+    pub fn new(vtable: Worker_ComponentVtable) -> Self {
+        WrappedVTable {
+            vtable
+        }
+    }
+}
+
 // Vtable implementation functions.
-fn create_component_vtable<C: Component>() -> Worker_ComponentVtable {
+pub fn create_component_vtable<C: Component>() -> Worker_ComponentVtable {
     Worker_ComponentVtable {
         component_id: C::ID,
         user_data: ptr::null_mut(),

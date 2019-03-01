@@ -11,6 +11,7 @@ edition = "2018"
 derivative = "1.0.2"
 spatialos-sdk-sys = { path = "../spatialos-sdk-sys"}
 futures = "0.1.25"
+inventory = "0.1"
 
 [dev-dependencies]
 uuid = { version = "0.7", features = ["v4"] }
