@@ -228,7 +228,7 @@ pub(crate) mod internal {
     }
 }
 
-inventory::collect!(WrappedVTable);
+inventory::collect!(VTable);
 
 // A data structure which represents all known component types. Used to generate an array of vtables to pass
 // to the connection object.
@@ -240,14 +240,13 @@ pub struct ComponentDatabase {
 impl ComponentDatabase {
     pub fn new() -> Self {
         let mut vtables = Vec::new();
-        for table in inventory::iter::<WrappedVTable> {
+        for table in inventory::iter::<VTable> {
             vtables.push(table.vtable)
         }
 
         ComponentDatabase {
             component_vtables: vtables,
         }
-
     }
 
     pub(crate) fn to_worker_sdk(&self) -> *const Worker_ComponentVtable {
@@ -274,39 +273,34 @@ pub(crate) unsafe fn handle_copy<T>(handle: *mut raw::c_void) -> *mut raw::c_voi
     Arc::into_raw(copy) as *mut _
 }
 
-pub struct WrappedVTable {
-    vtable: Worker_ComponentVtable
+pub struct VTable {
+    vtable: Worker_ComponentVtable,
 }
 
-impl WrappedVTable {
-    pub fn new(vtable: Worker_ComponentVtable) -> Self {
-        WrappedVTable {
-            vtable
+impl VTable {
+    pub fn new<C: Component>() -> Self {
+        VTable {
+            vtable: Worker_ComponentVtable {
+                component_id: C::ID,
+                user_data: ptr::null_mut(),
+                command_request_free: Some(vtable_command_request_free::<C>),
+                command_request_copy: Some(vtable_command_request_copy::<C>),
+                command_request_deserialize: Some(vtable_command_request_deserialize::<C>),
+                command_request_serialize: Some(vtable_command_request_serialize::<C>),
+                command_response_free: Some(vtable_command_response_free::<C>),
+                command_response_copy: Some(vtable_command_response_copy::<C>),
+                command_response_deserialize: Some(vtable_command_response_deserialize::<C>),
+                command_response_serialize: Some(vtable_command_response_serialize::<C>),
+                component_data_free: Some(vtable_component_data_free::<C>),
+                component_data_copy: Some(vtable_component_data_copy::<C>),
+                component_data_deserialize: Some(vtable_component_data_deserialize::<C>),
+                component_data_serialize: Some(vtable_component_data_serialize::<C>),
+                component_update_free: Some(vtable_component_update_free::<C>),
+                component_update_copy: Some(vtable_component_update_copy::<C>),
+                component_update_deserialize: Some(vtable_component_update_deserialize::<C>),
+                component_update_serialize: Some(vtable_component_update_serialize::<C>),
+            },
         }
-    }
-}
-
-// Vtable implementation functions.
-pub fn create_component_vtable<C: Component>() -> Worker_ComponentVtable {
-    Worker_ComponentVtable {
-        component_id: C::ID,
-        user_data: ptr::null_mut(),
-        command_request_free: Some(vtable_command_request_free::<C>),
-        command_request_copy: Some(vtable_command_request_copy::<C>),
-        command_request_deserialize: Some(vtable_command_request_deserialize::<C>),
-        command_request_serialize: Some(vtable_command_request_serialize::<C>),
-        command_response_free: Some(vtable_command_response_free::<C>),
-        command_response_copy: Some(vtable_command_response_copy::<C>),
-        command_response_deserialize: Some(vtable_command_response_deserialize::<C>),
-        command_response_serialize: Some(vtable_command_response_serialize::<C>),
-        component_data_free: Some(vtable_component_data_free::<C>),
-        component_data_copy: Some(vtable_component_data_copy::<C>),
-        component_data_deserialize: Some(vtable_component_data_deserialize::<C>),
-        component_data_serialize: Some(vtable_component_data_serialize::<C>),
-        component_update_free: Some(vtable_component_update_free::<C>),
-        component_update_copy: Some(vtable_component_update_copy::<C>),
-        component_update_deserialize: Some(vtable_component_update_deserialize::<C>),
-        component_update_serialize: Some(vtable_component_update_serialize::<C>),
     }
 }
 
