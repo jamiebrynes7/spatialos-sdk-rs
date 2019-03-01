@@ -24,16 +24,8 @@ mod generated;
 mod opt;
 
 fn main() {
-    println!("Entered program");
 
-    let components = ComponentDatabase::new()
-        .add_component::<example::Example>()
-        .add_component::<example::Rotate>()
-        .add_component::<improbable::EntityAcl>()
-        .add_component::<improbable::Persistence>()
-        .add_component::<improbable::Metadata>()
-        .add_component::<improbable::Interest>()
-        .add_component::<improbable::Position>();
+    let components = ComponentDatabase::new();
 
     let opt = Opt::from_args();
     let mut worker_connection = match get_connection(opt, components) {
