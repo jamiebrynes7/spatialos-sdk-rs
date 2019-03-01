@@ -104,15 +104,15 @@ impl ConnectionParameters {
             thread_affinity: self.thread_affinity.to_worker_sdk(),
             component_vtable_count: match self.components {
                 Some(ref components) => components.len() as u32,
-                None => 0
+                None => 0,
             },
             component_vtables: match self.components {
                 Some(ref components) => components.to_worker_sdk(),
-                None => ptr::null()
+                None => ptr::null(),
             },
             default_component_vtable: match self.components {
                 Some(_) => ptr::null(),
-                None => &vtable::PASSTHROUGH_VTABLE
+                None => &vtable::PASSTHROUGH_VTABLE,
             },
         }
     }
