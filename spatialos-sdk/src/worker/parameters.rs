@@ -15,12 +15,12 @@ pub struct ConnectionParameters {
     pub protocol_logging: ProtocolLoggingParameters,
     pub enable_protocol_logging_at_startup: bool,
     pub thread_affinity: ThreadAffinityParameters,
-    pub components: ComponentDatabase,
+    components: Option<ComponentDatabase>,
 }
 
 impl ConnectionParameters {
-    pub fn new<T: AsRef<str>>(worker_type: T, components: ComponentDatabase) -> Self {
-        let mut params = ConnectionParameters::default(components);
+    pub fn new<T: AsRef<str>>(worker_type: T) -> Self {
+        let mut params = ConnectionParameters::default();
         params.worker_type =
             CString::new(worker_type.as_ref()).expect("`worker_type` contains a null byte");
         params
@@ -70,7 +70,12 @@ impl ConnectionParameters {
         self
     }
 
-    pub fn default(components: ComponentDatabase) -> Self {
+    pub fn generate_component_vtable(mut self) -> Self {
+        self.components = Some(ComponentDatabase::new());
+        self
+    }
+
+    pub fn default() -> Self {
         ConnectionParameters {
             worker_type: CString::new("").unwrap(),
             network: NetworkParameters::default(),
@@ -82,7 +87,7 @@ impl ConnectionParameters {
             protocol_logging: ProtocolLoggingParameters::default(),
             enable_protocol_logging_at_startup: false,
             thread_affinity: ThreadAffinityParameters::default(),
-            components,
+            components: None,
         }
     }
 
@@ -97,9 +102,18 @@ impl ConnectionParameters {
             protocol_logging: self.protocol_logging.to_worker_sdk(),
             enable_protocol_logging_at_startup: self.enable_protocol_logging_at_startup as u8,
             thread_affinity: self.thread_affinity.to_worker_sdk(),
-            component_vtable_count: self.components.len() as u32,
-            component_vtables: self.components.to_worker_sdk(),
-            default_component_vtable: ptr::null(),
+            component_vtable_count: match self.components {
+                Some(ref components) => components.len() as u32,
+                None => 0
+            },
+            component_vtables: match self.components {
+                Some(ref components) => components.to_worker_sdk(),
+                None => ptr::null()
+            },
+            default_component_vtable: match self.components {
+                Some(_) => ptr::null(),
+                None => &vtable::PASSTHROUGH_VTABLE
+            },
         }
     }
 }
