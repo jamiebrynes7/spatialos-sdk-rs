@@ -4,6 +4,8 @@ use std::os::raw;
 use std::sync::Arc;
 use std::{mem, ptr};
 
+pub use inventory;
+
 pub type ComponentId = u32;
 
 pub trait ComponentUpdate<C: Component> {
