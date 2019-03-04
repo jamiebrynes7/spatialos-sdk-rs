@@ -70,7 +70,7 @@ impl ConnectionParameters {
         self
     }
 
-    pub fn generate_component_vtable(mut self) -> Self {
+    pub fn enable_internal_serialization(mut self) -> Self {
         self.components = Some(ComponentDatabase::new());
         self
     }

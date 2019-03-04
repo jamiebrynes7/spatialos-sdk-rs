@@ -30,7 +30,7 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
             let params = ConnectionParameters::new(worker_type)
                 .using_tcp()
                 .using_external_ip(connect_with_external_ip)
-                .generate_component_vtable();
+                .enable_internal_serialization();
             WorkerConnection::connect_receptionist_async(
                 &worker_id,
                 &host.unwrap_or_else(|| "127.0.0.1".into()),
@@ -53,7 +53,7 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
                 &ConnectionParameters::new(worker_type)
                     .using_tcp()
                     .using_external_ip(true)
-                    .generate_component_vtable(),
+                    .enable_internal_serialization(),
                 queue_status_callback,
             )
         }
@@ -97,7 +97,7 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
                 &ConnectionParameters::new(worker_type)
                     .using_tcp()
                     .using_external_ip(true)
-                    .generate_component_vtable(),
+                    .enable_internal_serialization(),
             )
         }
     };
