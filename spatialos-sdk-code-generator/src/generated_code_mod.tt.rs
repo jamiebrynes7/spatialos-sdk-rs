@@ -229,4 +229,6 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
         }
     }
 }
+
+inventory::submit!(VTable::new::<<#= self.rust_name(&component.identifier) #>>());
 <# } #>

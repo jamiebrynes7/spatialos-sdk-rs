@@ -2,7 +2,6 @@ use crate::{Command, Opt};
 use futures::{Async, Future};
 use spatialos_sdk::worker::{
     alpha::{self, LoginTokensRequest, PlayerIdentityCredentials, PlayerIdentityTokenRequest},
-    component::ComponentDatabase,
     connection::{WorkerConnection, WorkerConnectionFuture},
     constants::{LOCATOR_HOSTNAME, LOCATOR_PORT, RECEPTIONIST_PORT},
     locator::{Locator, LocatorCredentials, LocatorParameters},
@@ -13,7 +12,7 @@ use uuid::Uuid;
 const POLL_NUM_ATTEMPTS: u32 = 5;
 const POLL_TIME_BETWEEN_ATTEMPTS_MILLIS: u64 = 3000;
 
-pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerConnection, String> {
+pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
     let Opt {
         worker_type,
         worker_id,
@@ -28,9 +27,10 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
             port,
             connect_with_external_ip,
         } => {
-            let params = ConnectionParameters::new(worker_type, components)
+            let params = ConnectionParameters::new(worker_type)
                 .using_tcp()
-                .using_external_ip(connect_with_external_ip);
+                .using_external_ip(connect_with_external_ip)
+                .enable_internal_serialization();
             WorkerConnection::connect_receptionist_async(
                 &worker_id,
                 &host.unwrap_or_else(|| "127.0.0.1".into()),
@@ -50,9 +50,10 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
             WorkerConnection::connect_locator_async(
                 &locator,
                 &deployment,
-                &ConnectionParameters::new(worker_type, components)
+                &ConnectionParameters::new(worker_type)
                     .using_tcp()
-                    .using_external_ip(true),
+                    .using_external_ip(true)
+                    .enable_internal_serialization(),
                 queue_status_callback,
             )
         }
@@ -93,9 +94,10 @@ pub fn get_connection(opt: Opt, components: ComponentDatabase) -> Result<WorkerC
 
             WorkerConnection::connect_alpha_locator_async(
                 &alpha_locator,
-                &ConnectionParameters::new(worker_type, components)
+                &ConnectionParameters::new(worker_type)
                     .using_tcp()
-                    .using_external_ip(true),
+                    .using_external_ip(true)
+                    .enable_internal_serialization(),
             )
         }
     };

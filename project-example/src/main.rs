@@ -3,7 +3,7 @@ use generated::{example, improbable};
 use rand::Rng;
 use spatialos_sdk::worker::{
     commands::{EntityQueryRequest, ReserveEntityIdsRequest},
-    component::{Component, ComponentData, ComponentDatabase, UpdateParameters},
+    component::{Component, ComponentData, UpdateParameters},
     connection::{Connection, WorkerConnection},
     entity::Entity,
     metrics::{HistogramMetric, Metrics},
@@ -24,19 +24,8 @@ mod generated;
 mod opt;
 
 fn main() {
-    println!("Entered program");
-
-    let components = ComponentDatabase::new()
-        .add_component::<example::Example>()
-        .add_component::<example::Rotate>()
-        .add_component::<improbable::EntityAcl>()
-        .add_component::<improbable::Persistence>()
-        .add_component::<improbable::Metadata>()
-        .add_component::<improbable::Interest>()
-        .add_component::<improbable::Position>();
-
     let opt = Opt::from_args();
-    let mut worker_connection = match get_connection(opt, components) {
+    let mut worker_connection = match get_connection(opt) {
         Ok(c) => c,
         Err(e) => panic!("{}", e),
     };
