@@ -3,10 +3,10 @@ use crate::{
     worker::component::{self, Component, ComponentId},
 };
 use spatialos_sdk_sys::worker::Worker_ComponentData;
+use spatialos_sdk_sys::worker::Worker_Entity;
 use std::collections::HashMap;
 use std::ptr;
 use std::slice;
-use spatialos_sdk_sys::worker::Worker_Entity;
 
 #[derive(Debug, Default)]
 pub struct Entity {
