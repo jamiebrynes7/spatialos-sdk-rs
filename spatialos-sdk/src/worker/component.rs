@@ -236,7 +236,7 @@ inventory::collect!(VTable);
 // to the connection object.
 #[derive(Default)]
 pub(crate) struct ComponentDatabase {
-    component_vtables: Vec<Worker_ComponentVtable>,
+    pub component_vtables: Vec<Worker_ComponentVtable>,
 }
 
 impl ComponentDatabase {
@@ -249,6 +249,19 @@ impl ComponentDatabase {
         ComponentDatabase {
             component_vtables: vtables,
         }
+    }
+
+    // TODO: possible optimisation - HashMap<ComponentId, usize> where the value is the element in the vector.
+    pub(crate) fn has_vtable(&self, id: ComponentId) -> bool {
+        self.component_vtables
+            .iter()
+            .any(|vtable| vtable.component_id == id)
+    }
+
+    pub(crate) fn get_vtable(&self, id: ComponentId) -> Option<&Worker_ComponentVtable> {
+        self.component_vtables
+            .iter()
+            .find(|vtable| vtable.component_id == id)
     }
 
     pub(crate) fn to_worker_sdk(&self) -> *const Worker_ComponentVtable {

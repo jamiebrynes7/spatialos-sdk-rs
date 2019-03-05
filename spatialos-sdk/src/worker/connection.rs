@@ -331,8 +331,8 @@ impl Connection for WorkerConnection {
         let id = unsafe {
             Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),
-                component_data.len() as _,
-                component_data.as_ptr(),
+                component_data.components.len() as _,
+                component_data.components.as_ptr(),
                 entity_id,
                 timeout,
             )
