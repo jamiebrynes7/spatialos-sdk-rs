@@ -5,6 +5,8 @@ use crate::{
 use spatialos_sdk_sys::worker::Worker_ComponentData;
 use std::collections::HashMap;
 use std::ptr;
+use std::slice;
+use spatialos_sdk_sys::worker::Worker_Entity;
 
 #[derive(Debug, Default)]
 pub struct Entity {
@@ -15,6 +17,20 @@ pub struct Entity {
 impl Entity {
     pub fn new() -> Self {
         Entity::default()
+    }
+
+    pub(crate) fn from_worker_sdk(raw_entity: &Worker_Entity) -> Self {
+        let mut entity = Entity::new();
+
+        let component_data = unsafe {
+            slice::from_raw_parts(wrk_entity.components, wrk_entity.component_count as usize)
+        };
+
+        for data in component_data {
+            entity.add_raw(data);
+        }
+
+        entity
     }
 
     pub fn add<C: Component>(&mut self, component: C) {
