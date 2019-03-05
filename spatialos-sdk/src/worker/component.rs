@@ -5,6 +5,7 @@ use std::sync::Arc;
 use std::{mem, ptr};
 
 pub use inventory;
+use std::collections::hash_map::HashMap;
 
 pub type ComponentId = u32;
 
@@ -237,31 +238,32 @@ inventory::collect!(VTable);
 #[derive(Default)]
 pub(crate) struct ComponentDatabase {
     pub component_vtables: Vec<Worker_ComponentVtable>,
+    index_map: HashMap<ComponentId, usize>,
 }
 
 impl ComponentDatabase {
     pub fn new() -> Self {
         let mut vtables = Vec::new();
-        for table in inventory::iter::<VTable> {
-            vtables.push(table.vtable)
+        let mut index_map = HashMap::new();
+        for (i, table) in inventory::iter::<VTable>.into_iter().enumerate() {
+            vtables.push(table.vtable);
+            index_map.insert(table.vtable.component_id, i);
         }
 
         ComponentDatabase {
             component_vtables: vtables,
+            index_map,
         }
     }
 
-    // TODO: possible optimisation - HashMap<ComponentId, usize> where the value is the element in the vector.
     pub(crate) fn has_vtable(&self, id: ComponentId) -> bool {
-        self.component_vtables
-            .iter()
-            .any(|vtable| vtable.component_id == id)
+        self.index_map.contains_key(&id)
     }
 
     pub(crate) fn get_vtable(&self, id: ComponentId) -> Option<&Worker_ComponentVtable> {
-        self.component_vtables
-            .iter()
-            .find(|vtable| vtable.component_id == id)
+        self.index_map
+            .get(&id)
+            .map(|index| &self.component_vtables[*index])
     }
 
     pub(crate) fn to_worker_sdk(&self) -> *const Worker_ComponentVtable {
