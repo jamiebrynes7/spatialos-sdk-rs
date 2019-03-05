@@ -3,16 +3,19 @@
 use std::collections::HashMap;
 use std::slice;
 
-use crate::worker::commands::*;
-use crate::worker::component::{self, *};
-use crate::worker::entity_snapshot::EntitySnapshot;
-use crate::worker::internal::schema::{
-    SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData, SchemaComponentUpdate,
+use crate::worker::{
+    commands::*,
+    component::{self, *},
+    entity::Entity,
+    internal::{
+        schema::{
+            SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData, SchemaComponentUpdate,
+        },
+        utils::*,
+    },
+    metrics::Metrics,
+    {Authority, EntityId, LogLevel, RequestId},
 };
-use crate::worker::metrics::Metrics;
-use crate::worker::{Authority, EntityId, LogLevel, RequestId};
-
-use crate::worker::internal::utils::*;
 use spatialos_sdk_sys::worker::*;
 
 pub struct OpList {
@@ -490,7 +493,7 @@ pub struct DeleteEntityResponseOp {
 
 #[derive(Debug)]
 pub enum QueryResponse {
-    Snapshot(HashMap<EntityId, EntitySnapshot>),
+    Snapshot(HashMap<EntityId, Entity>),
     Result(u32),
 }
 
