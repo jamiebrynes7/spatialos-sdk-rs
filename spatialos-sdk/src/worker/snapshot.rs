@@ -1,8 +1,9 @@
-use crate::worker::component::ComponentDatabase;
-use crate::{worker::entity::Entity, worker::internal::utils::cstr_to_string, worker::EntityId};
+use crate::{
+    worker::component::get_component_database, worker::entity::Entity,
+    worker::internal::utils::cstr_to_string, worker::EntityId,
+};
 use spatialos_sdk_sys::worker::*;
 use std::{ffi::CString, path::Path};
-use crate::worker::component::get_component_database;
 
 pub struct SnapshotOutputStream {
     ptr: *mut Worker_SnapshotOutputStream,

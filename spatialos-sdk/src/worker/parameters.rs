@@ -1,10 +1,10 @@
+use crate::worker::component::get_component_database;
 use crate::worker::{component::ComponentDatabase, vtable};
 use spatialos_sdk_sys::worker::*;
 use std::{
     ffi::{CStr, CString},
     ptr,
 };
-use crate::worker::component::get_component_database;
 
 pub struct ConnectionParameters {
     pub worker_type: CString,

@@ -1,3 +1,4 @@
+use crate::worker::component::get_component_database;
 use crate::{
     worker::component::ComponentDatabase,
     worker::component::{self, Component, ComponentId},
@@ -7,7 +8,6 @@ use spatialos_sdk_sys::worker::Worker_Entity;
 use std::collections::HashMap;
 use std::ptr;
 use std::slice;
-use crate::worker::component::get_component_database;
 
 #[derive(Debug)]
 pub struct Entity {
@@ -19,7 +19,7 @@ impl Entity {
     pub fn new() -> Self {
         Entity {
             components: HashMap::new(),
-            database: get_component_database()
+            database: get_component_database(),
         }
     }
 

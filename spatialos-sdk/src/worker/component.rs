@@ -1,14 +1,13 @@
 use crate::worker::internal::schema;
 use spatialos_sdk_sys::worker::*;
-use std::os::raw;
-use std::sync::Arc;
-use std::{mem, ptr};
+use std::{
+    collections::hash_map::HashMap, mem, ops::Deref, os::raw, ptr, sync::Arc, sync::Once,
+    sync::ONCE_INIT,
+};
 
+// Re-export inventory so generated code doesn't require the user to add inventory to their
+// Cargo.toml
 pub use inventory;
-use std::collections::hash_map::HashMap;
-use std::sync::Once;
-use std::sync::ONCE_INIT;
-use std::ops::Deref;
 
 pub type ComponentId = u32;
 
@@ -236,6 +235,12 @@ pub(crate) mod internal {
 
 inventory::collect!(VTable);
 
+// This is pattern used in the Rust std lib for a singleton object. Sadly we cannot use lazy_static
+// due to the unsafe types within the component vtables. This operates similarly to the stdin()
+// method. We need a singleton instance as inventory appears to only allow iteration once (at
+// least that was the observed behaviour).
+//
+// See: https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton
 pub(crate) fn get_component_database() -> ComponentDatabase {
     static mut COMPONENT_DATABASE: *const ComponentDatabase = 0 as *const _;
     static ONCE: Once = ONCE_INIT;
@@ -249,24 +254,27 @@ pub(crate) fn get_component_database() -> ComponentDatabase {
                 index_map.insert(table.vtable.component_id, i);
             }
 
-            let database = InnerComponentDatabase {
+            let inner_database = InnerComponentDatabase {
                 component_vtables: vtables,
                 index_map,
             };
 
-            COMPONENT_DATABASE = mem::transmute(Box::new(ComponentDatabase { inner: Arc::new(database) }));
+            COMPONENT_DATABASE = mem::transmute(Box::new(ComponentDatabase {
+                inner: Arc::new(inner_database),
+            }));
         });
 
         (*COMPONENT_DATABASE).clone()
     }
 }
 
-
 #[derive(Clone, Debug)]
 pub(crate) struct ComponentDatabase {
-    inner: Arc<InnerComponentDatabase>
+    inner: Arc<InnerComponentDatabase>,
 }
 
+// This allows users of ComponentDatabase to reach into the inner database without reaching
+// directly into inner. This also hides the implementation.
 impl Deref for ComponentDatabase {
     type Target = InnerComponentDatabase;
 
@@ -276,8 +284,8 @@ impl Deref for ComponentDatabase {
 }
 
 #[derive(Debug)]
-pub struct InnerComponentDatabase {
-    pub component_vtables: Vec<Worker_ComponentVtable>,
+pub(crate) struct InnerComponentDatabase {
+    component_vtables: Vec<Worker_ComponentVtable>,
     index_map: HashMap<ComponentId, usize>,
 }
 
