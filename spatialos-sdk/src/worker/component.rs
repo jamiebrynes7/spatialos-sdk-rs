@@ -6,6 +6,9 @@ use std::{mem, ptr};
 
 pub use inventory;
 use std::collections::hash_map::HashMap;
+use std::sync::Once;
+use std::sync::ONCE_INIT;
+use std::ops::Deref;
 
 pub type ComponentId = u32;
 
@@ -233,29 +236,52 @@ pub(crate) mod internal {
 
 inventory::collect!(VTable);
 
-// A data structure which represents all known component types. Used to generate an array of vtables to pass
-// to the connection object.
-#[derive(Default, Debug)]
+pub(crate) fn get_component_database() -> ComponentDatabase {
+    static mut COMPONENT_DATABASE: *const ComponentDatabase = 0 as *const _;
+    static ONCE: Once = ONCE_INIT;
+
+    unsafe {
+        ONCE.call_once(|| {
+            let mut vtables = Vec::new();
+            let mut index_map = HashMap::new();
+            for (i, table) in inventory::iter::<VTable>.into_iter().enumerate() {
+                vtables.push(table.vtable);
+                index_map.insert(table.vtable.component_id, i);
+            }
+
+            let database = InnerComponentDatabase {
+                component_vtables: vtables,
+                index_map,
+            };
+
+            COMPONENT_DATABASE = mem::transmute(Box::new(ComponentDatabase { inner: Arc::new(database) }));
+        });
+
+        (*COMPONENT_DATABASE).clone()
+    }
+}
+
+
+#[derive(Clone, Debug)]
 pub(crate) struct ComponentDatabase {
+    inner: Arc<InnerComponentDatabase>
+}
+
+impl Deref for ComponentDatabase {
+    type Target = InnerComponentDatabase;
+
+    fn deref(&self) -> &Self::Target {
+        self.inner.deref()
+    }
+}
+
+#[derive(Debug)]
+pub struct InnerComponentDatabase {
     pub component_vtables: Vec<Worker_ComponentVtable>,
     index_map: HashMap<ComponentId, usize>,
 }
 
-impl ComponentDatabase {
-    pub fn new() -> Self {
-        let mut vtables = Vec::new();
-        let mut index_map = HashMap::new();
-        for (i, table) in inventory::iter::<VTable>.into_iter().enumerate() {
-            vtables.push(table.vtable);
-            index_map.insert(table.vtable.component_id, i);
-        }
-
-        ComponentDatabase {
-            component_vtables: vtables,
-            index_map,
-        }
-    }
-
+impl InnerComponentDatabase {
     pub(crate) fn has_vtable(&self, id: ComponentId) -> bool {
         self.index_map.contains_key(&id)
     }

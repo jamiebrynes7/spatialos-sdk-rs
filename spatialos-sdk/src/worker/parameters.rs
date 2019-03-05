@@ -4,6 +4,7 @@ use std::{
     ffi::{CStr, CString},
     ptr,
 };
+use crate::worker::component::get_component_database;
 
 pub struct ConnectionParameters {
     pub worker_type: CString,
@@ -71,7 +72,7 @@ impl ConnectionParameters {
     }
 
     pub fn enable_internal_serialization(mut self) -> Self {
-        self.components = Some(ComponentDatabase::new());
+        self.components = Some(get_component_database());
         self
     }
 

@@ -7,8 +7,9 @@ use spatialos_sdk_sys::worker::Worker_Entity;
 use std::collections::HashMap;
 use std::ptr;
 use std::slice;
+use crate::worker::component::get_component_database;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Entity {
     components: HashMap<ComponentId, Worker_ComponentData>,
     database: ComponentDatabase,
@@ -16,7 +17,10 @@ pub struct Entity {
 
 impl Entity {
     pub fn new() -> Self {
-        Entity::default()
+        Entity {
+            components: HashMap::new(),
+            database: get_component_database()
+        }
     }
 
     pub(crate) fn from_worker_sdk(raw_entity: &Worker_Entity) -> Result<Self, String> {
@@ -131,7 +135,7 @@ impl RawEntity {
     where
         I: Iterator<Item = &'a Worker_ComponentData>,
     {
-        let database = ComponentDatabase::new();
+        let database = get_component_database();;
 
         // Go through each Worker_ComponentData object, make a copy and call handle_copy using the vtable.
         let new_data = original_data
