@@ -19,7 +19,7 @@ impl Entity {
         Entity::default()
     }
 
-    pub(crate) fn from_worker_sdk(raw_entity: &Worker_Entity) -> Self {
+    pub(crate) fn from_worker_sdk(raw_entity: &Worker_Entity) -> Result<Self, String> {
         let mut entity = Entity::new();
 
         let component_data = unsafe {
@@ -27,25 +27,14 @@ impl Entity {
         };
 
         for data in component_data {
-            entity.add_raw(data);
+            entity.add_raw(data)?;
         }
 
-        entity
+        Ok(entity)
     }
 
-    pub fn add<C: Component>(&mut self, component: C) {
-        assert!(
-            !self.components.contains_key(&C::ID),
-            "Duplicate component added to `Entity`"
-        );
-
-        assert!(
-            !self.database.has_vtable(C::ID),
-            format!(
-                "Could not find a vtable implementation for component {}",
-                C::ID
-            )
-        );
+    pub fn add<C: Component>(&mut self, component: C) -> Result<(), String> {
+        self.pre_add_check(C::ID)?;
 
         let data_ptr = component::handle_allocate(component);
         let raw_data = Worker_ComponentData {
@@ -56,23 +45,14 @@ impl Entity {
         };
 
         self.components.insert(C::ID, raw_data);
+
+        Ok(())
     }
 
-    pub(crate) fn add_raw(&mut self, component: &Worker_ComponentData) {
+    pub(crate) fn add_raw(&mut self, component: &Worker_ComponentData) -> Result<(), String> {
         let id = component.component_id;
 
-        assert!(
-            !self.components.contains_key(&id),
-            "Duplicate component added to `Entity`"
-        );
-
-        assert!(
-            !self.database.has_vtable(id),
-            format!(
-                "Could not find a vtable implementation for component {}",
-                id
-            )
-        );
+        self.pre_add_check(id)?;
 
         // Call copy on the component data. We don't own this Worker_ComponentData.
         let vtable = self.database.get_vtable(id).unwrap();
@@ -90,6 +70,8 @@ impl Entity {
                 user_handle: component.user_handle,
             },
         );
+
+        Ok(())
     }
 
     pub fn get<C: Component>(&self) -> Option<&C> {
@@ -100,6 +82,24 @@ impl Entity {
 
     pub(crate) fn raw_component_data(&self) -> RawEntity {
         RawEntity::new(self.components.values())
+    }
+
+    fn pre_add_check(&self, id: ComponentId) -> Result<(), String> {
+        if self.components.contains_key(&id) {
+            return Err(format!(
+                "Duplicate component with ID {} added to `Entity`.",
+                id
+            ));
+        }
+
+        if !self.database.has_vtable(id) {
+            return Err(format!(
+                "Could not find a vtable implementation for component {}",
+                id
+            ));
+        }
+
+        Ok(())
     }
 }
 

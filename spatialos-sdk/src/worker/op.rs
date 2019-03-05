@@ -393,7 +393,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                                 for raw_entity in raw_entities {
                                     entities.insert(
                                         EntityId::new(raw_entity.entity_id),
-                                        Entity::from_worker_sdk(raw_entity),
+                                        Entity::from_worker_sdk(raw_entity).unwrap(),
                                     );
                                 }
 
