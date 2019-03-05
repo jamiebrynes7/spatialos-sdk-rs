@@ -23,7 +23,7 @@ impl Entity {
         let mut entity = Entity::new();
 
         let component_data = unsafe {
-            slice::from_raw_parts(wrk_entity.components, wrk_entity.component_count as usize)
+            slice::from_raw_parts(raw_entity.components, raw_entity.component_count as usize)
         };
 
         for data in component_data {

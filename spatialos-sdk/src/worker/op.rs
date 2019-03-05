@@ -1,8 +1,9 @@
 #![allow(non_upper_case_globals)]
 
-use std::collections::HashMap;
-use std::slice;
-
+use std::{
+    collections::HashMap,
+    slice
+};
 use crate::worker::{
     commands::*,
     component::{self, *},
@@ -389,15 +390,14 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                                 StatusCode::Success(QueryResponse::Result(op.result_count))
                             } else {
                                 let mut entities = HashMap::new();
-                                let raw_entities = unsafe {
-                                    slice::from_raw_parts(op.results, op.result_count as usize)
-                                };
+                                let raw_entities =
+                                    slice::from_raw_parts(op.results, op.result_count as usize);
 
                                 for raw_entity in raw_entities {
                                     entities.insert(
                                         EntityId::new(raw_entity.entity_id),
                                         Entity::from_worker_sdk(raw_entity),
-                                    )
+                                    );
                                 }
 
                                 StatusCode::Success(QueryResponse::Snapshot(entities))

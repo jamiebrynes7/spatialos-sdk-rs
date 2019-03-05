@@ -1,7 +1,7 @@
 use crate::worker::component::ComponentDatabase;
 use crate::{worker::entity::Entity, worker::internal::utils::cstr_to_string, worker::EntityId};
 use spatialos_sdk_sys::worker::*;
-use std::{ffi::CString, path::Path, slice};
+use std::{ffi::CString, path::Path};
 
 pub struct SnapshotOutputStream {
     ptr: *mut Worker_SnapshotOutputStream,
