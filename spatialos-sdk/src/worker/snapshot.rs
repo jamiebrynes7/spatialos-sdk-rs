@@ -103,16 +103,7 @@ impl SnapshotInputStream {
 
         let wrk_entity = unsafe { *wrk_entity_ptr };
 
-        let mut entity = Entity::new();
-        let component_data = unsafe {
-            slice::from_raw_parts(wrk_entity.components, wrk_entity.component_count as usize)
-        };
-
-        for data in component_data {
-            entity.add_raw(data);
-        }
-
-        Ok(entity)
+        Ok(Entity::from_worker_sdk(&wrk_entity))
     }
 }
 
