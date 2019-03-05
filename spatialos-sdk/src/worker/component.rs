@@ -235,7 +235,7 @@ inventory::collect!(VTable);
 
 // A data structure which represents all known component types. Used to generate an array of vtables to pass
 // to the connection object.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub(crate) struct ComponentDatabase {
     pub component_vtables: Vec<Worker_ComponentVtable>,
     index_map: HashMap<ComponentId, usize>,

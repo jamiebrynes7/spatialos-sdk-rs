@@ -6,8 +6,7 @@ use spatialos_sdk_sys::worker::Worker_ComponentData;
 use std::collections::HashMap;
 use std::ptr;
 
-// TODO: #[derive(Debug)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Entity {
     components: HashMap<ComponentId, Worker_ComponentData>,
     database: ComponentDatabase,
