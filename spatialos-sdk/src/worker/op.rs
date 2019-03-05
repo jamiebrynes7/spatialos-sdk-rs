@@ -1,9 +1,5 @@
 #![allow(non_upper_case_globals)]
 
-use std::{
-    collections::HashMap,
-    slice
-};
 use crate::worker::{
     commands::*,
     component::{self, *},
@@ -18,6 +14,7 @@ use crate::worker::{
     {Authority, EntityId, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
+use std::{collections::HashMap, slice};
 
 pub struct OpList {
     raw: *mut Worker_OpList,
