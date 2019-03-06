@@ -17,10 +17,7 @@ pub struct Entity {
 
 impl Entity {
     pub fn new() -> Self {
-        Entity {
-            components: HashMap::new(),
-            database: get_component_database(),
-        }
+        Entity::default()
     }
 
     pub(crate) fn from_worker_sdk(raw_entity: &Worker_Entity) -> Result<Self, String> {
@@ -104,6 +101,15 @@ impl Entity {
         }
 
         Ok(())
+    }
+}
+
+impl Default for Entity {
+    fn default() -> Self {
+        Entity {
+            components: HashMap::new(),
+            database: get_component_database(),
+        }
     }
 }
 

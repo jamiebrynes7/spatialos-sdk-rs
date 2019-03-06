@@ -247,20 +247,8 @@ pub(crate) fn get_component_database() -> ComponentDatabase {
 
     unsafe {
         ONCE.call_once(|| {
-            let mut vtables = Vec::new();
-            let mut index_map = HashMap::new();
-            for (i, table) in inventory::iter::<VTable>.into_iter().enumerate() {
-                vtables.push(table.vtable);
-                index_map.insert(table.vtable.component_id, i);
-            }
-
-            let inner_database = InnerComponentDatabase {
-                component_vtables: vtables,
-                index_map,
-            };
-
             COMPONENT_DATABASE = mem::transmute(Box::new(ComponentDatabase {
-                inner: Arc::new(inner_database),
+                inner: Arc::new(InnerComponentDatabase::new()),
             }));
         });
 
@@ -290,6 +278,20 @@ pub(crate) struct InnerComponentDatabase {
 }
 
 impl InnerComponentDatabase {
+    fn new() -> InnerComponentDatabase {
+        let mut vtables = Vec::new();
+        let mut index_map = HashMap::new();
+
+        for (i, table) in inventory::iter::<VTable>.into_iter().enumerate() {
+            vtables.push(table.vtable);
+            index_map.insert(table.vtable.component_id, i);
+        }
+
+        InnerComponentDatabase {
+            component_vtables: vtables,
+            index_map,
+        }
+    }
     pub(crate) fn has_vtable(&self, id: ComponentId) -> bool {
         self.index_map.contains_key(&id)
     }
