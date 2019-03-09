@@ -175,13 +175,18 @@ impl WorkerConnection {
             let cstr = CStr::from_ptr(worker_id);
 
             let sdk_attr = Worker_Connection_GetWorkerAttributes(connection_ptr);
-            let attributes = ::std::slice::from_raw_parts(
-                (*sdk_attr).attributes,
-                (*sdk_attr).attribute_count as usize,
-            )
-            .iter()
-            .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
-            .collect();
+
+            let attributes = if (*sdk_attr).attributes.is_null() {
+                Vec::new()
+            } else {
+                ::std::slice::from_raw_parts(
+                    (*sdk_attr).attributes,
+                    (*sdk_attr).attribute_count as usize,
+                )
+                .iter()
+                .map(|s| CStr::from_ptr(*s).to_string_lossy().to_string())
+                .collect()
+            };
 
             WorkerConnection {
                 connection_ptr: MutPtr::new(connection_ptr),
