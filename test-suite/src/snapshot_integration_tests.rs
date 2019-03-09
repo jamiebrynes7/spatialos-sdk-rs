@@ -1,5 +1,6 @@
 use spatialos_sdk::worker::{entity::Entity, snapshot::*, EntityId};
 use std::env;
+use std::f64::EPSILON;
 
 use crate::generated::improbable::*;
 use std::collections::BTreeMap;
@@ -9,27 +10,26 @@ pub fn create_and_read_snapshot() {
     let mut snapshot_path = env::temp_dir();
     snapshot_path.push("test.snapshot");
 
-    let entity = expect_specialized(get_test_entity());
+    let entity = get_test_entity().expect("Error");
 
     {
-        let snapshot = expect_specialized(SnapshotOutputStream::new(snapshot_path.clone()));
-        expect_specialized(snapshot.write_entity(EntityId::new(1), &entity));
+        let snapshot = SnapshotOutputStream::new(snapshot_path.clone()).expect("Error");
+        snapshot.write_entity(EntityId::new(1), &entity).expect("Error");
     }
 
     {
-        let mut snapshot = expect_specialized(SnapshotInputStream::new(snapshot_path));
+        let mut snapshot = SnapshotInputStream::new(snapshot_path).expect("Error");
 
         assert!(snapshot.has_next());
 
-        let entity = expect_specialized(snapshot.read_entity());
+        let entity = snapshot.read_entity().expect("Error");
 
         let position = entity.get::<Position>();
         assert!(position.is_some());
         let coords = &position.unwrap().coords;
-        // TODO: Look into floating point delta libs.
-        assert_eq!(10.0, coords.x);
-        assert_eq!(-10.0, coords.y);
-        assert_eq!(0.0, coords.z);
+        assert!((10.0 - coords.x).abs() < EPSILON);
+        assert!((-10.0 - coords.y).abs() < EPSILON);
+        assert!((0.0 - coords.z).abs() < EPSILON);
 
         let persistence = entity.get::<Persistence>();
         assert!(persistence.is_some());
@@ -67,11 +67,4 @@ fn get_test_entity() -> Result<Entity, String> {
     entity.add(Persistence {})?;
 
     Ok(entity)
-}
-
-fn expect_specialized<T>(res: Result<T, String>) -> T {
-    match res {
-        Ok(val) => val,
-        Err(e) => panic!(e),
-    }
 }
