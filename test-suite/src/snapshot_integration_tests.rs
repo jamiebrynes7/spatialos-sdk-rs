@@ -14,7 +14,9 @@ pub fn create_and_read_snapshot() {
 
     {
         let snapshot = SnapshotOutputStream::new(snapshot_path.clone()).expect("Error");
-        snapshot.write_entity(EntityId::new(1), &entity).expect("Error");
+        snapshot
+            .write_entity(EntityId::new(1), &entity)
+            .expect("Error");
     }
 
     {
