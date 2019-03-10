@@ -9,7 +9,7 @@ fn main() {
 
     if args.len() != 2 {
         panic!(
-            "Incorrect usage. Expected usage: cargo run --bin generate_snapshot <path-to-snapshot>"
+            "Incorrect usage. Expected usage: cargo run --example generate_snapshot <path-to-snapshot>"
         );
     }
 
