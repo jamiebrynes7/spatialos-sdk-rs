@@ -1,3 +1,4 @@
+#[rustfmt::skip]
 pub mod generated;
 
 #[cfg(test)]
