@@ -1,4 +1,3 @@
-use crate::worker::component::get_component_database;
 use crate::worker::{component::ComponentDatabase, vtable};
 use spatialos_sdk_sys::worker::*;
 use std::{
@@ -72,7 +71,7 @@ impl ConnectionParameters {
     }
 
     pub fn enable_internal_serialization(mut self) -> Self {
-        self.components = Some(get_component_database());
+        self.components = Some(Default::default());
         self
     }
 

@@ -1,9 +1,6 @@
 use crate::worker::internal::schema;
 use spatialos_sdk_sys::worker::*;
-use std::{
-    collections::hash_map::HashMap, mem, ops::Deref, os::raw, ptr, sync::Arc, sync::Once,
-    sync::ONCE_INIT,
-};
+use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 
 // Re-export inventory so generated code doesn't require the user to add inventory to their
 // Cargo.toml
@@ -235,69 +232,17 @@ pub(crate) mod internal {
 
 inventory::collect!(VTable);
 
-// This is pattern used in the Rust std lib for a singleton object. Sadly we cannot use lazy_static
-// due to the unsafe types within the component vtables. This operates similarly to the stdin()
-// method. We need a singleton instance as inventory appears to only allow iteration once (at
-// least that was the observed behaviour).
-//
-// See: https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton
-pub(crate) fn get_component_database() -> ComponentDatabase {
-    static mut COMPONENT_DATABASE: *const ComponentDatabase = 0 as *const _;
-    static ONCE: Once = ONCE_INIT;
-
-    unsafe {
-        ONCE.call_once(|| {
-            COMPONENT_DATABASE = mem::transmute(Box::new(ComponentDatabase {
-                inner: Arc::new(InnerComponentDatabase::new()),
-            }));
-        });
-
-        (*COMPONENT_DATABASE).clone()
-    }
-}
-
 #[derive(Clone, Debug)]
 pub(crate) struct ComponentDatabase {
-    inner: Arc<InnerComponentDatabase>,
-}
-
-impl Default for ComponentDatabase {
-    fn default() -> Self {
-        get_component_database()
-    }
-}
-
-// This allows users of ComponentDatabase to reach into the inner database without reaching
-// directly into inner. This also hides the implementation.
-impl Deref for ComponentDatabase {
-    type Target = InnerComponentDatabase;
-
-    fn deref(&self) -> &Self::Target {
-        self.inner.deref()
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct InnerComponentDatabase {
     component_vtables: Vec<Worker_ComponentVtable>,
     index_map: HashMap<ComponentId, usize>,
 }
 
-impl InnerComponentDatabase {
-    fn new() -> InnerComponentDatabase {
-        let mut vtables = Vec::new();
-        let mut index_map = HashMap::new();
-
-        for (i, table) in inventory::iter::<VTable>.into_iter().enumerate() {
-            vtables.push(table.vtable);
-            index_map.insert(table.vtable.component_id, i);
-        }
-
-        InnerComponentDatabase {
-            component_vtables: vtables,
-            index_map,
-        }
+impl ComponentDatabase {
+    pub fn new() -> Self {
+        Default::default()
     }
+
     pub(crate) fn has_vtable(&self, id: ComponentId) -> bool {
         self.index_map.contains_key(&id)
     }
@@ -314,6 +259,23 @@ impl InnerComponentDatabase {
 
     pub(crate) fn len(&self) -> usize {
         self.component_vtables.len()
+    }
+}
+
+impl Default for ComponentDatabase {
+    fn default() -> Self {
+        let mut vtables = Vec::new();
+        let mut index_map = HashMap::new();
+
+        for (i, table) in inventory::iter::<VTable>.into_iter().enumerate() {
+            vtables.push(table.vtable);
+            index_map.insert(table.vtable.component_id, i);
+        }
+
+        ComponentDatabase {
+            component_vtables: vtables,
+            index_map,
+        }
     }
 }
 

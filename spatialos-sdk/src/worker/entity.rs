@@ -1,8 +1,4 @@
-use crate::worker::component::get_component_database;
-use crate::{
-    worker::component::ComponentDatabase,
-    worker::component::{self, Component, ComponentId},
-};
+use crate::worker::component::{self, Component, ComponentDatabase, ComponentId};
 use spatialos_sdk_sys::worker::Worker_ComponentData;
 use spatialos_sdk_sys::worker::Worker_Entity;
 use std::collections::HashMap;
@@ -135,7 +131,7 @@ impl RawEntity {
     where
         I: Iterator<Item = &'a Worker_ComponentData>,
     {
-        let database = get_component_database();
+        let database: ComponentDatabase = Default::default();
 
         // Go through each Worker_ComponentData object, make a copy and call handle_copy using the vtable.
         let new_data = original_data
