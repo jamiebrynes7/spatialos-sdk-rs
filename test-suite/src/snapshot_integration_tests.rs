@@ -1,14 +1,12 @@
+use approx;
 use spatialos_sdk::worker::{entity::Entity, snapshot::*, EntityId};
-use std::env;
-use std::f64::EPSILON;
+use std::{collections::BTreeMap, env};
 
 use crate::generated::improbable::*;
-use std::collections::BTreeMap;
 
 #[test]
 pub fn create_and_read_snapshot() {
-    let mut snapshot_path = env::temp_dir();
-    snapshot_path.push("test.snapshot");
+    let snapshot_path = env::temp_dir().join("test.snapshot");
 
     let entity = get_test_entity().expect("Error");
 
@@ -29,9 +27,9 @@ pub fn create_and_read_snapshot() {
         let position = entity.get::<Position>();
         assert!(position.is_some());
         let coords = &position.unwrap().coords;
-        assert!((10.0 - coords.x).abs() < EPSILON);
-        assert!((-10.0 - coords.y).abs() < EPSILON);
-        assert!((0.0 - coords.z).abs() < EPSILON);
+        approx::abs_diff_eq!(10.0, coords.x);
+        approx::abs_diff_eq!(-10.0, coords.y);
+        approx::abs_diff_eq!(0.0, coords.z);
 
         let persistence = entity.get::<Persistence>();
         assert!(persistence.is_some());

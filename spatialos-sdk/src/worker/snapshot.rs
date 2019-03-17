@@ -13,7 +13,7 @@ impl SnapshotOutputStream {
     pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, String> {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
-        let database = get_component_database();;
+        let database = get_component_database();
         let params = Worker_SnapshotParameters {
             component_vtable_count: database.len() as u32,
             component_vtables: database.to_worker_sdk(),

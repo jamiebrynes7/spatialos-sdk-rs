@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::ptr;
 use std::slice;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Entity {
     components: HashMap<ComponentId, Worker_ComponentData>,
     database: ComponentDatabase,
@@ -28,7 +28,7 @@ impl Entity {
         };
 
         for data in component_data {
-            entity.add_raw(data)?;
+            unsafe { entity.add_raw(data)? };
         }
 
         Ok(entity)
@@ -50,7 +50,10 @@ impl Entity {
         Ok(())
     }
 
-    pub(crate) fn add_raw(&mut self, component: &Worker_ComponentData) -> Result<(), String> {
+    pub(crate) unsafe fn add_raw(
+        &mut self,
+        component: &Worker_ComponentData,
+    ) -> Result<(), String> {
         let id = component.component_id;
 
         self.pre_add_check(id)?;
@@ -60,7 +63,7 @@ impl Entity {
         let copy_data_func = vtable
             .component_data_copy
             .unwrap_or_else(|| panic!("No component_data_free method defined for {}", id));
-        unsafe { copy_data_func(id, ptr::null_mut(), component.user_handle) };
+        copy_data_func(id, ptr::null_mut(), component.user_handle);
 
         self.components.insert(
             id,
@@ -94,22 +97,13 @@ impl Entity {
         }
 
         if !self.database.has_vtable(id) {
-            return Err(format!(
+            panic!(format!(
                 "Could not find a vtable implementation for component {}",
                 id
             ));
         }
 
         Ok(())
-    }
-}
-
-impl Default for Entity {
-    fn default() -> Self {
-        Entity {
-            components: HashMap::new(),
-            database: get_component_database(),
-        }
     }
 }
 
@@ -141,7 +135,7 @@ impl RawEntity {
     where
         I: Iterator<Item = &'a Worker_ComponentData>,
     {
-        let database = get_component_database();;
+        let database = get_component_database();
 
         // Go through each Worker_ComponentData object, make a copy and call handle_copy using the vtable.
         let new_data = original_data

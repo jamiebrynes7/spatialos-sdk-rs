@@ -261,6 +261,12 @@ pub(crate) struct ComponentDatabase {
     inner: Arc<InnerComponentDatabase>,
 }
 
+impl Default for ComponentDatabase {
+    fn default() -> Self {
+        get_component_database()
+    }
+}
+
 // This allows users of ComponentDatabase to reach into the inner database without reaching
 // directly into inner. This also hides the implementation.
 impl Deref for ComponentDatabase {
