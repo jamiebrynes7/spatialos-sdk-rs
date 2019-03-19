@@ -5,6 +5,7 @@ pub mod commands;
 pub mod component;
 pub mod connection;
 pub mod entity;
+pub mod entity_builder;
 pub mod locator;
 pub mod metrics;
 pub mod op;
