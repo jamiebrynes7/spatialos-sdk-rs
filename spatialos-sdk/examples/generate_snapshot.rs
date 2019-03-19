@@ -1,24 +1,26 @@
-use std::env;
 use std::path::PathBuf;
+use structopt::StructOpt;
 
 use spatialos_sdk::worker::snapshot::*;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let opt = Opt::from_args();
     let current_dir = std::env::current_dir().expect("Could not find current working directory.");
-
-    if args.len() != 2 {
-        panic!(
-            "Incorrect usage. Expected usage: cargo run --example generate_snapshot <path-to-snapshot>"
-        );
-    }
 
     let mut path_buf = PathBuf::new();
     path_buf.push(current_dir);
-    path_buf.push(args[1].clone());
+    path_buf.push(opt.snapshot_path);
 
     let snapshot_path = path_buf.to_str().unwrap();
     println!("Creating empty snapshot at: {}", snapshot_path);
 
     let _stream = SnapshotOutputStream::new(snapshot_path);
+}
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "generate_snapshot")]
+struct Opt {
+    /// Relative path for the snapshot to be written to.
+    #[structopt(short = "p", long="snapshot-path")]
+    snapshot_path: PathBuf
 }
