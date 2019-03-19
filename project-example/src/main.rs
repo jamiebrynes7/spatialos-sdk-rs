@@ -5,18 +5,18 @@ use spatialos_sdk::worker::{
     commands::{EntityQueryRequest, ReserveEntityIdsRequest},
     component::{Component, ComponentData, UpdateParameters},
     connection::{Connection, WorkerConnection},
-    entity::Entity,
+    entity_builder::EntityBuilder,
     metrics::{HistogramMetric, Metrics},
     op::WorkerOp,
     query::{EntityQuery, QueryConstraint, ResultType},
     {EntityId, InterestOverride, LogLevel},
 };
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::HashMap,
     f64,
 };
 use structopt::StructOpt;
-use tap::*;
+use crate::generated::improbable::EntityAcl;
 
 mod connection_handler;
 #[rustfmt::skip]
@@ -53,54 +53,21 @@ fn logic_loop(c: &mut WorkerConnection) {
     // authority over, so that we know which ones we need to be updating.
     let mut world = HashMap::new();
 
-    // Create an entity with a `Rotate` component in order to demonstrate tracking and
-    // updating entities.
-    let mut entity = Entity::new();
-    entity
-        .add(improbable::Position {
-            coords: improbable::Coordinates {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-        })
-        .unwrap();
-    entity
-        .add(example::Rotate {
+    let entity = EntityBuilder::new(0.0, 0.0, 0.0, "rusty")
+        .add_component(example::Rotate {
             angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
             radius: rng.gen_range(20.0, 100.0),
             center_x: rng.gen_range(-50.0, 50.0),
             center_y: 0.0,
             center_z: rng.gen_range(-50.0, 50.0),
-        })
-        .unwrap();
-    entity
-        .add(improbable::EntityAcl {
-            read_acl: improbable::WorkerRequirementSet {
-                attribute_set: vec![improbable::WorkerAttributeSet {
-                    attribute: vec!["rusty".into()],
-                }],
-            },
-            component_write_acl: BTreeMap::new().tap(|writes| {
-                writes.insert(
-                    improbable::Position::ID,
-                    improbable::WorkerRequirementSet {
-                        attribute_set: vec![improbable::WorkerAttributeSet {
-                            attribute: vec!["rusty".into()],
-                        }],
-                    },
-                );
-                writes.insert(
-                    example::Rotate::ID,
-                    improbable::WorkerRequirementSet {
-                        attribute_set: vec![improbable::WorkerAttributeSet {
-                            attribute: vec!["rusty".into()],
-                        }],
-                    },
-                );
-            }),
-        })
-        .unwrap();
+        }, "rusty")
+        .add_component(improbable::Metadata {
+            entity_type: "Rotator".to_owned()
+        }, "rusty")
+        .set_read_access(&["rusty"])
+        .set_write_access(EntityAcl::ID, "rusty")
+        .build().unwrap();
+
     let create_request_id = c.send_create_entity_request(entity, None, None);
     println!("Create entity request ID: {:?}", create_request_id);
 
