@@ -21,14 +21,18 @@ pub struct EntityBuilder {
 }
 
 impl EntityBuilder {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
-        EntityBuilder {
+    pub fn new<T: Into<String>>(x: f64, y: f64, z: f64, position_write_layer: T) -> Self {
+        let mut builder = EntityBuilder {
             position: (x, y, z),
             entity: Entity::new(),
             write_permissions: HashMap::new(),
             read_permissions: Vec::new(),
             error: None,
-        }
+        };
+
+        builder.write_permissions.insert(POSITION_COMPONENT_ID, position_write_layer.into());
+
+        builder
     }
 
     pub fn add_component<C: Component, T: Into<String>>(mut self, data: C, write_layer: T) -> Self {
@@ -46,6 +50,11 @@ impl EntityBuilder {
             .map(|layer| layer.as_ref().to_owned())
             .collect();
 
+        self
+    }
+
+    pub fn set_write_access<T: Into<String>>(mut self, id: ComponentId, layer: T) -> Self {
+        self.write_permissions.insert(id, layer.into());
         self
     }
 
@@ -88,6 +97,8 @@ impl EntityBuilder {
 
             map_obj
                 .field::<SchemaObject>(2)
+                .add()
+                .field::<SchemaObject>(1)
                 .add()
                 .field::<SchemaString>(1)
                 .add(pair.1);

@@ -97,7 +97,7 @@ impl Entity {
             reserved: ptr::null_mut(),
             component_id: component.component_id,
             schema_type: ptr::null_mut(),
-            user_handle: deserialized_data_ptr
+            user_handle: *handle_out_ptr
         };
 
         self.add_raw(&component_data)
