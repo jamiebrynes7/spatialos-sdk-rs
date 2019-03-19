@@ -1,4 +1,5 @@
 use crate::worker::component::{self, Component, ComponentId, DATABASE};
+use crate::worker::internal::schema::SchemaComponentData;
 use spatialos_sdk_sys::worker::Worker_ComponentData;
 use spatialos_sdk_sys::worker::Worker_Entity;
 use std::collections::HashMap;
@@ -70,6 +71,36 @@ impl Entity {
         );
 
         Ok(())
+    }
+
+    pub(crate) unsafe fn add_serialized(
+        &mut self,
+        component: SchemaComponentData,
+    ) -> Result<(), String> {
+
+        self.pre_add_check(component.component_id)?;
+
+        let vtable = self.database.get_vtable(component.component_id).unwrap();
+        let deserialize_func = vtable.component_data_deserialize
+            .unwrap_or_else(|| panic!("No component_data_deserialize method define for {}", component.component_id));
+
+        let deserialized_data_ptr = Box::into_raw(Box::new(0)) as *mut ::std::os::raw::c_void;
+        let handle_out_ptr = Box::into_raw(Box::new(deserialized_data_ptr));
+
+        match deserialize_func(component.component_id, ptr::null_mut(), component.internal, handle_out_ptr) {
+            1 => {},
+            0 => return Err("Error deserializing manually serialized data. Is the SchemaComponentData malformed?".to_owned()),
+            _ => panic!("Unexpected return value from deserialize function. Expected true or false. Received other.")
+        };
+
+        let component_data = Worker_ComponentData {
+            reserved: ptr::null_mut(),
+            component_id: component.component_id,
+            schema_type: ptr::null_mut(),
+            user_handle: deserialized_data_ptr
+        };
+
+        self.add_raw(&component_data)
     }
 
     pub fn get<C: Component>(&self) -> Option<&C> {
