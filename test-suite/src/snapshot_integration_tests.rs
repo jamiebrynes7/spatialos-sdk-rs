@@ -4,19 +4,18 @@ use std::{collections::BTreeMap, env};
 
 use crate::generated::improbable::*;
 
-
 #[test]
 pub fn writing_invalid_entity_returns_error() {
     let snapshot_path = env::temp_dir().join("test2.snapshot");
 
     let entity = Entity::new();
 
-    let error = SnapshotOutputStream::new(snapshot_path).expect("Error")
+    let error = SnapshotOutputStream::new(snapshot_path)
+        .expect("Error")
         .write_entity(EntityId::new(1), &entity);
 
     assert!(error.is_err());
 }
-
 
 #[test]
 pub fn create_and_read_snapshot() {
