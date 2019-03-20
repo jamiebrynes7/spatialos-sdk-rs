@@ -1,3 +1,4 @@
+use crate::generated::improbable::EntityAcl;
 use crate::{connection_handler::*, opt::*};
 use generated::{example, improbable};
 use rand::Rng;
@@ -11,12 +12,8 @@ use spatialos_sdk::worker::{
     query::{EntityQuery, QueryConstraint, ResultType},
     {EntityId, InterestOverride, LogLevel},
 };
-use std::{
-    collections::HashMap,
-    f64,
-};
+use std::{collections::HashMap, f64};
 use structopt::StructOpt;
-use crate::generated::improbable::EntityAcl;
 
 mod connection_handler;
 #[rustfmt::skip]
@@ -54,19 +51,26 @@ fn logic_loop(c: &mut WorkerConnection) {
     let mut world = HashMap::new();
 
     let entity = EntityBuilder::new(0.0, 0.0, 0.0, "rusty")
-        .add_component(example::Rotate {
-            angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
-            radius: rng.gen_range(20.0, 100.0),
-            center_x: rng.gen_range(-50.0, 50.0),
-            center_y: 0.0,
-            center_z: rng.gen_range(-50.0, 50.0),
-        }, "rusty")
-        .add_component(improbable::Metadata {
-            entity_type: "Rotator".to_owned()
-        }, "rusty")
+        .add_component(
+            example::Rotate {
+                angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
+                radius: rng.gen_range(20.0, 100.0),
+                center_x: rng.gen_range(-50.0, 50.0),
+                center_y: 0.0,
+                center_z: rng.gen_range(-50.0, 50.0),
+            },
+            "rusty",
+        )
+        .add_component(
+            improbable::Metadata {
+                entity_type: "Rotator".to_owned(),
+            },
+            "rusty",
+        )
         .set_read_access(&["rusty"])
         .set_write_access(EntityAcl::ID, "rusty")
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let create_request_id = c.send_create_entity_request(entity, None, None);
     println!("Create entity request ID: {:?}", create_request_id);
