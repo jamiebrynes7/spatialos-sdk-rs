@@ -1,4 +1,7 @@
-use crate::worker::{component::{ComponentDatabase, DATABASE}, vtable};
+use crate::worker::{
+    component::{ComponentDatabase, DATABASE},
+    vtable,
+};
 use spatialos_sdk_sys::worker::*;
 use std::{
     ffi::{CStr, CString},

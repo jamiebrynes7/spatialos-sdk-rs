@@ -13,10 +13,7 @@ pub struct Entity {
 
 impl Entity {
     pub fn new() -> Self {
-        Entity {
-            components: HashMap::new(),
-            database: &component::DATABASE
-        }
+        Entity::default()
     }
 
     pub(crate) unsafe fn from_worker_sdk(raw_entity: &Worker_Entity) -> Result<Self, String> {
@@ -102,6 +99,15 @@ impl Entity {
         }
 
         Ok(())
+    }
+}
+
+impl Default for Entity {
+    fn default() -> Self {
+        Entity {
+            components: HashMap::new(),
+            database: &component::DATABASE,
+        }
     }
 }
 
