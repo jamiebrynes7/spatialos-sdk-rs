@@ -19,15 +19,14 @@ impl Entity {
         }
     }
 
-    pub(crate) fn from_worker_sdk(raw_entity: &Worker_Entity) -> Result<Self, String> {
+    pub(crate) unsafe fn from_worker_sdk(raw_entity: &Worker_Entity) -> Result<Self, String> {
         let mut entity = Entity::new();
 
-        let component_data = unsafe {
-            slice::from_raw_parts(raw_entity.components, raw_entity.component_count as usize)
-        };
+        let component_data =
+            slice::from_raw_parts(raw_entity.components, raw_entity.component_count as usize);
 
         for data in component_data {
-            unsafe { entity.add_raw(data)? };
+            entity.add_raw(data)?;
         }
 
         Ok(entity)

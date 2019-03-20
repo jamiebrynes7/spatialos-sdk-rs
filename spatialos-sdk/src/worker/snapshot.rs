@@ -103,7 +103,7 @@ impl SnapshotInputStream {
 
         let wrk_entity = unsafe { *wrk_entity_ptr };
 
-        Entity::from_worker_sdk(&wrk_entity)
+        unsafe { Entity::from_worker_sdk(&wrk_entity) }
     }
 }
 
