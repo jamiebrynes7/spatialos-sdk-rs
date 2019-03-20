@@ -71,9 +71,9 @@ impl EntityBuilder {
 
     fn serialize_position(&self) -> SchemaComponentData {
         let mut position_schema = SchemaComponentData::new(POSITION_COMPONENT_ID);
-        let mut position_fields = position_schema.fields_mut();
+        let position_fields = position_schema.fields_mut();
 
-        let mut coords_obj = position_fields.field::<SchemaObject>(1).add();
+        let coords_obj = position_fields.field::<SchemaObject>(1).add();
         coords_obj.field::<SchemaDouble>(1).add(self.position.0);
         coords_obj.field::<SchemaDouble>(2).add(self.position.1);
         coords_obj.field::<SchemaDouble>(3).add(self.position.2);
@@ -83,11 +83,11 @@ impl EntityBuilder {
 
     fn serialize_acl(&self) -> SchemaComponentData {
         let mut acl_schema = SchemaComponentData::new(ENTITY_ACL_COMPONENT_ID);
-        let mut acl_fields = acl_schema.fields_mut();
+        let acl_fields = acl_schema.fields_mut();
 
-        let mut read_access = acl_fields.field::<SchemaObject>(1).add();
+        let read_access = acl_fields.field::<SchemaObject>(1).add();
         for layer in &self.read_permissions {
-            let mut attribute_set = read_access.field::<SchemaObject>(1).add();
+            let attribute_set = read_access.field::<SchemaObject>(1).add();
             attribute_set.field::<SchemaString>(1).add(layer);
         }
 
