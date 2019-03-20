@@ -1,7 +1,6 @@
 use crate::worker::component::{self, Component, ComponentId, DATABASE};
 use crate::worker::internal::schema::SchemaComponentData;
-use spatialos_sdk_sys::worker::Worker_ComponentData;
-use spatialos_sdk_sys::worker::Worker_Entity;
+use spatialos_sdk_sys::worker::{Schema_DestroyComponentData, Worker_ComponentData, Worker_Entity};
 use std::collections::HashMap;
 use std::ptr;
 use std::slice;
@@ -77,19 +76,31 @@ impl Entity {
         &mut self,
         component: SchemaComponentData,
     ) -> Result<(), String> {
-
-        self.pre_add_check(component.component_id)?;
-
         let vtable = self.database.get_vtable(component.component_id).unwrap();
-        let deserialize_func = vtable.component_data_deserialize
-            .unwrap_or_else(|| panic!("No component_data_deserialize method define for {}", component.component_id));
+        let deserialize_func = vtable.component_data_deserialize.unwrap_or_else(|| {
+            Schema_DestroyComponentData(component.internal);
+            panic!(
+                "No component_data_deserialize method defined for {}",
+                component.component_id
+            )
+        });
 
-        let deserialized_data_ptr = Box::into_raw(Box::new(0)) as *mut ::std::os::raw::c_void;
-        let handle_out_ptr = Box::into_raw(Box::new(deserialized_data_ptr));
+        // Create the **void that the C API requires. We need to then clean this up later.
+        // The value pointed to by handle_out_ptr is written to during the deserialize method.
+        let placeholder_ptr = Box::into_raw(Box::new(0)) as *mut ::std::os::raw::c_void;
+        let handle_out_ptr = Box::into_raw(Box::new(placeholder_ptr));
 
-        match deserialize_func(component.component_id, ptr::null_mut(), component.internal, handle_out_ptr) {
+        let deserialize_result = deserialize_func(
+            component.component_id,
+            ptr::null_mut(),
+            component.internal,
+            handle_out_ptr,
+        );
+        Schema_DestroyComponentData(component.internal);
+
+        match deserialize_result {
             1 => {},
-            0 => return Err("Error deserializing manually serialized data. Is the SchemaComponentData malformed?".to_owned()),
+            0 => return Err("Error deserializing serialized data. Is the SchemaComponentData malformed?".to_owned()),
             _ => panic!("Unexpected return value from deserialize function. Expected true or false. Received other.")
         };
 
@@ -97,8 +108,13 @@ impl Entity {
             reserved: ptr::null_mut(),
             component_id: component.component_id,
             schema_type: ptr::null_mut(),
-            user_handle: *handle_out_ptr
+            user_handle: *handle_out_ptr,
         };
+
+        // Reconstruct these objects so they can be de-alloc'ed. We have pulled the data required
+        // from them by de-referencing handle_out_ptr above.
+        Box::from_raw(placeholder_ptr);
+        Box::from_raw(handle_out_ptr);
 
         self.add_raw(&component_data)
     }

@@ -30,7 +30,9 @@ impl EntityBuilder {
             error: None,
         };
 
-        builder.write_permissions.insert(POSITION_COMPONENT_ID, position_write_layer.into());
+        builder
+            .write_permissions
+            .insert(POSITION_COMPONENT_ID, position_write_layer.into());
 
         builder
     }
@@ -69,6 +71,15 @@ impl EntityBuilder {
         Ok(self.entity)
     }
 
+    // A workaround for not having access to generated code types here. The shape of Position
+    // & EntityAcl are well known, so we can manually serialize them and pass them into the
+    // Entity in SchemaComponentData form.
+    //
+    // This does then expect that there is a valid deserialize method defined for both components
+    // in the vtable.
+    //
+    // If this invariant is broken, then the EntityBuilder is broken. Should we assert against this
+    // before we call `entity.add_serialized`?
     fn serialize_position(&self) -> SchemaComponentData {
         let mut position_schema = SchemaComponentData::new(POSITION_COMPONENT_ID);
         let position_fields = position_schema.fields_mut();
