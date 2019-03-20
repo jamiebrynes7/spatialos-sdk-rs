@@ -5,15 +5,18 @@ use std::collections::HashMap;
 use std::ptr;
 use std::slice;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Entity {
     components: HashMap<ComponentId, Worker_ComponentData>,
-    database: ComponentDatabase,
+    database: &'static ComponentDatabase,
 }
 
 impl Entity {
     pub fn new() -> Self {
-        Entity::default()
+        Entity {
+            components: HashMap::new(),
+            database: &component::DATABASE
+        }
     }
 
     pub(crate) fn from_worker_sdk(raw_entity: &Worker_Entity) -> Result<Self, String> {
@@ -123,7 +126,7 @@ impl Drop for Entity {
 // than a Vec<&Worker_ComponentData> which most callers *will* want due to how Worker_Entity is structured.
 pub(crate) struct RawEntity {
     pub components: Vec<Worker_ComponentData>,
-    database: ComponentDatabase,
+    database: &'static ComponentDatabase,
 }
 
 impl RawEntity {
@@ -131,15 +134,13 @@ impl RawEntity {
     where
         I: Iterator<Item = &'a Worker_ComponentData>,
     {
-        let database: ComponentDatabase = Default::default();
-
         // Go through each Worker_ComponentData object, make a copy and call handle_copy using the vtable.
         let new_data = original_data
             .map(|original_component_data| {
                 let new_component_data = *original_component_data; // Is a copy operation.
                 let id = original_component_data.component_id;
 
-                let vtable = database.get_vtable(id).unwrap();
+                let vtable = &component::DATABASE.get_vtable(id).unwrap();
 
                 let copy_data_func = vtable
                     .component_data_copy
@@ -153,7 +154,7 @@ impl RawEntity {
 
         RawEntity {
             components: new_data,
-            database,
+            database: &component::DATABASE,
         }
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    worker::component::ComponentDatabase, worker::entity::Entity,
+    worker::component::DATABASE, worker::entity::Entity,
     worker::internal::utils::cstr_to_string, worker::EntityId,
 };
 use spatialos_sdk_sys::worker::*;
@@ -13,10 +13,9 @@ impl SnapshotOutputStream {
     pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, String> {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
-        let database: ComponentDatabase = Default::default();
         let params = Worker_SnapshotParameters {
-            component_vtable_count: database.len() as u32,
-            component_vtables: database.to_worker_sdk(),
+            component_vtable_count: DATABASE.len() as u32,
+            component_vtables: DATABASE.to_worker_sdk(),
             default_component_vtable: std::ptr::null(),
         };
 
@@ -69,10 +68,9 @@ impl SnapshotInputStream {
     pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, String> {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
-        let database: ComponentDatabase = Default::default();
         let params = Worker_SnapshotParameters {
-            component_vtable_count: database.len() as u32,
-            component_vtables: database.to_worker_sdk(),
+            component_vtable_count: DATABASE.len() as u32,
+            component_vtables: DATABASE.to_worker_sdk(),
             default_component_vtable: std::ptr::null(),
         };
 

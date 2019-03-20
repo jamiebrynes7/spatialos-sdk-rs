@@ -232,6 +232,24 @@ pub(crate) mod internal {
 
 inventory::collect!(VTable);
 
+lazy_static::lazy_static! {
+    pub(crate) static ref DATABASE: ComponentDatabase = {
+
+        let mut vtables = Vec::new();
+        let mut index_map = HashMap::new();
+
+        for (i, table) in inventory::iter::<VTable>.into_iter().enumerate() {
+            vtables.push(table.vtable);
+            index_map.insert(table.vtable.component_id, i);
+        }
+
+        ComponentDatabase {
+            component_vtables: vtables,
+            index_map,
+        }
+    };
+}
+
 #[derive(Clone, Debug)]
 pub(crate) struct ComponentDatabase {
     component_vtables: Vec<Worker_ComponentVtable>,
@@ -239,10 +257,6 @@ pub(crate) struct ComponentDatabase {
 }
 
 impl ComponentDatabase {
-    pub fn new() -> Self {
-        Default::default()
-    }
-
     pub(crate) fn has_vtable(&self, id: ComponentId) -> bool {
         self.index_map.contains_key(&id)
     }
@@ -262,22 +276,8 @@ impl ComponentDatabase {
     }
 }
 
-impl Default for ComponentDatabase {
-    fn default() -> Self {
-        let mut vtables = Vec::new();
-        let mut index_map = HashMap::new();
-
-        for (i, table) in inventory::iter::<VTable>.into_iter().enumerate() {
-            vtables.push(table.vtable);
-            index_map.insert(table.vtable.component_id, i);
-        }
-
-        ComponentDatabase {
-            component_vtables: vtables,
-            index_map,
-        }
-    }
-}
+unsafe impl Sync for ComponentDatabase {}
+unsafe impl Send for ComponentDatabase {}
 
 pub(crate) fn handle_allocate<T>(data: T) -> *mut raw::c_void {
     Arc::into_raw(Arc::new(data)) as *mut _

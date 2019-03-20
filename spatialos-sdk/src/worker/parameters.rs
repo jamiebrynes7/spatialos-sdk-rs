@@ -1,4 +1,4 @@
-use crate::worker::{component::ComponentDatabase, vtable};
+use crate::worker::{component::{ComponentDatabase, DATABASE}, vtable};
 use spatialos_sdk_sys::worker::*;
 use std::{
     ffi::{CStr, CString},
@@ -15,7 +15,7 @@ pub struct ConnectionParameters {
     pub protocol_logging: ProtocolLoggingParameters,
     pub enable_protocol_logging_at_startup: bool,
     pub thread_affinity: ThreadAffinityParameters,
-    components: Option<ComponentDatabase>,
+    components: Option<&'static ComponentDatabase>,
 }
 
 impl ConnectionParameters {
@@ -71,7 +71,7 @@ impl ConnectionParameters {
     }
 
     pub fn enable_internal_serialization(mut self) -> Self {
-        self.components = Some(Default::default());
+        self.components = Some(&DATABASE);
         self
     }
 
