@@ -48,6 +48,9 @@ fn entity_acl_is_serialized_correctly() {
     assert!(read_acl_layers.contains(&"client".to_owned()));
     assert!(read_acl_layers.contains(&"server".to_owned()));
 
+    // Check that the correct number of write ACL exists.
+    assert_eq!(3, acl.component_write_acl.len());
+
     // Test that position is correctly inserted.
     let maybe_position_acl = acl.component_write_acl.get(&Position::ID);
     assert!(maybe_position_acl.is_some());
@@ -69,4 +72,13 @@ fn entity_acl_is_serialized_correctly() {
     assert_eq!(1, entity_acl_acl.attribute_set.len());
     assert!(entity_acl_acl.attribute_set[0].attribute.contains(&"entity_acl_acl".to_owned()));
 
+}
+
+#[test]
+fn error_is_returned_if_invalid_entity() {
+    let result = EntityBuilder::new(0.0, 0.0, 0.0, "rusty")
+        .add_component(Position { coords: Coordinates { x: 0.0, y: 0.0, z: 0.0 }}, "rusty")
+        .build();
+
+    assert!(result.is_err());
 }
