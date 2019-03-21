@@ -61,12 +61,7 @@ fn logic_loop(c: &mut WorkerConnection) {
             },
             "rusty",
         )
-        .add_component(
-            improbable::Metadata {
-                entity_type: "Rotator".to_owned(),
-            },
-            "rusty",
-        )
+        .set_metadata("Rotator", "rusty")
         .set_read_access(&["rusty"])
         .set_write_access(EntityAcl::ID, "rusty")
         .build()

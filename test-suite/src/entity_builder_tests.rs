@@ -83,6 +83,31 @@ fn entity_acl_is_serialized_correctly() {
         .contains(&"entity_acl_acl".to_owned()));
 }
 
+
+#[test]
+fn metadata_is_serialized_correctly() {
+    let entity = EntityBuilder::new(0.0, 0.0, 0.0, "rusty")
+        .set_metadata("my_entity", "rusty")
+        .build()
+        .unwrap();
+
+    let maybe_metadata = entity.get::<Metadata>();
+    assert!(maybe_metadata.is_some());
+    let metadata = maybe_metadata.unwrap();
+
+    assert_eq!("my_entity", metadata.entity_type);
+}
+
+#[test]
+fn persistence_component_is_added_if_set() {
+    let entity = EntityBuilder::new(0.0, 0.0, 0.0, "rusty")
+        .set_persistent("rusty")
+        .build()
+        .unwrap();
+
+    assert!(entity.get::<Persistence>().is_some());
+}
+
 #[test]
 fn error_is_returned_if_invalid_entity() {
     let result = EntityBuilder::new(0.0, 0.0, 0.0, "rusty")

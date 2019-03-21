@@ -9,32 +9,37 @@ use crate::worker::{
 };
 use std::collections::HashMap;
 
-const POSITION_COMPONENT_ID: ComponentId = 54;
 const ENTITY_ACL_COMPONENT_ID: ComponentId = 50;
+const METADATA_COMPONENT_ID: ComponentId = 53;
+const POSITION_COMPONENT_ID: ComponentId = 54;
+const PERSISTENCE_COMPONENT_ID: ComponentId = 55;
 
 pub struct EntityBuilder {
-    position: (f64, f64, f64),
     entity: Entity,
+
+    position: (f64, f64, f64),
+    is_persistent: bool,
+    metadata: Option<String>,
+
     write_permissions: HashMap<ComponentId, String>,
     read_permissions: Vec<String>,
-    error: Option<String>,
+
+    error: Option<String>
 }
 
 impl EntityBuilder {
     pub fn new<T: Into<String>>(x: f64, y: f64, z: f64, position_write_layer: T) -> Self {
-        let mut builder = EntityBuilder {
-            position: (x, y, z),
+        let builder = EntityBuilder {
             entity: Entity::new(),
+            is_persistent: false,
+            metadata: None,
+            position: (x, y, z),
             write_permissions: HashMap::new(),
             read_permissions: Vec::new(),
             error: None,
         };
 
-        builder
-            .write_permissions
-            .insert(POSITION_COMPONENT_ID, position_write_layer.into());
-
-        builder
+        builder.set_write_access(POSITION_COMPONENT_ID, position_write_layer)
     }
 
     pub fn add_component<C: Component, T: Into<String>>(mut self, data: C, write_layer: T) -> Self {
@@ -44,6 +49,16 @@ impl EntityBuilder {
 
         self.write_permissions.insert(C::ID, write_layer.into());
         self
+    }
+
+    pub fn set_persistent<T: Into<String>>(mut self, write_layer: T) -> Self {
+        self.is_persistent = true;
+        self.set_write_access(PERSISTENCE_COMPONENT_ID, write_layer)
+    }
+
+    pub fn set_metadata<T: Into<String>, U: Into<String>>(mut self, entity_type: T, write_layer: U) -> Self {
+        self.metadata = Some(entity_type.into());
+        self.set_write_access(METADATA_COMPONENT_ID, write_layer)
     }
 
     pub fn set_read_access<T: AsRef<str>>(mut self, layers: &[T]) -> Self {
@@ -66,7 +81,15 @@ impl EntityBuilder {
         }
 
         unsafe { self.entity.add_serialized(self.serialize_position())? };
-        unsafe { self.entity.add_serialized(self.serialize_acl())? }
+        unsafe { self.entity.add_serialized(self.serialize_acl())? };
+
+        if self.metadata.is_some() {
+            unsafe { self.entity.add_serialized(self.serialize_metadata())? }
+        }
+
+        if self.is_persistent {
+            unsafe { self.entity.add_serialized(self.serialize_persistence())? }
+        }
 
         Ok(self.entity)
     }
@@ -116,5 +139,17 @@ impl EntityBuilder {
         }
 
         acl_schema
+    }
+
+    fn serialize_metadata(&self) -> SchemaComponentData {
+        let mut metadata_schema = SchemaComponentData::new(METADATA_COMPONENT_ID);
+        let metadata_fields = metadata_schema.fields_mut();
+        metadata_fields.field::<SchemaString>(1).add(self.metadata.as_ref().unwrap());
+
+        metadata_schema
+    }
+
+    fn serialize_persistence(&self) -> SchemaComponentData {
+        SchemaComponentData::new(PERSISTENCE_COMPONENT_ID)
     }
 }
