@@ -660,7 +660,7 @@ mod test {
 
     #[test]
     fn reserved_entity_id_range_iterator_returns_sequential_ids() {
-        let mut current_id :i64 = 1;
+        let mut current_id: i64 = 1;
         let range = ReservedEntityIdRange::new(current_id, 10);
 
         for entity_id in range {
