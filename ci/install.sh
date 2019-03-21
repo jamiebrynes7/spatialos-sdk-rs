@@ -64,5 +64,10 @@ cargo install --path cargo-spatial --force
 # Issue #56 should resolve this such that codegen can happen automatically as
 # part of the build script.
 pushd project-example
-cargo spatial --verbose codegen
+  cargo spatial --verbose codegen
+popd
+
+pushd test-suite
+  mkdir schema
+  cargo spatial --verbose codegen
 popd

@@ -1,4 +1,4 @@
-use crate::worker::{component::ComponentDatabase, vtable};
+use crate::worker::{component::DATABASE, vtable};
 use spatialos_sdk_sys::worker::*;
 use std::{
     ffi::{CStr, CString},
@@ -15,7 +15,7 @@ pub struct ConnectionParameters {
     pub protocol_logging: ProtocolLoggingParameters,
     pub enable_protocol_logging_at_startup: bool,
     pub thread_affinity: ThreadAffinityParameters,
-    components: Option<ComponentDatabase>,
+    use_internal_serialization: bool,
 }
 
 impl ConnectionParameters {
@@ -71,7 +71,7 @@ impl ConnectionParameters {
     }
 
     pub fn enable_internal_serialization(mut self) -> Self {
-        self.components = Some(ComponentDatabase::new());
+        self.use_internal_serialization = true;
         self
     }
 
@@ -87,7 +87,7 @@ impl ConnectionParameters {
             protocol_logging: ProtocolLoggingParameters::default(),
             enable_protocol_logging_at_startup: false,
             thread_affinity: ThreadAffinityParameters::default(),
-            components: None,
+            use_internal_serialization: false,
         }
     }
 
@@ -102,17 +102,20 @@ impl ConnectionParameters {
             protocol_logging: self.protocol_logging.to_worker_sdk(),
             enable_protocol_logging_at_startup: self.enable_protocol_logging_at_startup as u8,
             thread_affinity: self.thread_affinity.to_worker_sdk(),
-            component_vtable_count: match self.components {
-                Some(ref components) => components.len() as u32,
-                None => 0,
+            component_vtable_count: if self.use_internal_serialization {
+                DATABASE.len() as u32
+            } else {
+                0
             },
-            component_vtables: match self.components {
-                Some(ref components) => components.to_worker_sdk(),
-                None => ptr::null(),
+            component_vtables: if self.use_internal_serialization {
+                DATABASE.to_worker_sdk()
+            } else {
+                ptr::null()
             },
-            default_component_vtable: match self.components {
-                Some(_) => ptr::null(),
-                None => &vtable::PASSTHROUGH_VTABLE,
+            default_component_vtable: if self.use_internal_serialization {
+                ptr::null()
+            } else {
+                &vtable::PASSTHROUGH_VTABLE
             },
         }
     }
@@ -458,18 +461,6 @@ impl ThreadAffinityParameters {
             receive_threads_affinity_mask: self.receive_threads_affinity_mask,
             send_threads_affinity_mask: self.send_threads_affinity_mask,
             temporary_threads_affinity_mask: self.temporary_threads_affinity_mask,
-        }
-    }
-}
-
-pub struct SnapshotParameters {}
-
-impl SnapshotParameters {
-    pub(crate) fn to_worker_sdk(&self) -> Worker_SnapshotParameters {
-        Worker_SnapshotParameters {
-            component_vtable_count: 0,
-            component_vtables: ::std::ptr::null(),
-            default_component_vtable: &vtable::PASSTHROUGH_VTABLE,
         }
     }
 }

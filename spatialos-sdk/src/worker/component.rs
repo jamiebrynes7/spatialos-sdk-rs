@@ -1,9 +1,9 @@
 use crate::worker::internal::schema;
 use spatialos_sdk_sys::worker::*;
-use std::os::raw;
-use std::sync::Arc;
-use std::{mem, ptr};
+use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 
+// Re-export inventory so generated code doesn't require the user to add inventory to their
+// Cargo.toml
 pub use inventory;
 
 pub type ComponentId = u32;
@@ -232,23 +232,39 @@ pub(crate) mod internal {
 
 inventory::collect!(VTable);
 
-// A data structure which represents all known component types. Used to generate an array of vtables to pass
-// to the connection object.
-#[derive(Default)]
-pub(crate) struct ComponentDatabase {
-    component_vtables: Vec<Worker_ComponentVtable>,
-}
+lazy_static::lazy_static! {
+    pub(crate) static ref DATABASE: ComponentDatabase = {
 
-impl ComponentDatabase {
-    pub fn new() -> Self {
         let mut vtables = Vec::new();
-        for table in inventory::iter::<VTable> {
-            vtables.push(table.vtable)
+        let mut index_map = HashMap::new();
+
+        for (i, table) in inventory::iter::<VTable>.into_iter().enumerate() {
+            vtables.push(table.vtable);
+            index_map.insert(table.vtable.component_id, i);
         }
 
         ComponentDatabase {
             component_vtables: vtables,
+            index_map,
         }
+    };
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct ComponentDatabase {
+    component_vtables: Vec<Worker_ComponentVtable>,
+    index_map: HashMap<ComponentId, usize>,
+}
+
+impl ComponentDatabase {
+    pub(crate) fn has_vtable(&self, id: ComponentId) -> bool {
+        self.index_map.contains_key(&id)
+    }
+
+    pub(crate) fn get_vtable(&self, id: ComponentId) -> Option<&Worker_ComponentVtable> {
+        self.index_map
+            .get(&id)
+            .map(|index| &self.component_vtables[*index])
     }
 
     pub(crate) fn to_worker_sdk(&self) -> *const Worker_ComponentVtable {
@@ -259,6 +275,9 @@ impl ComponentDatabase {
         self.component_vtables.len()
     }
 }
+
+unsafe impl Sync for ComponentDatabase {}
+unsafe impl Send for ComponentDatabase {}
 
 pub(crate) fn handle_allocate<T>(data: T) -> *mut raw::c_void {
     Arc::into_raw(Arc::new(data)) as *mut _

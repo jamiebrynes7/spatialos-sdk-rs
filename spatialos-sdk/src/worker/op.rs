@@ -1,19 +1,20 @@
 #![allow(non_upper_case_globals)]
 
-use std::collections::HashMap;
-use std::slice;
-
-use crate::worker::commands::*;
-use crate::worker::component::{self, *};
-use crate::worker::entity_snapshot::EntitySnapshot;
-use crate::worker::internal::schema::{
-    SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData, SchemaComponentUpdate,
+use crate::worker::{
+    commands::*,
+    component::{self, *},
+    entity::Entity,
+    internal::{
+        schema::{
+            SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData, SchemaComponentUpdate,
+        },
+        utils::*,
+    },
+    metrics::Metrics,
+    {Authority, EntityId, LogLevel, RequestId},
 };
-use crate::worker::metrics::Metrics;
-use crate::worker::{Authority, EntityId, LogLevel, RequestId};
-
-use crate::worker::internal::utils::*;
 use spatialos_sdk_sys::worker::*;
+use std::{collections::HashMap, slice};
 
 pub struct OpList {
     raw: *mut Worker_OpList,
@@ -385,8 +386,18 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                                 // Is count type.
                                 StatusCode::Success(QueryResponse::Result(op.result_count))
                             } else {
-                                // TODO: Deseralise data? Do something with the snapshot.
-                                StatusCode::Success(QueryResponse::Snapshot(HashMap::new()))
+                                let mut entities = HashMap::new();
+                                let raw_entities =
+                                    slice::from_raw_parts(op.results, op.result_count as usize);
+
+                                for raw_entity in raw_entities {
+                                    entities.insert(
+                                        EntityId::new(raw_entity.entity_id),
+                                        Entity::from_worker_sdk(raw_entity).unwrap(),
+                                    );
+                                }
+
+                                StatusCode::Success(QueryResponse::Snapshot(entities))
                             }
                         }
                         Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
@@ -490,7 +501,7 @@ pub struct DeleteEntityResponseOp {
 
 #[derive(Debug)]
 pub enum QueryResponse {
-    Snapshot(HashMap<EntityId, EntitySnapshot>),
+    Snapshot(HashMap<EntityId, Entity>),
     Result(u32),
 }
 

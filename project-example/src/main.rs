@@ -56,45 +56,51 @@ fn logic_loop(c: &mut WorkerConnection) {
     // Create an entity with a `Rotate` component in order to demonstrate tracking and
     // updating entities.
     let mut entity = Entity::new();
-    entity.add(improbable::Position {
-        coords: improbable::Coordinates {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        },
-    });
-    entity.add(example::Rotate {
-        angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
-        radius: rng.gen_range(20.0, 100.0),
-        center_x: rng.gen_range(-50.0, 50.0),
-        center_y: 0.0,
-        center_z: rng.gen_range(-50.0, 50.0),
-    });
-    entity.add(improbable::EntityAcl {
-        read_acl: improbable::WorkerRequirementSet {
-            attribute_set: vec![improbable::WorkerAttributeSet {
-                attribute: vec!["rusty".into()],
-            }],
-        },
-        component_write_acl: BTreeMap::new().tap(|writes| {
-            writes.insert(
-                improbable::Position::ID,
-                improbable::WorkerRequirementSet {
-                    attribute_set: vec![improbable::WorkerAttributeSet {
-                        attribute: vec!["rusty".into()],
-                    }],
-                },
-            );
-            writes.insert(
-                example::Rotate::ID,
-                improbable::WorkerRequirementSet {
-                    attribute_set: vec![improbable::WorkerAttributeSet {
-                        attribute: vec!["rusty".into()],
-                    }],
-                },
-            );
-        }),
-    });
+    entity
+        .add(improbable::Position {
+            coords: improbable::Coordinates {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+        })
+        .unwrap();
+    entity
+        .add(example::Rotate {
+            angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
+            radius: rng.gen_range(20.0, 100.0),
+            center_x: rng.gen_range(-50.0, 50.0),
+            center_y: 0.0,
+            center_z: rng.gen_range(-50.0, 50.0),
+        })
+        .unwrap();
+    entity
+        .add(improbable::EntityAcl {
+            read_acl: improbable::WorkerRequirementSet {
+                attribute_set: vec![improbable::WorkerAttributeSet {
+                    attribute: vec!["rusty".into()],
+                }],
+            },
+            component_write_acl: BTreeMap::new().tap(|writes| {
+                writes.insert(
+                    improbable::Position::ID,
+                    improbable::WorkerRequirementSet {
+                        attribute_set: vec![improbable::WorkerAttributeSet {
+                            attribute: vec!["rusty".into()],
+                        }],
+                    },
+                );
+                writes.insert(
+                    example::Rotate::ID,
+                    improbable::WorkerRequirementSet {
+                        attribute_set: vec![improbable::WorkerAttributeSet {
+                            attribute: vec!["rusty".into()],
+                        }],
+                    },
+                );
+            }),
+        })
+        .unwrap();
     let create_request_id = c.send_create_entity_request(entity, None, None);
     println!("Create entity request ID: {:?}", create_request_id);
 
