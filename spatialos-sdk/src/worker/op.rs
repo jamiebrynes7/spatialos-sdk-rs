@@ -647,3 +647,25 @@ impl<'a> CommandResponse<'a> {
         &self.response.schema_type
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::ReservedEntityIdRange;
+
+    #[test]
+    fn reserved_entity_id_range_iterator_contains_correct_count() {
+        let range = ReservedEntityIdRange::new(10, 54);
+        assert_eq!(54, range.count());
+    }
+
+    #[test]
+    fn reserved_entity_id_range_iterator_returns_sequential_ids() {
+        let mut current_id :i64 = 1;
+        let range = ReservedEntityIdRange::new(current_id, 10);
+
+        for entity_id in range {
+            assert_eq!(current_id, entity_id.id);
+            current_id += 1;
+        }
+    }
+}
