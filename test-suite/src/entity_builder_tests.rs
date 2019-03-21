@@ -83,7 +83,6 @@ fn entity_acl_is_serialized_correctly() {
         .contains(&"entity_acl_acl".to_owned()));
 }
 
-
 #[test]
 fn metadata_is_serialized_correctly() {
     let entity = EntityBuilder::new(0.0, 0.0, 0.0, "rusty")

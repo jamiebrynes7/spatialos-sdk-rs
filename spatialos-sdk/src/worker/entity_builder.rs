@@ -24,7 +24,7 @@ pub struct EntityBuilder {
     write_permissions: HashMap<ComponentId, String>,
     read_permissions: Vec<String>,
 
-    error: Option<String>
+    error: Option<String>,
 }
 
 impl EntityBuilder {
@@ -56,7 +56,11 @@ impl EntityBuilder {
         self.set_write_access(PERSISTENCE_COMPONENT_ID, write_layer)
     }
 
-    pub fn set_metadata<T: Into<String>, U: Into<String>>(mut self, entity_type: T, write_layer: U) -> Self {
+    pub fn set_metadata<T: Into<String>, U: Into<String>>(
+        mut self,
+        entity_type: T,
+        write_layer: U,
+    ) -> Self {
         self.metadata = Some(entity_type.into());
         self.set_write_access(METADATA_COMPONENT_ID, write_layer)
     }
@@ -144,7 +148,9 @@ impl EntityBuilder {
     fn serialize_metadata(&self) -> SchemaComponentData {
         let mut metadata_schema = SchemaComponentData::new(METADATA_COMPONENT_ID);
         let metadata_fields = metadata_schema.fields_mut();
-        metadata_fields.field::<SchemaString>(1).add(self.metadata.as_ref().unwrap());
+        metadata_fields
+            .field::<SchemaString>(1)
+            .add(self.metadata.as_ref().unwrap());
 
         metadata_schema
     }
