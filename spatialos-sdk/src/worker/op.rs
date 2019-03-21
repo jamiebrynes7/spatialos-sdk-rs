@@ -477,6 +477,8 @@ pub struct ReserveEntityIdsResponseOp {
     pub status_code: StatusCode<ReservedEntityIdRange>,
 }
 
+// TODO: When https://doc.rust-lang.org/std/iter/trait.Step.html is stabilized - replace this
+//       with std::ops::Range<EntityId> and implement Step for EntityId.
 #[derive(Debug)]
 pub struct ReservedEntityIdRange {
     current: i64,
