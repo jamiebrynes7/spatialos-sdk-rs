@@ -1,4 +1,4 @@
-use crate::worker::component::{self, Component, ComponentDatabase, ComponentId};
+use crate::worker::component::{self, Component, ComponentId, DATABASE};
 use spatialos_sdk_sys::worker::Worker_ComponentData;
 use spatialos_sdk_sys::worker::Worker_Entity;
 use std::collections::HashMap;
@@ -8,7 +8,6 @@ use std::slice;
 #[derive(Debug)]
 pub struct Entity {
     components: HashMap<ComponentId, Worker_ComponentData>,
-    database: &'static ComponentDatabase,
 }
 
 impl Entity {
@@ -54,7 +53,7 @@ impl Entity {
         self.pre_add_check(id)?;
 
         // Call copy on the component data. We don't own this Worker_ComponentData.
-        let vtable = self.database.get_vtable(id).unwrap();
+        let vtable = DATABASE.get_vtable(id).unwrap();
         let copy_data_func = vtable
             .component_data_copy
             .unwrap_or_else(|| panic!("No component_data_free method defined for {}", id));
@@ -91,7 +90,7 @@ impl Entity {
             ));
         }
 
-        if !self.database.has_vtable(id) {
+        if !DATABASE.has_vtable(id) {
             panic!(format!(
                 "Could not find a vtable implementation for component {}",
                 id
@@ -106,7 +105,6 @@ impl Default for Entity {
     fn default() -> Self {
         Entity {
             components: HashMap::new(),
-            database: &component::DATABASE,
         }
     }
 }
@@ -116,7 +114,7 @@ impl Drop for Entity {
         for component_data in self.components.values() {
             let id = component_data.component_id;
 
-            let vtable = self.database.get_vtable(id).unwrap();
+            let vtable = DATABASE.get_vtable(id).unwrap();
 
             let free_data_func = vtable
                 .component_data_free
@@ -131,7 +129,6 @@ impl Drop for Entity {
 // than a Vec<&Worker_ComponentData> which most callers *will* want due to how Worker_Entity is structured.
 pub(crate) struct RawEntity {
     pub components: Vec<Worker_ComponentData>,
-    database: &'static ComponentDatabase,
 }
 
 impl RawEntity {
@@ -145,7 +142,7 @@ impl RawEntity {
                 let new_component_data = *original_component_data; // Is a copy operation.
                 let id = original_component_data.component_id;
 
-                let vtable = &component::DATABASE.get_vtable(id).unwrap();
+                let vtable = DATABASE.get_vtable(id).unwrap();
 
                 let copy_data_func = vtable
                     .component_data_copy
@@ -159,7 +156,6 @@ impl RawEntity {
 
         RawEntity {
             components: new_data,
-            database: &component::DATABASE,
         }
     }
 }
@@ -167,10 +163,7 @@ impl RawEntity {
 impl Drop for RawEntity {
     fn drop(&mut self) {
         for component_data in &self.components {
-            let vtable = self
-                .database
-                .get_vtable(component_data.component_id)
-                .unwrap();
+            let vtable = DATABASE.get_vtable(component_data.component_id).unwrap();
 
             let free_data_func = vtable.component_data_free.unwrap_or_else(|| {
                 panic!(
