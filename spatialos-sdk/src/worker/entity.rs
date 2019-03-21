@@ -76,7 +76,7 @@ impl Entity {
         &mut self,
         component: SchemaComponentData,
     ) -> Result<(), String> {
-        let vtable = self.database.get_vtable(component.component_id).unwrap();
+        let vtable = DATABASE.get_vtable(component.component_id).unwrap();
         let deserialize_func = vtable.component_data_deserialize.unwrap_or_else(|| {
             Schema_DestroyComponentData(component.internal);
             panic!(
