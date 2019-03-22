@@ -7,7 +7,7 @@ use spatialos_sdk::worker::{
     connection::{Connection, WorkerConnection},
     entity::Entity,
     metrics::{HistogramMetric, Metrics},
-    op::WorkerOp,
+    op::{StatusCode, WorkerOp},
     query::{EntityQuery, QueryConstraint, ResultType},
     {EntityId, InterestOverride, LogLevel},
 };
@@ -175,7 +175,14 @@ fn logic_loop(c: &mut WorkerConnection) {
                     }
                     id => println!("Received unknown component: {}", id),
                 },
-
+                WorkerOp::ReserveEntityIdsResponse(response) => match response.status_code {
+                    StatusCode::Success(range) => {
+                        for entity_id in range {
+                            println!("Reserved entity id: {:?}", entity_id);
+                        }
+                    }
+                    _ => println!("ReserveEntityIds command request failed."),
+                },
                 _ => {}
             }
         }

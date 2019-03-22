@@ -271,12 +271,9 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                 Worker_OpType_WORKER_OP_TYPE_RESERVE_ENTITY_IDS_RESPONSE => {
                     let op = erased_op.reserve_entity_ids_response;
                     let status_code = match i32::from(op.status_code) {
-                        Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
-                            StatusCode::Success(ReservedEntityIdRange {
-                                first_entity_id: EntityId::new(op.first_entity_id),
-                                number_of_entity_ids: op.number_of_entity_ids,
-                            })
-                        }
+                        Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => StatusCode::Success(
+                            ReservedEntityIdRange::new(op.first_entity_id, op.number_of_entity_ids),
+                        ),
                         Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
                             StatusCode::Timeout(cstr_to_string(op.message))
                         }
@@ -480,10 +477,39 @@ pub struct ReserveEntityIdsResponseOp {
     pub status_code: StatusCode<ReservedEntityIdRange>,
 }
 
+// TODO: When https://doc.rust-lang.org/std/iter/trait.Step.html is stabilized - replace this
+//       with std::ops::Range<EntityId> and implement Step for EntityId.
 #[derive(Debug)]
 pub struct ReservedEntityIdRange {
-    pub first_entity_id: EntityId,
-    pub number_of_entity_ids: u32,
+    current: i64,
+    consumed: u32,
+    reserved: u32,
+}
+
+impl ReservedEntityIdRange {
+    pub(crate) fn new(first: i64, number: u32) -> Self {
+        ReservedEntityIdRange {
+            current: first,
+            consumed: 0,
+            reserved: number,
+        }
+    }
+}
+
+impl Iterator for ReservedEntityIdRange {
+    type Item = EntityId;
+
+    fn next(&mut self) -> Option<EntityId> {
+        if self.consumed == self.reserved {
+            return None;
+        }
+
+        self.consumed += 1;
+        let res = Some(EntityId::new(self.current));
+        self.current += 1;
+
+        res
+    }
 }
 
 #[derive(Debug)]
@@ -621,5 +647,27 @@ impl<'a> CommandResponse<'a> {
 
     fn schema(&self) -> &SchemaCommandResponse {
         &self.response.schema_type
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::ReservedEntityIdRange;
+
+    #[test]
+    fn reserved_entity_id_range_iterator_contains_correct_count() {
+        let range = ReservedEntityIdRange::new(10, 54);
+        assert_eq!(54, range.count());
+    }
+
+    #[test]
+    fn reserved_entity_id_range_iterator_returns_sequential_ids() {
+        let mut current_id: i64 = 1;
+        let range = ReservedEntityIdRange::new(current_id, 10);
+
+        for entity_id in range {
+            assert_eq!(current_id, entity_id.id);
+            current_id += 1;
+        }
     }
 }
