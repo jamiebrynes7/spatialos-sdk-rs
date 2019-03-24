@@ -108,7 +108,7 @@ impl Metrics {
         WrappedWorkerMetrics {
             metrics: Worker_Metrics {
                 load: match self.load {
-                    Some(c) => &c,
+                    Some(ref c) => c,
                     None => ::std::ptr::null(),
                 },
                 gauge_metric_count: gauge_metrics.len() as u32,
