@@ -1,4 +1,4 @@
-use crate::worker::internal::schema;
+use crate::worker::internal::schema::{self, FieldId, SchemaObject, SchemaType};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 
@@ -14,15 +14,6 @@ pub trait ComponentUpdate<C: Component> {
 
 pub trait ComponentData<C: Component> {
     fn merge(&mut self, update: C::Update);
-}
-
-// A trait that's implemented by a type to convert to/from schema objects.
-pub trait TypeConversion
-where
-    Self: std::marker::Sized,
-{
-    fn from_type(input: &schema::SchemaObject) -> Result<Self, String>;
-    fn to_type(input: &Self, output: &mut schema::SchemaObject) -> Result<(), String>;
 }
 
 // A trait that's implemented by a component to convert to/from schema handle types.
