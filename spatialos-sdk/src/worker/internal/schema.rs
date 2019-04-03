@@ -9,29 +9,6 @@ pub struct SchemaComponentUpdate {
     pub internal: *mut Schema_ComponentUpdate,
 }
 
-#[derive(Debug)]
-pub struct SchemaComponentData {
-    pub component_id: ComponentId,
-    pub internal: *mut Schema_ComponentData,
-}
-
-#[derive(Debug)]
-pub struct SchemaCommandRequest {
-    pub component_id: ComponentId,
-    pub internal: *mut Schema_CommandRequest,
-}
-
-#[derive(Debug)]
-pub struct SchemaCommandResponse {
-    pub component_id: ComponentId,
-    pub internal: *mut Schema_CommandResponse,
-}
-
-#[derive(Debug)]
-pub struct SchemaObject {
-    internal: *mut Schema_Object,
-}
-
 impl SchemaComponentUpdate {
     pub fn new(component_id: ComponentId) -> SchemaComponentUpdate {
         SchemaComponentUpdate {
@@ -71,6 +48,12 @@ impl SchemaComponentUpdate {
     // TODO: Cleared fields.
 }
 
+#[derive(Debug)]
+pub struct SchemaComponentData {
+    pub component_id: ComponentId,
+    pub internal: *mut Schema_ComponentData,
+}
+
 impl SchemaComponentData {
     pub fn new(component_id: ComponentId) -> SchemaComponentData {
         SchemaComponentData {
@@ -94,6 +77,12 @@ impl SchemaComponentData {
             internal: unsafe { Schema_GetComponentDataFields(self.internal) },
         }
     }
+}
+
+#[derive(Debug)]
+pub struct SchemaCommandRequest {
+    pub component_id: ComponentId,
+    pub internal: *mut Schema_CommandRequest,
 }
 
 impl SchemaCommandRequest {
@@ -125,6 +114,12 @@ impl SchemaCommandRequest {
     }
 }
 
+#[derive(Debug)]
+pub struct SchemaCommandResponse {
+    pub component_id: ComponentId,
+    pub internal: *mut Schema_CommandResponse,
+}
+
 impl SchemaCommandResponse {
     pub fn new(component_id: u32, command_index: u32) -> SchemaCommandResponse {
         SchemaCommandResponse {
@@ -152,6 +147,11 @@ impl SchemaCommandResponse {
             internal: unsafe { Schema_GetCommandResponseObject(self.internal) },
         }
     }
+}
+
+#[derive(Debug)]
+pub struct SchemaObject {
+    internal: *mut Schema_Object,
 }
 
 impl SchemaObject {
