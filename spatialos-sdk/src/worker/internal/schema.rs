@@ -155,8 +155,8 @@ pub struct SchemaObject {
 }
 
 impl SchemaObject {
-    pub fn get<T: FromSchemaField>(&self, field: FieldId) -> Result<T::RustType, String> {
-        T::from_schema_field(self, field)
+    pub fn get<T: SchemaType>(&self, field: FieldId) -> Result<T::RustType, String> {
+        T::from_field(self, field)
     }
 }
 
@@ -164,42 +164,21 @@ impl SchemaObject {
 // Schema Conversion Traits
 // =================================================================================================
 
-/// A type that can be represented as serialized data in a `SchemaObject`.
-///
-/// This trait exists primarily to map the various primitive schema types to their
-/// corresponding Rust types. For example, `int32`, `sint32`, and `sfixed32` all map
-/// to Rust's `i32` primitive type.
-pub trait SchemaType: Sized {
+/// A type that can be represented as serialized data in a field of a `SchemaObject`.
+pub trait SchemaType {
     type RustType: Sized;
+
+    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Result<Self::RustType, String>;
+
+    fn field_count(schema_object: &SchemaObject, field: FieldId) -> u32;
 }
 
-/// A type that can be deserialized from a `SchemaObject`.
-pub trait FromSchemaObject: SchemaType<RustType = Self>
+/// A type that can be deserialized from an entire `SchemaObject`.
+pub trait SchemaObjectType: SchemaType<RustType = Self>
 where
     Self: Sized,
 {
     fn from_schema_object(input: &SchemaObject) -> Result<Self, String>;
-}
-
-/// A type that can be deserialized from a single field on a `SchemaObject`.
-pub trait FromSchemaField: SchemaType {
-    fn from_schema_field(input: &SchemaObject, field: FieldId) -> Result<Self::RustType, String>;
-}
-
-impl<S: FromSchemaObject> FromSchemaField for S {
-    fn from_schema_field(
-        schema_object: &SchemaObject,
-        field: FieldId,
-    ) -> Result<Self::RustType, String> {
-        let field_object = SchemaObject {
-            internal: unsafe { Schema_GetObject(schema_object.internal, field) },
-        };
-        Self::from_schema_object(&field_object)
-    }
-}
-
-pub trait ToSchemaObject: SchemaType {
-    fn to_type(input: &Self::RustType, output: &mut SchemaObject) -> Result<(), String>;
 }
 
 // =================================================================================================
@@ -221,14 +200,13 @@ macro_rules! impl_primitive_field {
 
         impl SchemaType for $schema_type {
             type RustType = $rust_type;
-        }
 
-        impl FromSchemaField for $schema_type {
-            fn from_schema_field(
-                input: &SchemaObject,
-                field: FieldId,
-            ) -> Result<Self::RustType, String> {
+            fn from_field(input: &SchemaObject, field: FieldId) -> Result<Self::RustType, String> {
                 Ok(unsafe { $schema_get(input.internal, field) })
+            }
+
+            fn field_count(input: &SchemaObject, field: FieldId) -> u32 {
+                unsafe { $schema_count(input.internal, field) }
             }
         }
     };
@@ -360,3 +338,23 @@ impl_primitive_field!(
     Schema_AddEnum,
     Schema_AddEnumList,
 );
+
+impl<T: SchemaType> SchemaType for Option<T> {
+    type RustType = Option<T::RustType>;
+
+    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Result<Self::RustType, String> {
+        let count = T::field_count(schema_object, field);
+        match count {
+            0 => Ok(None),
+            1 => Ok(Some(T::from_field(schema_object, field)?)),
+            _ => panic!(
+                "Invalid count {} for `option` schema field {}",
+                count, field
+            ),
+        }
+    }
+
+    fn field_count(schema_object: &SchemaObject, field: FieldId) -> u32 {
+        T::field_count(schema_object, field)
+    }
+}
