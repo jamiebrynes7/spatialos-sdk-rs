@@ -1,6 +1,7 @@
 use crate::worker::component::ComponentId;
 use spatialos_sdk_sys::worker::*;
-use std::{collections::BTreeMap, marker::PhantomData};
+use std::marker::PhantomData;
+use std::slice;
 
 pub type FieldId = u32;
 
@@ -8,6 +9,29 @@ pub type FieldId = u32;
 pub struct SchemaComponentUpdate {
     pub component_id: ComponentId,
     pub internal: *mut Schema_ComponentUpdate,
+}
+
+#[derive(Debug)]
+pub struct SchemaComponentData {
+    pub component_id: ComponentId,
+    pub internal: *mut Schema_ComponentData,
+}
+
+#[derive(Debug)]
+pub struct SchemaCommandRequest {
+    pub component_id: ComponentId,
+    pub internal: *mut Schema_CommandRequest,
+}
+
+#[derive(Debug)]
+pub struct SchemaCommandResponse {
+    pub component_id: ComponentId,
+    pub internal: *mut Schema_CommandResponse,
+}
+
+#[derive(Debug)]
+pub struct SchemaObject {
+    internal: *mut Schema_Object,
 }
 
 impl SchemaComponentUpdate {
@@ -49,12 +73,6 @@ impl SchemaComponentUpdate {
     // TODO: Cleared fields.
 }
 
-#[derive(Debug)]
-pub struct SchemaComponentData {
-    pub component_id: ComponentId,
-    pub internal: *mut Schema_ComponentData,
-}
-
 impl SchemaComponentData {
     pub fn new(component_id: ComponentId) -> SchemaComponentData {
         SchemaComponentData {
@@ -78,12 +96,6 @@ impl SchemaComponentData {
             internal: unsafe { Schema_GetComponentDataFields(self.internal) },
         }
     }
-}
-
-#[derive(Debug)]
-pub struct SchemaCommandRequest {
-    pub component_id: ComponentId,
-    pub internal: *mut Schema_CommandRequest,
 }
 
 impl SchemaCommandRequest {
@@ -115,12 +127,6 @@ impl SchemaCommandRequest {
     }
 }
 
-#[derive(Debug)]
-pub struct SchemaCommandResponse {
-    pub component_id: ComponentId,
-    pub internal: *mut Schema_CommandResponse,
-}
-
 impl SchemaCommandResponse {
     pub fn new(component_id: u32, command_index: u32) -> SchemaCommandResponse {
         SchemaCommandResponse {
@@ -150,110 +156,158 @@ impl SchemaCommandResponse {
     }
 }
 
+// A schema field. T is a schema type tag.
 #[derive(Debug)]
-pub struct SchemaObject {
-    internal: *mut Schema_Object,
+pub struct SchemaFieldContainer<'a, T> {
+    field_id: FieldId,
+    container: &'a SchemaObject,
+    _phantom: PhantomData<T>,
+}
+
+// Tags to represent schema types.
+#[derive(Debug)]
+pub struct SchemaFloat;
+#[derive(Debug)]
+pub struct SchemaDouble;
+#[derive(Debug)]
+pub struct SchemaBool;
+#[derive(Debug)]
+pub struct SchemaInt32;
+#[derive(Debug)]
+pub struct SchemaInt64;
+#[derive(Debug)]
+pub struct SchemaUint32;
+#[derive(Debug)]
+pub struct SchemaUint64;
+#[derive(Debug)]
+pub struct SchemaSint32;
+#[derive(Debug)]
+pub struct SchemaSint64;
+#[derive(Debug)]
+pub struct SchemaFixed32;
+#[derive(Debug)]
+pub struct SchemaFixed64;
+#[derive(Debug)]
+pub struct SchemaSfixed32;
+#[derive(Debug)]
+pub struct SchemaSfixed64;
+#[derive(Debug)]
+pub struct SchemaEntityId;
+#[derive(Debug)]
+pub struct SchemaEnum;
+#[derive(Debug)]
+pub struct SchemaBytes;
+#[derive(Debug)]
+pub struct SchemaString;
+
+// A primitive schema field.
+pub trait SchemaPrimitiveField<T> {
+    fn get(&self) -> Option<T> {
+        if self.count() == 0 {
+            None
+        } else {
+            Some(self.get_or_default())
+        }
+    }
+
+    fn get_or_default(&self) -> T;
+    fn index(&self, index: usize) -> T;
+    fn count(&self) -> usize;
+
+    fn add(&mut self, value: T);
+    fn add_list(&mut self, value: &[T]);
+}
+
+// A bytes schema field.
+pub trait SchemaBytesField {
+    fn get(&self) -> Option<Vec<u8>> {
+        if self.count() == 0 {
+            None
+        } else {
+            Some(self.get_or_default())
+        }
+    }
+
+    fn get_or_default(&self) -> Vec<u8>;
+    fn index(&self, index: usize) -> Vec<u8>;
+    fn count(&self) -> usize;
+    fn add(&mut self, value: &[u8]);
+}
+
+// A string schema field.
+#[allow(clippy::ptr_arg)]
+pub trait SchemaStringField {
+    fn get(&self) -> Option<String> {
+        if self.count() == 0 {
+            None
+        } else {
+            Some(self.get_or_default())
+        }
+    }
+
+    fn get_or_default(&self) -> String;
+    fn index(&self, index: usize) -> String;
+    fn count(&self) -> usize;
+
+    fn add(&mut self, value: &String);
+    fn add_list(&mut self, value: &[String]);
+}
+
+// An object schema field.
+pub trait SchemaObjectField {
+    fn get(&self) -> Option<SchemaObject> {
+        if self.count() == 0 {
+            None
+        } else {
+            Some(self.get_or_default())
+        }
+    }
+
+    fn get_or_default(&self) -> SchemaObject;
+    fn index(&self, index: usize) -> SchemaObject;
+    fn count(&self) -> usize;
+
+    fn add(&mut self) -> SchemaObject;
 }
 
 impl SchemaObject {
-    pub unsafe fn deserialize_field<T: SchemaType>(&self, field: FieldId) -> T::RustType {
-        T::from_field(self, field)
-    }
-
-    pub unsafe fn deserialize<T: SchemaObjectType>(&self) -> T::RustType {
-        T::from_schema_object(self)
-    }
-}
-
-// =================================================================================================
-// Schema Conversion Traits
-// =================================================================================================
-
-pub trait SchemaType: Sized {
-    type RustType: Sized;
-
-    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType;
-}
-
-pub trait SchemaCountType: SchemaType {
-    fn field_count(schema_object: &SchemaObject, field: FieldId) -> u32;
-}
-
-pub trait SchemaIndexType: SchemaCountType {
-    fn index_field(schema_object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType;
-}
-
-/// A type that can be deserialized from an entire `SchemaObject`.
-pub trait SchemaObjectType: Sized {
-    type RustType: Sized;
-
-    fn from_schema_object(schema_object: &SchemaObject) -> Self::RustType;
-}
-
-impl<T: SchemaObjectType> SchemaType for T {
-    type RustType = T::RustType;
-
-    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
-        let field_object = unsafe { Schema_GetObject(schema_object.internal, field) };
-        T::from_schema_object(&SchemaObject {
-            internal: field_object,
-        })
+    pub fn field<T>(&self, field_id: ComponentId) -> SchemaFieldContainer<T> {
+        SchemaFieldContainer {
+            field_id,
+            container: self,
+            _phantom: PhantomData,
+        }
     }
 }
-
-impl<T: SchemaObjectType> SchemaCountType for T {
-    fn field_count(schema_object: &SchemaObject, field: FieldId) -> u32 {
-        unsafe { Schema_GetObjectCount(schema_object.internal, field) }
-    }
-}
-
-impl<T: SchemaObjectType> SchemaIndexType for T {
-    fn index_field(schema_object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType {
-        let field_object = unsafe { Schema_IndexObject(schema_object.internal, field, index) };
-        T::from_schema_object(&SchemaObject {
-            internal: field_object,
-        })
-    }
-}
-
-// =================================================================================================
-// Schema Conversion Implementations for Primitive Types
-// =================================================================================================
 
 macro_rules! impl_primitive_field {
-    (
-        $rust_type:ty,
-        $schema_type:ident,
-        $schema_get:ident,
-        $schema_index:ident,
-        $schema_count:ident,
-        $schema_add:ident,
-        $schema_add_list:ident,
-    ) => {
-        #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        pub struct $schema_type;
-
-        impl SchemaType for $schema_type {
-            type RustType = $rust_type;
-
-            fn from_field(input: &SchemaObject, field: FieldId) -> Self::RustType {
-                unsafe { $schema_get(input.internal, field) }
+    ($rust_type:ty, $schema_type:ty, $schema_get:ident, $schema_index:ident, $schema_count:ident, $schema_add:ident, $schema_add_list:ident) => {
+        impl<'a> SchemaPrimitiveField<$rust_type> for SchemaFieldContainer<'a, $schema_type> {
+            fn get_or_default(&self) -> $rust_type {
+                unsafe { $schema_get(self.container.internal, self.field_id) }
             }
-        }
-
-        impl SchemaCountType for $schema_type {
-            fn field_count(input: &SchemaObject, field: FieldId) -> u32 {
-                unsafe { $schema_count(input.internal, field) }
+            fn index(&self, index: usize) -> $rust_type {
+                unsafe { $schema_index(self.container.internal, self.field_id, index as u32) }
             }
-        }
+            fn count(&self) -> usize {
+                unsafe { $schema_count(self.container.internal, self.field_id) as usize }
+            }
 
-        impl SchemaIndexType for $schema_type {
-            fn index_field(
-                schema_object: &SchemaObject,
-                field: FieldId,
-                index: u32,
-            ) -> Self::RustType {
-                unsafe { $schema_index(schema_object.internal, field, index) }
+            fn add(&mut self, value: $rust_type) {
+                unsafe {
+                    $schema_add(self.container.internal, self.field_id, value);
+                }
+            }
+            fn add_list(&mut self, value: &[$rust_type]) {
+                unsafe {
+                    let ptr = value.as_ptr();
+                    $schema_add_list(
+                        self.container.internal,
+                        self.field_id,
+                        ptr,
+                        value.len() as u32,
+                    );
+                }
             }
         }
     };
@@ -266,7 +320,7 @@ impl_primitive_field!(
     Schema_IndexFloat,
     Schema_GetFloatCount,
     Schema_AddFloat,
-    Schema_AddFloatList,
+    Schema_AddFloatList
 );
 impl_primitive_field!(
     f64,
@@ -275,7 +329,7 @@ impl_primitive_field!(
     Schema_IndexDouble,
     Schema_GetDoubleCount,
     Schema_AddDouble,
-    Schema_AddDoubleList,
+    Schema_AddDoubleList
 );
 impl_primitive_field!(
     i32,
@@ -284,7 +338,7 @@ impl_primitive_field!(
     Schema_IndexInt32,
     Schema_GetInt32Count,
     Schema_AddInt32,
-    Schema_AddInt32List,
+    Schema_AddInt32List
 );
 impl_primitive_field!(
     i64,
@@ -293,7 +347,7 @@ impl_primitive_field!(
     Schema_IndexInt64,
     Schema_GetInt64Count,
     Schema_AddInt64,
-    Schema_AddInt64List,
+    Schema_AddInt64List
 );
 impl_primitive_field!(
     u32,
@@ -302,7 +356,7 @@ impl_primitive_field!(
     Schema_IndexUint32,
     Schema_GetUint32Count,
     Schema_AddUint32,
-    Schema_AddUint32List,
+    Schema_AddUint32List
 );
 impl_primitive_field!(
     u64,
@@ -311,7 +365,7 @@ impl_primitive_field!(
     Schema_IndexUint64,
     Schema_GetUint64Count,
     Schema_AddUint64,
-    Schema_AddUint64List,
+    Schema_AddUint64List
 );
 impl_primitive_field!(
     i32,
@@ -320,7 +374,7 @@ impl_primitive_field!(
     Schema_IndexSint32,
     Schema_GetSint32Count,
     Schema_AddSint32,
-    Schema_AddSint32List,
+    Schema_AddSint32List
 );
 impl_primitive_field!(
     i64,
@@ -329,7 +383,7 @@ impl_primitive_field!(
     Schema_IndexSint64,
     Schema_GetSint64Count,
     Schema_AddSint64,
-    Schema_AddSint64List,
+    Schema_AddSint64List
 );
 impl_primitive_field!(
     u32,
@@ -338,7 +392,7 @@ impl_primitive_field!(
     Schema_IndexFixed32,
     Schema_GetFixed32Count,
     Schema_AddFixed32,
-    Schema_AddFixed32List,
+    Schema_AddFixed32List
 );
 impl_primitive_field!(
     u64,
@@ -347,7 +401,7 @@ impl_primitive_field!(
     Schema_IndexFixed64,
     Schema_GetFixed64Count,
     Schema_AddFixed64,
-    Schema_AddFixed64List,
+    Schema_AddFixed64List
 );
 impl_primitive_field!(
     i32,
@@ -356,7 +410,7 @@ impl_primitive_field!(
     Schema_IndexSfixed32,
     Schema_GetSfixed32Count,
     Schema_AddSfixed32,
-    Schema_AddSfixed32List,
+    Schema_AddSfixed32List
 );
 impl_primitive_field!(
     i64,
@@ -365,7 +419,7 @@ impl_primitive_field!(
     Schema_IndexSfixed64,
     Schema_GetSfixed64Count,
     Schema_AddSfixed64,
-    Schema_AddSfixed64List,
+    Schema_AddSfixed64List
 );
 impl_primitive_field!(
     i64,
@@ -374,7 +428,7 @@ impl_primitive_field!(
     Schema_IndexEntityId,
     Schema_GetEntityIdCount,
     Schema_AddEntityId,
-    Schema_AddEntityIdList,
+    Schema_AddEntityIdList
 );
 impl_primitive_field!(
     u32,
@@ -383,60 +437,133 @@ impl_primitive_field!(
     Schema_IndexEnum,
     Schema_GetEnumCount,
     Schema_AddEnum,
-    Schema_AddEnumList,
+    Schema_AddEnumList
 );
 
-impl<T: SchemaCountType> SchemaType for Option<T> {
-    type RustType = Option<T::RustType>;
+impl<'a> SchemaPrimitiveField<bool> for SchemaFieldContainer<'a, SchemaBool> {
+    fn get_or_default(&self) -> bool {
+        unsafe { Schema_GetBool(self.container.internal, self.field_id) != 0 }
+    }
+    fn index(&self, index: usize) -> bool {
+        unsafe { Schema_IndexBool(self.container.internal, self.field_id, index as u32) != 0 }
+    }
+    fn count(&self) -> usize {
+        unsafe { Schema_GetBoolCount(self.container.internal, self.field_id) as usize }
+    }
 
-    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
-        let count = T::field_count(schema_object, field);
-        match count {
-            0 => None,
-            1 => Some(T::from_field(schema_object, field)),
-            _ => panic!(
-                "Invalid count {} for `option` schema field {}",
-                count, field
-            ),
+    fn add(&mut self, value: bool) {
+        unsafe {
+            Schema_AddBool(self.container.internal, self.field_id, value as u8);
+        }
+    }
+    fn add_list(&mut self, value: &[bool]) {
+        let converted_list: Vec<u8> = value.iter().map(|v| if *v { 1u8 } else { 0u8 }).collect();
+        unsafe {
+            let ptr = converted_list.as_ptr();
+            Schema_AddBoolList(
+                self.container.internal,
+                self.field_id,
+                ptr,
+                value.len() as u32,
+            );
         }
     }
 }
 
-impl<K, V> SchemaObjectType for BTreeMap<K, V>
-where
-    K: SchemaIndexType,
-    V: SchemaIndexType,
-    K::RustType: Ord,
-{
-    type RustType = BTreeMap<K::RustType, V::RustType>;
+impl<'a> SchemaStringField for SchemaFieldContainer<'a, SchemaString> {
+    fn get_or_default(&self) -> String {
+        let slice = unsafe {
+            let bytes_ptr = Schema_GetBytes(self.container.internal, self.field_id);
+            let bytes_len = Schema_GetBytesLength(self.container.internal, self.field_id);
+            slice::from_raw_parts(bytes_ptr, bytes_len as usize)
+        };
+        String::from_utf8_lossy(slice).to_string()
+    }
+    fn index(&self, index: usize) -> String {
+        let slice = unsafe {
+            let bytes_ptr = Schema_IndexBytes(self.container.internal, self.field_id, index as u32);
+            let bytes_len =
+                Schema_IndexBytesLength(self.container.internal, self.field_id, index as u32);
+            slice::from_raw_parts(bytes_ptr, bytes_len as usize)
+        };
+        String::from_utf8_lossy(slice).to_string()
+    }
+    fn count(&self) -> usize {
+        unsafe { Schema_GetBytesCount(self.container.internal, self.field_id) as usize }
+    }
 
-    fn from_schema_object(schema_object: &SchemaObject) -> Self::RustType {
-        let count = K::field_count(schema_object, SCHEMA_MAP_KEY_FIELD_ID);
-
-        let mut result = BTreeMap::new();
-        for index in 0..count {
-            let key = K::index_field(schema_object, SCHEMA_MAP_KEY_FIELD_ID, index);
-            let value = V::index_field(schema_object, SCHEMA_MAP_VALUE_FIELD_ID, index);
-            result.insert(key, value);
+    fn add(&mut self, value: &String) {
+        let utf8_bytes = value.as_bytes();
+        unsafe {
+            Schema_AddBytes(
+                self.container.internal,
+                self.field_id,
+                utf8_bytes.as_ptr(),
+                utf8_bytes.len() as u32,
+            );
         }
-
-        result
+    }
+    fn add_list(&mut self, value: &[String]) {
+        for str in value.iter() {
+            self.add(str);
+        }
     }
 }
 
-impl<T: SchemaIndexType> SchemaType for Vec<T> {
-    type RustType = Vec<T::RustType>;
+impl<'a> SchemaBytesField for SchemaFieldContainer<'a, SchemaBytes> {
+    fn get_or_default(&self) -> Vec<u8> {
+        let slice = unsafe {
+            let bytes_ptr = Schema_GetBytes(self.container.internal, self.field_id);
+            let bytes_len = Schema_GetBytesLength(self.container.internal, self.field_id);
+            slice::from_raw_parts(bytes_ptr, bytes_len as usize)
+        };
+        slice.to_vec()
+    }
+    fn index(&self, index: usize) -> Vec<u8> {
+        let slice = unsafe {
+            let bytes_ptr = Schema_IndexBytes(self.container.internal, self.field_id, index as u32);
+            let bytes_len =
+                Schema_IndexBytesLength(self.container.internal, self.field_id, index as u32);
+            slice::from_raw_parts(bytes_ptr, bytes_len as usize)
+        };
+        slice.to_vec()
+    }
+    fn count(&self) -> usize {
+        unsafe { Schema_GetBytesCount(self.container.internal, self.field_id) as usize }
+    }
 
-    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
-        let count = T::field_count(schema_object, field);
-
-        // TODO: Provide a specialized version for primitive types that uses the
-        // `Schema_Get*List` functions.
-        let mut result = Vec::with_capacity(count as usize);
-        for index in 0..count {
-            result.push(T::index_field(schema_object, field, index));
+    fn add(&mut self, value: &[u8]) {
+        unsafe {
+            Schema_AddBytes(
+                self.container.internal,
+                self.field_id,
+                value.as_ptr(),
+                value.len() as u32,
+            );
         }
+    }
+}
 
-        result
+impl<'a> SchemaObjectField for SchemaFieldContainer<'a, SchemaObject> {
+    fn get_or_default(&self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_GetObject(self.container.internal, self.field_id) },
+        }
+    }
+    fn index(&self, index: usize) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe {
+                Schema_IndexObject(self.container.internal, self.field_id, index as u32)
+            },
+        }
+    }
+    fn count(&self) -> usize {
+        unsafe { Schema_GetObjectCount(self.container.internal, self.field_id) as usize }
+    }
+
+    fn add(&mut self) -> SchemaObject {
+        SchemaObject {
+            internal: unsafe { Schema_AddObject(self.container.internal, self.field_id) },
+        }
     }
 }
