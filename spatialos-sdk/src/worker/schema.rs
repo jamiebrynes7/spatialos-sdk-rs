@@ -156,11 +156,11 @@ pub struct SchemaObject {
 }
 
 impl SchemaObject {
-    pub unsafe fn deserialize_field<T: SchemaType>(&self, field: FieldId) -> T::RustType {
+    pub unsafe fn field<T: SchemaType>(&self, field: FieldId) -> T::RustType {
         T::from_field(self, field)
     }
 
-    pub unsafe fn deserialize<T: SchemaObjectType>(&self) -> T::RustType {
+    pub unsafe fn deserialize<T: SchemaObjectType>(&self) -> T {
         T::from_schema_object(self)
     }
 }
@@ -175,23 +175,19 @@ pub trait SchemaType: Sized {
     fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType;
 }
 
-pub trait SchemaCountType: SchemaType {
+pub trait SchemaIndexType: SchemaType {
     fn field_count(schema_object: &SchemaObject, field: FieldId) -> u32;
-}
 
-pub trait SchemaIndexType: SchemaCountType {
     fn index_field(schema_object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType;
 }
 
 /// A type that can be deserialized from an entire `SchemaObject`.
 pub trait SchemaObjectType: Sized {
-    type RustType: Sized;
-
-    fn from_schema_object(schema_object: &SchemaObject) -> Self::RustType;
+    fn from_schema_object(schema_object: &SchemaObject) -> Self;
 }
 
 impl<T: SchemaObjectType> SchemaType for T {
-    type RustType = T::RustType;
+    type RustType = Self;
 
     fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
         let field_object = unsafe { Schema_GetObject(schema_object.internal, field) };
@@ -201,13 +197,11 @@ impl<T: SchemaObjectType> SchemaType for T {
     }
 }
 
-impl<T: SchemaObjectType> SchemaCountType for T {
+impl<T: SchemaObjectType> SchemaIndexType for T {
     fn field_count(schema_object: &SchemaObject, field: FieldId) -> u32 {
         unsafe { Schema_GetObjectCount(schema_object.internal, field) }
     }
-}
 
-impl<T: SchemaObjectType> SchemaIndexType for T {
     fn index_field(schema_object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType {
         let field_object = unsafe { Schema_IndexObject(schema_object.internal, field, index) };
         T::from_schema_object(&SchemaObject {
@@ -241,13 +235,11 @@ macro_rules! impl_primitive_field {
             }
         }
 
-        impl SchemaCountType for $schema_type {
+        impl SchemaIndexType for $schema_type {
             fn field_count(input: &SchemaObject, field: FieldId) -> u32 {
                 unsafe { $schema_count(input.internal, field) }
             }
-        }
 
-        impl SchemaIndexType for $schema_type {
             fn index_field(
                 schema_object: &SchemaObject,
                 field: FieldId,
@@ -386,7 +378,7 @@ impl_primitive_field!(
     Schema_AddEnumList,
 );
 
-impl<T: SchemaCountType> SchemaType for Option<T> {
+impl<T: SchemaIndexType> SchemaType for Option<T> {
     type RustType = Option<T::RustType>;
 
     fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
