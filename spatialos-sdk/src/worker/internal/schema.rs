@@ -402,12 +402,7 @@ impl<T: SchemaCountType> SchemaType for Option<T> {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SchemaMap<K, V> {
-    _marker: PhantomData<(K, V)>,
-}
-
-impl<K, V> SchemaObjectType for SchemaMap<K, V>
+impl<K, V> SchemaObjectType for BTreeMap<K, V>
 where
     K: SchemaIndexType,
     V: SchemaIndexType,
@@ -423,6 +418,23 @@ where
             let key = K::index_field(schema_object, SCHEMA_MAP_KEY_FIELD_ID, index);
             let value = V::index_field(schema_object, SCHEMA_MAP_VALUE_FIELD_ID, index);
             result.insert(key, value);
+        }
+
+        result
+    }
+}
+
+impl<T: SchemaIndexType> SchemaType for Vec<T> {
+    type RustType = Vec<T::RustType>;
+
+    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
+        let count = T::field_count(schema_object, field);
+
+        // TODO: Provide a specialized version for primitive types that uses the
+        // `Schema_Get*List` functions.
+        let mut result = Vec::with_capacity(count as usize);
+        for index in 0..count {
+            result.push(T::index_field(schema_object, field, index));
         }
 
         result
