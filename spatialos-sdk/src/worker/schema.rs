@@ -402,7 +402,7 @@ impl<T: SchemaCountType> SchemaType for Option<T> {
     }
 }
 
-impl<K, V> SchemaObjectType for BTreeMap<K, V>
+impl<K, V> SchemaType for BTreeMap<K, V>
 where
     K: SchemaIndexType,
     V: SchemaIndexType,
@@ -410,9 +410,14 @@ where
 {
     type RustType = BTreeMap<K::RustType, V::RustType>;
 
-    fn from_schema_object(schema_object: &SchemaObject) -> Self::RustType {
-        let count = K::field_count(schema_object, SCHEMA_MAP_KEY_FIELD_ID);
+    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
+        // Get the map's schema object from the specified field on `schema_object`.
+        let schema_object = &SchemaObject {
+            internal: unsafe { Schema_GetObject(schema_object.internal, field) },
+        };
 
+        // Load each of the key-value pairs from the map object.
+        let count = K::field_count(schema_object, SCHEMA_MAP_KEY_FIELD_ID);
         let mut result = BTreeMap::new();
         for index in 0..count {
             let key = K::index_field(schema_object, SCHEMA_MAP_KEY_FIELD_ID, index);
