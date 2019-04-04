@@ -4,13 +4,11 @@ use crate::worker::{
     commands::*,
     component::{self, *},
     entity::Entity,
-    internal::{
-        schema::{
-            SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData, SchemaComponentUpdate,
-        },
-        utils::*,
-    },
+    internal::utils::*,
     metrics::Metrics,
+    schema::{
+        SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData, SchemaComponentUpdate,
+    },
     {Authority, EntityId, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;

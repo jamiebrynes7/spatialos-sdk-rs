@@ -1,6 +1,6 @@
 use crate::worker::component::ComponentId;
 use spatialos_sdk_sys::worker::*;
-use std::{collections::BTreeMap, marker::PhantomData};
+use std::collections::BTreeMap;
 
 pub type FieldId = u32;
 
