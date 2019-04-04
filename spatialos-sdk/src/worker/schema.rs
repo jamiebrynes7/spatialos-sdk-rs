@@ -181,6 +181,10 @@ pub trait SchemaIndexType: SchemaType {
     fn index_field(schema_object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType;
 }
 
+pub trait SchemaListType: SchemaIndexType {
+    fn get_field_list(schema_object: &SchemaObject, field: FieldId, data: &mut Vec<Self::RustType>);
+}
+
 /// A type that can be deserialized from an entire `SchemaObject`.
 pub trait SchemaObjectType: Sized {
     fn from_schema_object(schema_object: &SchemaObject) -> Self;
@@ -223,6 +227,7 @@ macro_rules! impl_primitive_field {
         $schema_count:ident,
         $schema_add:ident,
         $schema_add_list:ident,
+        $schema_get_list:ident,
     ) => {
         #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct $schema_type;
@@ -248,6 +253,27 @@ macro_rules! impl_primitive_field {
                 unsafe { $schema_index(schema_object.internal, field, index) }
             }
         }
+
+        impl SchemaListType for $schema_type {
+            fn get_field_list(
+                schema_object: &SchemaObject,
+                field: FieldId,
+                data: &mut Vec<Self::RustType>,
+            ) {
+                let count = Self::field_count(schema_object, field) as usize;
+
+                // Ensure that there is enough capacity for the elements in the schema field.
+                if data.capacity() < count {
+                    data.reserve(count - data.capacity());
+                }
+
+                // Replace the contents of `data` with the list of values in the schema field.
+                unsafe {
+                    data.set_len(count);
+                    $schema_get_list(schema_object.internal, field, data.as_mut_ptr());
+                }
+            }
+        }
     };
 }
 
@@ -259,6 +285,7 @@ impl_primitive_field!(
     Schema_GetFloatCount,
     Schema_AddFloat,
     Schema_AddFloatList,
+    Schema_GetFloatList,
 );
 impl_primitive_field!(
     f64,
@@ -268,6 +295,7 @@ impl_primitive_field!(
     Schema_GetDoubleCount,
     Schema_AddDouble,
     Schema_AddDoubleList,
+    Schema_GetDoubleList,
 );
 impl_primitive_field!(
     i32,
@@ -277,6 +305,7 @@ impl_primitive_field!(
     Schema_GetInt32Count,
     Schema_AddInt32,
     Schema_AddInt32List,
+    Schema_GetInt32List,
 );
 impl_primitive_field!(
     i64,
@@ -286,6 +315,7 @@ impl_primitive_field!(
     Schema_GetInt64Count,
     Schema_AddInt64,
     Schema_AddInt64List,
+    Schema_GetInt64List,
 );
 impl_primitive_field!(
     u32,
@@ -295,6 +325,7 @@ impl_primitive_field!(
     Schema_GetUint32Count,
     Schema_AddUint32,
     Schema_AddUint32List,
+    Schema_GetUint32List,
 );
 impl_primitive_field!(
     u64,
@@ -304,6 +335,7 @@ impl_primitive_field!(
     Schema_GetUint64Count,
     Schema_AddUint64,
     Schema_AddUint64List,
+    Schema_GetUint64List,
 );
 impl_primitive_field!(
     i32,
@@ -313,6 +345,7 @@ impl_primitive_field!(
     Schema_GetSint32Count,
     Schema_AddSint32,
     Schema_AddSint32List,
+    Schema_GetSint32List,
 );
 impl_primitive_field!(
     i64,
@@ -322,6 +355,7 @@ impl_primitive_field!(
     Schema_GetSint64Count,
     Schema_AddSint64,
     Schema_AddSint64List,
+    Schema_GetSint64List,
 );
 impl_primitive_field!(
     u32,
@@ -331,6 +365,7 @@ impl_primitive_field!(
     Schema_GetFixed32Count,
     Schema_AddFixed32,
     Schema_AddFixed32List,
+    Schema_GetFixed32List,
 );
 impl_primitive_field!(
     u64,
@@ -340,6 +375,7 @@ impl_primitive_field!(
     Schema_GetFixed64Count,
     Schema_AddFixed64,
     Schema_AddFixed64List,
+    Schema_GetFixed64List,
 );
 impl_primitive_field!(
     i32,
@@ -349,6 +385,7 @@ impl_primitive_field!(
     Schema_GetSfixed32Count,
     Schema_AddSfixed32,
     Schema_AddSfixed32List,
+    Schema_GetSfixed32List,
 );
 impl_primitive_field!(
     i64,
@@ -358,6 +395,7 @@ impl_primitive_field!(
     Schema_GetSfixed64Count,
     Schema_AddSfixed64,
     Schema_AddSfixed64List,
+    Schema_GetSfixed64List,
 );
 impl_primitive_field!(
     i64,
@@ -367,6 +405,7 @@ impl_primitive_field!(
     Schema_GetEntityIdCount,
     Schema_AddEntityId,
     Schema_AddEntityIdList,
+    Schema_GetEntityIdList,
 );
 impl_primitive_field!(
     u32,
@@ -376,6 +415,7 @@ impl_primitive_field!(
     Schema_GetEnumCount,
     Schema_AddEnum,
     Schema_AddEnumList,
+    Schema_GetEnumList,
 );
 
 impl<T: SchemaIndexType> SchemaType for Option<T> {
