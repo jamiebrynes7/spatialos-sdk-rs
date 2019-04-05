@@ -449,6 +449,29 @@ impl SchemaListType for EntityId {
     }
 }
 
+impl SchemaType for bool {
+    type RustType = Self;
+
+    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
+        let raw = unsafe { Schema_GetBool(schema_object.internal, field) };
+        raw != 0
+    }
+}
+
+impl SchemaIndexType for bool {
+    fn field_count(schema_object: &SchemaObject, field: FieldId) -> u32 {
+        unsafe { Schema_GetBoolCount(schema_object.internal, field) }
+    }
+
+    fn index_field(schema_object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType {
+        let raw = unsafe { Schema_IndexBool(schema_object.internal, field, index) };
+        raw != 0
+    }
+}
+
+// TODO: This is only valid if schema bools are guaranteed to be 0 or 1. If schema
+// bools are allowed to have other values, this could result in undefined behavior
+// and should be removed.
 impl<T: SchemaIndexType> SchemaType for Option<T> {
     type RustType = Option<T::RustType>;
 

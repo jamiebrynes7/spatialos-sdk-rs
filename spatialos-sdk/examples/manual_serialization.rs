@@ -10,6 +10,7 @@ pub struct CustomComponent {
     pub targets: Vec<EntityId>,
     pub target_names: BTreeMap<EntityId, String>,
     pub byte_collection: Vec<Vec<u8>>,
+    pub nested: NestedType,
 }
 
 impl SchemaObjectType for CustomComponent {
@@ -20,6 +21,19 @@ impl SchemaObjectType for CustomComponent {
             targets: schema_object.field::<Vec<EntityId>>(2),
             target_names: schema_object.field::<BTreeMap<EntityId, String>>(3),
             byte_collection: schema_object.field::<Vec<Vec<u8>>>(4),
+            nested: schema_object.field::<NestedType>(5),
+        }
+    }
+}
+
+pub struct NestedType {
+    pub something: Option<bool>,
+}
+
+impl SchemaObjectType for NestedType {
+    fn from_schema_object(object: &SchemaObject) -> Self {
+        Self {
+            something: object.field::<Option<bool>>(0),
         }
     }
 }
