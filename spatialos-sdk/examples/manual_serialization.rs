@@ -14,14 +14,14 @@ pub struct CustomComponent {
 }
 
 impl SchemaObjectType for CustomComponent {
-    fn from_schema_object(schema_object: &SchemaObject) -> Self {
+    fn from_object(object: &SchemaObject) -> Self {
         Self {
-            name: schema_object.field::<String>(0),
-            count: schema_object.field::<SchemaSfixed32>(1),
-            targets: schema_object.field::<Vec<EntityId>>(2),
-            target_names: schema_object.field::<BTreeMap<EntityId, String>>(3),
-            byte_collection: schema_object.field::<Vec<Vec<u8>>>(4),
-            nested: schema_object.field::<NestedType>(5),
+            name: object.field::<String>(0),
+            count: object.field::<SchemaSfixed32>(1),
+            targets: object.field::<Vec<EntityId>>(2),
+            target_names: object.field::<BTreeMap<EntityId, String>>(3),
+            byte_collection: object.field::<Vec<Vec<u8>>>(4),
+            nested: object.field::<NestedType>(5),
         }
     }
 }
@@ -31,7 +31,7 @@ pub struct NestedType {
 }
 
 impl SchemaObjectType for NestedType {
-    fn from_schema_object(object: &SchemaObject) -> Self {
+    fn from_object(object: &SchemaObject) -> Self {
         Self {
             something: object.field::<Option<bool>>(0),
         }
