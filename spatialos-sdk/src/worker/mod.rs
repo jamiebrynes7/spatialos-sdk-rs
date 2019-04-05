@@ -21,6 +21,7 @@ use std::cmp::Ordering;
 use std::marker::PhantomData;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+#[repr(transparent)]
 pub struct EntityId {
     pub id: i64,
 }

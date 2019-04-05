@@ -1,4 +1,4 @@
-use crate::worker::component::ComponentId;
+use crate::worker::{component::ComponentId, EntityId};
 use spatialos_sdk_sys::worker::*;
 use std::collections::BTreeMap;
 
@@ -156,11 +156,11 @@ pub struct SchemaObject {
 }
 
 impl SchemaObject {
-    pub unsafe fn field<T: SchemaType>(&self, field: FieldId) -> T::RustType {
+    pub fn field<T: SchemaType>(&self, field: FieldId) -> T::RustType {
         T::from_field(self, field)
     }
 
-    pub unsafe fn deserialize<T: SchemaObjectType>(&self) -> T {
+    pub fn deserialize<T: SchemaObjectType>(&self) -> T {
         T::from_schema_object(self)
     }
 }
@@ -398,16 +398,6 @@ impl_primitive_field!(
     Schema_GetSfixed64List,
 );
 impl_primitive_field!(
-    i64,
-    SchemaEntityId,
-    Schema_GetEntityId,
-    Schema_IndexEntityId,
-    Schema_GetEntityIdCount,
-    Schema_AddEntityId,
-    Schema_AddEntityIdList,
-    Schema_GetEntityIdList,
-);
-impl_primitive_field!(
     u32,
     SchemaEnum,
     Schema_GetEnum,
@@ -417,6 +407,47 @@ impl_primitive_field!(
     Schema_AddEnumList,
     Schema_GetEnumList,
 );
+
+impl SchemaType for EntityId {
+    type RustType = Self;
+
+    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
+        let id = unsafe { Schema_GetEntityId(schema_object.internal, field) };
+        Self { id }
+    }
+}
+
+impl SchemaIndexType for EntityId {
+    fn field_count(schema_object: &SchemaObject, field: FieldId) -> u32 {
+        unsafe { Schema_GetEntityIdCount(schema_object.internal, field) }
+    }
+
+    fn index_field(schema_object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType {
+        let id = unsafe { Schema_IndexEntityId(schema_object.internal, field, index) };
+        Self { id }
+    }
+}
+
+impl SchemaListType for EntityId {
+    fn get_field_list(
+        schema_object: &SchemaObject,
+        field: FieldId,
+        data: &mut Vec<Self::RustType>,
+    ) {
+        let count = Self::field_count(schema_object, field) as usize;
+
+        // Ensure that there is enough capacity for the elements in the schema field.
+        if data.capacity() < count {
+            data.reserve(count - data.capacity());
+        }
+
+        // Replace the contents of `data` with the list of values in the schema field.
+        unsafe {
+            data.set_len(count);
+            Schema_GetEntityIdList(schema_object.internal, field, data.as_mut_ptr() as *mut _);
+        }
+    }
+}
 
 impl<T: SchemaIndexType> SchemaType for Option<T> {
     type RustType = Option<T::RustType>;
