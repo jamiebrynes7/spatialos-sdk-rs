@@ -467,8 +467,7 @@ impl<T: SchemaIndexType> SchemaType for Vec<T> {
     fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
         let count = T::field_count(schema_object, field);
 
-        // TODO: Provide a specialized version for primitive types that uses the
-        // `Schema_Get*List` functions.
+        // TODO: Provide a specialized version for types implementing `SchemaListType`.
         let mut result = Vec::with_capacity(count as usize);
         for index in 0..count {
             result.push(T::index_field(schema_object, field, index));
