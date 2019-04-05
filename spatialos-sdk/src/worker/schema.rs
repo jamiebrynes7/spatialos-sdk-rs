@@ -476,3 +476,61 @@ impl<T: SchemaIndexType> SchemaType for Vec<T> {
         result
     }
 }
+
+impl SchemaType for String {
+    type RustType = Self;
+
+    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
+        let bytes = get_bytes(schema_object, field);
+        std::str::from_utf8(bytes)
+            .expect("Schema string was invalid UTF-8")
+            .into()
+    }
+}
+
+impl SchemaIndexType for String {
+    fn field_count(schema_object: &SchemaObject, field: FieldId) -> u32 {
+        unsafe { Schema_GetBytesCount(schema_object.internal, field) }
+    }
+
+    fn index_field(schema_object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType {
+        let bytes = index_bytes(schema_object, field, index);
+        std::str::from_utf8(bytes)
+            .expect("Schema string was invalid UTF-8")
+            .into()
+    }
+}
+
+impl SchemaType for Vec<u8> {
+    type RustType = Self;
+
+    fn from_field(schema_object: &SchemaObject, field: FieldId) -> Self::RustType {
+        get_bytes(schema_object, field).into()
+    }
+}
+
+impl SchemaIndexType for Vec<u8> {
+    fn field_count(schema_object: &SchemaObject, field: FieldId) -> u32 {
+        unsafe { Schema_GetBytesCount(schema_object.internal, field) }
+    }
+
+    fn index_field(schema_object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType {
+        index_bytes(schema_object, field, index).into()
+    }
+}
+
+fn get_bytes(object: &SchemaObject, field: FieldId) -> &[u8] {
+    unsafe {
+        let data = Schema_GetBytes(object.internal, field);
+        let len = Schema_GetBytesLength(object.internal, field);
+        std::slice::from_raw_parts(data, len as usize)
+    }
+}
+
+fn index_bytes(object: &SchemaObject, field: FieldId, index: u32) -> &[u8] {
+    unsafe {
+        let data = Schema_IndexBytes(object.internal, field, index);
+        let len = Schema_IndexBytesLength(object.internal, field, index);
+        std::slice::from_raw_parts(data, len as usize)
+    }
+}

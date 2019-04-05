@@ -9,6 +9,7 @@ pub struct CustomComponent {
     pub count: i32,
     pub targets: Vec<EntityId>,
     pub target_names: BTreeMap<EntityId, String>,
+    pub byte_collection: Vec<Vec<u8>>,
 }
 
 impl SchemaObjectType for CustomComponent {
@@ -18,6 +19,7 @@ impl SchemaObjectType for CustomComponent {
             count: schema_object.field::<SchemaSfixed32>(1),
             targets: schema_object.field::<Vec<EntityId>>(2),
             target_names: schema_object.field::<BTreeMap<EntityId, String>>(3),
+            byte_collection: schema_object.field::<Vec<Vec<u8>>>(4),
         }
     }
 }
