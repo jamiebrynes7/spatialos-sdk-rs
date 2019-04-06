@@ -28,8 +28,8 @@ fn entity_acl_is_serialized_correctly() {
             },
             "metadata_acl",
         )
-        .set_write_access(EntityAcl::ID, "entity_acl_acl")
-        .set_read_access(&["client", "server"])
+        .set_entity_acl_write_access(EntityAcl::ID, "entity_acl_acl")
+        .add_read_access(&["client", "server"])
         .build()
         .unwrap();
 

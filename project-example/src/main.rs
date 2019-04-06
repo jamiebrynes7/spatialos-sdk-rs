@@ -62,8 +62,7 @@ fn logic_loop(c: &mut WorkerConnection) {
             "rusty",
         )
         .set_metadata("Rotator", "rusty")
-        .set_read_access(&["rusty"])
-        .set_write_access(EntityAcl::ID, "rusty")
+        .set_entity_acl_write_access("rusty")
         .build()
         .unwrap();
 

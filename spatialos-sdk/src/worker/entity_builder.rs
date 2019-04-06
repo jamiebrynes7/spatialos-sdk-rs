@@ -7,7 +7,7 @@ use crate::worker::{
         SchemaString, SchemaStringField, SchemaUint32,
     },
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const ENTITY_ACL_COMPONENT_ID: ComponentId = 50;
 const METADATA_COMPONENT_ID: ComponentId = 53;
@@ -22,14 +22,14 @@ pub struct EntityBuilder {
     metadata: Option<String>,
 
     write_permissions: HashMap<ComponentId, String>,
-    read_permissions: Vec<String>,
+    read_permissions: HashSet<String>,
 
     error: Option<String>,
 }
 
 impl EntityBuilder {
     pub fn new<T: Into<String>>(x: f64, y: f64, z: f64, position_write_layer: T) -> Self {
-        let builder = EntityBuilder {
+        let mut builder = EntityBuilder {
             entity: Entity::new(),
             is_persistent: false,
             metadata: None,
@@ -39,7 +39,8 @@ impl EntityBuilder {
             error: None,
         };
 
-        builder.set_write_access(POSITION_COMPONENT_ID, position_write_layer)
+        builder.add_write_access(POSITION_COMPONENT_ID, position_write_layer);
+        builder
     }
 
     pub fn add_component<C: Component, T: Into<String>>(mut self, data: C, write_layer: T) -> Self {
@@ -47,13 +48,14 @@ impl EntityBuilder {
             self.error = Some(e);
         };
 
-        self.write_permissions.insert(C::ID, write_layer.into());
+        self.add_write_access(C::ID, write_layer);
         self
     }
 
     pub fn set_persistent<T: Into<String>>(mut self, write_layer: T) -> Self {
         self.is_persistent = true;
-        self.set_write_access(PERSISTENCE_COMPONENT_ID, write_layer)
+        self.add_write_access(PERSISTENCE_COMPONENT_ID, write_layer);
+        self
     }
 
     pub fn set_metadata<T: Into<String>, U: Into<String>>(
@@ -62,21 +64,23 @@ impl EntityBuilder {
         write_layer: U,
     ) -> Self {
         self.metadata = Some(entity_type.into());
-        self.set_write_access(METADATA_COMPONENT_ID, write_layer)
-    }
-
-    pub fn set_read_access<T: AsRef<str>>(mut self, layers: &[T]) -> Self {
-        self.read_permissions = layers
-            .iter()
-            .map(|layer| layer.as_ref().to_owned())
-            .collect();
-
+        self.add_write_access(METADATA_COMPONENT_ID, write_layer);
         self
     }
 
-    pub fn set_write_access<T: Into<String>>(mut self, id: ComponentId, layer: T) -> Self {
-        self.write_permissions.insert(id, layer.into());
+    pub fn add_read_access<T: Into<String>>(mut self, layer: T) -> Self {
+        self.read_permissions.insert(layer.into());
         self
+    }
+
+    pub fn set_entity_acl_write_access<T: Into<String>>(mut self, layer: T) -> Self {
+        self.add_write_access(ENTITY_ACL_COMPONENT_ID, layer);
+        self
+    }
+
+    fn add_write_access<T: Into<String>>(&mut self, id: ComponentId, layer: T) {
+        self.write_permissions.insert(ENTITY_ACL_COMPONENT_ID, layer.into());
+        self.read_permissions.insert(layer.into());
     }
 
     pub fn build(mut self) -> Result<Entity, String> {

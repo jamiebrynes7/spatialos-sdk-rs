@@ -28,7 +28,7 @@ impl Entity {
         Ok(entity)
     }
 
-    pub fn add<C: Component>(&mut self, component: C) -> Result<(), String> {
+    pub(crate) fn add<C: Component>(&mut self, component: C) -> Result<(), String> {
         self.pre_add_check(C::ID)?;
 
         let data_ptr = component::handle_allocate(component);
