@@ -1,4 +1,3 @@
-use crate::generated::improbable::EntityAcl;
 use crate::{connection_handler::*, opt::*};
 use generated::{example, improbable};
 use rand::Rng;

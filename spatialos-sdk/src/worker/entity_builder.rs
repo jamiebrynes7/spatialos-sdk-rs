@@ -35,7 +35,7 @@ impl EntityBuilder {
             metadata: None,
             position: (x, y, z),
             write_permissions: HashMap::new(),
-            read_permissions: Vec::new(),
+            read_permissions: HashSet::new(),
             error: None,
         };
 
@@ -74,9 +74,9 @@ impl EntityBuilder {
     }
 
     fn add_write_access<T: Into<String>>(&mut self, id: ComponentId, layer: T) {
-        self.write_permissions
-            .insert(ENTITY_ACL_COMPONENT_ID, layer.into());
-        self.read_permissions.insert(layer.into());
+        let layer = layer.into();
+        self.write_permissions.insert(id, layer.clone());
+        self.read_permissions.insert(layer);
     }
 
     pub fn build(mut self) -> Result<Entity, String> {

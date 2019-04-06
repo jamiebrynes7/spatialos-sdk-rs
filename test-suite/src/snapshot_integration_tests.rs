@@ -1,8 +1,9 @@
 use approx;
 use spatialos_sdk::worker::{entity::Entity, snapshot::*, EntityId};
-use std::{collections::BTreeMap, env};
+use std::env;
 
 use crate::generated::improbable::*;
+use spatialos_sdk::worker::entity_builder::EntityBuilder;
 
 #[test]
 pub fn writing_invalid_entity_returns_error() {
@@ -56,28 +57,7 @@ pub fn create_and_read_snapshot() {
 }
 
 fn get_test_entity() -> Result<Entity, String> {
-    let mut entity = Entity::new();
-
-    let position = Position {
-        coords: Coordinates {
-            x: 10.0,
-            y: -10.0,
-            z: 0.0,
-        },
-    };
-
-    let acl = EntityAcl {
-        read_acl: WorkerRequirementSet {
-            attribute_set: vec![WorkerAttributeSet {
-                attribute: vec!["RustWorker".to_owned()],
-            }],
-        },
-        component_write_acl: BTreeMap::new(),
-    };
-
-    entity.add(position)?;
-    entity.add(acl)?;
-    entity.add(Persistence {})?;
-
-    Ok(entity)
+    let mut builder = EntityBuilder::new(10.0, -10.0, 0.0, "RustWorker");
+    builder.set_persistent("RustWorker");
+    builder.build()
 }

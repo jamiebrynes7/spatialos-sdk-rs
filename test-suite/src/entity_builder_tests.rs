@@ -5,9 +5,8 @@ use spatialos_sdk::worker::entity_builder::EntityBuilder;
 
 #[test]
 fn position_is_serialized_correctly() {
-    let entity = EntityBuilder::new(10.0, -10.0, 7.5, "rusty")
-        .build()
-        .unwrap();
+    let builder = EntityBuilder::new(10.0, -10.0, 7.5, "rusty");
+    let entity = builder.build().unwrap();
 
     let maybe_position = entity.get::<Position>();
     assert!(maybe_position.is_some());
@@ -21,17 +20,18 @@ fn position_is_serialized_correctly() {
 
 #[test]
 fn entity_acl_is_serialized_correctly() {
-    let entity = EntityBuilder::new(0.0, 0.0, 0.0, "position_acl")
-        .add_component(
-            Metadata {
-                entity_type: "test".to_owned(),
-            },
-            "metadata_acl",
-        )
-        .set_entity_acl_write_access(EntityAcl::ID, "entity_acl_acl")
-        .add_read_access(&["client", "server"])
-        .build()
-        .unwrap();
+    let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, "position_acl");
+    builder.add_component(
+        Metadata {
+            entity_type: "test".to_owned(),
+        },
+        "metadata_acl",
+    );
+    builder.set_entity_acl_write_access("entity_acl_acl");
+    builder.add_read_access("client");
+    builder.add_read_access("server");
+
+    let entity = builder.build().unwrap();
 
     let maybe_acl = entity.get::<EntityAcl>();
     assert!(maybe_acl.is_some());
@@ -39,7 +39,7 @@ fn entity_acl_is_serialized_correctly() {
     let acl = maybe_acl.unwrap();
 
     // First check that we insert each layer into a different set.
-    assert_eq!(2, acl.read_acl.attribute_set.len());
+    assert_eq!(5, acl.read_acl.attribute_set.len());
 
     let read_acl_layers: Vec<String> = acl
         .read_acl
@@ -85,10 +85,9 @@ fn entity_acl_is_serialized_correctly() {
 
 #[test]
 fn metadata_is_serialized_correctly() {
-    let entity = EntityBuilder::new(0.0, 0.0, 0.0, "rusty")
-        .set_metadata("my_entity", "rusty")
-        .build()
-        .unwrap();
+    let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, "rusty");
+    builder.set_metadata("my_entity", "rusty");
+    let entity = builder.build().unwrap();
 
     let maybe_metadata = entity.get::<Metadata>();
     assert!(maybe_metadata.is_some());
@@ -99,28 +98,27 @@ fn metadata_is_serialized_correctly() {
 
 #[test]
 fn persistence_component_is_added_if_set() {
-    let entity = EntityBuilder::new(0.0, 0.0, 0.0, "rusty")
-        .set_persistent("rusty")
-        .build()
-        .unwrap();
+    let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, "rusty");
+    builder.set_persistent("rusty");
+    let entity = builder.build().unwrap();
 
     assert!(entity.get::<Persistence>().is_some());
 }
 
 #[test]
 fn error_is_returned_if_invalid_entity() {
-    let result = EntityBuilder::new(0.0, 0.0, 0.0, "rusty")
-        .add_component(
-            Position {
-                coords: Coordinates {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
+    let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, "rusty");
+    builder.add_component(
+        Position {
+            coords: Coordinates {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
             },
-            "rusty",
-        )
-        .build();
+        },
+        "rusty",
+    );
+    let result = builder.build();
 
     assert!(result.is_err());
 }
