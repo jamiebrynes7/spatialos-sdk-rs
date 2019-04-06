@@ -43,43 +43,39 @@ impl EntityBuilder {
         builder
     }
 
-    pub fn add_component<C: Component, T: Into<String>>(mut self, data: C, write_layer: T) -> Self {
+    pub fn add_component<C: Component, T: Into<String>>(&mut self, data: C, write_layer: T) {
         if let Err(e) = self.entity.add(data) {
             self.error = Some(e);
         };
 
         self.add_write_access(C::ID, write_layer);
-        self
     }
 
-    pub fn set_persistent<T: Into<String>>(mut self, write_layer: T) -> Self {
+    pub fn set_persistent<T: Into<String>>(&mut self, write_layer: T) {
         self.is_persistent = true;
         self.add_write_access(PERSISTENCE_COMPONENT_ID, write_layer);
-        self
     }
 
     pub fn set_metadata<T: Into<String>, U: Into<String>>(
-        mut self,
+        &mut self,
         entity_type: T,
         write_layer: U,
-    ) -> Self {
+    ) {
         self.metadata = Some(entity_type.into());
         self.add_write_access(METADATA_COMPONENT_ID, write_layer);
-        self
     }
 
-    pub fn add_read_access<T: Into<String>>(mut self, layer: T) -> Self {
+    pub fn add_read_access<T: Into<String>>(&mut self, layer: T) {
         self.read_permissions.insert(layer.into());
-        self
     }
 
-    pub fn set_entity_acl_write_access<T: Into<String>>(mut self, layer: T) -> Self {
+    pub fn set_entity_acl_write_access<T: Into<String>>(&mut self, layer: T) {
         self.add_write_access(ENTITY_ACL_COMPONENT_ID, layer);
-        self
     }
 
     fn add_write_access<T: Into<String>>(&mut self, id: ComponentId, layer: T) {
-        self.write_permissions.insert(ENTITY_ACL_COMPONENT_ID, layer.into());
+        self.write_permissions
+            .insert(ENTITY_ACL_COMPONENT_ID, layer.into());
         self.read_permissions.insert(layer.into());
     }
 

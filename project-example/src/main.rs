@@ -50,21 +50,22 @@ fn logic_loop(c: &mut WorkerConnection) {
     // authority over, so that we know which ones we need to be updating.
     let mut world = HashMap::new();
 
-    let entity = EntityBuilder::new(0.0, 0.0, 0.0, "rusty")
-        .add_component(
-            example::Rotate {
-                angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
-                radius: rng.gen_range(20.0, 100.0),
-                center_x: rng.gen_range(-50.0, 50.0),
-                center_y: 0.0,
-                center_z: rng.gen_range(-50.0, 50.0),
-            },
-            "rusty",
-        )
-        .set_metadata("Rotator", "rusty")
-        .set_entity_acl_write_access("rusty")
-        .build()
-        .unwrap();
+    let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, "rusty");
+
+    builder.add_component(
+        example::Rotate {
+            angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
+            radius: rng.gen_range(20.0, 100.0),
+            center_x: rng.gen_range(-50.0, 50.0),
+            center_y: 0.0,
+            center_z: rng.gen_range(-50.0, 50.0),
+        },
+        "rusty",
+    );
+    builder.set_metadata("Rotator", "rusty");
+    builder.set_entity_acl_write_access("rusty");
+
+    let entity = builder.build().unwrap();
 
     let create_request_id = c.send_create_entity_request(entity, None, None);
     println!("Create entity request ID: {:?}", create_request_id);
