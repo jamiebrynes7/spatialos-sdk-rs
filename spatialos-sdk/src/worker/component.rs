@@ -30,7 +30,7 @@ pub trait Component
 where
     Self: std::marker::Sized,
 {
-    type Update;
+    type Update: Clone;
     type CommandRequest;
     type CommandResponse;
 
@@ -125,11 +125,13 @@ pub(crate) mod internal {
 
     use crate::worker::component::ComponentId;
 
+    // TODO: Should this just wrap &'a Worker_ComponentData ?
     #[derive(Debug)]
     pub struct ComponentData<'a> {
         pub component_id: ComponentId,
         pub schema_type: SchemaComponentData,
         pub user_handle: *const Worker_ComponentDataHandle,
+        pub reserved: *mut ::std::os::raw::c_void,
 
         // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
         // type-erased pointer that may be null, so we just mark that we're borrowing
@@ -146,6 +148,7 @@ pub(crate) mod internal {
                     internal: data.schema_type,
                 },
                 user_handle: data.user_handle,
+                reserved: data.reserved,
                 _marker: PhantomData,
             }
         }
@@ -237,15 +240,18 @@ lazy_static::lazy_static! {
 
         let mut vtables = Vec::new();
         let mut index_map = HashMap::new();
+        let mut merge_methods = HashMap::new();
 
         for (i, table) in inventory::iter::<VTable>.into_iter().enumerate() {
-            vtables.push(table.vtable);
-            index_map.insert(table.vtable.component_id, i);
+            vtables.push(table.worker_vtable);
+            index_map.insert(table.worker_vtable.component_id, i);
+            merge_methods.insert(table.worker_vtable.component_id, table.merge);
         }
 
         ComponentDatabase {
             component_vtables: vtables,
             index_map,
+            merge_methods,
         }
     };
 }
@@ -254,6 +260,8 @@ lazy_static::lazy_static! {
 pub(crate) struct ComponentDatabase {
     component_vtables: Vec<Worker_ComponentVtable>,
     index_map: HashMap<ComponentId, usize>,
+    merge_methods:
+        HashMap<ComponentId, Option<unsafe fn(data: *mut raw::c_void, update: *const raw::c_void)>>,
 }
 
 impl ComponentDatabase {
@@ -267,8 +275,22 @@ impl ComponentDatabase {
             .map(|index| &self.component_vtables[*index])
     }
 
+    pub(crate) fn get_registered_component_ids(&self) -> Vec<ComponentId> {
+        self.component_vtables
+            .iter()
+            .map(|table| table.component_id)
+            .collect()
+    }
+
     pub(crate) fn to_worker_sdk(&self) -> *const Worker_ComponentVtable {
         self.component_vtables.as_ptr()
+    }
+
+    pub(crate) fn get_merge_method(
+        &self,
+        id: ComponentId,
+    ) -> &Option<unsafe fn(data: *mut raw::c_void, update: *const raw::c_void)> {
+        self.merge_methods.get(&id).unwrap()
     }
 
     pub(crate) fn len(&self) -> usize {
@@ -295,13 +317,14 @@ pub(crate) unsafe fn handle_copy<T>(handle: *mut raw::c_void) -> *mut raw::c_voi
 }
 
 pub struct VTable {
-    vtable: Worker_ComponentVtable,
+    worker_vtable: Worker_ComponentVtable,
+    merge: Option<unsafe fn(data: *mut raw::c_void, update: *const raw::c_void)>,
 }
 
 impl VTable {
-    pub fn new<C: Component>() -> Self {
+    pub fn new<C: Component + ComponentData<C>>() -> Self {
         VTable {
-            vtable: Worker_ComponentVtable {
+            worker_vtable: Worker_ComponentVtable {
                 component_id: C::ID,
                 user_data: ptr::null_mut(),
                 command_request_free: Some(vtable_command_request_free::<C>),
@@ -321,8 +344,19 @@ impl VTable {
                 component_update_deserialize: Some(vtable_component_update_deserialize::<C>),
                 component_update_serialize: Some(vtable_component_update_serialize::<C>),
             },
+            merge: Some(vtable_data_merge_update::<C>),
         }
     }
+}
+
+unsafe fn vtable_data_merge_update<C: Component + ComponentData<C>>(
+    data: *mut raw::c_void,
+    update: *const raw::c_void,
+) {
+    C::merge(
+        &mut *(data as *mut C),
+        (&*(update as *const C::Update)).clone(),
+    )
 }
 
 unsafe extern "C" fn vtable_component_data_free<C: Component>(

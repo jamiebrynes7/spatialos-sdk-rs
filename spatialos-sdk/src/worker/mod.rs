@@ -12,6 +12,7 @@ pub mod op;
 pub mod parameters;
 pub mod query;
 pub mod snapshot;
+pub mod view;
 pub mod vtable;
 
 use component::ComponentId;

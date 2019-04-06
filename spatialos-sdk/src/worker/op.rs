@@ -554,6 +554,10 @@ impl<'a> AddComponentOp<'a> {
         }
     }
 
+    pub(crate) fn data(&self) -> &component::internal::ComponentData<'a> {
+        &self.component_data
+    }
+
     fn schema(&self) -> &SchemaComponentData {
         &self.component_data.schema_type
     }
