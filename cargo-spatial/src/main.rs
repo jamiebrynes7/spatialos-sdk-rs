@@ -1,4 +1,4 @@
-use cargo_spatial::{codegen, config::Config, local, opt::*};
+use cargo_spatial::{codegen, config::Config, download, local, opt::*};
 use log::*;
 use simplelog::*;
 use structopt::StructOpt;
@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
 
         Command::Download {command} => match command {
-            Download::Cli => println!("Download CLI"),
+            Download::Cli => download::download_cli()?,
             Download::Sdk => println!("Download SDK")
         }
     }
