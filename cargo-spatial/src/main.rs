@@ -30,6 +30,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Component ID: {}", cargo_spatial::generate_component_id());
             }
         },
+
+        Command::Download {command} => match command {
+            Download::Cli => println!("Download CLI"),
+            Download::Sdk => println!("Download SDK")
+        }
     }
 
     Ok(())

@@ -47,6 +47,13 @@ pub enum Command {
         #[structopt(subcommand)]
         command: Generate,
     },
+
+    // Commands for downloading the spatial CLI and worker packages.
+    #[structopt(name = "download")]
+    Download {
+        #[structopt(subcommand)]
+        command: Download
+    }
 }
 
 #[derive(StructOpt)]
@@ -75,4 +82,16 @@ pub enum Generate {
     /// Generate a random, valid component ID
     #[structopt(name = "component-id")]
     ComponentId,
+}
+
+#[derive(StructOpt)]
+#[structopt(rename_all = "kebab-case")]
+pub enum Download {
+    // Download the spatial CLI for your platform.
+    #[structopt(name = "cli")]
+    Cli,
+
+    // Download the SpatialOS C API dependencies
+    #[structopt(name = "sdk")]
+    Sdk
 }
