@@ -52,8 +52,8 @@ pub enum Command {
     #[structopt(name = "download")]
     Download {
         #[structopt(subcommand)]
-        command: Download
-    }
+        command: Download,
+    },
 }
 
 #[derive(StructOpt)]
@@ -93,7 +93,7 @@ pub enum Download {
 
     // Download the SpatialOS C API dependencies
     #[structopt(name = "sdk")]
-    Sdk(DownloadSdk)
+    Sdk(DownloadSdk),
 }
 
 #[derive(StructOpt)]
@@ -101,5 +101,5 @@ pub enum Download {
 pub struct DownloadSdk {
     /// Overrides the SDK version in Spatial.toml
     #[structopt(long, short)]
-    pub sdk_version: Option<String>
+    pub sdk_version: Option<String>,
 }

@@ -28,10 +28,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         },
 
-        Command::Download {command} => match command {
+        Command::Download { command } => match command {
             Download::Cli => download::download_cli()?,
-            Download::Sdk(options) => download::download_sdk(options)?
-        }
+            Download::Sdk(options) => download::download_sdk(options)?,
+        },
     }
 
     Ok(())

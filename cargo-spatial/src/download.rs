@@ -5,18 +5,18 @@ pub use self::linux::*;
 pub use self::win_osx::*;
 
 use crate::config::Config;
-use std::path::{PathBuf, Path};
-use std::fs;
-use std::process;
-use std::io;
-use log::*;
-use zip;
 use crate::opt::DownloadSdk;
+use log::*;
+use std::fs;
+use std::io;
+use std::path::{Path, PathBuf};
+use std::process;
+use zip;
 
 enum SpatialWorkerSdkPackage {
     CApiWin,
     CApiMac,
-    CApiLinux
+    CApiLinux,
 }
 
 impl SpatialWorkerSdkPackage {
@@ -24,7 +24,7 @@ impl SpatialWorkerSdkPackage {
         match self {
             SpatialWorkerSdkPackage::CApiWin => "c-static-x86_64-msvc_mt-win32",
             SpatialWorkerSdkPackage::CApiMac => "c-static-x86_64-clang_libcpp-macos",
-            SpatialWorkerSdkPackage::CApiLinux=> "c-static-x86_64-gcc_libstdcpp_pic-linux"
+            SpatialWorkerSdkPackage::CApiLinux => "c-static-x86_64-gcc_libstdcpp_pic-linux",
         }
     }
 
@@ -32,7 +32,7 @@ impl SpatialWorkerSdkPackage {
         match self {
             SpatialWorkerSdkPackage::CApiWin => "win",
             SpatialWorkerSdkPackage::CApiMac => "macos",
-            SpatialWorkerSdkPackage::CApiLinux=> "linux"
+            SpatialWorkerSdkPackage::CApiLinux => "linux",
         }
     }
 }
@@ -43,7 +43,7 @@ enum SpatialToolsPackage {
     SchemaCompilerLinux,
     SnapshotConverterWin,
     SnapshotConverterMac,
-    SnapshotConverterLinux
+    SnapshotConverterLinux,
 }
 
 impl SpatialToolsPackage {
@@ -54,14 +54,18 @@ impl SpatialToolsPackage {
             SpatialToolsPackage::SchemaCompilerLinux => "schema_compiler-x86_64-linux",
             SpatialToolsPackage::SnapshotConverterWin => "snapshot_converter-x86_64-win32",
             SpatialToolsPackage::SnapshotConverterMac => "snapshot_converter-x86_64-macos",
-            SpatialToolsPackage::SnapshotConverterLinux => "snapshot_converter-x86_64-linux"
+            SpatialToolsPackage::SnapshotConverterLinux => "snapshot_converter-x86_64-linux",
         }
     }
 
     fn get_relative_target_directory(&self) -> &str {
         match self {
-            SpatialToolsPackage::SchemaCompilerWin | SpatialToolsPackage::SchemaCompilerMac | SpatialToolsPackage::SchemaCompilerLinux => "schema_compiler",
-            SpatialToolsPackage::SnapshotConverterWin | SpatialToolsPackage::SnapshotConverterMac | SpatialToolsPackage::SnapshotConverterLinux => "snapshot_converter",
+            SpatialToolsPackage::SchemaCompilerWin
+            | SpatialToolsPackage::SchemaCompilerMac
+            | SpatialToolsPackage::SchemaCompilerLinux => "schema_compiler",
+            SpatialToolsPackage::SnapshotConverterWin
+            | SpatialToolsPackage::SnapshotConverterMac
+            | SpatialToolsPackage::SnapshotConverterLinux => "snapshot_converter",
         }
     }
 }
@@ -74,9 +78,10 @@ enum SpatialPackageSource {
 
 impl SpatialPackageSource {
     fn get_package_name(&self) -> Vec<&str> {
-
         match self {
-            SpatialPackageSource::WorkerSdk(package) => vec!["worker_sdk", package.get_package_name()],
+            SpatialPackageSource::WorkerSdk(package) => {
+                vec!["worker_sdk", package.get_package_name()]
+            }
             SpatialPackageSource::Tools(package) => vec!["tools", package.get_package_name()],
             SpatialPackageSource::Schema => vec!["schema", "standard_library"],
         }
@@ -86,7 +91,7 @@ impl SpatialPackageSource {
         match self {
             SpatialPackageSource::WorkerSdk(package) => package.get_relative_target_directory(),
             SpatialPackageSource::Tools(package) => package.get_relative_target_directory(),
-            SpatialPackageSource::Schema => "std-lib"
+            SpatialPackageSource::Schema => "std-lib",
         }
     }
 }
@@ -96,7 +101,7 @@ static COMMON_PACKAGES: &'static [SpatialPackageSource] = &[
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiLinux),
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiWin),
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiMac),
-    SpatialPackageSource::Schema
+    SpatialPackageSource::Schema,
 ];
 
 #[cfg(target_os = "linux")]
@@ -117,7 +122,6 @@ static PLATFORM_PACKAGES: &'static [SpatialPackageSource] = &[
     SpatialPackageSource::Tools(SpatialToolsPackage::SnapshotConverterMac),
 ];
 
-
 pub fn download_sdk(options: &DownloadSdk) -> Result<(), Box<dyn std::error::Error>> {
     let config = Config::load();
     trace!("Config loaded.");
@@ -127,9 +131,9 @@ pub fn download_sdk(options: &DownloadSdk) -> Result<(), Box<dyn std::error::Err
         Err(_) => ::std::env::var("SPATIAL_LIB_DIR")?
     };
 
-    let spatial_sdk_version= match options.sdk_version {
+    let spatial_sdk_version = match options.sdk_version {
         Some(ref version) => version.clone(),
-        None => config?.spatial_sdk_version
+        None => config?.spatial_sdk_version,
     };
 
     info!("Downloading packages into: {}", spatial_lib_dir);
@@ -153,16 +157,21 @@ pub fn download_sdk(options: &DownloadSdk) -> Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
-fn download_package(package_source: &SpatialPackageSource, sdk_version: &str, spatial_lib_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
-    info!("Downloading {}", package_source.get_package_name().join(" "));
+fn download_package(
+    package_source: &SpatialPackageSource,
+    sdk_version: &str,
+    spatial_lib_dir: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!(
+        "Downloading {}",
+        package_source.get_package_name().join(" ")
+    );
 
     let mut output_path = PathBuf::new();
     output_path.push(spatial_lib_dir);
     output_path.push(package_source.get_relative_target_directory());
 
-    let mut args = vec![
-        "package",
-        "retrieve"];
+    let mut args = vec!["package", "retrieve"];
 
     args.extend(package_source.get_package_name());
     args.push(sdk_version);
@@ -171,9 +180,7 @@ fn download_package(package_source: &SpatialPackageSource, sdk_version: &str, sp
 
     trace!("Running spatial command with arguments: {:?}", args);
 
-    let process = process::Command::new("spatial")
-        .args(args)
-        .output()?;
+    let process = process::Command::new("spatial").args(args).output()?;
 
     if !process.status.success() {
         let stdout = String::from_utf8(process.stdout)?;
@@ -197,19 +204,15 @@ mod linux {
 mod win_osx {
     use log::*;
     use reqwest::get;
+    use std::{fs::File, io::copy, path::Path, path::PathBuf, process};
     use tempfile;
-    use std::{
-        process,
-        io::copy,
-        fs::File,
-        path::PathBuf,
-        path::Path
-    };
 
     #[cfg(target_os = "windows")]
-    const DOWNLOAD_LOCATION: &str = "https://console.improbable.io/installer/download/stable/latest/win";
+    const DOWNLOAD_LOCATION: &str =
+        "https://console.improbable.io/installer/download/stable/latest/win";
     #[cfg(target_os = "macos")]
-    const DOWNLOAD_LOCATION: &str =  "https://console.improbable.io/installer/download/stable/latest/mac";
+    const DOWNLOAD_LOCATION: &str =
+        "https://console.improbable.io/installer/download/stable/latest/mac";
 
     pub fn download_cli() -> Result<(), Box<dyn std::error::Error>> {
         // Create a temporary directory. When this is dropped the directory is deleted.

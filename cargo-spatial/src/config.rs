@@ -95,8 +95,8 @@ impl Config {
                 cwd.push(path);
 
                 cwd.to_str().map(|p| p.to_owned())
-            },
-            None => ::std::env::var("SPATIAL_LIB_DIR").ok()
+            }
+            None => ::std::env::var("SPATIAL_LIB_DIR").ok(),
         }
     }
 }
