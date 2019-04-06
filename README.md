@@ -13,9 +13,10 @@
 ## Setup
 
 1. Clone this repository.
-2. Run `cargo run --bin download_sdk -- -d dependencies -s 13.6.0` to download the C API dependencies.
+2. Install cargo-spatial: `cargo install --path ./cargo-spatial`
 3. Set the `SPATIAL_LIB_DIR` environment variable to the location of the dependencies: `export SPATIAL_LIB_DIR=$(pwd)/dependencies`.
-4. Run `cargo build`
+4. Run `cargo spatial download sdk` to download the C API dependencies.
+5. Run `cargo build`
 
 If these steps complete successfully, the `spatialos-sdk` crate has been built and linked successfully and can be used in user code.
 
@@ -23,9 +24,8 @@ If these steps complete successfully, the `spatialos-sdk` crate has been built a
 
 To run the example project, you will need to:
 
-1. Install cargo-spatial: `cargo install --path ./cargo-spatial`
-2. Navigate to `project-example`
-3. Run `cargo spatial local launch`
+1. Navigate to `project-example`
+2. Run `cargo spatial local launch`
 
 This will start a local deployment of SpatialOS with one entity. The entity will have the `Example`
 component described in `project-example/schema/example.schema`.
