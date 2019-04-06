@@ -7,11 +7,11 @@ pub use self::win_osx::*;
 use crate::config::Config;
 use crate::opt::DownloadSdk;
 use log::*;
-use std::fs;
-use std::io;
-use std::path::{Path, PathBuf};
-use std::process;
-use zip;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    process,
+};
 
 enum SpatialWorkerSdkPackage {
     CApiWin,
