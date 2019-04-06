@@ -1,4 +1,4 @@
-use cargo_spatial::{codegen, config::Config, download, local, opt::*};
+use cargo_spatial::{codegen, download, local, opt::*};
 use log::*;
 use simplelog::*;
 use structopt::StructOpt;
@@ -10,19 +10,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let verbosity = if opt.verbose {
         LevelFilter::Trace
     } else {
-        LevelFilter::Warn
+        LevelFilter::Info
     };
     SimpleLogger::init(verbosity, Default::default()).expect("Failed to setup logger");
 
-    let config = Config::load()?;
-    trace!("Loaded config: {:#?}", config);
-
     // Perform the operation selected by the user.
     match &opt.command {
-        Command::Codegen => codegen::run_codegen(&config)?,
+        Command::Codegen => codegen::run_codegen()?,
 
         Command::Local(local) => match local {
-            Local::Launch(launch) => local::launch(&config, launch)?,
+            Local::Launch(launch) => local::launch(launch)?,
         },
 
         Command::Generate { command } => match command {
@@ -33,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         Command::Download {command} => match command {
             Download::Cli => download::download_cli()?,
-            Download::Sdk => println!("Download SDK")
+            Download::Sdk(options) => download::download_sdk(options)?
         }
     }
 

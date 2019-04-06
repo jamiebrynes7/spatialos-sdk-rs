@@ -93,5 +93,13 @@ pub enum Download {
 
     // Download the SpatialOS C API dependencies
     #[structopt(name = "sdk")]
-    Sdk
+    Sdk(DownloadSdk)
+}
+
+#[derive(StructOpt)]
+#[structopt(rename_all = "kebab-case")]
+pub struct DownloadSdk {
+    /// Overrides the SDK version in Spatial.toml
+    #[structopt(long, short)]
+    pub sdk_version: Option<String>
 }

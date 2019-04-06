@@ -6,6 +6,11 @@ use std::io::prelude::*;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
+    /// The version of the SpatialOS SDK to build against.
+    ///
+    /// Defaults to the latest supported version.
+    pub spatial_sdk_version: String,
+
     /// The list of worker projects to be built.
     ///
     /// If empty, the root project is assumed to contain all workers.
@@ -47,6 +52,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
+            spatial_sdk_version: "13.6.0".to_owned(),
             workers: vec![".".into()],
             codegen_out: "src/generated.rs".into(),
             schema_paths: vec!["./schema".into()],
@@ -80,12 +86,18 @@ impl Config {
             .unwrap_or_else(|| self.build_dir.clone() + "/schema")
     }
 
-    /// Returns the path to the spatial SDK directory, or `None` if the path hasn't
+    /// Returns the absolute path to the spatial SDK directory, or `None` if the path hasn't
     /// been configured.
     pub fn spatial_lib_dir(&self) -> Option<String> {
-        self.spatial_lib_dir
-            .clone()
-            .or_else(|| std::env::var("SPATIAL_LIB_DIR").ok())
+        match self.spatial_lib_dir {
+            Some(ref path) => {
+                let mut cwd = ::std::env::current_dir().unwrap();
+                cwd.push(path);
+
+                cwd.to_str().map(|p| p.to_owned())
+            },
+            None => ::std::env::var("SPATIAL_LIB_DIR").ok()
+        }
     }
 }
 

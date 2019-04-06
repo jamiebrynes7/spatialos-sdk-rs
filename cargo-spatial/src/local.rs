@@ -10,14 +10,16 @@ use tap::*;
 /// Before launching the deployment, this will first run code generation and build
 /// workers in the project. Assumes that the current working directory is the root
 /// directory of the project, i.e. the directory that has the `Spatial.toml` file.
-pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Box<dyn std::error::Error>> {
+pub fn launch(launch: &LocalLaunch) -> Result<(), Box<dyn std::error::Error>> {
+    let config = Config::load()?;
+
     assert!(
         crate::current_dir_is_root(),
         "Current directory should be the project root"
     );
 
     // Run codegen and such.
-    crate::codegen::run_codegen(&config)?;
+    crate::codegen::run_codegen()?;
 
     // Use `cargo install` to build workers and copy the exectuables to the build
     // directory.
