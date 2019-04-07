@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::Path;
 
 /// Project configuration stored in the `Cargo.toml` file at project's root.
 #[derive(Debug, Serialize, Deserialize)]
@@ -52,7 +53,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            spatial_sdk_version: "13.6.0".to_owned(),
+            spatial_sdk_version: "13.6.0".into(),
             workers: vec![".".into()],
             codegen_out: "src/generated.rs".into(),
             schema_paths: vec!["./schema".into()],
@@ -90,14 +91,27 @@ impl Config {
     /// been configured.
     pub fn spatial_lib_dir(&self) -> Option<String> {
         match self.spatial_lib_dir {
-            Some(ref path) => {
-                let mut cwd = ::std::env::current_dir().unwrap();
-                cwd.push(path);
-
-                cwd.to_str().map(|p| p.to_owned())
-            }
-            None => ::std::env::var("SPATIAL_LIB_DIR").ok(),
+            Some(ref path) => Some(self.resolve_path(path)),
+            None => {
+                ::std::env::var("SPATIAL_LIB_DIR")
+                    .ok()
+                    .map(|env_var| self.resolve_path(&env_var))
+            },
         }
+    }
+
+    /// Resolves the unresolved path into an absolute path.
+    fn resolve_path(&self, unresolved_path: &str) -> String {
+        let path = Path::new(unresolved_path);
+
+        if path.is_absolute() {
+            return path.to_str().unwrap().to_owned();
+        }
+
+        let mut cwd = ::std::env::current_dir().unwrap();
+        cwd.push(path);
+
+        cwd.to_str().unwrap().to_owned()
     }
 }
 
