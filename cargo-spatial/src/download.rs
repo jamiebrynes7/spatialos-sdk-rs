@@ -20,7 +20,7 @@ enum SpatialWorkerSdkPackage {
 }
 
 impl SpatialWorkerSdkPackage {
-    fn get_package_name(&self) -> &str {
+    fn package_name(self) -> &'static str {
         match self {
             SpatialWorkerSdkPackage::CApiWin => "c-static-x86_64-msvc_mt-win32",
             SpatialWorkerSdkPackage::CApiMac => "c-static-x86_64-clang_libcpp-macos",
@@ -28,7 +28,7 @@ impl SpatialWorkerSdkPackage {
         }
     }
 
-    fn get_relative_target_directory(&self) -> &str {
+    fn relative_target_directory(self) -> &'static str {
         match self {
             SpatialWorkerSdkPackage::CApiWin => "win",
             SpatialWorkerSdkPackage::CApiMac => "macos",
@@ -48,7 +48,7 @@ enum SpatialToolsPackage {
 }
 
 impl SpatialToolsPackage {
-    fn get_package_name(&self) -> &str {
+    fn package_name(self) -> &'static str {
         match self {
             SpatialToolsPackage::SchemaCompilerWin => "schema_compiler-x86_64-win32",
             SpatialToolsPackage::SchemaCompilerMac => "schema_compiler-x86_64-macos",
@@ -59,7 +59,7 @@ impl SpatialToolsPackage {
         }
     }
 
-    fn get_relative_target_directory(&self) -> &str {
+    fn relative_target_directory(self) -> &'static str {
         match self {
             SpatialToolsPackage::SchemaCompilerWin
             | SpatialToolsPackage::SchemaCompilerMac
@@ -79,20 +79,18 @@ enum SpatialPackageSource {
 }
 
 impl SpatialPackageSource {
-    fn get_package_name(&self) -> Vec<&str> {
+    fn package_name(self) -> Vec<&'static str> {
         match self {
-            SpatialPackageSource::WorkerSdk(package) => {
-                vec!["worker_sdk", package.get_package_name()]
-            }
-            SpatialPackageSource::Tools(package) => vec!["tools", package.get_package_name()],
+            SpatialPackageSource::WorkerSdk(package) => vec!["worker_sdk", package.package_name()],
+            SpatialPackageSource::Tools(package) => vec!["tools", package.package_name()],
             SpatialPackageSource::Schema => vec!["schema", "standard_library"],
         }
     }
 
-    fn get_relative_target_directory(&self) -> &str {
+    fn relative_target_directory(self) -> &'static str {
         match self {
-            SpatialPackageSource::WorkerSdk(package) => package.get_relative_target_directory(),
-            SpatialPackageSource::Tools(package) => package.get_relative_target_directory(),
+            SpatialPackageSource::WorkerSdk(package) => package.relative_target_directory(),
+            SpatialPackageSource::Tools(package) => package.relative_target_directory(),
             SpatialPackageSource::Schema => "std-lib",
         }
     }
@@ -138,8 +136,6 @@ pub fn download_sdk(
         None => config?.spatial_sdk_version,
     };
 
-    trace!("{}", ::std::env::var("PATH").unwrap());
-
     info!("Downloading packages into: {}", spatial_lib_dir);
 
     // Clean existing directory.
@@ -151,33 +147,30 @@ pub fn download_sdk(
     trace!("Spatial lib directory cleaned.");
 
     for package in COMMON_PACKAGES {
-        download_package(package, &spatial_sdk_version, &spatial_lib_dir)?;
+        download_package(*package, &spatial_sdk_version, &spatial_lib_dir)?;
     }
 
     for package in PLATFORM_PACKAGES {
-        download_package(package, &spatial_sdk_version, &spatial_lib_dir)?;
+        download_package(*package, &spatial_sdk_version, &spatial_lib_dir)?;
     }
 
     Ok(())
 }
 
 fn download_package(
-    package_source: &SpatialPackageSource,
+    package_source: SpatialPackageSource,
     sdk_version: &str,
     spatial_lib_dir: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    info!(
-        "Downloading {}",
-        package_source.get_package_name().join(" ")
-    );
+    info!("Downloading {}", package_source.package_name().join(" "));
 
     let mut output_path = PathBuf::new();
     output_path.push(spatial_lib_dir);
-    output_path.push(package_source.get_relative_target_directory());
+    output_path.push(package_source.relative_target_directory());
 
     let mut args = vec!["package", "retrieve"];
 
-    args.extend(package_source.get_package_name());
+    args.extend(package_source.package_name());
     args.push(sdk_version);
     args.push(output_path.to_str().unwrap());
     args.push("--unzip");

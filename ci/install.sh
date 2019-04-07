@@ -50,8 +50,6 @@ export RUST_BACKTRACE=1
 mkdir -p ~/.improbable/oauth2
 echo $SPATIAL_OAUTH > ~/.improbable/oauth2/oauth2_refresh_token
 
-rm -rf "./temp"
-
 rustup component add rustfmt-preview
 rustup component add clippy-preview
 
