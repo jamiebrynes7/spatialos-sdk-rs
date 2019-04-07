@@ -79,6 +79,11 @@ impl View {
         self.entities.contains(entity_id)
     }
 
+    pub fn query<'a, T : ViewQuery>(&'a self) -> (impl Iterator<Item = T> + 'a) {
+        self.iter_entities().filter(move |id| T::filter(self, id))
+            .map(move |id| T::select(self, id))
+    }
+
     fn add_entity(&mut self, entity_id: EntityId) {
         self.entities.insert(entity_id);
     }
@@ -130,14 +135,21 @@ impl View {
 
 pub struct ViewEntityIterator<'a> {
     iter: ::std::collections::hash_set::Iter<'a, EntityId>,
+    view: &'a View,
 }
 
 impl<'a> ViewEntityIterator<'a> {
     fn new(view: &'a View) -> Self {
         ViewEntityIterator {
             iter: view.entities.iter(),
+            view,
         }
     }
+}
+
+pub trait ViewQuery {
+    fn filter(view: &View, entity_id: &EntityId) -> bool;
+    fn select(view: &View, entity_id: &EntityId) -> Self;
 }
 
 impl<'a> Iterator for ViewEntityIterator<'a> {

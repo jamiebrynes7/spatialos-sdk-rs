@@ -22,6 +22,8 @@ use std::{
     f64,
 };
 use structopt::StructOpt;
+use tap::*;
+use spatialos_sdk::worker::view::ViewQuery;
 
 mod connection_handler;
 #[rustfmt::skip]
@@ -40,6 +42,26 @@ fn main() {
     exercise_connection_code_paths(&mut worker_connection);
     create_entities(&mut worker_connection, 25);
     logic_loop(&mut worker_connection);
+}
+
+struct RotatorQuery<'a> {
+    pub id: &'a EntityId,
+    pub position: &'a Position,
+    pub rotate: &'a example::Rotate,
+}
+
+impl ViewQuery for RotatorQuery {
+    fn filter(view: &View, entity_id: &EntityId) -> bool {
+        view.is_authoritative::<Position>(entity_id) && view.is_authoritative::<example::Rotate>(entity_id)
+    }
+
+    fn select(view: &View, entity_id: &EntityId) -> Self {
+        RotatorQuery {
+            id: entity_id,
+            position: view.get_component::<Position>(entity_id).unwrap(),
+            rotate: view.get_component::<example::Rotate>(entity_id).unwrap()
+        }
+    }
 }
 
 fn logic_loop(c: &mut WorkerConnection) {
@@ -80,38 +102,34 @@ fn logic_loop(c: &mut WorkerConnection) {
     let mut fps_tracker = FpsTracker::new(10);
     let mut metrics = Metrics::new();
 
+
     loop {
         fps_tracker.record();
         view.process_ops(&c.get_op_list(0));
 
-        for entity_id in view.iter_entities() {
-            if view.is_authoritative::<Position>(entity_id)
-                && view.is_authoritative::<example::Rotate>(entity_id)
-            {
-                let rotate = view.get_component::<example::Rotate>(entity_id).unwrap();
+        for RotatorQuery { id, position, rotate} in view.query::<RotatorQuery>() {
+            c.send_component_update::<example::Rotate>(
+                entity_id.clone(),
+                example::RotateUpdate {
+                    angle: Some(rotate.angle + f64::consts::PI * 2.0 / 200.0),
+                    ..Default::default()
+                },
+                update_params.clone(),
+            );
 
-                c.send_component_update::<example::Rotate>(
-                    entity_id.clone(),
-                    example::RotateUpdate {
-                        angle: Some(rotate.angle + f64::consts::PI * 2.0 / 200.0),
-                        ..Default::default()
-                    },
-                    update_params.clone(),
-                );
-
-                c.send_component_update::<improbable::Position>(
-                    entity_id.clone(),
-                    improbable::PositionUpdate {
-                        coords: Some(improbable::Coordinates {
-                            x: rotate.angle.sin() * rotate.radius + rotate.center.x,
-                            y: rotate.center.x,
-                            z: rotate.angle.cos() * rotate.radius + rotate.center.z,
-                        }),
-                    },
-                    update_params.clone(),
-                );
-            }
+            c.send_component_update::<improbable::Position>(
+                entity_id.clone(),
+                improbable::PositionUpdate {
+                    coords: Some(improbable::Coordinates {
+                        x: rotate.angle.sin() * rotate.radius + rotate.center_x,
+                        y: rotate.center_y,
+                        z: rotate.angle.cos() * rotate.radius + rotate.center_z,
+                    }),
+                },
+                update_params.clone(),
+            );
         }
+
         let load = (60.0 - fps_tracker.get_fps()) / 30.0;
         metrics.load = Some(if load < 0.0 { 0.0 } else { load } as f64);
         c.send_metrics(&metrics);
@@ -283,7 +301,8 @@ impl FpsTracker {
             return 0.0;
         }
 
-        let sum = self.measurements
+        let sum = self
+            .measurements
             .iter()
             .map(|duration| 1.0 / (f64::from(duration.subsec_micros()) / 1_000_000.0))
             .fold(0.0, |sum, next| sum + next);
