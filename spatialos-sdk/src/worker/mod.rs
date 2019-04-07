@@ -1,4 +1,4 @@
-pub mod internal;
+mod internal;
 
 pub mod alpha;
 pub mod commands;

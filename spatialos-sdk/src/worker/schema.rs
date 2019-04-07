@@ -1,5 +1,6 @@
 use crate::worker::{
     component::{Component, ComponentId, ComponentUpdate},
+    internal::Sealed,
     EntityId,
 };
 use spatialos_sdk_sys::worker::*;
@@ -153,7 +154,7 @@ impl<'a> From<*mut Schema_Object> for SchemaObject<'a> {
 // Schema Conversion Traits
 // =================================================================================================
 
-pub trait SchemaField: Sized {
+pub trait SchemaField: Sized + Sealed {
     type RustType: Sized;
 
     fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType);
@@ -177,6 +178,8 @@ pub trait SchemaObjectType: Sized {
     fn into_object<'a>(&'a self, object: &mut SchemaObject<'a>);
     fn from_object(object: &SchemaObject) -> Self;
 }
+
+impl<T: SchemaObjectType> Sealed for T {}
 
 impl<T: SchemaObjectType> SchemaField for T {
     type RustType = Self;
@@ -220,6 +223,8 @@ macro_rules! impl_primitive_field {
     ) => {
         #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct $schema_type;
+
+        impl Sealed for $schema_type {}
 
         impl SchemaField for $schema_type {
             type RustType = $rust_type;
@@ -405,6 +410,8 @@ impl_primitive_field!(
     Schema_GetEnumList,
 );
 
+impl Sealed for EntityId {}
+
 impl SchemaField for EntityId {
     type RustType = Self;
 
@@ -462,6 +469,8 @@ impl ArrayField for EntityId {
     }
 }
 
+impl Sealed for bool {}
+
 impl SchemaField for bool {
     type RustType = Self;
 
@@ -488,6 +497,8 @@ impl IndexedField for bool {
     }
 }
 
+impl<T: IndexedField> Sealed for Option<T> {}
+
 impl<T: IndexedField> SchemaField for Option<T> {
     type RustType = Option<T::RustType>;
 
@@ -503,6 +514,14 @@ impl<T: IndexedField> SchemaField for Option<T> {
             _ => Some(T::get_field(object, field)),
         }
     }
+}
+
+impl<K, V> Sealed for BTreeMap<K, V>
+where
+    K: IndexedField,
+    V: IndexedField,
+    K::RustType: Ord,
+{
 }
 
 impl<K, V> SchemaField for BTreeMap<K, V>
@@ -532,6 +551,8 @@ where
     }
 }
 
+impl<T: IndexedField> Sealed for Vec<T> {}
+
 impl<T: IndexedField> SchemaField for Vec<T> {
     type RustType = Vec<T::RustType>;
 
@@ -554,6 +575,8 @@ impl<T: IndexedField> SchemaField for Vec<T> {
         result
     }
 }
+
+impl Sealed for String {}
 
 impl SchemaField for String {
     type RustType = Self;
@@ -582,6 +605,8 @@ impl IndexedField for String {
             .into()
     }
 }
+
+impl Sealed for Vec<u8> {}
 
 impl SchemaField for Vec<u8> {
     type RustType = Self;
