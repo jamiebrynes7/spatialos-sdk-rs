@@ -138,6 +138,8 @@ pub fn download_sdk(
         None => config?.spatial_sdk_version,
     };
 
+    trace!("{}", ::std::env::var("PATH").unwrap());
+
     info!("Downloading packages into: {}", spatial_lib_dir);
 
     // Clean existing directory.
