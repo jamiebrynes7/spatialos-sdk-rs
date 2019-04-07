@@ -20,6 +20,9 @@ use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::cmp::Ordering;
 use std::marker::PhantomData;
 
+// NOTE: `EntityId` is maked as `repr(transparent)` so that we can treat an array
+// of entity IDs as an array of of `i64`, which allows us to more efficiently
+// read and write arrays of entity IDs when working with schema objects.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[repr(transparent)]
 pub struct EntityId {
