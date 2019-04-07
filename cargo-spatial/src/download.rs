@@ -63,10 +63,10 @@ impl SpatialToolsPackage {
         match self {
             SpatialToolsPackage::SchemaCompilerWin
             | SpatialToolsPackage::SchemaCompilerMac
-            | SpatialToolsPackage::SchemaCompilerLinux => "schema_compiler",
+            | SpatialToolsPackage::SchemaCompilerLinux => "schema-compiler",
             SpatialToolsPackage::SnapshotConverterWin
             | SpatialToolsPackage::SnapshotConverterMac
-            | SpatialToolsPackage::SnapshotConverterLinux => "snapshot_converter",
+            | SpatialToolsPackage::SnapshotConverterLinux => "snapshot-converter",
         }
     }
 }
