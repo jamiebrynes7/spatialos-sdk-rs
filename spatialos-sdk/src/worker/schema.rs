@@ -503,14 +503,9 @@ impl<T: IndexedField> SchemaField for Option<T> {
     }
 
     fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
-        let count = T::field_count(object, field);
-        match count {
+        match T::field_count(object, field) {
             0 => None,
-            1 => Some(T::get_field(object, field)),
-            _ => panic!(
-                "Invalid count {} for `option` schema field {}",
-                count, field
-            ),
+            _ => Some(T::get_field(object, field)),
         }
     }
 }
