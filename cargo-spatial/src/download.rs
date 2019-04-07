@@ -4,8 +4,7 @@ pub use self::linux::*;
 #[cfg(any(target_os = "windows", target_os = "macos"))]
 pub use self::win_osx::*;
 
-use crate::config::Config;
-use crate::opt::DownloadSdk;
+use crate::{config::Config, opt::DownloadSdk};
 use log::*;
 use std::{
     fs,
@@ -13,6 +12,7 @@ use std::{
     process,
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum SpatialWorkerSdkPackage {
     CApiWin,
     CApiMac,
@@ -37,6 +37,7 @@ impl SpatialWorkerSdkPackage {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum SpatialToolsPackage {
     SchemaCompilerWin,
     SchemaCompilerMac,
@@ -70,6 +71,7 @@ impl SpatialToolsPackage {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum SpatialPackageSource {
     WorkerSdk(SpatialWorkerSdkPackage),
     Tools(SpatialToolsPackage),
@@ -122,7 +124,10 @@ static PLATFORM_PACKAGES: &'static [SpatialPackageSource] = &[
     SpatialPackageSource::Tools(SpatialToolsPackage::SnapshotConverterMac),
 ];
 
-pub fn download_sdk(config: Result<Config, Box<dyn std::error::Error>>, options: &DownloadSdk) -> Result<(), Box<dyn std::error::Error>> {
+pub fn download_sdk(
+    config: Result<Config, Box<dyn std::error::Error>>,
+    options: &DownloadSdk,
+) -> Result<(), Box<dyn std::error::Error>> {
     let spatial_lib_dir = match config {
         Ok(ref config) => config.spatial_lib_dir().ok_or("spatial_lib_dir value must be set in the config, or the SPATIAL_LIB_DIR environment variable must be set")?,
         Err(_) => ::std::env::var("SPATIAL_LIB_DIR")?

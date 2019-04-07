@@ -92,11 +92,9 @@ impl Config {
     pub fn spatial_lib_dir(&self) -> Option<String> {
         match self.spatial_lib_dir {
             Some(ref path) => Some(self.resolve_path(path)),
-            None => {
-                ::std::env::var("SPATIAL_LIB_DIR")
-                    .ok()
-                    .map(|env_var| self.resolve_path(&env_var))
-            },
+            None => ::std::env::var("SPATIAL_LIB_DIR")
+                .ok()
+                .map(|env_var| self.resolve_path(&env_var)),
         }
     }
 
