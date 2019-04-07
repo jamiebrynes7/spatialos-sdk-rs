@@ -541,10 +541,13 @@ where
         let object = unsafe { Schema_GetObject(object.internal, field) }.into();
 
         // Load each of the key-value pairs from the map object.
-        let count = K::field_count(&object, SCHEMA_MAP_KEY_FIELD_ID);
+        let count = K::field_count(&object, field);
         let mut result = BTreeMap::new();
         for index in 0..count {
-            unimplemented!();
+            let pair = unsafe { Schema_IndexObject(object.internal, field, index) }.into();
+            let key = K::get_field(&pair, SCHEMA_MAP_KEY_FIELD_ID);
+            let value = V::get_field(&pair, SCHEMA_MAP_VALUE_FIELD_ID);
+            result.insert(key, value);
         }
 
         result
