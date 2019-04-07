@@ -156,11 +156,11 @@ pub struct SchemaObject {
 }
 
 impl SchemaObject {
-    pub fn field<T: SchemaType>(&self, field: FieldId) -> T::RustType {
+    pub fn field<T: SchemaField>(&self, field: FieldId) -> T::RustType {
         T::get_field(self, field)
     }
 
-    pub fn add_field<T: SchemaType>(&mut self, field: FieldId, value: &T::RustType) {
+    pub fn add_field<T: SchemaField>(&mut self, field: FieldId, value: &T::RustType) {
         T::add_field(self, field, value);
     }
 
@@ -173,7 +173,7 @@ impl SchemaObject {
 // Schema Conversion Traits
 // =================================================================================================
 
-pub trait SchemaType: Sized {
+pub trait SchemaField: Sized {
     type RustType: Sized;
 
     fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType);
@@ -181,13 +181,13 @@ pub trait SchemaType: Sized {
     fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType;
 }
 
-pub trait SchemaIndexType: SchemaType {
+pub trait IndexedField: SchemaField {
     fn field_count(object: &SchemaObject, field: FieldId) -> u32;
 
     fn index_field(object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType;
 }
 
-pub trait SchemaListType: SchemaIndexType {
+pub trait ArrayField: IndexedField {
     fn get_field_list(object: &SchemaObject, field: FieldId, data: &mut Vec<Self::RustType>);
 }
 
@@ -197,7 +197,7 @@ pub trait SchemaObjectType: Sized {
     fn from_object(object: &SchemaObject) -> Self;
 }
 
-impl<T: SchemaObjectType> SchemaType for T {
+impl<T: SchemaObjectType> SchemaField for T {
     type RustType = Self;
 
     fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
@@ -215,7 +215,7 @@ impl<T: SchemaObjectType> SchemaType for T {
     }
 }
 
-impl<T: SchemaObjectType> SchemaIndexType for T {
+impl<T: SchemaObjectType> IndexedField for T {
     fn field_count(object: &SchemaObject, field: FieldId) -> u32 {
         unsafe { Schema_GetObjectCount(object.internal, field) }
     }
@@ -246,7 +246,7 @@ macro_rules! impl_primitive_field {
         #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct $schema_type;
 
-        impl SchemaType for $schema_type {
+        impl SchemaField for $schema_type {
             type RustType = $rust_type;
 
             fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
@@ -260,7 +260,7 @@ macro_rules! impl_primitive_field {
             }
         }
 
-        impl SchemaIndexType for $schema_type {
+        impl IndexedField for $schema_type {
             fn field_count(object: &SchemaObject, field: FieldId) -> u32 {
                 unsafe { $schema_count(object.internal, field) }
             }
@@ -270,7 +270,7 @@ macro_rules! impl_primitive_field {
             }
         }
 
-        impl SchemaListType for $schema_type {
+        impl ArrayField for $schema_type {
             fn get_field_list(
                 object: &SchemaObject,
                 field: FieldId,
@@ -424,7 +424,7 @@ impl_primitive_field!(
     Schema_GetEnumList,
 );
 
-impl SchemaType for EntityId {
+impl SchemaField for EntityId {
     type RustType = Self;
 
     fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
@@ -439,7 +439,7 @@ impl SchemaType for EntityId {
     }
 }
 
-impl SchemaIndexType for EntityId {
+impl IndexedField for EntityId {
     fn field_count(object: &SchemaObject, field: FieldId) -> u32 {
         unsafe { Schema_GetEntityIdCount(object.internal, field) }
     }
@@ -450,7 +450,7 @@ impl SchemaIndexType for EntityId {
     }
 }
 
-impl SchemaListType for EntityId {
+impl ArrayField for EntityId {
     fn get_field_list(object: &SchemaObject, field: FieldId, data: &mut Vec<Self::RustType>) {
         let count = Self::field_count(object, field) as usize;
 
@@ -467,7 +467,7 @@ impl SchemaListType for EntityId {
     }
 }
 
-impl SchemaType for bool {
+impl SchemaField for bool {
     type RustType = Self;
 
     fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
@@ -482,7 +482,7 @@ impl SchemaType for bool {
     }
 }
 
-impl SchemaIndexType for bool {
+impl IndexedField for bool {
     fn field_count(object: &SchemaObject, field: FieldId) -> u32 {
         unsafe { Schema_GetBoolCount(object.internal, field) }
     }
@@ -493,7 +493,7 @@ impl SchemaIndexType for bool {
     }
 }
 
-impl<T: SchemaIndexType> SchemaType for Option<T> {
+impl<T: IndexedField> SchemaField for Option<T> {
     type RustType = Option<T::RustType>;
 
     fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
@@ -515,10 +515,10 @@ impl<T: SchemaIndexType> SchemaType for Option<T> {
     }
 }
 
-impl<K, V> SchemaType for BTreeMap<K, V>
+impl<K, V> SchemaField for BTreeMap<K, V>
 where
-    K: SchemaIndexType,
-    V: SchemaIndexType,
+    K: IndexedField,
+    V: IndexedField,
     K::RustType: Ord,
 {
     type RustType = BTreeMap<K::RustType, V::RustType>;
@@ -546,7 +546,7 @@ where
     }
 }
 
-impl<T: SchemaIndexType> SchemaType for Vec<T> {
+impl<T: IndexedField> SchemaField for Vec<T> {
     type RustType = Vec<T::RustType>;
 
     fn add_field(object: &mut SchemaObject, field: FieldId, values: &Self::RustType) {
@@ -569,7 +569,7 @@ impl<T: SchemaIndexType> SchemaType for Vec<T> {
     }
 }
 
-impl SchemaType for String {
+impl SchemaField for String {
     type RustType = Self;
 
     fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
@@ -584,7 +584,7 @@ impl SchemaType for String {
     }
 }
 
-impl SchemaIndexType for String {
+impl IndexedField for String {
     fn field_count(object: &SchemaObject, field: FieldId) -> u32 {
         unsafe { Schema_GetBytesCount(object.internal, field) }
     }
@@ -597,7 +597,7 @@ impl SchemaIndexType for String {
     }
 }
 
-impl SchemaType for Vec<u8> {
+impl SchemaField for Vec<u8> {
     type RustType = Self;
 
     fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
@@ -609,7 +609,7 @@ impl SchemaType for Vec<u8> {
     }
 }
 
-impl SchemaIndexType for Vec<u8> {
+impl IndexedField for Vec<u8> {
     fn field_count(object: &SchemaObject, field: FieldId) -> u32 {
         unsafe { Schema_GetBytesCount(object.internal, field) }
     }

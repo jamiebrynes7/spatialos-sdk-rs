@@ -1,4 +1,4 @@
-use crate::worker::schema::{self, FieldId, SchemaObject, SchemaType};
+use crate::worker::schema::{self, FieldId, SchemaObject, SchemaField};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 
