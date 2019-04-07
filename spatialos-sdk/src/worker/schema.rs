@@ -1,52 +1,52 @@
-use crate::worker::{component::ComponentId, EntityId};
+use crate::worker::{
+    component::{Component, ComponentId, ComponentUpdate},
+    EntityId,
+};
 use spatialos_sdk_sys::worker::*;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, marker::PhantomData};
 
 pub type FieldId = u32;
 
 #[derive(Debug)]
-pub struct SchemaComponentUpdate {
-    pub component_id: ComponentId,
-    pub internal: *mut Schema_ComponentUpdate,
+pub struct SchemaComponentUpdate<'a> {
+    pub(crate) internal: *mut Schema_ComponentUpdate,
+    fields: SchemaObject<'a>,
 }
 
-impl SchemaComponentUpdate {
-    pub fn new(component_id: ComponentId) -> SchemaComponentUpdate {
-        SchemaComponentUpdate {
-            component_id,
-            internal: unsafe { Schema_CreateComponentUpdate(component_id) },
-        }
+impl<'a> SchemaComponentUpdate<'a> {
+    pub fn new<C, U>(update: &'a U) -> SchemaComponentUpdate<'a>
+    where
+        C: Component,
+        U: ComponentUpdate<C> + SchemaObjectType,
+    {
+        let internal = unsafe { Schema_CreateComponentUpdate(C::ID) };
+        let fields = unsafe { Schema_GetComponentUpdateFields(internal) }.into();
+        let mut result = Self { internal, fields };
+
+        // Populate the update fields with the data from `update`.
+        update.into_object(result.fields_mut());
+
+        result
     }
 
-    pub fn component_id(&self) -> ComponentId {
+    pub(crate) fn from_worker_update(
+        internal: *mut Schema_ComponentUpdate,
+    ) -> SchemaComponentUpdate<'a> {
+        let fields = unsafe { Schema_GetComponentUpdateFields(internal) }.into();
+        Self { internal, fields }
+    }
+
+    pub fn id(&self) -> ComponentId {
         unsafe { Schema_GetComponentUpdateComponentId(self.internal) }
     }
 
-    pub fn fields(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateFields(self.internal) },
-        }
+    fn fields(&self) -> &SchemaObject<'a> {
+        &self.fields
     }
 
-    pub fn fields_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateFields(self.internal) },
-        }
+    fn fields_mut(&mut self) -> &mut SchemaObject<'a> {
+        &mut self.fields
     }
-
-    pub fn events(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) },
-        }
-    }
-
-    pub fn events_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) },
-        }
-    }
-
-    // TODO: Cleared fields.
 }
 
 #[derive(Debug)]
@@ -65,18 +65,6 @@ impl SchemaComponentData {
 
     pub fn component_id(&self) -> ComponentId {
         unsafe { Schema_GetComponentDataComponentId(self.internal) }
-    }
-
-    pub fn fields(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentDataFields(self.internal) },
-        }
-    }
-
-    pub fn fields_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentDataFields(self.internal) },
-        }
     }
 }
 
@@ -101,18 +89,6 @@ impl SchemaCommandRequest {
     pub fn command_index(&self) -> FieldId {
         unsafe { Schema_GetCommandRequestCommandIndex(self.internal) }
     }
-
-    pub fn object(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetCommandRequestObject(self.internal) },
-        }
-    }
-
-    pub fn object_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetCommandRequestObject(self.internal) },
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -136,36 +112,40 @@ impl SchemaCommandResponse {
     pub fn command_index(&self) -> FieldId {
         unsafe { Schema_GetCommandResponseCommandIndex(self.internal) }
     }
-
-    pub fn object(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetCommandResponseObject(self.internal) },
-        }
-    }
-
-    pub fn object_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetCommandResponseObject(self.internal) },
-        }
-    }
 }
 
 #[derive(Debug)]
-pub struct SchemaObject {
+pub struct SchemaObject<'a> {
     internal: *mut Schema_Object,
+    _marker: PhantomData<&'a ()>,
 }
 
-impl SchemaObject {
+impl<'a> SchemaObject<'a> {
     pub fn field<T: SchemaField>(&self, field: FieldId) -> T::RustType {
         T::get_field(self, field)
+    }
+
+    pub fn field_array<T: ArrayField>(&self, field: FieldId) -> Vec<T::RustType> {
+        let mut result = Vec::new();
+        T::get_field_list(self, field, &mut result);
+        result
     }
 
     pub fn add_field<T: SchemaField>(&mut self, field: FieldId, value: &T::RustType) {
         T::add_field(self, field, value);
     }
 
-    pub fn deserialize<T: SchemaObjectType>(&self) -> T {
-        T::from_object(self)
+    pub fn add_field_array<T: ArrayField>(&mut self, field: FieldId, value: &'a [T::RustType]) {
+        T::add_field_list(self, field, value);
+    }
+}
+
+impl<'a> From<*mut Schema_Object> for SchemaObject<'a> {
+    fn from(from: *mut Schema_Object) -> Self {
+        Self {
+            internal: from,
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -188,12 +168,13 @@ pub trait IndexedField: SchemaField {
 }
 
 pub trait ArrayField: IndexedField {
+    fn add_field_list(object: &mut SchemaObject, field: FieldId, data: &[Self::RustType]);
     fn get_field_list(object: &SchemaObject, field: FieldId, data: &mut Vec<Self::RustType>);
 }
 
 /// A type that can be deserialized from an entire `SchemaObject`.
 pub trait SchemaObjectType: Sized {
-    fn into_object(&self, object: &mut SchemaObject);
+    fn into_object<'a>(&'a self, object: &mut SchemaObject<'a>);
     fn from_object(object: &SchemaObject) -> Self;
 }
 
@@ -201,17 +182,13 @@ impl<T: SchemaObjectType> SchemaField for T {
     type RustType = Self;
 
     fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
-        let field_object = unsafe { Schema_AddObject(object.internal, field) };
-        value.into_object(&mut SchemaObject {
-            internal: field_object,
-        });
+        let mut field_object = unsafe { Schema_AddObject(object.internal, field) }.into();
+        value.into_object(&mut field_object);
     }
 
     fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
-        let field_object = unsafe { Schema_GetObject(object.internal, field) };
-        T::from_object(&SchemaObject {
-            internal: field_object,
-        })
+        let field_object = unsafe { Schema_GetObject(object.internal, field) }.into();
+        T::from_object(&field_object)
     }
 }
 
@@ -221,10 +198,8 @@ impl<T: SchemaObjectType> IndexedField for T {
     }
 
     fn index_field(object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType {
-        let field_object = unsafe { Schema_IndexObject(object.internal, field, index) };
-        T::from_object(&SchemaObject {
-            internal: field_object,
-        })
+        let field_object = unsafe { Schema_IndexObject(object.internal, field, index) }.into();
+        T::from_object(&field_object)
     }
 }
 
@@ -271,6 +246,12 @@ macro_rules! impl_primitive_field {
         }
 
         impl ArrayField for $schema_type {
+            fn add_field_list(object: &mut SchemaObject, field: FieldId, data: &[Self::RustType]) {
+                unsafe {
+                    $schema_add_list(object.internal, field, data.as_ptr(), data.len() as u32);
+                }
+            }
+
             fn get_field_list(
                 object: &SchemaObject,
                 field: FieldId,
@@ -450,7 +431,21 @@ impl IndexedField for EntityId {
     }
 }
 
+// NOTE: It's safe to treat the `EntityId` array as an `i64` array because
+// `EntityId` is marked `repr(transparent)`, and so is identical to an `i64` for
+// the purpose of FFI.
 impl ArrayField for EntityId {
+    fn add_field_list(object: &mut SchemaObject, field: FieldId, data: &[Self::RustType]) {
+        unsafe {
+            Schema_AddEntityIdList(
+                object.internal,
+                field,
+                data.as_ptr() as *const _,
+                data.len() as u32,
+            );
+        }
+    }
+
     fn get_field_list(object: &SchemaObject, field: FieldId, data: &mut Vec<Self::RustType>) {
         let count = Self::field_count(object, field) as usize;
 
@@ -524,17 +519,13 @@ where
 
     fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
         // Get the map's schema object from the specified field on `object`.
-        let object = &SchemaObject {
-            internal: unsafe { Schema_GetObject(object.internal, field) },
-        };
+        let object = unsafe { Schema_GetObject(object.internal, field) }.into();
 
         // Load each of the key-value pairs from the map object.
-        let count = K::field_count(object, SCHEMA_MAP_KEY_FIELD_ID);
+        let count = K::field_count(&object, SCHEMA_MAP_KEY_FIELD_ID);
         let mut result = BTreeMap::new();
         for index in 0..count {
-            let key = K::index_field(object, SCHEMA_MAP_KEY_FIELD_ID, index);
-            let value = V::index_field(object, SCHEMA_MAP_VALUE_FIELD_ID, index);
-            result.insert(key, value);
+            unimplemented!();
         }
 
         result
@@ -614,7 +605,7 @@ impl IndexedField for Vec<u8> {
     }
 }
 
-fn get_bytes(object: &SchemaObject, field: FieldId) -> &[u8] {
+fn get_bytes<'a>(object: &'a SchemaObject<'_>, field: FieldId) -> &'a [u8] {
     unsafe {
         let data = Schema_GetBytes(object.internal, field);
         let len = Schema_GetBytesLength(object.internal, field);
@@ -622,7 +613,7 @@ fn get_bytes(object: &SchemaObject, field: FieldId) -> &[u8] {
     }
 }
 
-fn index_bytes(object: &SchemaObject, field: FieldId, index: u32) -> &[u8] {
+fn index_bytes<'a>(object: &'a SchemaObject<'_>, field: FieldId, index: u32) -> &'a [u8] {
     unsafe {
         let data = Schema_IndexBytes(object.internal, field, index);
         let len = Schema_IndexBytesLength(object.internal, field, index);

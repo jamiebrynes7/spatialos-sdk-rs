@@ -15,23 +15,17 @@ impl SchemaObjectType for CustomComponent {
         Self {
             name: object.field::<String>(0),
             count: object.field::<SchemaSfixed32>(1),
-
-            // TODO: Use the specialized version.
-            targets: object.field::<Vec<EntityId>>(2),
-
+            targets: object.field_array::<EntityId>(2),
             target_names: object.field::<BTreeMap<EntityId, String>>(3),
             byte_collection: object.field::<Vec<Vec<u8>>>(4),
             nested: object.field::<NestedType>(5),
         }
     }
 
-    fn into_object(&self, object: &mut SchemaObject) {
+    fn into_object<'a>(&'a self, object: &mut SchemaObject<'a>) {
         object.add_field::<String>(0, &self.name);
         object.add_field::<SchemaSfixed32>(1, &self.count);
-
-        // TODO: Use the specialized version.
-        object.add_field::<Vec<EntityId>>(2, &self.targets);
-
+        object.add_field_array::<EntityId>(2, &self.targets);
         object.add_field::<BTreeMap<EntityId, String>>(3, &self.target_names);
         object.add_field::<Vec<Vec<u8>>>(4, &self.byte_collection);
         object.add_field::<NestedType>(5, &self.nested);

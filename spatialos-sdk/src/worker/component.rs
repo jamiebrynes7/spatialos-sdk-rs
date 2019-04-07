@@ -1,4 +1,4 @@
-use crate::worker::schema::{self, FieldId, SchemaObject, SchemaField};
+use crate::worker::schema::{self, FieldId, SchemaComponentUpdate, SchemaField, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 
@@ -145,7 +145,7 @@ pub(crate) mod internal {
     #[derive(Debug)]
     pub struct ComponentUpdate<'a> {
         pub component_id: ComponentId,
-        pub schema_type: SchemaComponentUpdate,
+        pub schema_type: SchemaComponentUpdate<'a>,
         pub user_handle: *const Worker_ComponentUpdateHandle,
 
         // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
@@ -158,10 +158,7 @@ pub(crate) mod internal {
         fn from(update: &Worker_ComponentUpdate) -> Self {
             ComponentUpdate {
                 component_id: update.component_id,
-                schema_type: SchemaComponentUpdate {
-                    component_id: update.component_id,
-                    internal: update.schema_type,
-                },
+                schema_type: SchemaComponentUpdate::from_worker_update(update.schema_type),
                 user_handle: update.user_handle,
                 _marker: PhantomData,
             }
@@ -387,10 +384,7 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     update: *mut Schema_ComponentUpdate,
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
-    let schema_update = schema::SchemaComponentUpdate {
-        component_id: C::ID,
-        internal: update,
-    };
+    let schema_update = SchemaComponentUpdate::from_worker_update(update);
     let deserialized_result = C::from_update(&schema_update);
     if let Ok(deserialized_update) = deserialized_result {
         *handle_out = handle_allocate(deserialized_update);
