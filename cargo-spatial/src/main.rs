@@ -1,4 +1,4 @@
-use cargo_spatial::{codegen, download, local, opt::*};
+use cargo_spatial::{codegen, config::Config, download, local, opt::*};
 use log::*;
 use simplelog::*;
 use structopt::StructOpt;
@@ -16,10 +16,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Perform the operation selected by the user.
     match &opt.command {
-        Command::Codegen => codegen::run_codegen()?,
+        Command::Codegen => codegen::run_codegen(&Config::load()?)?,
 
         Command::Local(local) => match local {
-            Local::Launch(launch) => local::launch(launch)?,
+            Local::Launch(launch) => local::launch(&Config::load()?, launch)?,
         },
 
         Command::Generate { command } => match command {
@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         Command::Download { command } => match command {
             Download::Cli => download::download_cli()?,
-            Download::Sdk(options) => download::download_sdk(options)?,
+            Download::Sdk(options) => download::download_sdk(Config::load(), options)?,
         },
     }
 

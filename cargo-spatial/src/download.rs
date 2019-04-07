@@ -122,10 +122,7 @@ static PLATFORM_PACKAGES: &'static [SpatialPackageSource] = &[
     SpatialPackageSource::Tools(SpatialToolsPackage::SnapshotConverterMac),
 ];
 
-pub fn download_sdk(options: &DownloadSdk) -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config::load();
-    trace!("Config loaded.");
-
+pub fn download_sdk(config: Result<Config, Box<dyn std::error::Error>>, options: &DownloadSdk) -> Result<(), Box<dyn std::error::Error>> {
     let spatial_lib_dir = match config {
         Ok(ref config) => config.spatial_lib_dir().ok_or("spatial_lib_dir value must be set in the config, or the SPATIAL_LIB_DIR environment variable must be set")?,
         Err(_) => ::std::env::var("SPATIAL_LIB_DIR")?
