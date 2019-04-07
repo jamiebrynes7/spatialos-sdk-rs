@@ -132,7 +132,7 @@ impl<'a> SchemaObject<'a> {
         result
     }
 
-    pub fn add_field<T: SchemaField>(&mut self, field: FieldId, value: &T::RustType) {
+    pub fn add_field<T: SchemaField>(&mut self, field: FieldId, value: &'a T::RustType) {
         T::add_field(self, field, value);
     }
 
@@ -157,7 +157,7 @@ impl<'a> From<*mut Schema_Object> for SchemaObject<'a> {
 pub trait SchemaField: Sized + Sealed {
     type RustType: Sized;
 
-    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType);
+    fn add_field<'a>(object: &mut SchemaObject<'a>, field: FieldId, value: &'a Self::RustType);
 
     fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType;
 }
@@ -502,7 +502,7 @@ impl<T: IndexedField> Sealed for Option<T> {}
 impl<T: IndexedField> SchemaField for Option<T> {
     type RustType = Option<T::RustType>;
 
-    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+    fn add_field<'a>(object: &mut SchemaObject<'a>, field: FieldId, value: &'a Self::RustType) {
         if let Some(value) = value {
             T::add_field(object, field, value);
         }
@@ -532,8 +532,16 @@ where
 {
     type RustType = BTreeMap<K::RustType, V::RustType>;
 
-    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
-        unimplemented!();
+    fn add_field(object: &mut SchemaObject, field: FieldId, map: &Self::RustType) {
+        // Create a schema object at the specified field in `object`.
+        let object: SchemaObject = unsafe { Schema_AddObject(object.internal, field) }.into();
+
+        // Load each of the key-value pairs from the map object.
+        for (key, value) in map {
+            let mut pair: SchemaObject = unsafe { Schema_AddObject(object.internal, field) }.into();
+            pair.add_field::<K>(SCHEMA_MAP_KEY_FIELD_ID, key);
+            pair.add_field::<V>(SCHEMA_MAP_VALUE_FIELD_ID, value);
+        }
     }
 
     fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
@@ -559,8 +567,7 @@ impl<T: IndexedField> Sealed for Vec<T> {}
 impl<T: IndexedField> SchemaField for Vec<T> {
     type RustType = Vec<T::RustType>;
 
-    fn add_field(object: &mut SchemaObject, field: FieldId, values: &Self::RustType) {
-        // TODO: Provide a specialized version for types implementing `SchemaListType`.
+    fn add_field<'a>(object: &mut SchemaObject<'a>, field: FieldId, values: &'a Self::RustType) {
         for value in values {
             T::add_field(object, field, value);
         }
@@ -569,7 +576,6 @@ impl<T: IndexedField> SchemaField for Vec<T> {
     fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
         let count = T::field_count(object, field);
 
-        // TODO: Provide a specialized version for types implementing `SchemaListType`.
         let mut result = Vec::with_capacity(count as usize);
         for index in 0..count {
             result.push(T::index_field(object, field, index));
@@ -584,8 +590,8 @@ impl Sealed for String {}
 impl SchemaField for String {
     type RustType = Self;
 
-    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
-        unimplemented!();
+    fn add_field<'a>(object: &mut SchemaObject<'a>, field: FieldId, value: &'a Self::RustType) {
+        add_bytes(object, field, value.as_bytes());
     }
 
     fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
@@ -614,8 +620,8 @@ impl Sealed for Vec<u8> {}
 impl SchemaField for Vec<u8> {
     type RustType = Self;
 
-    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
-        unimplemented!();
+    fn add_field<'a>(object: &mut SchemaObject<'a>, field: FieldId, value: &'a Self::RustType) {
+        add_bytes(object, field, value);
     }
 
     fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
@@ -633,7 +639,13 @@ impl IndexedField for Vec<u8> {
     }
 }
 
-fn get_bytes<'a>(object: &'a SchemaObject<'_>, field: FieldId) -> &'a [u8] {
+fn add_bytes<'a>(object: &mut SchemaObject<'a>, field: FieldId, bytes: &'a [u8]) {
+    unsafe {
+        Schema_AddBytes(object.internal, field, bytes.as_ptr(), bytes.len() as u32);
+    }
+}
+
+fn get_bytes<'a>(object: &SchemaObject<'a>, field: FieldId) -> &'a [u8] {
     unsafe {
         let data = Schema_GetBytes(object.internal, field);
         let len = Schema_GetBytesLength(object.internal, field);
@@ -641,7 +653,7 @@ fn get_bytes<'a>(object: &'a SchemaObject<'_>, field: FieldId) -> &'a [u8] {
     }
 }
 
-fn index_bytes<'a>(object: &'a SchemaObject<'_>, field: FieldId, index: u32) -> &'a [u8] {
+fn index_bytes<'a>(object: &SchemaObject<'a>, field: FieldId, index: u32) -> &'a [u8] {
     unsafe {
         let data = Schema_IndexBytes(object.internal, field, index);
         let len = Schema_IndexBytesLength(object.internal, field, index);

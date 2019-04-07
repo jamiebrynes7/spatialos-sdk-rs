@@ -43,7 +43,7 @@ impl SchemaObjectType for NestedType {
         }
     }
 
-    fn into_object(&self, object: &mut SchemaObject) {
+    fn into_object<'a>(&'a self, object: &mut SchemaObject<'a>) {
         object.add_field::<Option<bool>>(0, &self.something);
     }
 }
