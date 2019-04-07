@@ -157,7 +157,11 @@ pub struct SchemaObject {
 
 impl SchemaObject {
     pub fn field<T: SchemaType>(&self, field: FieldId) -> T::RustType {
-        T::from_field(self, field)
+        T::get_field(self, field)
+    }
+
+    pub fn add_field<T: SchemaType>(&mut self, field: FieldId, value: &T::RustType) {
+        T::add_field(self, field, value);
     }
 
     pub fn deserialize<T: SchemaObjectType>(&self) -> T {
@@ -172,7 +176,9 @@ impl SchemaObject {
 pub trait SchemaType: Sized {
     type RustType: Sized;
 
-    fn from_field(object: &SchemaObject, field: FieldId) -> Self::RustType;
+    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType);
+
+    fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType;
 }
 
 pub trait SchemaIndexType: SchemaType {
@@ -187,13 +193,21 @@ pub trait SchemaListType: SchemaIndexType {
 
 /// A type that can be deserialized from an entire `SchemaObject`.
 pub trait SchemaObjectType: Sized {
+    fn into_object(&self, object: &mut SchemaObject);
     fn from_object(object: &SchemaObject) -> Self;
 }
 
 impl<T: SchemaObjectType> SchemaType for T {
     type RustType = Self;
 
-    fn from_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+        let field_object = unsafe { Schema_AddObject(object.internal, field) };
+        value.into_object(&mut SchemaObject {
+            internal: field_object,
+        });
+    }
+
+    fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
         let field_object = unsafe { Schema_GetObject(object.internal, field) };
         T::from_object(&SchemaObject {
             internal: field_object,
@@ -235,14 +249,20 @@ macro_rules! impl_primitive_field {
         impl SchemaType for $schema_type {
             type RustType = $rust_type;
 
-            fn from_field(input: &SchemaObject, field: FieldId) -> Self::RustType {
-                unsafe { $schema_get(input.internal, field) }
+            fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+                unsafe {
+                    $schema_add(object.internal, field, *value);
+                }
+            }
+
+            fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
+                unsafe { $schema_get(object.internal, field) }
             }
         }
 
         impl SchemaIndexType for $schema_type {
-            fn field_count(input: &SchemaObject, field: FieldId) -> u32 {
-                unsafe { $schema_count(input.internal, field) }
+            fn field_count(object: &SchemaObject, field: FieldId) -> u32 {
+                unsafe { $schema_count(object.internal, field) }
             }
 
             fn index_field(object: &SchemaObject, field: FieldId, index: u32) -> Self::RustType {
@@ -407,7 +427,13 @@ impl_primitive_field!(
 impl SchemaType for EntityId {
     type RustType = Self;
 
-    fn from_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+        unsafe {
+            Schema_AddEntityId(object.internal, field, value.id);
+        }
+    }
+
+    fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
         let id = unsafe { Schema_GetEntityId(object.internal, field) };
         Self { id }
     }
@@ -444,7 +470,13 @@ impl SchemaListType for EntityId {
 impl SchemaType for bool {
     type RustType = Self;
 
-    fn from_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+        unsafe {
+            Schema_AddBool(object.internal, field, *value as u8);
+        }
+    }
+
+    fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
         let raw = unsafe { Schema_GetBool(object.internal, field) };
         raw != 0
     }
@@ -461,17 +493,20 @@ impl SchemaIndexType for bool {
     }
 }
 
-// TODO: This is only valid if schema bools are guaranteed to be 0 or 1. If schema
-// bools are allowed to have other values, this could result in undefined behavior
-// and should be removed.
 impl<T: SchemaIndexType> SchemaType for Option<T> {
     type RustType = Option<T::RustType>;
 
-    fn from_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+        if let Some(value) = value {
+            T::add_field(object, field, value);
+        }
+    }
+
+    fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
         let count = T::field_count(object, field);
         match count {
             0 => None,
-            1 => Some(T::from_field(object, field)),
+            1 => Some(T::get_field(object, field)),
             _ => panic!(
                 "Invalid count {} for `option` schema field {}",
                 count, field
@@ -488,7 +523,11 @@ where
 {
     type RustType = BTreeMap<K::RustType, V::RustType>;
 
-    fn from_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+        unimplemented!();
+    }
+
+    fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
         // Get the map's schema object from the specified field on `object`.
         let object = &SchemaObject {
             internal: unsafe { Schema_GetObject(object.internal, field) },
@@ -510,7 +549,14 @@ where
 impl<T: SchemaIndexType> SchemaType for Vec<T> {
     type RustType = Vec<T::RustType>;
 
-    fn from_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn add_field(object: &mut SchemaObject, field: FieldId, values: &Self::RustType) {
+        // TODO: Provide a specialized version for types implementing `SchemaListType`.
+        for value in values {
+            T::add_field(object, field, value);
+        }
+    }
+
+    fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
         let count = T::field_count(object, field);
 
         // TODO: Provide a specialized version for types implementing `SchemaListType`.
@@ -526,7 +572,11 @@ impl<T: SchemaIndexType> SchemaType for Vec<T> {
 impl SchemaType for String {
     type RustType = Self;
 
-    fn from_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+        unimplemented!();
+    }
+
+    fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
         let bytes = get_bytes(object, field);
         std::str::from_utf8(bytes)
             .expect("Schema string was invalid UTF-8")
@@ -550,7 +600,11 @@ impl SchemaIndexType for String {
 impl SchemaType for Vec<u8> {
     type RustType = Self;
 
-    fn from_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn add_field(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+        unimplemented!();
+    }
+
+    fn get_field(object: &SchemaObject, field: FieldId) -> Self::RustType {
         get_bytes(object, field).into()
     }
 }
