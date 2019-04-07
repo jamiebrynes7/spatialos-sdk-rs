@@ -41,7 +41,7 @@ mkdir -p "./temp"
 
 curl -sSL $SPATIAL_URL --output ./temp/spatial
 chmod +x ./temp/spatial
-PATH=$PATH:$(pwd)/temp/
+export PATH=$PATH:$(pwd)/temp/
 
 export RUST_BACKTRACE=1
 
