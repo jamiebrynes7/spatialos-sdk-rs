@@ -47,5 +47,3 @@ impl SchemaObjectType for NestedType {
         object.add_field::<Option<bool>>(0, &self.something);
     }
 }
-
-fn main() {}
