@@ -45,21 +45,21 @@ fn main() {
 }
 
 struct RotatorQuery<'a> {
-    pub id: &'a EntityId,
+    pub id: EntityId,
     pub position: &'a Position,
     pub rotate: &'a example::Rotate,
 }
 
-impl ViewQuery for RotatorQuery {
+impl<'a, 'b : 'a> ViewQuery<'b, RotatorQuery<'a>> for RotatorQuery<'a> {
     fn filter(view: &View, entity_id: &EntityId) -> bool {
         view.is_authoritative::<Position>(entity_id) && view.is_authoritative::<example::Rotate>(entity_id)
     }
 
-    fn select(view: &View, entity_id: &EntityId) -> Self {
+    fn select(view: &'b View, entity_id: EntityId) -> RotatorQuery<'a> {
         RotatorQuery {
-            id: entity_id,
-            position: view.get_component::<Position>(entity_id).unwrap(),
-            rotate: view.get_component::<example::Rotate>(entity_id).unwrap()
+            id: entity_id.clone(),
+            position: view.get_component::<Position>(&entity_id).unwrap(),
+            rotate: view.get_component::<example::Rotate>(&entity_id).unwrap(),
         }
     }
 }
@@ -109,7 +109,7 @@ fn logic_loop(c: &mut WorkerConnection) {
 
         for RotatorQuery { id, position, rotate} in view.query::<RotatorQuery>() {
             c.send_component_update::<example::Rotate>(
-                entity_id.clone(),
+                id.clone(),
                 example::RotateUpdate {
                     angle: Some(rotate.angle + f64::consts::PI * 2.0 / 200.0),
                     ..Default::default()
@@ -118,7 +118,7 @@ fn logic_loop(c: &mut WorkerConnection) {
             );
 
             c.send_component_update::<improbable::Position>(
-                entity_id.clone(),
+                id.clone(),
                 improbable::PositionUpdate {
                     coords: Some(improbable::Coordinates {
                         x: rotate.angle.sin() * rotate.radius + rotate.center_x,
