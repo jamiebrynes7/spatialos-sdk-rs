@@ -3,13 +3,14 @@ use crate::{connection_handler::*, opt::*};
 use generated::{example, improbable};
 use rand::Rng;
 use spatialos_sdk::worker::view::View;
-use spatialos_sdk::worker::Authority::Authoritative;
+use spatialos_sdk::worker::view::ViewQuery;
 use spatialos_sdk::worker::{
     commands::{EntityQueryRequest, ReserveEntityIdsRequest},
-    component::{Component, ComponentData, UpdateParameters},
+    component::{Component, UpdateParameters},
     connection::{Connection, WorkerConnection},
     entity_builder::EntityBuilder,
     metrics::{HistogramMetric, Metrics},
+<<<<<<< HEAD
     op::{StatusCode, WorkerOp},
     query::{EntityQuery, QueryConstraint, ResultType},
     {EntityId, InterestOverride, LogLevel},
@@ -17,13 +18,18 @@ use spatialos_sdk::worker::{
 use std::{collections::HashMap, f64};
 use std::time::Duration;
 use std::time::SystemTime;
+=======
+    query::{EntityQuery, QueryConstraint, ResultType},
+    {EntityId, InterestOverride, LogLevel},
+};
+>>>>>>> lints
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::BTreeMap,
     f64,
+    time::{Duration, SystemTime},
 };
 use structopt::StructOpt;
 use tap::*;
-use spatialos_sdk::worker::view::ViewQuery;
 
 mod connection_handler;
 #[rustfmt::skip]
@@ -50,9 +56,10 @@ struct RotatorQuery<'a> {
     pub rotate: &'a example::Rotate,
 }
 
-impl<'a, 'b : 'a> ViewQuery<'b, RotatorQuery<'a>> for RotatorQuery<'a> {
+impl<'a, 'b: 'a> ViewQuery<'b, RotatorQuery<'a>> for RotatorQuery<'a> {
     fn filter(view: &View, entity_id: &EntityId) -> bool {
-        view.is_authoritative::<Position>(entity_id) && view.is_authoritative::<example::Rotate>(entity_id)
+        view.is_authoritative::<Position>(entity_id)
+            && view.is_authoritative::<example::Rotate>(entity_id)
     }
 
     fn select(view: &'b View, entity_id: EntityId) -> RotatorQuery<'a> {
@@ -102,12 +109,16 @@ fn logic_loop(c: &mut WorkerConnection) {
     let mut fps_tracker = FpsTracker::new(10);
     let mut metrics = Metrics::new();
 
-
     loop {
         fps_tracker.record();
         view.process_ops(&c.get_op_list(0));
 
-        for RotatorQuery { id, position, rotate} in view.query::<RotatorQuery>() {
+        for RotatorQuery {
+            id,
+            position: _,
+            rotate,
+        } in view.query::<RotatorQuery>()
+        {
             c.send_component_update::<example::Rotate>(
                 id.clone(),
                 example::RotateUpdate {
