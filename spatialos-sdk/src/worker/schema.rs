@@ -9,13 +9,49 @@ use std::{collections::BTreeMap, marker::PhantomData};
 pub type FieldId = u32;
 
 #[derive(Debug)]
+pub struct SchemaComponentData<'a> {
+    internal: *mut Schema_ComponentData,
+    fields: SchemaObject<'a>,
+}
+
+impl<'a> SchemaComponentData<'a> {
+    pub(crate) fn new<C: Component>(component: &'a C) -> SchemaComponentData<'a> {
+        let internal = unsafe { Schema_CreateComponentData(C::ID) };
+        let fields = unsafe { Schema_GetComponentDataFields(internal) }.into();
+        let mut result = Self { internal, fields };
+
+        // Populate the schema data from the component.
+        component.to_data(&mut result.fields);
+
+        result
+    }
+
+    pub(crate) unsafe fn from_raw(internal: *mut Schema_ComponentData) -> Self {
+        let fields = Schema_GetComponentDataFields(internal).into();
+        SchemaComponentData { internal, fields }
+    }
+
+    pub(crate) fn into_raw(self) -> *mut Schema_ComponentData {
+        self.internal
+    }
+
+    pub fn component_id(&self) -> ComponentId {
+        unsafe { Schema_GetComponentDataComponentId(self.internal) }
+    }
+
+    pub fn from_fields<T: SchemaObjectType>(&self) -> T {
+        T::from_object(&self.fields)
+    }
+}
+
+#[derive(Debug)]
 pub struct SchemaComponentUpdate<'a> {
-    pub(crate) internal: *mut Schema_ComponentUpdate,
+    internal: *mut Schema_ComponentUpdate,
     fields: SchemaObject<'a>,
 }
 
 impl<'a> SchemaComponentUpdate<'a> {
-    pub fn new<C, U>(update: &'a U) -> SchemaComponentUpdate<'a>
+    pub(crate) fn new<C, U>(update: &'a U) -> SchemaComponentUpdate<'a>
     where
         C: Component,
         U: ComponentUpdate<C> + SchemaObjectType,
@@ -25,47 +61,24 @@ impl<'a> SchemaComponentUpdate<'a> {
         let mut result = Self { internal, fields };
 
         // Populate the update fields with the data from `update`.
-        update.into_object(result.fields_mut());
+        update.into_object(&mut result.fields);
 
         result
     }
 
-    pub(crate) fn from_worker_update(
+    pub(crate) unsafe fn from_raw(
         internal: *mut Schema_ComponentUpdate,
     ) -> SchemaComponentUpdate<'a> {
-        let fields = unsafe { Schema_GetComponentUpdateFields(internal) }.into();
+        let fields = Schema_GetComponentUpdateFields(internal).into();
         Self { internal, fields }
+    }
+
+    pub(crate) fn into_raw(self) -> *mut Schema_ComponentUpdate {
+        self.internal
     }
 
     pub fn id(&self) -> ComponentId {
         unsafe { Schema_GetComponentUpdateComponentId(self.internal) }
-    }
-
-    fn fields(&self) -> &SchemaObject<'a> {
-        &self.fields
-    }
-
-    fn fields_mut(&mut self) -> &mut SchemaObject<'a> {
-        &mut self.fields
-    }
-}
-
-#[derive(Debug)]
-pub struct SchemaComponentData {
-    pub component_id: ComponentId,
-    pub internal: *mut Schema_ComponentData,
-}
-
-impl SchemaComponentData {
-    pub fn new(component_id: ComponentId) -> SchemaComponentData {
-        SchemaComponentData {
-            component_id,
-            internal: unsafe { Schema_CreateComponentData(component_id) },
-        }
-    }
-
-    pub fn component_id(&self) -> ComponentId {
-        unsafe { Schema_GetComponentDataComponentId(self.internal) }
     }
 }
 

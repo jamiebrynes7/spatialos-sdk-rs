@@ -1,4 +1,6 @@
-use crate::worker::schema::{self, FieldId, SchemaComponentUpdate, SchemaField, SchemaObject};
+use crate::worker::schema::{
+    self, SchemaComponentData, SchemaComponentUpdate, SchemaObject, SchemaObjectType,
+};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 
@@ -8,7 +10,7 @@ pub use inventory;
 
 pub type ComponentId = u32;
 
-pub trait ComponentUpdate<C: Component> {
+pub trait ComponentUpdate<C: Component>: SchemaObjectType {
     fn merge(&mut self, update: Self);
 }
 
@@ -17,17 +19,13 @@ pub trait ComponentData<C: Component> {
 }
 
 // A trait that's implemented by a component to convert to/from schema handle types.
-pub trait Component
-where
-    Self: std::marker::Sized,
-{
-    type Update;
+pub trait Component: SchemaObjectType {
+    type Update: ComponentUpdate<Self>;
     type CommandRequest;
     type CommandResponse;
 
     const ID: ComponentId;
 
-    fn from_data(data: &schema::SchemaComponentData) -> Result<Self, String>;
     fn from_update(update: &schema::SchemaComponentUpdate) -> Result<Self::Update, String>;
     fn from_request(request: &schema::SchemaCommandRequest)
         -> Result<Self::CommandRequest, String>;
@@ -35,7 +33,6 @@ where
         response: &schema::SchemaCommandResponse,
     ) -> Result<Self::CommandResponse, String>;
 
-    fn to_data(data: &Self) -> Result<schema::SchemaComponentData, String>;
     fn to_update(update: &Self::Update) -> Result<schema::SchemaComponentUpdate, String>;
     fn to_request(request: &Self::CommandRequest) -> Result<schema::SchemaCommandRequest, String>;
     fn to_response(
@@ -119,7 +116,7 @@ pub(crate) mod internal {
     #[derive(Debug)]
     pub struct ComponentData<'a> {
         pub component_id: ComponentId,
-        pub schema_type: SchemaComponentData,
+        pub schema_type: SchemaComponentData<'a>,
         pub user_handle: *const Worker_ComponentDataHandle,
 
         // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
@@ -132,10 +129,7 @@ pub(crate) mod internal {
         fn from(data: &Worker_ComponentData) -> Self {
             ComponentData {
                 component_id: data.component_id,
-                schema_type: SchemaComponentData {
-                    component_id: data.component_id,
-                    internal: data.schema_type,
-                },
+                schema_type: unsafe { SchemaComponentData::from_raw(data.schema_type) },
                 user_handle: data.user_handle,
                 _marker: PhantomData,
             }
@@ -158,7 +152,7 @@ pub(crate) mod internal {
         fn from(update: &Worker_ComponentUpdate) -> Self {
             ComponentUpdate {
                 component_id: update.component_id,
-                schema_type: SchemaComponentUpdate::from_worker_update(update.schema_type),
+                schema_type: unsafe { SchemaComponentUpdate::from_raw(update.schema_type) },
                 user_handle: update.user_handle,
                 _marker: PhantomData,
             }
@@ -318,7 +312,7 @@ unsafe extern "C" fn vtable_component_data_free<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
-    handle_free::<C>(handle)
+    handle_free::<C>(handle);
 }
 
 unsafe extern "C" fn vtable_component_data_copy<C: Component>(
@@ -330,22 +324,15 @@ unsafe extern "C" fn vtable_component_data_copy<C: Component>(
 }
 
 unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
-    _: u32,
-    _: *mut raw::c_void,
-    data: *mut Schema_ComponentData,
+    _component_id: u32,
+    _user_data: *mut raw::c_void,
+    schema_data: *mut Schema_ComponentData,
     handle_out: *mut *mut Worker_ComponentDataHandle,
 ) -> u8 {
-    let schema_data = schema::SchemaComponentData {
-        component_id: C::ID,
-        internal: data,
-    };
-    let deserialized_result = C::from_data(&schema_data);
-    if let Ok(deserialized_data) = deserialized_result {
-        *handle_out = handle_allocate(deserialized_data);
-        1
-    } else {
-        0
-    }
+    let schema_data = schema::SchemaComponentData::from_raw(schema_data);
+    let component = schema_data.from_fields::<C>();
+    *handle_out = handle_allocate(component);
+    1
 }
 
 unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
@@ -355,11 +342,7 @@ unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
     data: *mut *mut Schema_ComponentData,
 ) {
     let client_data = &*(handle as *const C);
-    if let Ok(schema_data) = C::to_data(client_data) {
-        *data = schema_data.internal;
-    } else {
-        *data = ptr::null_mut();
-    }
+    *data = SchemaComponentData::new(client_data).into_raw();
 }
 
 unsafe extern "C" fn vtable_component_update_free<C: Component>(
@@ -367,7 +350,7 @@ unsafe extern "C" fn vtable_component_update_free<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
-    handle_free::<C>(handle)
+    handle_free::<C>(handle);
 }
 
 unsafe extern "C" fn vtable_component_update_copy<C: Component>(
@@ -384,7 +367,7 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     update: *mut Schema_ComponentUpdate,
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
-    let schema_update = SchemaComponentUpdate::from_worker_update(update);
+    let schema_update = SchemaComponentUpdate::from_raw(update);
     let deserialized_result = C::from_update(&schema_update);
     if let Ok(deserialized_update) = deserialized_result {
         *handle_out = handle_allocate(deserialized_update);
@@ -394,19 +377,17 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     }
 }
 
-unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
+unsafe extern "C" fn vtable_component_update_serialize<C>(
     _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
     update: *mut *mut Schema_ComponentUpdate,
-) {
-    let data = &*(handle as *const _);
-    let schema_result = C::to_update(data);
-    if let Ok(schema_update) = schema_result {
-        *update = schema_update.internal;
-    } else {
-        *update = ptr::null_mut();
-    }
+) where
+    C: Component,
+    C::Update: SchemaObjectType,
+{
+    let data: &C::Update = &*(handle as *const _);
+    *update = SchemaComponentUpdate::new(data).into_raw();
 }
 
 unsafe extern "C" fn vtable_command_request_free<C: Component>(
