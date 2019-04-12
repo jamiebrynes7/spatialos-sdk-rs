@@ -1,11 +1,16 @@
 // Conditionally re-export the correct version of download_cli dependent on platform.
 #[cfg(target_os = "linux")]
 pub use self::linux::*;
-#[cfg(any(target_os = "windows", target_os = "macos"))]
-pub use self::win_osx::*;
+#[cfg(target_os = "macos")]
+pub use self::macos::*;
+#[cfg(target_os = "windows")]
+pub use self::windows::*;
 
 use crate::{config::Config, opt::DownloadSdk};
 use log::*;
+use reqwest::get;
+use std::fs::File;
+use std::io::copy;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -190,6 +195,34 @@ fn download_package(
     Ok(())
 }
 
+fn get_installer(
+    download_url: &str,
+    directory: &Path,
+) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    // Download the installer.
+    trace!("GET request to {}", download_url);
+    let mut response = get(download_url)?;
+
+    let (mut dest, path) = {
+        let fname = response
+            .url()
+            .path_segments()
+            .and_then(|segments| segments.last())
+            .and_then(|name| if name.is_empty() { None } else { Some(name) })
+            .unwrap_or("tmp.bin");
+
+        trace!("Downloading {}", fname);
+        let fname = directory.join(fname);
+        trace!("Creating temporary file at: {:?}", fname);
+        (File::create(fname.clone())?, fname)
+    };
+
+    // Copy the data in the response to the temporary file.
+    copy(&mut response, &mut dest)?;
+
+    Ok(path)
+}
+
 #[cfg(target_os = "linux")]
 mod linux {
     pub fn download_cli() -> Result<(), Box<dyn std::error::Error>> {
@@ -197,57 +230,52 @@ mod linux {
     }
 }
 
-#[cfg(any(target_os = "windows", target_os = "macos"))]
-mod win_osx {
-    use log::*;
-    use reqwest::get;
-    use std::{fs::File, io::copy, path::Path, path::PathBuf, process};
+#[cfg(target_os = "windows")]
+mod windows {
+    use log::info;
+    use std::process;
     use tempfile;
 
-    #[cfg(target_os = "windows")]
     const DOWNLOAD_LOCATION: &str =
         "https://console.improbable.io/installer/download/stable/latest/win";
-    #[cfg(target_os = "macos")]
-    const DOWNLOAD_LOCATION: &str =
-        "https://console.improbable.io/installer/download/stable/latest/mac";
 
     pub fn download_cli() -> Result<(), Box<dyn std::error::Error>> {
         // Create a temporary directory. When this is dropped the directory is deleted.
         let tmp_dir = tempfile::TempDir::new()?;
-        let installer_path = get_installer(tmp_dir.path())?;
+        info!("Downloading installer.");
+        let installer_path = super::get_installer(DOWNLOAD_LOCATION, tmp_dir.path())?;
 
+        info!("Executing installer.");
         // Invoke the executable and wait for it to exit.
-        let result = process::Command::new(installer_path).status()?;
+        let result = process::Command::new(installer_path).status();
 
-        if !result.success() {
-            return Err("Installer returned a non-zero exit code.".to_owned())?;
+        match result {
+            Ok(status) => {
+                if !status.success() {
+                    Err("Installer returned a non-zero exit code.".to_owned())?
+                }
+
+                Ok(())
+            }
+            Err(e) => {
+                if let Some(code) = e.raw_os_error() {
+                    if code == 740 {
+                        Err("Installer requires elevated permissions to run. Please rerun in a terminal with elevated permissions.".to_owned())?
+                    }
+                }
+
+                Err(e)?
+            }
         }
-
-        Ok(())
     }
+}
 
-    fn get_installer(directory: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
-        // Download the installer.
-        trace!("GET request to {}", DOWNLOAD_LOCATION);
-        let mut response = get(DOWNLOAD_LOCATION)?;
+#[cfg(target_os = "macos")]
+mod macos {
+    const DOWNLOAD_LOCATION: &str =
+        "https://console.improbable.io/installer/download/stable/latest/mac";
 
-        let (mut dest, path) = {
-            let fname = response
-                .url()
-                .path_segments()
-                .and_then(|segments| segments.last())
-                .and_then(|name| if name.is_empty() { None } else { Some(name) })
-                .unwrap_or("tmp.bin");
-
-            trace!("Downloading {}", fname);
-            let fname = directory.join(fname);
-            trace!("Creating temporary file at: {:?}", fname);
-            (File::create(fname.clone())?, fname)
-        };
-
-        // Copy the data in the response to the temporary file.
-        copy(&mut response, &mut dest)?;
-
-        Ok(path)
+    pub fn download_cli() -> Result<(), Box<dyn std::error::Error>> {
+        unimplemented!()
     }
 }
