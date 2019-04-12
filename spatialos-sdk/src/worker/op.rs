@@ -6,9 +6,7 @@ use crate::worker::{
     entity::Entity,
     internal::utils::*,
     metrics::Metrics,
-    schema::{
-        SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData, SchemaComponentUpdate,
-    },
+    schema::SchemaComponentData,
     {Authority, EntityId, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
@@ -106,10 +104,10 @@ pub enum WorkerOp<'a> {
     RemoveEntity(RemoveEntityOp),
     AddComponent(AddComponentOp<'a>),
     RemoveComponent(RemoveComponentOp),
-    ComponentUpdate(ComponentUpdateOp<'a>),
+    ComponentUpdate,
     AuthorityChange(AuthorityChangeOp),
-    CommandRequest(CommandRequestOp<'a>),
-    CommandResponse(CommandResponseOp<'a>),
+    CommandRequest,
+    CommandResponse,
     ReserveEntityIdsResponse(ReserveEntityIdsResponseOp),
     CreateEntityResponse(CreateEntityResponseOp),
     DeleteEntityResponse(DeleteEntityResponseOp),
@@ -200,71 +198,74 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     WorkerOp::AuthorityChange(authority_change_op)
                 }
                 Worker_OpType_WORKER_OP_TYPE_COMPONENT_UPDATE => {
-                    let op = &erased_op.component_update;
-                    let component_update_op = ComponentUpdateOp {
-                        entity_id: EntityId::new(op.entity_id),
-                        component_id: op.update.component_id,
-                        component_update: internal::ComponentUpdate::from(&op.update),
-                    };
-                    WorkerOp::ComponentUpdate(component_update_op)
+                    // let op = &erased_op.component_update;
+                    // let component_update_op = ComponentUpdateOp {
+                    //     entity_id: EntityId::new(op.entity_id),
+                    //     component_id: op.update.component_id,
+                    //     component_update: internal::ComponentUpdate::from(&op.update),
+                    // };
+                    // WorkerOp::ComponentUpdate(component_update_op)
+                    WorkerOp::ComponentUpdate
                 }
                 Worker_OpType_WORKER_OP_TYPE_COMMAND_REQUEST => {
-                    let op = &erased_op.command_request;
-                    let attribute_set = cstr_array_to_vec_string(
-                        op.caller_attribute_set.attributes,
-                        op.caller_attribute_set.attribute_count,
-                    );
+                    // let op = &erased_op.command_request;
+                    // let attribute_set = cstr_array_to_vec_string(
+                    //     op.caller_attribute_set.attributes,
+                    //     op.caller_attribute_set.attribute_count,
+                    // );
 
-                    let command_request_op = CommandRequestOp {
-                        request_id: RequestId::new(op.request_id),
-                        entity_id: EntityId::new(op.entity_id),
-                        timeout_millis: op.timeout_millis,
-                        caller_worker_id: cstr_to_string(op.caller_worker_id),
-                        caller_attribute_set: attribute_set,
-                        component_id: op.request.component_id,
-                        request: internal::CommandRequest::from(&op.request),
-                    };
-                    WorkerOp::CommandRequest(command_request_op)
+                    // let command_request_op = CommandRequestOp {
+                    //     request_id: RequestId::new(op.request_id),
+                    //     entity_id: EntityId::new(op.entity_id),
+                    //     timeout_millis: op.timeout_millis,
+                    //     caller_worker_id: cstr_to_string(op.caller_worker_id),
+                    //     caller_attribute_set: attribute_set,
+                    //     component_id: op.request.component_id,
+                    //     request: internal::CommandRequest::from(&op.request),
+                    // };
+                    // WorkerOp::CommandRequest(command_request_op)
+                    WorkerOp::CommandRequest
                 }
                 Worker_OpType_WORKER_OP_TYPE_COMMAND_RESPONSE => {
-                    let op = &erased_op.command_response;
-                    let status_code = match i32::from(op.status_code) {
-                        Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
-                            StatusCode::Success(CommandResponse {
-                                response: internal::CommandResponse::from(&op.response),
-                            })
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
-                            StatusCode::Timeout(cstr_to_string(op.message))
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_NOT_FOUND => {
-                            StatusCode::NotFound(cstr_to_string(op.message))
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_AUTHORITY_LOST => {
-                            StatusCode::AuthorityLost(cstr_to_string(op.message))
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_PERMISSION_DENIED => {
-                            StatusCode::PermissionDenied(cstr_to_string(op.message))
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_APPLICATION_ERROR => {
-                            StatusCode::ApplicationError(cstr_to_string(op.message))
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_INTERNAL_ERROR => {
-                            StatusCode::InternalError(cstr_to_string(op.message))
-                        }
-                        _ => panic!(
-                            "Unknown command response status code received: {}",
-                            op.status_code
-                        ),
-                    };
+                    // let op = &erased_op.command_response;
+                    // let status_code = match i32::from(op.status_code) {
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
+                    //         StatusCode::Success(CommandResponse {
+                    //             response: internal::CommandResponse::from(&op.response),
+                    //         })
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
+                    //         StatusCode::Timeout(cstr_to_string(op.message))
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_NOT_FOUND => {
+                    //         StatusCode::NotFound(cstr_to_string(op.message))
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_AUTHORITY_LOST => {
+                    //         StatusCode::AuthorityLost(cstr_to_string(op.message))
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_PERMISSION_DENIED => {
+                    //         StatusCode::PermissionDenied(cstr_to_string(op.message))
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_APPLICATION_ERROR => {
+                    //         StatusCode::ApplicationError(cstr_to_string(op.message))
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_INTERNAL_ERROR => {
+                    //         StatusCode::InternalError(cstr_to_string(op.message))
+                    //     }
+                    //     _ => panic!(
+                    //         "Unknown command response status code received: {}",
+                    //         op.status_code
+                    //     ),
+                    // };
 
-                    let command_response_op = CommandResponseOp {
-                        entity_id: EntityId::new(op.entity_id),
-                        request_id: RequestId::new(op.request_id),
-                        component_id: op.response.component_id,
-                        response: status_code,
-                    };
-                    WorkerOp::CommandResponse(command_response_op)
+                    // let command_response_op = CommandResponseOp {
+                    //     entity_id: EntityId::new(op.entity_id),
+                    //     request_id: RequestId::new(op.request_id),
+                    //     component_id: op.response.component_id,
+                    //     response: status_code,
+                    // };
+                    // WorkerOp::CommandResponse(command_response_op)
+                    WorkerOp::CommandResponse
                 }
                 Worker_OpType_WORKER_OP_TYPE_RESERVE_ENTITY_IDS_RESPONSE => {
                     let op = erased_op.reserve_entity_ids_response;
@@ -570,83 +571,71 @@ pub struct AuthorityChangeOp {
     pub authority: Authority,
 }
 
-#[derive(Debug)]
-pub struct ComponentUpdateOp<'a> {
-    pub entity_id: EntityId,
-    pub component_id: ComponentId,
-    pub component_update: component::internal::ComponentUpdate<'a>,
-}
+// #[derive(Debug)]
+// pub struct ComponentUpdateOp<'a> {
+//     pub entity_id: EntityId,
+//     pub component_id: ComponentId,
+//     pub component_update: component::internal::ComponentUpdate<'a>,
+// }
 
-impl<'a> ComponentUpdateOp<'a> {
-    pub fn get<C: Component>(&self) -> Option<&C::Update> {
-        // TODO: Deserialize schema_type if user_handle is null.
-        if C::ID == self.component_update.component_id
-            && !self.component_update.user_handle.is_null()
-        {
-            Some(unsafe { &*(self.component_update.user_handle as *const _) })
-        } else {
-            None
-        }
-    }
+// impl<'a> ComponentUpdateOp<'a> {
+//     pub fn get<C: Component>(&self) -> Option<&C::Update> {
+//         // TODO: Deserialize schema_type if user_handle is null.
+//         if C::ID == self.component_update.component_id
+//             && !self.component_update.user_handle.is_null()
+//         {
+//             Some(unsafe { &*(self.component_update.user_handle as *const _) })
+//         } else {
+//             None
+//         }
+//     }
+// }
 
-    fn schema(&self) -> &SchemaComponentUpdate {
-        &self.component_update.schema_type
-    }
-}
+// #[derive(Debug)]
+// pub struct CommandRequestOp<'a> {
+//     pub request_id: RequestId<IncomingCommandRequest>,
+//     pub entity_id: EntityId,
+//     pub timeout_millis: u32,
+//     pub caller_worker_id: String,
+//     pub caller_attribute_set: Vec<String>,
+//     pub component_id: ComponentId,
+//     request: component::internal::CommandRequest<'a>,
+// }
 
-#[derive(Debug)]
-pub struct CommandRequestOp<'a> {
-    pub request_id: RequestId<IncomingCommandRequest>,
-    pub entity_id: EntityId,
-    pub timeout_millis: u32,
-    pub caller_worker_id: String,
-    pub caller_attribute_set: Vec<String>,
-    pub component_id: ComponentId,
-    request: component::internal::CommandRequest<'a>,
-}
+// impl<'a> CommandRequestOp<'a> {
+//     pub fn get<C: Component>(&self) -> Option<&C::CommandRequest> {
+//         // TODO: Deserialize schema_type if user_handle is null.
+//         if C::ID == self.component_id && !self.request.user_handle.is_null() {
+//             Some(unsafe { &*(self.request.user_handle as *const _) })
+//         } else {
+//             None
+//         }
+//     }
+// }
 
-impl<'a> CommandRequestOp<'a> {
-    pub fn get<C: Component>(&self) -> Option<&C::CommandRequest> {
-        // TODO: Deserialize schema_type if user_handle is null.
-        if C::ID == self.component_id && !self.request.user_handle.is_null() {
-            Some(unsafe { &*(self.request.user_handle as *const _) })
-        } else {
-            None
-        }
-    }
+// #[derive(Debug)]
+// pub struct CommandResponseOp<'a> {
+//     pub request_id: RequestId<OutgoingCommandRequest>,
+//     pub entity_id: EntityId,
+//     pub component_id: ComponentId,
+//     pub response: StatusCode<CommandResponse<'a>>,
+// }
 
-    fn schema(&self) -> &SchemaCommandRequest {
-        &self.request.schema_type
-    }
-}
+// #[derive(Debug)]
+// pub struct CommandResponse<'a> {
+//     response: component::internal::CommandResponse<'a>,
+// }
 
-#[derive(Debug)]
-pub struct CommandResponseOp<'a> {
-    pub request_id: RequestId<OutgoingCommandRequest>,
-    pub entity_id: EntityId,
-    pub component_id: ComponentId,
-    pub response: StatusCode<CommandResponse<'a>>,
-}
-
-#[derive(Debug)]
-pub struct CommandResponse<'a> {
-    response: component::internal::CommandResponse<'a>,
-}
-
-impl<'a> CommandResponse<'a> {
-    pub fn get<C: Component>(&self) -> Option<&C::CommandResponse> {
-        // TODO: Deserialize schema_type if user_handle is null.
-        if C::ID == self.response.component_id && !self.response.user_handle.is_null() {
-            Some(unsafe { &*(self.response.user_handle as *const _) })
-        } else {
-            None
-        }
-    }
-
-    fn schema(&self) -> &SchemaCommandResponse {
-        &self.response.schema_type
-    }
-}
+// impl<'a> CommandResponse<'a> {
+//     pub fn get<C: Component>(&self) -> Option<&C::CommandResponse> {
+//         // TODO: Deserialize schema_type if user_handle is null.
+//         if C::ID == self.response.component_id && !self.response.user_handle.is_null() {
+//             Some(unsafe { &*(self.response.user_handle as *const _) })
+//         } else {
+//             None
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod test {

@@ -1,6 +1,4 @@
-use crate::worker::schema::{
-    self, SchemaComponentData, SchemaComponentUpdate, SchemaObject, SchemaObjectType,
-};
+use crate::worker::schema::{self, SchemaComponentData, SchemaObject, SchemaObjectType};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 
@@ -10,37 +8,9 @@ pub use inventory;
 
 pub type ComponentId = u32;
 
-pub trait ComponentUpdate<C: Component>: SchemaObjectType {
-    fn merge(&mut self, update: Self);
-}
-
-pub trait ComponentData<C: Component> {
-    fn merge(&mut self, update: C::Update);
-}
-
 // A trait that's implemented by a component to convert to/from schema handle types.
 pub trait Component: SchemaObjectType {
-    type Update: ComponentUpdate<Self>;
-    type CommandRequest;
-    type CommandResponse;
-
     const ID: ComponentId;
-
-    fn from_update(update: &schema::SchemaComponentUpdate) -> Result<Self::Update, String>;
-    fn from_request(request: &schema::SchemaCommandRequest)
-        -> Result<Self::CommandRequest, String>;
-    fn from_response(
-        response: &schema::SchemaCommandResponse,
-    ) -> Result<Self::CommandResponse, String>;
-
-    fn to_update(update: &Self::Update) -> Result<schema::SchemaComponentUpdate, String>;
-    fn to_request(request: &Self::CommandRequest) -> Result<schema::SchemaCommandRequest, String>;
-    fn to_response(
-        response: &Self::CommandResponse,
-    ) -> Result<schema::SchemaCommandResponse, String>;
-
-    fn get_request_command_index(request: &Self::CommandRequest) -> u32;
-    fn get_response_command_index(response: &Self::CommandResponse) -> u32;
 }
 
 /// Additional parameters for sending component updates.
@@ -136,80 +106,80 @@ pub(crate) mod internal {
         }
     }
 
-    #[derive(Debug)]
-    pub struct ComponentUpdate<'a> {
-        pub component_id: ComponentId,
-        pub schema_type: SchemaComponentUpdate<'a>,
-        pub user_handle: *const Worker_ComponentUpdateHandle,
+    // #[derive(Debug)]
+    // pub struct ComponentUpdate<'a> {
+    //     pub component_id: ComponentId,
+    //     pub schema_type: SchemaComponentUpdate<'a>,
+    //     pub user_handle: *const Worker_ComponentUpdateHandle,
 
-        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-        // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something*.
-        pub _marker: PhantomData<&'a ()>,
-    }
+    //     // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
+    //     // type-erased pointer that may be null, so we just mark that we're borrowing
+    //     // *something*.
+    //     pub _marker: PhantomData<&'a ()>,
+    // }
 
-    impl<'a> From<&'a Worker_ComponentUpdate> for ComponentUpdate<'a> {
-        fn from(update: &Worker_ComponentUpdate) -> Self {
-            ComponentUpdate {
-                component_id: update.component_id,
-                schema_type: unsafe { SchemaComponentUpdate::from_raw(update.schema_type) },
-                user_handle: update.user_handle,
-                _marker: PhantomData,
-            }
-        }
-    }
+    // impl<'a> From<&'a Worker_ComponentUpdate> for ComponentUpdate<'a> {
+    //     fn from(update: &Worker_ComponentUpdate) -> Self {
+    //         ComponentUpdate {
+    //             component_id: update.component_id,
+    //             schema_type: unsafe { SchemaComponentUpdate::from_raw(update.schema_type) },
+    //             user_handle: update.user_handle,
+    //             _marker: PhantomData,
+    //         }
+    //     }
+    // }
 
-    #[derive(Debug)]
-    pub struct CommandRequest<'a> {
-        pub component_id: ComponentId,
-        pub schema_type: SchemaCommandRequest,
-        pub user_handle: *const Worker_CommandRequestHandle,
+    // #[derive(Debug)]
+    // pub struct CommandRequest<'a> {
+    //     pub component_id: ComponentId,
+    //     pub schema_type: SchemaCommandRequest,
+    //     pub user_handle: *const Worker_CommandRequestHandle,
 
-        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-        // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something*.
-        pub _marker: PhantomData<&'a ()>,
-    }
+    //     // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
+    //     // type-erased pointer that may be null, so we just mark that we're borrowing
+    //     // *something*.
+    //     pub _marker: PhantomData<&'a ()>,
+    // }
 
-    impl<'a> From<&'a Worker_CommandRequest> for CommandRequest<'a> {
-        fn from(request: &Worker_CommandRequest) -> Self {
-            CommandRequest {
-                component_id: request.component_id,
-                schema_type: SchemaCommandRequest {
-                    component_id: request.component_id,
-                    internal: request.schema_type,
-                },
-                user_handle: request.user_handle,
-                _marker: PhantomData,
-            }
-        }
-    }
+    // impl<'a> From<&'a Worker_CommandRequest> for CommandRequest<'a> {
+    //     fn from(request: &Worker_CommandRequest) -> Self {
+    //         CommandRequest {
+    //             component_id: request.component_id,
+    //             schema_type: SchemaCommandRequest {
+    //                 component_id: request.component_id,
+    //                 internal: request.schema_type,
+    //             },
+    //             user_handle: request.user_handle,
+    //             _marker: PhantomData,
+    //         }
+    //     }
+    // }
 
-    #[derive(Debug)]
-    pub struct CommandResponse<'a> {
-        pub component_id: ComponentId,
-        pub schema_type: SchemaCommandResponse,
-        pub user_handle: *const Worker_CommandResponseHandle,
+    // #[derive(Debug)]
+    // pub struct CommandResponse<'a> {
+    //     pub component_id: ComponentId,
+    //     pub schema_type: SchemaCommandResponse,
+    //     pub user_handle: *const Worker_CommandResponseHandle,
 
-        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-        // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something*.
-        pub _marker: PhantomData<&'a ()>,
-    }
+    //     // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
+    //     // type-erased pointer that may be null, so we just mark that we're borrowing
+    //     // *something*.
+    //     pub _marker: PhantomData<&'a ()>,
+    // }
 
-    impl<'a> From<&'a Worker_CommandResponse> for CommandResponse<'a> {
-        fn from(response: &Worker_CommandResponse) -> Self {
-            CommandResponse {
-                component_id: response.component_id,
-                schema_type: SchemaCommandResponse {
-                    component_id: response.component_id,
-                    internal: response.schema_type,
-                },
-                user_handle: response.user_handle,
-                _marker: PhantomData,
-            }
-        }
-    }
+    // impl<'a> From<&'a Worker_CommandResponse> for CommandResponse<'a> {
+    //     fn from(response: &Worker_CommandResponse) -> Self {
+    //         CommandResponse {
+    //             component_id: response.component_id,
+    //             schema_type: SchemaCommandResponse {
+    //                 component_id: response.component_id,
+    //                 internal: response.schema_type,
+    //             },
+    //             user_handle: response.user_handle,
+    //             _marker: PhantomData,
+    //         }
+    //     }
+    // }
 }
 
 inventory::collect!(VTable);
@@ -342,7 +312,8 @@ unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
     data: *mut *mut Schema_ComponentData,
 ) {
     let client_data = &*(handle as *const C);
-    *data = SchemaComponentData::new(client_data).into_raw();
+    unimplemented!();
+    // *data = SchemaComponentData::new(client_data).into_raw();
 }
 
 unsafe extern "C" fn vtable_component_update_free<C: Component>(
@@ -367,14 +338,15 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     update: *mut Schema_ComponentUpdate,
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
-    let schema_update = SchemaComponentUpdate::from_raw(update);
-    let deserialized_result = C::from_update(&schema_update);
-    if let Ok(deserialized_update) = deserialized_result {
-        *handle_out = handle_allocate(deserialized_update);
-        1
-    } else {
-        0
-    }
+    unimplemented!()
+    // let schema_update = SchemaComponentUpdate::from_raw(update);
+    // let deserialized_result = C::from_update(&schema_update);
+    // if let Ok(deserialized_update) = deserialized_result {
+    //     *handle_out = handle_allocate(deserialized_update);
+    //     1
+    // } else {
+    //     0
+    // }
 }
 
 unsafe extern "C" fn vtable_component_update_serialize<C>(
@@ -384,10 +356,10 @@ unsafe extern "C" fn vtable_component_update_serialize<C>(
     update: *mut *mut Schema_ComponentUpdate,
 ) where
     C: Component,
-    C::Update: SchemaObjectType,
 {
-    let data: &C::Update = &*(handle as *const _);
-    *update = SchemaComponentUpdate::new(data).into_raw();
+    unimplemented!();
+    // let data: &C::Update = &*(handle as *const _);
+    // *update = SchemaComponentUpdate::new(data).into_raw();
 }
 
 unsafe extern "C" fn vtable_command_request_free<C: Component>(
@@ -412,17 +384,18 @@ unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
     request: *mut Schema_CommandRequest,
     handle_out: *mut *mut Worker_CommandRequestHandle,
 ) -> u8 {
-    let schema_request = schema::SchemaCommandRequest {
-        component_id: C::ID,
-        internal: request,
-    };
-    let deserialized_result = C::from_request(&schema_request);
-    if let Ok(deserialized_request) = deserialized_result {
-        *handle_out = handle_allocate(deserialized_request);
-        1
-    } else {
-        0
-    }
+    unimplemented!()
+    // let schema_request = schema::SchemaCommandRequest {
+    //     component_id: C::ID,
+    //     internal: request,
+    // };
+    // let deserialized_result = C::from_request(&schema_request);
+    // if let Ok(deserialized_request) = deserialized_result {
+    //     *handle_out = handle_allocate(deserialized_request);
+    //     1
+    // } else {
+    //     0
+    // }
 }
 
 unsafe extern "C" fn vtable_command_request_serialize<C: Component>(
@@ -431,13 +404,14 @@ unsafe extern "C" fn vtable_command_request_serialize<C: Component>(
     handle: *mut raw::c_void,
     request: *mut *mut Schema_CommandRequest,
 ) {
-    let data = &*(handle as *const _);
-    let schema_result = C::to_request(data);
-    if let Ok(schema_request) = schema_result {
-        *request = schema_request.internal;
-    } else {
-        *request = ptr::null_mut();
-    }
+    unimplemented!();
+    // let data = &*(handle as *const _);
+    // let schema_result = C::to_request(data);
+    // if let Ok(schema_request) = schema_result {
+    //     *request = schema_request.internal;
+    // } else {
+    //     *request = ptr::null_mut();
+    // }
 }
 
 unsafe extern "C" fn vtable_command_response_free<C: Component>(
@@ -462,17 +436,18 @@ unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(
     response: *mut Schema_CommandResponse,
     handle_out: *mut *mut Worker_CommandRequestHandle,
 ) -> u8 {
-    let schema_response = schema::SchemaCommandResponse {
-        component_id: C::ID,
-        internal: response,
-    };
-    let deserialized_result = C::from_response(&schema_response);
-    if let Ok(deserialized_response) = deserialized_result {
-        *handle_out = handle_allocate(deserialized_response);
-        1
-    } else {
-        0
-    }
+    unimplemented!();
+    // let schema_response = schema::SchemaCommandResponse {
+    //     component_id: C::ID,
+    //     internal: response,
+    // };
+    // let deserialized_result = C::from_response(&schema_response);
+    // if let Ok(deserialized_response) = deserialized_result {
+    //     *handle_out = handle_allocate(deserialized_response);
+    //     1
+    // } else {
+    //     0
+    // }
 }
 
 unsafe extern "C" fn vtable_command_response_serialize<C: Component>(
@@ -481,11 +456,12 @@ unsafe extern "C" fn vtable_command_response_serialize<C: Component>(
     handle: *mut raw::c_void,
     response: *mut *mut Schema_CommandResponse,
 ) {
-    let data = &*(handle as *const _);
-    let schema_result = C::to_response(data);
-    if let Ok(schema_response) = schema_result {
-        *response = schema_response.internal;
-    } else {
-        *response = ptr::null_mut();
-    }
+    unimplemented!();
+    // let data = &*(handle as *const _);
+    // let schema_result = C::to_response(data);
+    // if let Ok(schema_response) = schema_result {
+    //     *response = schema_response.internal;
+    // } else {
+    //     *response = ptr::null_mut();
+    // }
 }

@@ -102,7 +102,7 @@ pub trait Connection {
     fn send_command_request<C: Component>(
         &mut self,
         entity_id: EntityId,
-        request: C::CommandRequest,
+        request: (), //C::CommandRequest,
         timeout_millis: Option<u32>,
         params: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest>;
@@ -110,7 +110,7 @@ pub trait Connection {
     fn send_command_response<C: Component>(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
-        response: C::CommandResponse,
+        response: (), //C::CommandResponse,
     );
 
     fn send_command_failure(
@@ -122,7 +122,7 @@ pub trait Connection {
     fn send_component_update<C: Component>(
         &mut self,
         entity_id: EntityId,
-        update: C::Update,
+        update: (), //C::Update,
         parameters: UpdateParameters,
     );
 
@@ -384,42 +384,43 @@ impl Connection for WorkerConnection {
     fn send_command_request<C: Component>(
         &mut self,
         entity_id: EntityId,
-        request: C::CommandRequest,
+        request: (), //C::CommandRequest,
         timeout_millis: Option<u32>,
         params: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest> {
-        let command_index = C::get_request_command_index(&request);
+        unimplemented!()
+        // let command_index = C::get_request_command_index(&request);
 
-        let timeout = match timeout_millis {
-            Some(c) => &c,
-            None => ptr::null(),
-        };
+        // let timeout = match timeout_millis {
+        //     Some(c) => &c,
+        //     None => ptr::null(),
+        // };
 
-        let command_request = Worker_CommandRequest {
-            reserved: ptr::null_mut(),
-            component_id: C::ID,
-            schema_type: ptr::null_mut(),
-            user_handle: component::handle_allocate(request),
-        };
+        // let command_request = Worker_CommandRequest {
+        //     reserved: ptr::null_mut(),
+        //     component_id: C::ID,
+        //     schema_type: ptr::null_mut(),
+        //     user_handle: component::handle_allocate(request),
+        // };
 
-        let request_id = unsafe {
-            Worker_Connection_SendCommandRequest(
-                self.connection_ptr.get(),
-                entity_id.id,
-                &command_request,
-                command_index,
-                timeout,
-                &params.to_worker_sdk(),
-            )
-        };
+        // let request_id = unsafe {
+        //     Worker_Connection_SendCommandRequest(
+        //         self.connection_ptr.get(),
+        //         entity_id.id,
+        //         &command_request,
+        //         command_index,
+        //         timeout,
+        //         &params.to_worker_sdk(),
+        //     )
+        // };
 
-        RequestId::new(request_id)
+        // RequestId::new(request_id)
     }
 
     fn send_command_response<C: Component>(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
-        response: C::CommandResponse,
+        response: (), //C::CommandResponse,
     ) {
         unsafe {
             let raw_response = Worker_CommandResponse {
@@ -457,7 +458,7 @@ impl Connection for WorkerConnection {
     fn send_component_update<C: Component>(
         &mut self,
         entity_id: EntityId,
-        update: C::Update,
+        update: (), //C::Update,
         parameters: UpdateParameters,
     ) {
         let component_update = Worker_ComponentUpdate {

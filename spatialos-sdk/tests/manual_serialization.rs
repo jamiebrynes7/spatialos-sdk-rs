@@ -30,43 +30,7 @@ impl SchemaObjectType for CustomComponent {
 }
 
 impl Component for CustomComponent {
-    type Update = CustomComponentUpdate;
-    type CommandRequest = CustomComponentRequest;
-    type CommandResponse = CustomComponentResponse;
-
     const ID: ComponentId = 1234;
-
-    fn from_update(_update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
-        unimplemented!()
-    }
-
-    fn from_request(_request: &SchemaCommandRequest) -> Result<Self::CommandRequest, String> {
-        unimplemented!()
-    }
-
-    fn from_response(_response: &SchemaCommandResponse) -> Result<Self::CommandResponse, String> {
-        unimplemented!()
-    }
-
-    fn to_update(_update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
-        unimplemented!()
-    }
-
-    fn to_request(_request: &Self::CommandRequest) -> Result<SchemaCommandRequest, String> {
-        unimplemented!()
-    }
-
-    fn to_response(_response: &Self::CommandResponse) -> Result<SchemaCommandResponse, String> {
-        unimplemented!()
-    }
-
-    fn get_request_command_index(_request: &Self::CommandRequest) -> u32 {
-        unimplemented!()
-    }
-
-    fn get_response_command_index(_response: &Self::CommandResponse) -> u32 {
-        unimplemented!()
-    }
 }
 
 pub struct CustomComponentUpdate {
@@ -89,7 +53,7 @@ impl SchemaObjectType for CustomComponentUpdate {
         // Self {
         //     name: object.field::<Option<String>>(0),
         //     count: object.field::<Option<SchemaSfixed32>>(1),
-        //     targets: object.field_array::<Option<EntityId>>(2),
+        //     targets: object.field_array::<Option<Vec<EntityId>>>(2),
         //     target_names: object.field::<Option<BTreeMap<EntityId, String>>>(3),
         //     byte_collection: object.field::<Option<Vec<Vec<u8>>>>(4),
         // }
@@ -99,7 +63,7 @@ impl SchemaObjectType for CustomComponentUpdate {
         unimplemented!();
         // object.add_field::<Option<String>>(0, &self.name);
         // object.add_field::<Option<SchemaSfixed32>>(1, &self.count);
-        // object.add_field_array::<Option<EntityId>>(2, &self.targets);
+        // object.add_field_array::<Option<Vec<EntityId>>>(2, &self.targets);
         // object.add_field::<Option<BTreeMap<EntityId, String>>>(3, &self.target_names);
         // object.add_field::<Optoin<Vec<Vec<u8>>>>(4, &self.byte_collection);
     }
