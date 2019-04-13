@@ -272,10 +272,35 @@ mod windows {
 
 #[cfg(target_os = "macos")]
 mod macos {
+    use log::info;
+    use std::process;
+    use tempfile;
+
     const DOWNLOAD_LOCATION: &str =
         "https://console.improbable.io/installer/download/stable/latest/mac";
 
     pub fn download_cli() -> Result<(), Box<dyn std::error::Error>> {
-        unimplemented!()
+        // Create a temporary directory. When this is dropped the directory is deleted.
+        let tmp_dir = tempfile::TempDir::new()?;
+        info!("Downloading installer.");
+        let installer_path = super::get_installer(DOWNLOAD_LOCATION, tmp_dir.path())?;
+
+        info!("Executing installer.");
+        let result = process::Command::new("installer")
+            .arg("-pkg")
+            .arg(installer_path)
+            .args(&["-target", "/"])
+            .status();
+
+        match result {
+            Ok(status) => {
+                if !status.success() {
+                    Err("Installer returned a non-zero exit code.".to_owned())?
+                }
+
+                Ok(())
+            }
+            Err(e) => Err(e)?,
+        }
     }
 }
