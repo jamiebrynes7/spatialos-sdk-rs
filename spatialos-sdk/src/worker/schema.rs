@@ -15,16 +15,25 @@ pub struct SchemaComponentData<'a> {
 }
 
 impl<'a> SchemaComponentData<'a> {
-    // pub(crate) fn new<C: Component>(component: &'a C) -> SchemaComponentData<'a> {
-    //     let internal = unsafe { Schema_CreateComponentData(C::ID) };
-    //     let fields = unsafe { Schema_GetComponentDataFields(internal) }.into();
-    //     let mut result = Self { internal, fields };
+    pub(crate) fn new<C: Component>(component: &'a C) -> SchemaComponentData<'a> {
+        // Create the underlying `Schema_ComponentData` and retrieve the fields object.
+        let internal = unsafe { Schema_CreateComponentData(C::ID) };
+        let fields = unsafe { Schema_GetComponentDataFields(internal) }.into();
+        let mut result = Self { internal, fields };
 
-    //     // Populate the schema data from the component.
-    //     component.to_data(&mut result.fields);
+        // Populate the schema data from the component.
+        component.into_object(&mut result.fields);
 
-    //     result
-    // }
+        result
+    }
+
+    pub fn component_id(&self) -> ComponentId {
+        unsafe { Schema_GetComponentDataComponentId(self.internal) }
+    }
+
+    pub fn deserialize<T: SchemaObjectType>(&self) -> T {
+        T::from_object(&self.fields)
+    }
 
     pub(crate) unsafe fn from_raw(internal: *mut Schema_ComponentData) -> Self {
         let fields = Schema_GetComponentDataFields(internal).into();
@@ -33,14 +42,6 @@ impl<'a> SchemaComponentData<'a> {
 
     pub(crate) fn into_raw(self) -> *mut Schema_ComponentData {
         self.internal
-    }
-
-    pub fn component_id(&self) -> ComponentId {
-        unsafe { Schema_GetComponentDataComponentId(self.internal) }
-    }
-
-    pub fn from_fields<T: SchemaObjectType>(&self) -> T {
-        T::from_object(&self.fields)
     }
 }
 

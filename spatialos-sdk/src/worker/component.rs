@@ -278,16 +278,16 @@ impl VTable {
 }
 
 unsafe extern "C" fn vtable_component_data_free<C: Component>(
-    _: u32,
-    _: *mut raw::c_void,
+    _component_id: u32,
+    _user_data: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
     handle_free::<C>(handle);
 }
 
 unsafe extern "C" fn vtable_component_data_copy<C: Component>(
-    _: u32,
-    _: *mut raw::c_void,
+    _component_id: u32,
+    _user_data: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) -> *mut raw::c_void {
     handle_copy::<C>(handle)
@@ -299,21 +299,20 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     schema_data: *mut Schema_ComponentData,
     handle_out: *mut *mut Worker_ComponentDataHandle,
 ) -> u8 {
-    let schema_data = schema::SchemaComponentData::from_raw(schema_data);
-    let component = schema_data.from_fields::<C>();
+    let schema_data = SchemaComponentData::from_raw(schema_data);
+    let component = schema_data.deserialize::<C>();
     *handle_out = handle_allocate(component);
     1
 }
 
 unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
-    _: u32,
-    _: *mut raw::c_void,
+    _component_id: u32,
+    _user_data: *mut raw::c_void,
     handle: *mut raw::c_void,
     data: *mut *mut Schema_ComponentData,
 ) {
-    let client_data = &*(handle as *const C);
-    unimplemented!();
-    // *data = SchemaComponentData::new(client_data).into_raw();
+    let component = &*(handle as *const C);
+    *data = SchemaComponentData::new(component).into_raw();
 }
 
 unsafe extern "C" fn vtable_component_update_free<C: Component>(

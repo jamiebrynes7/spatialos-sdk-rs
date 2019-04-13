@@ -3,6 +3,7 @@
 Cargo.lock
 
 .idea/
+.vscode/
 
 # SpatialOS SDK dependencies.
 dependencies/
