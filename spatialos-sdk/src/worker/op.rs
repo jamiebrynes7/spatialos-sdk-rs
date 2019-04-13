@@ -9,6 +9,7 @@ use crate::worker::{
     schema::SchemaComponentData,
     {Authority, EntityId, LogLevel, RequestId},
 };
+use maybe_owned::MaybeOwned;
 use spatialos_sdk_sys::worker::*;
 use std::{collections::HashMap, slice};
 
@@ -176,7 +177,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     let add_component_op = AddComponentOp {
                         entity_id: EntityId::new(op.entity_id),
                         component_id: op.data.component_id,
-                        component_data: internal::ComponentData::from(&op.data),
+                        component_data: ComponentData::from_raw(&op.data),
                     };
                     WorkerOp::AddComponent(add_component_op)
                 }
@@ -539,22 +540,12 @@ pub struct EntityQueryResponseOp {
 #[derive(Debug)]
 pub struct AddComponentOp<'a> {
     pub entity_id: EntityId,
-    pub component_id: ComponentId,
-    component_data: component::internal::ComponentData<'a>,
+    component_data: ComponentData<'a>,
 }
 
 impl<'a> AddComponentOp<'a> {
-    pub fn get<C: Component>(&self) -> Option<&C> {
-        if C::ID == self.component_data.component_id {
-            // TODO: Deserialize schema_type if user_handle is null.
-            Some(unsafe { &*(self.component_data.user_handle as *const _) })
-        } else {
-            None
-        }
-    }
-
-    fn schema(&self) -> &SchemaComponentData {
-        &self.component_data.schema_type
+    pub fn get<C: Component>(&self) -> Option<MaybeOwned<'a, C>> {
+        self.component_data.get()
     }
 }
 

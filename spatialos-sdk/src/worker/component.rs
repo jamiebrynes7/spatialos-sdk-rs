@@ -1,4 +1,5 @@
 use crate::worker::schema::{self, SchemaComponentData, SchemaObject, SchemaObjectType};
+use maybe_owned::MaybeOwned;
 use spatialos_sdk_sys::worker::*;
 use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 
@@ -75,112 +76,110 @@ impl UpdateParameters {
     }
 }
 
-// Internal untyped component data objects.
-pub(crate) mod internal {
-    use crate::worker::schema::*;
-    use spatialos_sdk_sys::worker::*;
-    use std::marker::PhantomData;
+#[derive(Debug)]
+pub(crate) struct ComponentData<'a> {
+    pub component_id: ComponentId,
+    pub schema_type: SchemaComponentData<'a>,
+    pub user_handle: *mut Worker_ComponentDataHandle,
+}
 
-    use crate::worker::component::ComponentId;
-
-    #[derive(Debug)]
-    pub struct ComponentData<'a> {
-        pub component_id: ComponentId,
-        pub schema_type: SchemaComponentData<'a>,
-        pub user_handle: *const Worker_ComponentDataHandle,
-
-        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-        // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something*.
-        pub _marker: PhantomData<&'a ()>,
-    }
-
-    impl<'a> From<&'a Worker_ComponentData> for ComponentData<'a> {
-        fn from(data: &Worker_ComponentData) -> Self {
-            ComponentData {
-                component_id: data.component_id,
-                schema_type: unsafe { SchemaComponentData::from_raw(data.schema_type) },
-                user_handle: data.user_handle,
-                _marker: PhantomData,
-            }
+impl<'a> ComponentData<'a> {
+    pub(crate) unsafe fn from_raw(data: &'a Worker_ComponentData) -> Self {
+        ComponentData {
+            component_id: data.component_id,
+            schema_type: SchemaComponentData::from_raw(data.schema_type),
+            user_handle: data.user_handle,
         }
     }
 
-    // #[derive(Debug)]
-    // pub struct ComponentUpdate<'a> {
-    //     pub component_id: ComponentId,
-    //     pub schema_type: SchemaComponentUpdate<'a>,
-    //     pub user_handle: *const Worker_ComponentUpdateHandle,
+    pub fn get<C: Component>(&self) -> Option<MaybeOwned<'a, C>> {
+        if C::ID != self.component_id {
+            return None;
+        }
 
-    //     // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-    //     // type-erased pointer that may be null, so we just mark that we're borrowing
-    //     // *something*.
-    //     pub _marker: PhantomData<&'a ()>,
-    // }
-
-    // impl<'a> From<&'a Worker_ComponentUpdate> for ComponentUpdate<'a> {
-    //     fn from(update: &Worker_ComponentUpdate) -> Self {
-    //         ComponentUpdate {
-    //             component_id: update.component_id,
-    //             schema_type: unsafe { SchemaComponentUpdate::from_raw(update.schema_type) },
-    //             user_handle: update.user_handle,
-    //             _marker: PhantomData,
-    //         }
-    //     }
-    // }
-
-    // #[derive(Debug)]
-    // pub struct CommandRequest<'a> {
-    //     pub component_id: ComponentId,
-    //     pub schema_type: SchemaCommandRequest,
-    //     pub user_handle: *const Worker_CommandRequestHandle,
-
-    //     // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-    //     // type-erased pointer that may be null, so we just mark that we're borrowing
-    //     // *something*.
-    //     pub _marker: PhantomData<&'a ()>,
-    // }
-
-    // impl<'a> From<&'a Worker_CommandRequest> for CommandRequest<'a> {
-    //     fn from(request: &Worker_CommandRequest) -> Self {
-    //         CommandRequest {
-    //             component_id: request.component_id,
-    //             schema_type: SchemaCommandRequest {
-    //                 component_id: request.component_id,
-    //                 internal: request.schema_type,
-    //             },
-    //             user_handle: request.user_handle,
-    //             _marker: PhantomData,
-    //         }
-    //     }
-    // }
-
-    // #[derive(Debug)]
-    // pub struct CommandResponse<'a> {
-    //     pub component_id: ComponentId,
-    //     pub schema_type: SchemaCommandResponse,
-    //     pub user_handle: *const Worker_CommandResponseHandle,
-
-    //     // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-    //     // type-erased pointer that may be null, so we just mark that we're borrowing
-    //     // *something*.
-    //     pub _marker: PhantomData<&'a ()>,
-    // }
-
-    // impl<'a> From<&'a Worker_CommandResponse> for CommandResponse<'a> {
-    //     fn from(response: &Worker_CommandResponse) -> Self {
-    //         CommandResponse {
-    //             component_id: response.component_id,
-    //             schema_type: SchemaCommandResponse {
-    //                 component_id: response.component_id,
-    //                 internal: response.schema_type,
-    //             },
-    //             user_handle: response.user_handle,
-    //             _marker: PhantomData,
-    //         }
-    //     }
-    // }
+        if !self.user_handle.is_null() {
+            let component = unsafe { *(self.user_handle as *const _) };
+            Some(MaybeOwned::Borrowed(component))
+        } else {
+            Some(MaybeOwned::Owned(self.schema_type.deserialize()))
+        }
+    }
 }
+
+// #[derive(Debug)]
+// pub struct ComponentUpdate<'a> {
+//     pub component_id: ComponentId,
+//     pub schema_type: SchemaComponentUpdate<'a>,
+//     pub user_handle: *const Worker_ComponentUpdateHandle,
+
+//     // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
+//     // type-erased pointer that may be null, so we just mark that we're borrowing
+//     // *something*.
+//     pub _marker: PhantomData<&'a ()>,
+// }
+
+// impl<'a> From<&'a Worker_ComponentUpdate> for ComponentUpdate<'a> {
+//     fn from(update: &Worker_ComponentUpdate) -> Self {
+//         ComponentUpdate {
+//             component_id: update.component_id,
+//             schema_type: unsafe { SchemaComponentUpdate::from_raw(update.schema_type) },
+//             user_handle: update.user_handle,
+//             _marker: PhantomData,
+//         }
+//     }
+// }
+
+// #[derive(Debug)]
+// pub struct CommandRequest<'a> {
+//     pub component_id: ComponentId,
+//     pub schema_type: SchemaCommandRequest,
+//     pub user_handle: *const Worker_CommandRequestHandle,
+
+//     // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
+//     // type-erased pointer that may be null, so we just mark that we're borrowing
+//     // *something*.
+//     pub _marker: PhantomData<&'a ()>,
+// }
+
+// impl<'a> From<&'a Worker_CommandRequest> for CommandRequest<'a> {
+//     fn from(request: &Worker_CommandRequest) -> Self {
+//         CommandRequest {
+//             component_id: request.component_id,
+//             schema_type: SchemaCommandRequest {
+//                 component_id: request.component_id,
+//                 internal: request.schema_type,
+//             },
+//             user_handle: request.user_handle,
+//             _marker: PhantomData,
+//         }
+//     }
+// }
+
+// #[derive(Debug)]
+// pub struct CommandResponse<'a> {
+//     pub component_id: ComponentId,
+//     pub schema_type: SchemaCommandResponse,
+//     pub user_handle: *const Worker_CommandResponseHandle,
+
+//     // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
+//     // type-erased pointer that may be null, so we just mark that we're borrowing
+//     // *something*.
+//     pub _marker: PhantomData<&'a ()>,
+// }
+
+// impl<'a> From<&'a Worker_CommandResponse> for CommandResponse<'a> {
+//     fn from(response: &Worker_CommandResponse) -> Self {
+//         CommandResponse {
+//             component_id: response.component_id,
+//             schema_type: SchemaCommandResponse {
+//                 component_id: response.component_id,
+//                 internal: response.schema_type,
+//             },
+//             user_handle: response.user_handle,
+//             _marker: PhantomData,
+//         }
+//     }
+// }
 
 inventory::collect!(VTable);
 
