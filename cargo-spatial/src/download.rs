@@ -286,21 +286,16 @@ mod macos {
         let installer_path = super::get_installer(DOWNLOAD_LOCATION, tmp_dir.path())?;
 
         info!("Executing installer.");
-        let result = process::Command::new("installer")
+        let status = process::Command::new("installer")
             .arg("-pkg")
             .arg(installer_path)
             .args(&["-target", "/"])
-            .status();
+            .status()?;
 
-        match result {
-            Ok(status) => {
-                if !status.success() {
-                    Err("Installer returned a non-zero exit code.".to_owned())?
-                }
-
-                Ok(())
-            }
-            Err(e) => Err(e)?,
+        if !status.success() {
+            Err("Installer returned a non-zero exit code.".to_owned())?;
         }
+
+        Ok(())
     }
 }
