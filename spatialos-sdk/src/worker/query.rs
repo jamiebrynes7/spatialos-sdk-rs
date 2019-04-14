@@ -249,7 +249,7 @@ impl QueryConstraint {
             QueryConstraint::And(constraints) | QueryConstraint::Or(constraints) => {
                 constraints
                     .iter()
-                    .map(|x| x.constraint_len_recursive())
+                    .map(QueryConstraint::constraint_len_recursive)
                     .sum::<u32>()
                     + 1
             }
