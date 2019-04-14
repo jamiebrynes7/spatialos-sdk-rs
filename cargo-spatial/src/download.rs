@@ -207,7 +207,7 @@ fn get_installer(
         let fname = response
             .url()
             .path_segments()
-            .and_then(|segments| segments.last())
+            .and_then(::std::iter::Iterator::last)
             .and_then(|name| if name.is_empty() { None } else { Some(name) })
             .unwrap_or("tmp.bin");
 
