@@ -486,7 +486,7 @@ impl Connection for WorkerConnection {
         assert!(!self.connection_ptr.is_null());
         let worker_sdk_overrides = interest_overrides
             .iter()
-            .map(|x| x.to_worker_sdk())
+            .map(InterestOverride::to_worker_sdk)
             .collect::<Vec<Worker_InterestOverride>>();
 
         unsafe {
