@@ -1,30 +1,17 @@
-use crate::generated::improbable::Position;
 use crate::{connection_handler::*, opt::*};
 use generated::{example, improbable};
 use rand::Rng;
-use spatialos_sdk::worker::view::View;
-use spatialos_sdk::worker::view::ViewQuery;
 use spatialos_sdk::worker::{
     commands::{EntityQueryRequest, ReserveEntityIdsRequest},
-    component::{Component, UpdateParameters},
+    component::{UpdateParameters},
     connection::{Connection, WorkerConnection},
     entity_builder::EntityBuilder,
     metrics::{HistogramMetric, Metrics},
-<<<<<<< HEAD
-    op::{StatusCode, WorkerOp},
     query::{EntityQuery, QueryConstraint, ResultType},
+    view::{View, ViewQuery},
     {EntityId, InterestOverride, LogLevel},
 };
-use std::{collections::HashMap, f64};
-use std::time::Duration;
-use std::time::SystemTime;
-=======
-    query::{EntityQuery, QueryConstraint, ResultType},
-    {EntityId, InterestOverride, LogLevel},
-};
->>>>>>> lints
 use std::{
-    collections::BTreeMap,
     f64,
     time::{Duration, SystemTime},
 };
@@ -46,26 +33,26 @@ fn main() {
     println!("Connected as: {}", worker_connection.get_worker_id());
 
     exercise_connection_code_paths(&mut worker_connection);
-    create_entities(&mut worker_connection, 25);
+    create_entities(&mut worker_connection, 5);
     logic_loop(&mut worker_connection);
 }
 
 struct RotatorQuery<'a> {
     pub id: EntityId,
-    pub position: &'a Position,
+    pub position: &'a improbable::Position,
     pub rotate: &'a example::Rotate,
 }
 
 impl<'a, 'b: 'a> ViewQuery<'b> for RotatorQuery<'a> {
     fn filter(view: &View, entity_id: &EntityId) -> bool {
-        view.is_authoritative::<Position>(entity_id)
+        view.is_authoritative::<improbable::Position>(entity_id)
             && view.is_authoritative::<example::Rotate>(entity_id)
     }
 
     fn select(view: &'b View, entity_id: EntityId) -> RotatorQuery<'a> {
         RotatorQuery {
             id: entity_id.clone(),
-            position: view.get_component::<Position>(&entity_id).unwrap(),
+            position: view.get_component::<improbable::Position>(&entity_id).unwrap(),
             rotate: view.get_component::<example::Rotate>(&entity_id).unwrap(),
         }
     }
@@ -73,12 +60,6 @@ impl<'a, 'b: 'a> ViewQuery<'b> for RotatorQuery<'a> {
 
 fn logic_loop(c: &mut WorkerConnection) {
     let mut rng = rand::thread_rng();
-
-    // Store the currently-visible state of the world. Entities/components are added
-    // and removed from the world as we get ops notifying us of those changes. The
-    // data in `world` also tracks which `Rotate` components we currently have
-    // authority over, so that we know which ones we need to be updating.
-    let mut world = HashMap::new();
 
     let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, "rusty");
 
@@ -132,9 +113,9 @@ fn logic_loop(c: &mut WorkerConnection) {
                 id.clone(),
                 improbable::PositionUpdate {
                     coords: Some(improbable::Coordinates {
-                        x: rotate.angle.sin() * rotate.radius + rotate.center_x,
-                        y: rotate.center_y,
-                        z: rotate.angle.cos() * rotate.radius + rotate.center_z,
+                        x: rotate.angle.sin() * rotate.radius + rotate.center.x,
+                        y: rotate.center.y,
+                        z: rotate.angle.cos() * rotate.radius + rotate.center.z,
                     }),
                 },
                 update_params.clone(),
@@ -229,52 +210,22 @@ fn create_entities(c: &mut WorkerConnection, number: u32) {
     let mut rng = rand::thread_rng();
 
     for _ in 0..number {
-        let mut entity = Entity::new();
-        entity
-            .add(improbable::Position {
-                coords: improbable::Coordinates {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-            })
-            .unwrap();
-        entity
-            .add(example::Rotate {
-                angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
-                radius: rng.gen_range(20.0, 100.0),
-                center_x: rng.gen_range(-50.0, 50.0),
-                center_y: 0.0,
-                center_z: rng.gen_range(-50.0, 50.0),
-            })
-            .unwrap();
-        entity
-            .add(improbable::EntityAcl {
-                read_acl: improbable::WorkerRequirementSet {
-                    attribute_set: vec![improbable::WorkerAttributeSet {
-                        attribute: vec!["rusty".into()],
-                    }],
-                },
-                component_write_acl: BTreeMap::new().tap(|writes| {
-                    writes.insert(
-                        improbable::Position::ID,
-                        improbable::WorkerRequirementSet {
-                            attribute_set: vec![improbable::WorkerAttributeSet {
-                                attribute: vec!["rusty".into()],
-                            }],
-                        },
-                    );
-                    writes.insert(
-                        example::Rotate::ID,
-                        improbable::WorkerRequirementSet {
-                            attribute_set: vec![improbable::WorkerAttributeSet {
-                                attribute: vec!["rusty".into()],
-                            }],
-                        },
-                    );
-                }),
-            })
-            .unwrap();
+        let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, "rusty");
+
+        builder.add_component(example::Rotate {
+            angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
+            radius: rng.gen_range(20.0, 100.0),
+            center: improbable::Vector3d {
+                x: rng.gen_range(-50.0, 50.0),
+                y: 0.0,
+                z: rng.gen_range(-50.0, 50.0),
+            }
+        }, "rusty");
+
+        builder.set_entity_acl_write_access("rusty");
+
+        let entity = builder.build().unwrap();
+
         let create_request_id = c.send_create_entity_request(entity, None, None);
         println!("Create entity request ID: {:?}", create_request_id);
     }
