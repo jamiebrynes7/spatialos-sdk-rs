@@ -106,7 +106,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                     angle: Some(rotate.angle + f64::consts::PI * 2.0 / 200.0),
                     ..Default::default()
                 },
-                update_params.clone(),
+                update_params,
             );
 
             c.send_component_update::<improbable::Position>(
@@ -118,7 +118,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                         z: rotate.angle.cos() * rotate.radius + rotate.center.z,
                     }),
                 },
-                update_params.clone(),
+                update_params,
             );
         }
 
