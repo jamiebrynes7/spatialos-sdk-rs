@@ -55,9 +55,11 @@ fn logic_loop(c: &mut WorkerConnection) {
         example::Rotate {
             angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
             radius: rng.gen_range(20.0, 100.0),
-            center_x: rng.gen_range(-50.0, 50.0),
-            center_y: 0.0,
-            center_z: rng.gen_range(-50.0, 50.0),
+            center: improbable::Vector3d {
+                x: rng.gen_range(-50.0, 50.0),
+                y: 0.0,
+                z: rng.gen_range(-50.0, 50.0),
+            },
         },
         "rusty",
     );
@@ -185,9 +187,9 @@ fn logic_loop(c: &mut WorkerConnection) {
                     entity_id,
                     improbable::PositionUpdate {
                         coords: Some(improbable::Coordinates {
-                            x: rotate.angle.sin() * rotate.radius + rotate.center_x,
-                            y: rotate.center_y,
-                            z: rotate.angle.cos() * rotate.radius + rotate.center_z,
+                            x: rotate.angle.sin() * rotate.radius + rotate.center.x,
+                            y: rotate.center.x,
+                            z: rotate.angle.cos() * rotate.radius + rotate.center.z,
                         }),
                     },
                     UpdateParameters::default(),

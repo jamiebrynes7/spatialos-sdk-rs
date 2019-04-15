@@ -92,6 +92,10 @@ impl Package {
         }
     }
 
+    pub fn get_subpackage(&self, package_part: &str) -> Option<&Package> {
+        self.subpackages.get(package_part)
+    }
+
     fn depth(&self) -> usize {
         self.path.len()
     }
@@ -101,10 +105,13 @@ impl Package {
     }
 
     fn rust_fqname(&self, identifier: &Identifier) -> String {
+        let gen_code = self.generated_code.borrow();
+        let identifier_package = gen_code.get_package(identifier);
+
         [
             "generated".to_string(),
-            self.path.join("::"),
-            self.rust_name(identifier),
+            identifier_package.path.join("::"),
+            identifier_package.rust_name(identifier),
         ]
         .join("::")
     }
@@ -454,6 +461,23 @@ impl GeneratedCode {
 
     fn resolve_enum_reference(&self, reference: &EnumReference) -> &EnumDefinition {
         &self.enums[&reference.qualified_name]
+    }
+
+    pub fn get_package(&self, identifier: &Identifier) -> &Package {
+        let mut package = self.root_package.as_ref().unwrap();
+        let path = &identifier.path;
+        let mut current_part = 0;
+
+        while current_part < path.len() {
+            if let Some(new_package) = package.get_subpackage(&path[current_part]) {
+                current_part += 1;
+                package = new_package;
+            } else {
+                break;
+            }
+        }
+
+        package
     }
 }
 
