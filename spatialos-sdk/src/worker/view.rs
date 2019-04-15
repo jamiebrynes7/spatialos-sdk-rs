@@ -79,7 +79,7 @@ impl View {
         self.entities.contains(entity_id)
     }
 
-    pub fn query<'a, T: ViewQuery<'a, T>>(&'a self) -> (impl Iterator<Item = T> + 'a) {
+    pub fn query<'a, T: ViewQuery<'a>>(&'a self) -> (impl Iterator<Item = T> + 'a) {
         self.iter_entities()
             .filter(move |id| T::filter(self, id))
             .map(move |id| T::select(self, id.clone()))
@@ -148,9 +148,9 @@ impl<'a> ViewEntityIterator<'a> {
     }
 }
 
-pub trait ViewQuery<'a, T> {
+pub trait ViewQuery<'a> {
     fn filter(view: &View, entity_id: &EntityId) -> bool;
-    fn select(view: &'a View, entity_id: EntityId) -> T;
+    fn select(view: &'a View, entity_id: EntityId) -> Self;
 }
 
 impl<'a> Iterator for ViewEntityIterator<'a> {

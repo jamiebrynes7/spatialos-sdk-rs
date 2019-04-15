@@ -56,7 +56,7 @@ struct RotatorQuery<'a> {
     pub rotate: &'a example::Rotate,
 }
 
-impl<'a, 'b: 'a> ViewQuery<'b, RotatorQuery<'a>> for RotatorQuery<'a> {
+impl<'a, 'b: 'a> ViewQuery<'b> for RotatorQuery<'a> {
     fn filter(view: &View, entity_id: &EntityId) -> bool {
         view.is_authoritative::<Position>(entity_id)
             && view.is_authoritative::<example::Rotate>(entity_id)
