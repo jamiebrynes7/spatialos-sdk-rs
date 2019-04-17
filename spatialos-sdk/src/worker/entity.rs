@@ -17,14 +17,12 @@ enum ComponentData<'a> {
 #[derive(Debug, Default)]
 pub struct Entity<'a> {
     components: HashMap<ComponentId, ComponentData<'a>>,
-    use_internal_serialization: bool,
 }
 
 impl<'a> Entity<'a> {
-    pub fn new(use_internal_serialization: bool) -> Self {
+    pub fn new() -> Self {
         Self {
             components: Default::default(),
-            use_internal_serialization,
         }
     }
 
