@@ -17,7 +17,7 @@ pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Box<dyn std::
     );
 
     // Run codegen and such.
-    crate::codegen::run_codegen(&config)?;
+    crate::codegen::run_codegen(config)?;
 
     // Use `cargo install` to build workers and copy the exectuables to the build
     // directory.

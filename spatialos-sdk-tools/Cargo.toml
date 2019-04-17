@@ -5,15 +5,10 @@ authors = ["Jamie Brynes <jamiebrynes7@gmail.com>"]
 edition = "2018"
 
 [[bin]]
-name = "download_sdk"
-path = "src/download_sdk/main.rs"
-
-[[bin]]
 name = "generate_bindings"
 path = "src/generate_bindings/main.rs"
 
 [dependencies]
-zip = "0.5"
 clap = "2.32.0"
 glob = "0.2"
 bindgen = "0.42"
