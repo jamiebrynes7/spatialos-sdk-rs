@@ -1,6 +1,8 @@
-use crate::{
-    worker::component::DATABASE, worker::entity::Entity, worker::internal::utils::cstr_to_string,
-    worker::EntityId,
+use crate::worker::{
+    component::DATABASE,
+    entity::{Entity, EntityQuery},
+    internal::utils::cstr_to_string,
+    EntityId,
 };
 use spatialos_sdk_sys::worker::*;
 use std::{ffi::CString, path::Path};
@@ -32,13 +34,13 @@ impl SnapshotOutputStream {
         Ok(stream)
     }
 
-    pub fn write_entity(&self, id: EntityId, entity: &Entity) -> Result<(), String> {
-        let components = entity.raw_component_data();
+    pub fn write_entity(&self, id: EntityId, entity: Entity) -> Result<(), String> {
+        let components = entity.into_raw();
 
         let wrk_entity = Worker_Entity {
             entity_id: id.id,
-            components: components.components.as_ptr(),
-            component_count: components.components.len() as u32,
+            components: components.as_ptr(),
+            component_count: components.len() as _,
         };
 
         let success =
@@ -93,7 +95,7 @@ impl SnapshotInputStream {
         unsafe { Worker_SnapshotInputStream_HasNext(self.ptr) != 0 }
     }
 
-    pub fn read_entity(&mut self) -> Result<Entity, String> {
+    pub fn read_entity(&mut self) -> Result<EntityQuery, String> {
         let wrk_entity_ptr = unsafe { Worker_SnapshotInputStream_ReadEntity(self.ptr) };
         let err_ptr = unsafe { Worker_SnapshotInputStream_GetError(self.ptr) };
 
@@ -101,9 +103,9 @@ impl SnapshotInputStream {
             return Err(cstr_to_string(err_ptr));
         }
 
-        let wrk_entity = unsafe { *wrk_entity_ptr };
+        let wrk_entity = unsafe { &*wrk_entity_ptr };
 
-        unsafe { Entity::from_worker_sdk(&wrk_entity) }
+        Ok(unsafe { EntityQuery::from_raw(&wrk_entity) })
     }
 }
 

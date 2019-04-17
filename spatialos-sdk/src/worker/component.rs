@@ -1,4 +1,4 @@
-use crate::worker::schema::{self, SchemaComponentData, SchemaObject, SchemaObjectType};
+use crate::worker::schema::{self, SchemaObjectType};
 use maybe_owned::MaybeOwned;
 use spatialos_sdk_sys::worker::*;
 use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
@@ -8,6 +8,7 @@ use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 pub use inventory;
 
 pub type ComponentId = u32;
+pub type UserHandle = *mut raw::c_void;
 
 // A trait that's implemented by a component to convert to/from schema handle types.
 pub trait Component: SchemaObjectType {
@@ -76,18 +77,19 @@ impl UpdateParameters {
     }
 }
 
+/// Component data returned from the runtime.
 #[derive(Debug)]
-pub(crate) struct ComponentData<'a> {
+pub(crate) struct ComponentDataRef<'a> {
     pub component_id: ComponentId,
-    pub schema_type: SchemaComponentData<'a>,
+    pub schema_type: schema::ComponentDataRef<'a>,
     pub user_handle: *mut Worker_ComponentDataHandle,
 }
 
-impl<'a> ComponentData<'a> {
-    pub(crate) unsafe fn from_raw(data: &'a Worker_ComponentData) -> Self {
-        ComponentData {
+impl<'a> ComponentDataRef<'a> {
+    pub unsafe fn from_raw(data: &'a Worker_ComponentData) -> Self {
+        Self {
             component_id: data.component_id,
-            schema_type: SchemaComponentData::from_raw(data.schema_type),
+            schema_type: schema::ComponentDataRef::from_raw(&*data.schema_type),
             user_handle: data.user_handle,
         }
     }
@@ -230,15 +232,15 @@ impl ComponentDatabase {
 unsafe impl Sync for ComponentDatabase {}
 unsafe impl Send for ComponentDatabase {}
 
-pub(crate) fn handle_allocate<T>(data: T) -> *mut raw::c_void {
+pub(crate) fn handle_allocate<T>(data: T) -> UserHandle {
     Arc::into_raw(Arc::new(data)) as *mut _
 }
 
-pub(crate) unsafe fn handle_free<T>(handle: *mut raw::c_void) {
+pub(crate) unsafe fn handle_free<T>(handle: UserHandle) {
     let _ = Arc::<T>::from_raw(handle as *const _);
 }
 
-pub(crate) unsafe fn handle_copy<T>(handle: *mut raw::c_void) -> *mut raw::c_void {
+pub(crate) unsafe fn handle_copy<T>(handle: UserHandle) -> UserHandle {
     let original = Arc::<T>::from_raw(handle as *const _);
     let copy = original.clone();
     mem::forget(original);
@@ -298,7 +300,7 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     schema_data: *mut Schema_ComponentData,
     handle_out: *mut *mut Worker_ComponentDataHandle,
 ) -> u8 {
-    let schema_data = SchemaComponentData::from_raw(schema_data);
+    let schema_data = schema::ComponentDataRef::from_raw(&*schema_data);
     let component = schema_data.deserialize::<C>();
     *handle_out = handle_allocate(component);
     1
@@ -311,7 +313,7 @@ unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
     data: *mut *mut Schema_ComponentData,
 ) {
     let component = &*(handle as *const C);
-    *data = SchemaComponentData::new(component).into_raw();
+    *data = schema::ComponentData::new(component).into_raw();
 }
 
 unsafe extern "C" fn vtable_component_update_free<C: Component>(

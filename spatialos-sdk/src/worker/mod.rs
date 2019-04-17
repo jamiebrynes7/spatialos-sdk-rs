@@ -43,6 +43,18 @@ impl EntityId {
     }
 }
 
+impl From<i64> for EntityId {
+    fn from(from: i64) -> Self {
+        Self { id: from }
+    }
+}
+
+impl From<EntityId> for i64 {
+    fn from(from: EntityId) -> Self {
+        from.id
+    }
+}
+
 #[derive(Derivative)]
 #[derivative(
     Debug(bound = ""),

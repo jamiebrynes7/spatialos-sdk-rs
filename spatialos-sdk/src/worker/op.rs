@@ -2,11 +2,10 @@
 
 use crate::worker::{
     commands::*,
-    component::{self, *},
-    entity::Entity,
+    component::*,
+    entity::EntityQuery,
     internal::utils::*,
     metrics::Metrics,
-    schema::SchemaComponentData,
     {Authority, EntityId, LogLevel, RequestId},
 };
 use maybe_owned::MaybeOwned;
@@ -112,7 +111,7 @@ pub enum WorkerOp<'a> {
     ReserveEntityIdsResponse(ReserveEntityIdsResponseOp),
     CreateEntityResponse(CreateEntityResponseOp),
     DeleteEntityResponse(DeleteEntityResponseOp),
-    EntityQueryResponse(EntityQueryResponseOp),
+    EntityQueryResponse(EntityQueryResponseOp<'a>),
 }
 
 impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
@@ -176,8 +175,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     let op = &erased_op.add_component;
                     let add_component_op = AddComponentOp {
                         entity_id: EntityId::new(op.entity_id),
-                        component_id: op.data.component_id,
-                        component_data: ComponentData::from_raw(&op.data),
+                        component_data: ComponentDataRef::from_raw(&op.data),
                     };
                     WorkerOp::AddComponent(add_component_op)
                 }
@@ -390,7 +388,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                                 for raw_entity in raw_entities {
                                     entities.insert(
                                         EntityId::new(raw_entity.entity_id),
-                                        Entity::from_worker_sdk(raw_entity).unwrap(),
+                                        EntityQuery::from_raw(raw_entity),
                                     );
                                 }
 
@@ -526,21 +524,21 @@ pub struct DeleteEntityResponseOp {
 }
 
 #[derive(Debug)]
-pub enum QueryResponse {
-    Snapshot(HashMap<EntityId, Entity>),
+pub enum QueryResponse<'a> {
+    Snapshot(HashMap<EntityId, EntityQuery<'a>>),
     Result(u32),
 }
 
 #[derive(Debug)]
-pub struct EntityQueryResponseOp {
+pub struct EntityQueryResponseOp<'a> {
     pub request_id: RequestId<EntityQueryRequest>,
-    pub status_code: StatusCode<QueryResponse>,
+    pub status_code: StatusCode<QueryResponse<'a>>,
 }
 
 #[derive(Debug)]
 pub struct AddComponentOp<'a> {
     pub entity_id: EntityId,
-    component_data: ComponentData<'a>,
+    component_data: ComponentDataRef<'a>,
 }
 
 impl<'a> AddComponentOp<'a> {

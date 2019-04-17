@@ -313,9 +313,9 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn send_create_entity_request(
+    fn send_create_entity_request<'a>(
         &mut self,
-        entity: Entity,
+        entity: Entity<'a>,
         entity_id: Option<EntityId>,
         timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest> {
@@ -327,12 +327,12 @@ impl Connection for WorkerConnection {
             Some(e) => &e.id,
             None => ptr::null(),
         };
-        let component_data = entity.raw_component_data();
+        let components = entity.into_raw();
         let id = unsafe {
             Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),
-                component_data.components.len() as _,
-                component_data.components.as_ptr(),
+                components.len() as _,
+                components.as_ptr(),
                 entity_id,
                 timeout,
             )
