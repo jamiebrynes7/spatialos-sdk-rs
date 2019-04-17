@@ -182,14 +182,13 @@ pub trait SchemaField: Sized + Sealed {
         value: &'data Self::RustType,
     );
 
-    fn get_field<'owner>(object: ObjectRef<'owner>, field: FieldId) -> Self::RustType;
+    fn get_field(object: ObjectRef, field: FieldId) -> Self::RustType;
 }
 
 pub trait IndexedField: SchemaField {
-    fn field_count<'owner>(object: ObjectRef<'owner>, field: FieldId) -> u32;
+    fn field_count(object: ObjectRef, field: FieldId) -> u32;
 
-    fn index_field<'owner>(object: ObjectRef<'owner>, field: FieldId, index: u32)
-        -> Self::RustType;
+    fn index_field(object: ObjectRef, field: FieldId, index: u32) -> Self::RustType;
 }
 
 pub trait ArrayField: IndexedField {
@@ -199,17 +198,13 @@ pub trait ArrayField: IndexedField {
         data: &'data [Self::RustType],
     );
 
-    fn get_field_list<'owner>(
-        object: ObjectRef<'owner>,
-        field: FieldId,
-        data: &mut Vec<Self::RustType>,
-    );
+    fn get_field_list(object: ObjectRef, field: FieldId, data: &mut Vec<Self::RustType>);
 }
 
 /// A type that can be deserialized from an entire `SchemaObject`.
 pub trait SchemaObjectType: Sized {
     fn into_object<'owner, 'data>(&'data self, object: &mut ObjectMut<'owner, 'data>);
-    fn from_object<'owner>(object: ObjectRef<'owner>) -> Self;
+    fn from_object(object: ObjectRef) -> Self;
 }
 
 impl<T: SchemaObjectType> Sealed for T {}
@@ -327,21 +322,19 @@ macro_rules! impl_primitive_field {
                 }
             }
 
-            fn get_field<'owner>(object: ObjectRef<'owner>, field: FieldId) -> Self::RustType {
+            #[allow(clippy::useless_transmute, clippy::transmute_int_to_bool)]
+            fn get_field(object: ObjectRef, field: FieldId) -> Self::RustType {
                 unsafe { mem::transmute($schema_get(object.raw, field)) }
             }
         }
 
         impl IndexedField for $schema_type {
-            fn field_count<'owner>(object: ObjectRef<'owner>, field: FieldId) -> u32 {
+            fn field_count(object: ObjectRef, field: FieldId) -> u32 {
                 unsafe { $schema_count(object.raw, field) }
             }
 
-            fn index_field<'owner>(
-                object: ObjectRef<'owner>,
-                field: FieldId,
-                index: u32,
-            ) -> Self::RustType {
+            #[allow(clippy::useless_transmute, clippy::transmute_int_to_bool)]
+            fn index_field(object: ObjectRef, field: FieldId, index: u32) -> Self::RustType {
                 unsafe { mem::transmute($schema_index(object.raw, field, index)) }
             }
         }
@@ -362,11 +355,7 @@ macro_rules! impl_primitive_field {
                 }
             }
 
-            fn get_field_list<'owner>(
-                object: ObjectRef<'owner>,
-                field: FieldId,
-                data: &mut Vec<Self::RustType>,
-            ) {
+            fn get_field_list(object: ObjectRef, field: FieldId, data: &mut Vec<Self::RustType>) {
                 let count = Self::field_count(object, field) as usize;
 
                 // Ensure that there is enough capacity for the elements in the schema field.
@@ -596,7 +585,7 @@ where
         }
     }
 
-    fn get_field<'owner>(object: ObjectRef<'owner>, field: FieldId) -> Self::RustType {
+    fn get_field(object: ObjectRef, field: FieldId) -> Self::RustType {
         // Load each of the key-value pairs from the map object.
         let count = K::field_count(object, field);
         let mut result = BTreeMap::new();
@@ -632,7 +621,7 @@ impl<T: IndexedField> SchemaField for Vec<T> {
         }
     }
 
-    fn get_field<'data>(object: ObjectRef<'data>, field: FieldId) -> Self::RustType {
+    fn get_field(object: ObjectRef, field: FieldId) -> Self::RustType {
         let count = T::field_count(object, field);
 
         let mut result = Vec::with_capacity(count as usize);
@@ -657,7 +646,7 @@ impl SchemaField for String {
         add_bytes(object, field, value.as_bytes());
     }
 
-    fn get_field<'owner>(object: ObjectRef<'owner>, field: FieldId) -> Self::RustType {
+    fn get_field(object: ObjectRef, field: FieldId) -> Self::RustType {
         let bytes = get_bytes(object, field);
         std::str::from_utf8(bytes)
             .expect("Schema string was invalid UTF-8")
@@ -666,15 +655,11 @@ impl SchemaField for String {
 }
 
 impl IndexedField for String {
-    fn field_count<'owner>(object: ObjectRef<'owner>, field: FieldId) -> u32 {
+    fn field_count(object: ObjectRef, field: FieldId) -> u32 {
         unsafe { Schema_GetBytesCount(object.raw, field) }
     }
 
-    fn index_field<'owner>(
-        object: ObjectRef<'owner>,
-        field: FieldId,
-        index: u32,
-    ) -> Self::RustType {
+    fn index_field(object: ObjectRef, field: FieldId, index: u32) -> Self::RustType {
         let bytes = index_bytes(object, field, index);
         std::str::from_utf8(bytes)
             .expect("Schema string was invalid UTF-8")
@@ -695,21 +680,17 @@ impl SchemaField for Vec<u8> {
         add_bytes(object, field, value);
     }
 
-    fn get_field<'owner>(object: ObjectRef<'owner>, field: FieldId) -> Self::RustType {
+    fn get_field(object: ObjectRef, field: FieldId) -> Self::RustType {
         get_bytes(object, field).into()
     }
 }
 
 impl IndexedField for Vec<u8> {
-    fn field_count<'owner>(object: ObjectRef<'owner>, field: FieldId) -> u32 {
+    fn field_count(object: ObjectRef, field: FieldId) -> u32 {
         unsafe { Schema_GetBytesCount(object.raw, field) }
     }
 
-    fn index_field<'owner>(
-        object: ObjectRef<'owner>,
-        field: FieldId,
-        index: u32,
-    ) -> Self::RustType {
+    fn index_field(object: ObjectRef, field: FieldId, index: u32) -> Self::RustType {
         index_bytes(object, field, index).into()
     }
 }
@@ -724,7 +705,7 @@ fn add_bytes<'owner, 'data>(
     }
 }
 
-fn get_bytes<'owner>(object: ObjectRef<'owner>, field: FieldId) -> &'owner [u8] {
+fn get_bytes(object: ObjectRef, field: FieldId) -> &[u8] {
     unsafe {
         let data = Schema_GetBytes(object.raw, field);
         let len = Schema_GetBytesLength(object.raw, field);
@@ -732,7 +713,7 @@ fn get_bytes<'owner>(object: ObjectRef<'owner>, field: FieldId) -> &'owner [u8] 
     }
 }
 
-fn index_bytes<'owner>(object: ObjectRef<'owner>, field: FieldId, index: u32) -> &'owner [u8] {
+fn index_bytes(object: ObjectRef, field: FieldId, index: u32) -> &[u8] {
     unsafe {
         let data = Schema_IndexBytes(object.raw, field, index);
         let len = Schema_IndexBytesLength(object.raw, field, index);
