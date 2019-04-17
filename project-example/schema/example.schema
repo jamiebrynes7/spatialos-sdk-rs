@@ -1,5 +1,7 @@
 package example;
 
+import "improbable/vector3.schema";
+
 type CommandData {
     int32 value = 1;
 }
@@ -17,13 +19,9 @@ component Rotate {
     /// The current angle (in radians) offset from the base.
     double angle = 1;
 
-    /// The radius of the rotation.
-    double radius = 5;
+    /// The center of the circle
+    improbable.Vector3d center = 2;
 
-    /// The center point of the rotation.
-    // TODO: Use `improbable.Vector3d` here. Currently can't be used due to issues
-    // with the code generation logic.
-    double center_x = 2;
-    double center_y = 3;
-    double center_z = 4;
+    /// The radius of the rotation.
+    double radius = 3;
 }
