@@ -1,0 +1,9 @@
+package test;
+
+component Test {
+    id = 1002;
+
+    option<int32> opt_data = 1;
+    list<int32> list_data = 2;
+    map<int32, int32> map_data = 3;
+}
