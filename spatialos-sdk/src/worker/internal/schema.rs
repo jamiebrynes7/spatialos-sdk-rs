@@ -70,7 +70,20 @@ impl SchemaComponentUpdate {
         }
     }
 
-    // TODO: Cleared fields.
+    pub fn cleared_fields(&self) -> Vec<FieldId> {
+        let count = unsafe { Schema_GetComponentUpdateClearedFieldCount(self.internal) };
+        let mut cleared_fields = Vec::with_capacity(count as usize);
+
+        unsafe {
+            Schema_GetComponentUpdateClearedFieldList(self.internal, cleared_fields.as_mut_ptr())
+        }
+
+        cleared_fields
+    }
+
+    pub fn clear_field(&mut self, id: FieldId) {
+        unsafe { Schema_AddComponentUpdateClearedField(self.internal, id) };
+    }
 }
 
 impl SchemaComponentData {
