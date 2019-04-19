@@ -443,6 +443,34 @@ impl Package {
             deserialize_expr
         }
     }
+
+    fn get_cleared_data(&self, field: &FieldDefinition) -> &str {
+        if field.option_type.is_some() {
+            return "None";
+        }
+
+        if field.list_type.is_some() {
+            return "Vec::new()";
+        }
+
+        if field.map_type.is_some() {
+            return "BTreeMap::new()";
+        }
+
+        panic!("Called get_cleared_data on a field which cannot be cleared!")
+    }
+
+    fn get_empty_field_expr(&self, field: &FieldDefinition, field_name: &str) -> String {
+        if field.option_type.is_some() {
+            return format!("{}.is_some()", field_name);
+        }
+
+        if field.list_type.is_some() || field.map_type.is_some() {
+            return format!("{}.is_empty()", field_name);
+        }
+
+        panic!("Called get_empty_field_expr on a field which cannot be empty!")
+    }
 }
 
 #[derive(Debug)]

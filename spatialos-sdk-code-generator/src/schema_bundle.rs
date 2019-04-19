@@ -195,6 +195,12 @@ pub struct FieldDefinition {
     pub annotations: Vec<Annotation>,
 }
 
+impl FieldDefinition {
+    pub fn can_be_cleared(&self) -> bool {
+        self.option_type.is_some() || self.list_type.is_some() || self.map_type.is_some()
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeDefinition {

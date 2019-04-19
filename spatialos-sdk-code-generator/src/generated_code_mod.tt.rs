@@ -161,7 +161,18 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<<#= self.rust_fqname(&component.identifier) #>Update, String> {
-        <<#= self.rust_fqname(&component.identifier) #>Update as TypeConversion>::from_type(&update.fields())
+        let mut data = <<#= self.rust_fqname(&component.identifier) #>Update as TypeConversion>::from_type(&update.fields())?;
+        <# if component_fields.iter().any(FieldDefinition::can_be_cleared) { #>
+        let cleared_fields = update.cleared_fields();
+        for field_id in cleared_fields {
+            match field_id {
+        <# for field in component_fields.iter().filter(|field| field.can_be_cleared()) { #>
+                <#= field.field_id #> => data.<#= field.identifier.name #> = Some(<#= self.get_cleared_data(field) #>),<# } #>
+                _ => Err(format!("Received cleared field id {} in component <#= self.rust_name(&component.identifier) #> which could not be cleared.", field_id))?
+            }
+        }
+        <# } #>
+        Ok(data)
     }
 
     fn from_request(request: &SchemaCommandRequest) -> Result<<#= self.rust_fqname(&component.identifier) #>CommandRequest, String> {
@@ -197,6 +208,13 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
     fn to_update(update: &<#= self.rust_fqname(&component.identifier) #>Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
         <<#= self.rust_fqname(&component.identifier) #>Update as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <# for field in component_fields.iter().filter(|field| field.can_be_cleared()) { #>
+        if let Some(ref data) = update.<#= field.identifier.name #> {
+            if <#= self.get_empty_field_expr(field, "data") #> {
+                serialized_update.clear_field(<#= field.field_id #>);
+            }
+        }
+        <# } #>
         Ok(serialized_update)
     }
 
