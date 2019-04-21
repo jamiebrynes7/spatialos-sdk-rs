@@ -5,7 +5,7 @@ use crate::worker::{
 use maybe_owned::MaybeOwned;
 use spatialos_sdk_sys::worker::Worker_ComponentData;
 use spatialos_sdk_sys::worker::Worker_Entity;
-use std::{collections::HashMap, mem, ptr, slice};
+use std::{collections::HashMap, ptr, slice};
 
 #[derive(Debug)]
 enum ComponentData<'a> {
@@ -142,6 +142,6 @@ impl<'a> EntityQuery<'a> {
     }
 
     pub fn get<C: Component>(&self) -> Option<MaybeOwned<'a, C>> {
-        self.components.get(&C::ID).and_then(|data| data.get())
+        self.components.get(&C::ID).and_then(ComponentDataRef::get)
     }
 }
