@@ -9,7 +9,7 @@ pub type FieldId = u32;
 pub struct SchemaComponentUpdate {
     pub component_id: ComponentId,
     pub internal: *mut Schema_ComponentUpdate,
-    pub cleared_fields: Option<Vec<FieldId>>
+    pub cleared_fields: Option<Vec<FieldId>>,
 }
 
 #[derive(Debug)]
@@ -40,7 +40,7 @@ impl SchemaComponentUpdate {
         SchemaComponentUpdate {
             component_id,
             internal: unsafe { Schema_CreateComponentUpdate(component_id) },
-            cleared_fields: None
+            cleared_fields: None,
         }
     }
 
@@ -50,13 +50,16 @@ impl SchemaComponentUpdate {
 
         if cleared_fields_count > 0 {
             cleared_fields = Some(Vec::with_capacity(cleared_fields_count as usize));
-            Schema_GetComponentUpdateClearedFieldList(ptr, cleared_fields.as_mut().unwrap().as_mut_ptr())
+            Schema_GetComponentUpdateClearedFieldList(
+                ptr,
+                cleared_fields.as_mut().unwrap().as_mut_ptr(),
+            )
         }
 
         SchemaComponentUpdate {
             component_id: Schema_GetComponentUpdateComponentId(ptr),
             internal: ptr,
-            cleared_fields
+            cleared_fields,
         }
     }
 
@@ -89,7 +92,9 @@ impl SchemaComponentUpdate {
     }
 
     pub fn is_field_cleared(&self, id: FieldId) -> bool {
-        self.cleared_fields.as_ref().map_or(false, |vec| vec.contains(&id))
+        self.cleared_fields
+            .as_ref()
+            .map_or(false, |vec| vec.contains(&id))
     }
 
     pub fn clear_field(&mut self, id: FieldId) {
