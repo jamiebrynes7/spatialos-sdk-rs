@@ -163,7 +163,7 @@ impl Package {
                 PrimitiveType::Float => "f32",
                 PrimitiveType::Double => "f64",
                 PrimitiveType::String => "String",
-                PrimitiveType::EntityId => "worker::EntityId",
+                PrimitiveType::EntityId => "spatialos_sdk::worker::EntityId",
                 PrimitiveType::Bytes => "Vec<u8>",
             }
             .to_string()
