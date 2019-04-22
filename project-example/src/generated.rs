@@ -115,7 +115,9 @@ impl Component for Example {
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::ExampleUpdate, String> {
-        <generated::example::ExampleUpdate as TypeConversion>::from_type(&update.fields())
+        let mut data = <generated::example::ExampleUpdate as TypeConversion>::from_type(&update.fields())?;
+        
+        Ok(data)
     }
 
     fn from_request(request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest, String> {
@@ -147,6 +149,7 @@ impl Component for Example {
     fn to_update(update: &generated::example::ExampleUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
         <generated::example::ExampleUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        
         Ok(serialized_update)
     }
 
@@ -289,7 +292,9 @@ impl Component for Rotate {
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::RotateUpdate, String> {
-        <generated::example::RotateUpdate as TypeConversion>::from_type(&update.fields())
+        let mut data = <generated::example::RotateUpdate as TypeConversion>::from_type(&update.fields())?;
+        
+        Ok(data)
     }
 
     fn from_request(request: &SchemaCommandRequest) -> Result<generated::example::RotateCommandRequest, String> {
@@ -313,6 +318,7 @@ impl Component for Rotate {
     fn to_update(update: &generated::example::RotateUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
         <generated::example::RotateUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        
         Ok(serialized_update)
     }
 
@@ -754,7 +760,13 @@ impl Component for EntityAcl {
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::EntityAclUpdate, String> {
-        <generated::improbable::EntityAclUpdate as TypeConversion>::from_type(&update.fields())
+        let mut data = <generated::improbable::EntityAclUpdate as TypeConversion>::from_type(&update.fields())?;
+        
+        if update.is_field_cleared(2) {
+            data.component_write_acl = Some(BTreeMap::new());
+        }
+        
+        Ok(data)
     }
 
     fn from_request(request: &SchemaCommandRequest) -> Result<generated::improbable::EntityAclCommandRequest, String> {
@@ -778,6 +790,13 @@ impl Component for EntityAcl {
     fn to_update(update: &generated::improbable::EntityAclUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
         <generated::improbable::EntityAclUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        
+        if let Some(ref data) = update.component_write_acl {
+            if data.is_empty() {
+                serialized_update.clear_field(2);
+            }
+        }
+        
         Ok(serialized_update)
     }
 
@@ -882,7 +901,13 @@ impl Component for Interest {
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::InterestUpdate, String> {
-        <generated::improbable::InterestUpdate as TypeConversion>::from_type(&update.fields())
+        let mut data = <generated::improbable::InterestUpdate as TypeConversion>::from_type(&update.fields())?;
+        
+        if update.is_field_cleared(1) {
+            data.component_interest = Some(BTreeMap::new());
+        }
+        
+        Ok(data)
     }
 
     fn from_request(request: &SchemaCommandRequest) -> Result<generated::improbable::InterestCommandRequest, String> {
@@ -906,6 +931,13 @@ impl Component for Interest {
     fn to_update(update: &generated::improbable::InterestUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
         <generated::improbable::InterestUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        
+        if let Some(ref data) = update.component_interest {
+            if data.is_empty() {
+                serialized_update.clear_field(1);
+            }
+        }
+        
         Ok(serialized_update)
     }
 
@@ -1010,7 +1042,9 @@ impl Component for Metadata {
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::MetadataUpdate, String> {
-        <generated::improbable::MetadataUpdate as TypeConversion>::from_type(&update.fields())
+        let mut data = <generated::improbable::MetadataUpdate as TypeConversion>::from_type(&update.fields())?;
+        
+        Ok(data)
     }
 
     fn from_request(request: &SchemaCommandRequest) -> Result<generated::improbable::MetadataCommandRequest, String> {
@@ -1034,6 +1068,7 @@ impl Component for Metadata {
     fn to_update(update: &generated::improbable::MetadataUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
         <generated::improbable::MetadataUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        
         Ok(serialized_update)
     }
 
@@ -1123,7 +1158,9 @@ impl Component for Persistence {
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PersistenceUpdate, String> {
-        <generated::improbable::PersistenceUpdate as TypeConversion>::from_type(&update.fields())
+        let mut data = <generated::improbable::PersistenceUpdate as TypeConversion>::from_type(&update.fields())?;
+        
+        Ok(data)
     }
 
     fn from_request(request: &SchemaCommandRequest) -> Result<generated::improbable::PersistenceCommandRequest, String> {
@@ -1147,6 +1184,7 @@ impl Component for Persistence {
     fn to_update(update: &generated::improbable::PersistenceUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
         <generated::improbable::PersistenceUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        
         Ok(serialized_update)
     }
 
@@ -1251,7 +1289,9 @@ impl Component for Position {
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PositionUpdate, String> {
-        <generated::improbable::PositionUpdate as TypeConversion>::from_type(&update.fields())
+        let mut data = <generated::improbable::PositionUpdate as TypeConversion>::from_type(&update.fields())?;
+        
+        Ok(data)
     }
 
     fn from_request(request: &SchemaCommandRequest) -> Result<generated::improbable::PositionCommandRequest, String> {
@@ -1275,6 +1315,7 @@ impl Component for Position {
     fn to_update(update: &generated::improbable::PositionUpdate) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
         <generated::improbable::PositionUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        
         Ok(serialized_update)
     }
 
@@ -1308,6 +1349,210 @@ impl Component for Position {
 }
 
 inventory::submit!(VTable::new::<Position>());
+
+
+}
+
+pub mod test {
+use spatialos_sdk::worker::internal::schema::*;
+use spatialos_sdk::worker::component::*;
+use std::collections::BTreeMap;
+
+use super::super::generated as generated;
+
+/* Enums. */
+/* Types. */
+/* Components. */ 
+#[derive(Debug, Clone)]
+pub struct Test {
+    pub opt_data: Option<i32>,
+    pub list_data: Vec<i32>,
+    pub map_data: BTreeMap<i32, i32>,
+}
+impl TypeConversion for Test {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+            opt_data: if let Some(data) = input.field::<SchemaInt32>(1).get() { Some(data) } else { None },
+            list_data: { let size = input.field::<SchemaInt32>(2).count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(input.field::<SchemaInt32>(2).index(i)); }; l },
+            map_data: { let size = input.field::<SchemaObject>(3).count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = input.field::<SchemaObject>(3).index(i); m.insert(kv.field::<SchemaInt32>(1).get_or_default(), kv.field::<SchemaInt32>(2).get_or_default()); }; m },
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        if let Some(data) = input.opt_data { output.field::<SchemaInt32>(1).add(data); };
+        output.field::<SchemaInt32>(2).add_list(&&input.list_data[..]);
+        for (k, v) in &input.map_data { let object = output.field::<SchemaObject>(3).add(); object.field::<SchemaInt32>(1).add(*k); object.field::<SchemaInt32>(2).add(*v); };
+        Ok(())
+    }
+}
+impl ComponentData<Test> for Test {
+    fn merge(&mut self, update: TestUpdate) {
+        if let Some(value) = update.opt_data { self.opt_data = value; }
+        if let Some(value) = update.list_data { self.list_data = value; }
+        if let Some(value) = update.map_data { self.map_data = value; }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct TestUpdate {
+    pub opt_data: Option<Option<i32>>,
+    pub list_data: Option<Vec<i32>>,
+    pub map_data: Option<BTreeMap<i32, i32>>,
+}
+impl TypeConversion for TestUpdate {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        let mut output = Self {
+            opt_data: None,
+            list_data: None,
+            map_data: None,
+        };
+        let _field_opt_data = input.field::<SchemaInt32>(1);
+        if _field_opt_data.count() > 0 {
+            let field = &_field_opt_data;
+            output.opt_data = Some(if let Some(data) = field.get() { Some(data) } else { None });
+        }
+        let _field_list_data = input.field::<SchemaInt32>(2);
+        if _field_list_data.count() > 0 {
+            let field = &_field_list_data;
+            output.list_data = Some({ let size = field.count(); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(field.index(i)); }; l });
+        }
+        let _field_map_data = input.field::<SchemaObject>(3);
+        if _field_map_data.count() > 0 {
+            let field = &_field_map_data;
+            output.map_data = Some({ let size = field.count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = field.index(i); m.insert(kv.field::<SchemaInt32>(1).get_or_default(), kv.field::<SchemaInt32>(2).get_or_default()); }; m });
+        }
+        Ok(output)
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        if let Some(value) = input.opt_data {
+            if let Some(data) = value { output.field::<SchemaInt32>(1).add(data); };
+        }
+        if let Some(ref value) = input.list_data {
+            output.field::<SchemaInt32>(2).add_list(&value[..]);
+        }
+        if let Some(ref value) = input.map_data {
+            for (k, v) in value { let object = output.field::<SchemaObject>(3).add(); object.field::<SchemaInt32>(1).add(*k); object.field::<SchemaInt32>(2).add(*v); };
+        }
+        Ok(())
+    }
+}
+impl ComponentUpdate<Test> for TestUpdate {
+    fn merge(&mut self, update: TestUpdate) {
+        if update.opt_data.is_some() { self.opt_data = update.opt_data; }
+        if update.list_data.is_some() { self.list_data = update.list_data; }
+        if update.map_data.is_some() { self.map_data = update.map_data; }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum TestCommandRequest {
+}
+
+#[derive(Debug, Clone)]
+pub enum TestCommandResponse {
+}
+
+impl Component for Test {
+    type Update = generated::test::TestUpdate;
+    type CommandRequest = generated::test::TestCommandRequest;
+    type CommandResponse = generated::test::TestCommandResponse;
+
+    const ID: ComponentId = 1002;
+
+    fn from_data(data: &SchemaComponentData) -> Result<generated::test::Test, String> {
+        <generated::test::Test as TypeConversion>::from_type(&data.fields())
+    }
+
+    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::test::TestUpdate, String> {
+        let mut data = <generated::test::TestUpdate as TypeConversion>::from_type(&update.fields())?;
+        
+        if update.is_field_cleared(1) {
+            data.opt_data = Some(None);
+        }
+        
+        if update.is_field_cleared(2) {
+            data.list_data = Some(Vec::new());
+        }
+        
+        if update.is_field_cleared(3) {
+            data.map_data = Some(BTreeMap::new());
+        }
+        
+        Ok(data)
+    }
+
+    fn from_request(request: &SchemaCommandRequest) -> Result<generated::test::TestCommandRequest, String> {
+        match request.command_index() {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Test.", request.command_index()))
+        }
+    }
+
+    fn from_response(response: &SchemaCommandResponse) -> Result<generated::test::TestCommandResponse, String> {
+        match response.command_index() {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Test.", response.command_index()))
+        }
+    }
+
+    fn to_data(data: &generated::test::Test) -> Result<SchemaComponentData, String> {
+        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        <generated::test::Test as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        Ok(serialized_data)
+    }
+
+    fn to_update(update: &generated::test::TestUpdate) -> Result<SchemaComponentUpdate, String> {
+        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        <generated::test::TestUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        
+        if let Some(ref data) = update.opt_data {
+            if data.is_some() {
+                serialized_update.clear_field(1);
+            }
+        }
+        
+        if let Some(ref data) = update.list_data {
+            if data.is_empty() {
+                serialized_update.clear_field(2);
+            }
+        }
+        
+        if let Some(ref data) = update.map_data {
+            if data.is_empty() {
+                serialized_update.clear_field(3);
+            }
+        }
+        
+        Ok(serialized_update)
+    }
+
+    fn to_request(request: &generated::test::TestCommandRequest) -> Result<SchemaCommandRequest, String> {
+        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        match request {
+            _ => unreachable!()
+        }
+        Ok(serialized_request)
+    }
+
+    fn to_response(response: &generated::test::TestCommandResponse) -> Result<SchemaCommandResponse, String> {
+        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        match response {
+            _ => unreachable!()
+        }
+        Ok(serialized_response)
+    }
+
+    fn get_request_command_index(request: &generated::test::TestCommandRequest) -> u32 {
+        match request {
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_response_command_index(response: &generated::test::TestCommandResponse) -> u32 {
+        match response {
+            _ => unreachable!(),
+        }
+    }
+}
+
+inventory::submit!(VTable::new::<Test>());
 
 
 }
