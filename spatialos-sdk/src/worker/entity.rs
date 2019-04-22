@@ -8,22 +8,28 @@ use spatialos_sdk_sys::worker::Worker_Entity;
 use std::{collections::HashMap, ptr, slice};
 
 #[derive(Debug)]
-enum ComponentData<'a> {
-    SchemaData(schema::ComponentData<'a>),
+enum ComponentData {
+    SchemaData(schema::ComponentData),
     UserHandle(UserHandle),
 }
 
 /// A collection of entities
 #[derive(Debug, Default)]
-pub struct Entity<'a> {
-    components: HashMap<ComponentId, ComponentData<'a>>,
+pub struct Entity {
+    components: HashMap<ComponentId, ComponentData>,
 }
 
-impl<'a> Entity<'a> {
+impl Entity {
     pub fn new() -> Self {
         Self {
             components: Default::default(),
         }
+    }
+
+    pub fn add<C: Component>(&mut self, component: C) -> Result<(), String> {
+        // TODO: Actually do something to determine if we should add it as a handle or
+        // serialize it immediately.
+        self.add_handle(component)
     }
 
     /// Adds `component` without serializing it,
@@ -44,7 +50,7 @@ impl<'a> Entity<'a> {
         Ok(())
     }
 
-    pub fn add_serialized<C: Component>(&mut self, component: &'a C) -> Result<(), String> {
+    pub fn add_serialized<C: Component>(&mut self, component: &C) -> Result<(), String> {
         self.pre_add_check(C::ID)?;
 
         let schema_data = schema::ComponentData::new(component);
@@ -95,7 +101,7 @@ impl<'a> Entity<'a> {
     }
 }
 
-impl<'a> Drop for Entity<'a> {
+impl Drop for Entity {
     fn drop(&mut self) {
         for (id, component_data) in self.components.drain() {
             match component_data {

@@ -6,8 +6,8 @@ const METADATA_COMPONENT_ID: ComponentId = 53;
 const POSITION_COMPONENT_ID: ComponentId = 54;
 const PERSISTENCE_COMPONENT_ID: ComponentId = 55;
 
-pub struct EntityBuilder<'data> {
-    entity: Entity<'data>,
+pub struct EntityBuilder {
+    entity: Entity,
 
     _position: (f64, f64, f64),
     is_persistent: bool,
@@ -19,7 +19,7 @@ pub struct EntityBuilder<'data> {
     error: Option<String>,
 }
 
-impl<'data> EntityBuilder<'data> {
+impl EntityBuilder {
     pub fn new<T: Into<String>>(x: f64, y: f64, z: f64, position_write_layer: T) -> Self {
         let mut builder = EntityBuilder {
             entity: Entity::new(),
@@ -35,9 +35,20 @@ impl<'data> EntityBuilder<'data> {
         builder
     }
 
+    pub fn add<C: Component, T: Into<String>>(
+        &mut self,
+        data: C,
+        write_layer: T,
+    ) -> Result<(), String> {
+        self.entity.add(data)?;
+        self.add_write_access(C::ID, write_layer);
+
+        Ok(())
+    }
+
     pub fn add_serialized<C: Component, T: Into<String>>(
         &mut self,
-        data: &'data C,
+        data: &C,
         write_layer: T,
     ) -> Result<(), String> {
         self.entity.add_serialized(data)?;
@@ -47,7 +58,7 @@ impl<'data> EntityBuilder<'data> {
     }
 
     pub fn add_handle<C: Component, T: Into<String>>(
-        &'data mut self,
+        &mut self,
         data: C,
         write_layer: T,
     ) -> Result<(), String> {
@@ -85,7 +96,7 @@ impl<'data> EntityBuilder<'data> {
         self.read_permissions.insert(layer);
     }
 
-    pub fn build(self) -> Result<Entity<'data>, String> {
+    pub fn build(self) -> Result<Entity, String> {
         if let Some(e) = self.error {
             return Err(e);
         }

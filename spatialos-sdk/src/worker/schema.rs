@@ -25,19 +25,15 @@ pub type FieldId = u32;
 /// tracks this borrow, such that an `OwnedComponentData` cannot outlive the
 /// data it borrows.
 #[derive(Debug)]
-pub(crate) struct ComponentData<'data> {
+pub(crate) struct ComponentData {
     raw: NonNull<Schema_ComponentData>,
-    _marker: PhantomData<&'data ()>,
 }
 
-impl<'data> ComponentData<'data> {
-    pub fn new<C: Component>(component: &'data C) -> Self {
+impl ComponentData {
+    pub fn new<C: Component>(component: &C) -> Self {
         // Create the underlying `Schema_ComponentData` and retrieve the fields object.
         let raw = NonNull::new(unsafe { Schema_CreateComponentData(C::ID) }).unwrap();
-        let mut result = Self {
-            raw,
-            _marker: PhantomData,
-        };
+        let mut result = Self { raw };
 
         // Populate the schema data from the component.
         component.into_object(&mut result.fields_mut());
@@ -53,7 +49,7 @@ impl<'data> ComponentData<'data> {
         self.as_ref().fields()
     }
 
-    pub fn fields_mut<'owner>(&'owner mut self) -> ObjectMut<'owner, 'data> {
+    pub fn fields_mut<'owner>(&'owner mut self) -> ObjectMut<'owner> {
         unsafe { ObjectMut::from_raw(&mut *Schema_GetComponentDataFields(self.raw.as_ptr())) }
     }
 
@@ -81,7 +77,7 @@ impl<'data> ComponentData<'data> {
     }
 }
 
-impl<'data> Drop for ComponentData<'data> {
+impl Drop for ComponentData {
     fn drop(&mut self) {
         unsafe {
             Schema_DestroyComponentData(self.raw.as_ptr());
@@ -122,24 +118,20 @@ impl<'owner> ComponentDataRef<'owner> {
 }
 
 #[derive(Debug)]
-pub struct ObjectMut<'owner, 'data> {
+pub struct ObjectMut<'owner> {
     raw: &'owner mut Schema_Object,
-    _marker: PhantomData<&'data ()>,
 }
 
-impl<'owner, 'data> ObjectMut<'owner, 'data> {
+impl<'owner> ObjectMut<'owner> {
     pub(crate) unsafe fn from_raw(raw: &'owner mut Schema_Object) -> Self {
-        Self {
-            raw,
-            _marker: PhantomData,
-        }
+        Self { raw }
     }
 
-    pub fn add_field<T: SchemaField>(&mut self, field: FieldId, value: &'data T::RustType) {
+    pub fn add_field<T: SchemaField>(&mut self, field: FieldId, value: &T::RustType) {
         T::add_field(self, field, value);
     }
 
-    pub fn add_field_array<T: ArrayField>(&mut self, field: FieldId, value: &'data [T::RustType]) {
+    pub fn add_field_array<T: ArrayField>(&mut self, field: FieldId, value: &[T::RustType]) {
         T::add_field_list(self, field, value);
     }
 
@@ -176,11 +168,7 @@ impl<'a> ObjectRef<'a> {
 pub trait SchemaField: Sized + Sealed {
     type RustType: Sized;
 
-    fn add_field<'owner, 'data>(
-        object: &mut ObjectMut<'owner, 'data>,
-        field: FieldId,
-        value: &'data Self::RustType,
-    );
+    fn add_field<'owner>(object: &mut ObjectMut<'owner>, field: FieldId, value: &Self::RustType);
 
     fn get_field(object: ObjectRef, field: FieldId) -> Self::RustType;
 }
@@ -192,10 +180,10 @@ pub trait IndexedField: SchemaField {
 }
 
 pub trait ArrayField: IndexedField {
-    fn add_field_list<'owner, 'data>(
-        object: &mut ObjectMut<'owner, 'data>,
+    fn add_field_list<'owner>(
+        object: &mut ObjectMut<'owner>,
         field: FieldId,
-        data: &'data [Self::RustType],
+        data: &[Self::RustType],
     );
 
     fn get_field_list(object: ObjectRef, field: FieldId, data: &mut Vec<Self::RustType>);
@@ -203,7 +191,7 @@ pub trait ArrayField: IndexedField {
 
 /// A type that can be deserialized from an entire `SchemaObject`.
 pub trait SchemaObjectType: Sized {
-    fn into_object<'owner, 'data>(&'data self, object: &mut ObjectMut<'owner, 'data>);
+    fn into_object<'owner>(&self, object: &mut ObjectMut<'owner>);
     fn from_object(object: ObjectRef) -> Self;
 }
 
@@ -212,11 +200,7 @@ impl<T: SchemaObjectType> Sealed for T {}
 impl<T: SchemaObjectType> SchemaField for T {
     type RustType = Self;
 
-    fn add_field<'owner, 'data>(
-        object: &mut ObjectMut<'owner, 'data>,
-        field: FieldId,
-        value: &'data Self::RustType,
-    ) {
+    fn add_field<'owner>(object: &mut ObjectMut<'owner>, field: FieldId, value: &Self::RustType) {
         let mut field_object =
             unsafe { ObjectMut::from_raw(&mut *Schema_AddObject(object.raw, field)) };
         value.into_object(&mut field_object);
@@ -311,10 +295,10 @@ macro_rules! impl_primitive_field {
         impl SchemaField for $schema_type {
             type RustType = $rust_type;
 
-            fn add_field<'owner, 'data>(
-                object: &mut ObjectMut<'owner, 'data>,
+            fn add_field<'owner>(
+                object: &mut ObjectMut<'owner>,
                 field: FieldId,
-                value: &'data Self::RustType,
+                value: &Self::RustType,
             ) {
                 let value = (*value).into();
                 unsafe {
@@ -340,19 +324,20 @@ macro_rules! impl_primitive_field {
         }
 
         impl ArrayField for $schema_type {
-            fn add_field_list<'owner, 'data>(
-                object: &mut ObjectMut<'owner, 'data>,
+            fn add_field_list<'owner>(
+                object: &mut ObjectMut<'owner>,
                 field: FieldId,
-                data: &'data [Self::RustType],
+                data: &[Self::RustType],
             ) {
-                unsafe {
-                    $schema_add_list(
-                        object.raw,
-                        field,
-                        data.as_ptr() as *const _,
-                        data.len() as u32,
-                    );
-                }
+                unimplemented!();
+                // unsafe {
+                //     $schema_add_list(
+                //         object.raw,
+                //         field,
+                //         data.as_ptr() as *const _,
+                //         data.len() as u32,
+                //     );
+                // }
             }
 
             fn get_field_list(object: ObjectRef, field: FieldId, data: &mut Vec<Self::RustType>) {
@@ -537,11 +522,7 @@ impl<T: IndexedField> Sealed for Option<T> {}
 impl<T: IndexedField> SchemaField for Option<T> {
     type RustType = Option<T::RustType>;
 
-    fn add_field<'owner, 'data>(
-        object: &mut ObjectMut<'owner, 'data>,
-        field: FieldId,
-        value: &'data Self::RustType,
-    ) {
+    fn add_field<'owner>(object: &mut ObjectMut<'owner>, field: FieldId, value: &Self::RustType) {
         if let Some(value) = value {
             T::add_field(object, field, value);
         }
@@ -571,11 +552,7 @@ where
 {
     type RustType = BTreeMap<K::RustType, V::RustType>;
 
-    fn add_field<'owner, 'data>(
-        object: &mut ObjectMut<'owner, 'data>,
-        field: FieldId,
-        map: &'data Self::RustType,
-    ) {
+    fn add_field<'owner>(object: &mut ObjectMut<'owner>, field: FieldId, map: &Self::RustType) {
         // Create a key-value pair object for each entry in the map.
         for (key, value) in map {
             let mut pair =
@@ -611,11 +588,7 @@ impl<T: IndexedField> Sealed for Vec<T> {}
 impl<T: IndexedField> SchemaField for Vec<T> {
     type RustType = Vec<T::RustType>;
 
-    fn add_field<'owner, 'data>(
-        object: &mut ObjectMut<'owner, 'data>,
-        field: FieldId,
-        values: &'data Self::RustType,
-    ) {
+    fn add_field<'owner>(object: &mut ObjectMut<'owner>, field: FieldId, values: &Self::RustType) {
         for value in values {
             T::add_field(object, field, value);
         }
@@ -638,11 +611,7 @@ impl Sealed for String {}
 impl SchemaField for String {
     type RustType = Self;
 
-    fn add_field<'owner, 'data>(
-        object: &mut ObjectMut<'owner, 'data>,
-        field: FieldId,
-        value: &'data Self::RustType,
-    ) {
+    fn add_field<'owner>(object: &mut ObjectMut<'owner>, field: FieldId, value: &Self::RustType) {
         add_bytes(object, field, value.as_bytes());
     }
 
@@ -672,40 +641,33 @@ impl Sealed for Vec<u8> {}
 impl SchemaField for Vec<u8> {
     type RustType = Self;
 
-    fn add_field<'owner, 'data>(
-        object: &mut ObjectMut<'owner, 'data>,
-        field: FieldId,
-        value: &'data Self::RustType,
-    ) {
+    fn add_field<'owner>(object: &mut ObjectMut<'owner>, field: FieldId, value: &Self::RustType) {
         add_bytes(object, field, value);
     }
 
-    fn get_field(object: ObjectRef, field: FieldId) -> Self::RustType {
+    fn get_field(object: ObjectRef<'_>, field: FieldId) -> Self::RustType {
         get_bytes(object, field).into()
     }
 }
 
 impl IndexedField for Vec<u8> {
-    fn field_count(object: ObjectRef, field: FieldId) -> u32 {
+    fn field_count(object: ObjectRef<'_>, field: FieldId) -> u32 {
         unsafe { Schema_GetBytesCount(object.raw, field) }
     }
 
-    fn index_field(object: ObjectRef, field: FieldId, index: u32) -> Self::RustType {
+    fn index_field(object: ObjectRef<'_>, field: FieldId, index: u32) -> Self::RustType {
         index_bytes(object, field, index).into()
     }
 }
 
-fn add_bytes<'owner, 'data>(
-    object: &mut ObjectMut<'owner, 'data>,
-    field: FieldId,
-    bytes: &'data [u8],
-) {
-    unsafe {
-        Schema_AddBytes(object.raw, field, bytes.as_ptr(), bytes.len() as u32);
-    }
+fn add_bytes<'owner>(object: &mut ObjectMut<'owner>, field: FieldId, bytes: &[u8]) {
+    unimplemented!();
+    // unsafe {
+    //     Schema_AddBytes(object.raw, field, bytes.as_ptr(), bytes.len() as u32);
+    // }
 }
 
-fn get_bytes(object: ObjectRef, field: FieldId) -> &[u8] {
+fn get_bytes(object: ObjectRef<'_>, field: FieldId) -> &[u8] {
     unsafe {
         let data = Schema_GetBytes(object.raw, field);
         let len = Schema_GetBytesLength(object.raw, field);
@@ -713,7 +675,7 @@ fn get_bytes(object: ObjectRef, field: FieldId) -> &[u8] {
     }
 }
 
-fn index_bytes(object: ObjectRef, field: FieldId, index: u32) -> &[u8] {
+fn index_bytes(object: ObjectRef<'_>, field: FieldId, index: u32) -> &[u8] {
     unsafe {
         let data = Schema_IndexBytes(object.raw, field, index);
         let len = Schema_IndexBytesLength(object.raw, field, index);

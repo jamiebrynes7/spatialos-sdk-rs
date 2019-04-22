@@ -13,7 +13,7 @@ impl SchemaObjectType for CustomComponent {
         }
     }
 
-    fn into_object<'owner, 'data>(&'data self, object: &mut ObjectMut<'owner, 'data>) {
+    fn into_object<'owner>(&self, object: &mut ObjectMut<'owner>) {
         let bad_targets = Vec::new();
         object.add_field_array::<EntityId>(0, &bad_targets);
         //~^ ERROR does not live long enough

@@ -20,7 +20,7 @@ impl SchemaObjectType for CustomComponent {
         }
     }
 
-    fn into_object<'owner, 'data>(&'data self, object: &mut ObjectMut<'owner, 'data>) {
+    fn into_object<'owner>(&self, object: &mut ObjectMut<'owner>) {
         object.add_field::<String>(0, &self.name);
         object.add_field::<SchemaSfixed32>(1, &self.count);
         object.add_field_array::<EntityId>(2, &self.targets);

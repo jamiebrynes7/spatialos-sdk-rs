@@ -313,9 +313,9 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn send_create_entity_request<'a>(
+    fn send_create_entity_request(
         &mut self,
-        entity: Entity<'a>,
+        entity: Entity,
         entity_id: Option<EntityId>,
         timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest> {
