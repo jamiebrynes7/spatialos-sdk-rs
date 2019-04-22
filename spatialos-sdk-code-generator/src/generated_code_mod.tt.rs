@@ -162,14 +162,9 @@ impl Component for <#= self.rust_name(&component.identifier) #> {
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<<#= self.rust_fqname(&component.identifier) #>Update, String> {
         let mut data = <<#= self.rust_fqname(&component.identifier) #>Update as TypeConversion>::from_type(&update.fields())?;
-        <# if component_fields.iter().any(FieldDefinition::can_be_cleared) { #>
-        let cleared_fields = update.cleared_fields();
-        for field_id in cleared_fields {
-            match field_id {
         <# for field in component_fields.iter().filter(|field| field.can_be_cleared()) { #>
-                <#= field.field_id #> => data.<#= field.identifier.name #> = Some(<#= self.get_cleared_data(field) #>),<# } #>
-                _ => Err(format!("Received cleared field id {} in component <#= self.rust_name(&component.identifier) #> which could not be cleared.", field_id))?
-            }
+        if update.is_field_cleared(<#= field.field_id #>) {
+            data.<#= field.identifier.name #> = Some(<#= self.get_cleared_data(field) #>);
         }
         <# } #>
         Ok(data)
