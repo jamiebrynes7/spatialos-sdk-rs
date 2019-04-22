@@ -4,9 +4,24 @@ use std::collections::BTreeMap;
 
 use <#= vec!["super".to_string(); self.depth() + 1].join("::") #>::generated as generated;
 
-/* Enums. */<# for enum_name in &self.enums { let enum_def = self.get_enum_definition(enum_name); #>
+/* Enums. */<# for enum_name in &self.enums {
+let enum_def = self.get_enum_definition(enum_name);
+let enum_rust_name = self.rust_name(&enum_def.identifier);
+#>
 #[derive(Debug, Clone)]
-pub enum <#= self.rust_name(&enum_def.identifier) #> {
+pub enum <#= enum_rust_name #> {
+<# for enum_value in &enum_def.value_definitions { #>
+    <#= enum_value.identifier.name #>,<# } #>
+}
+
+impl From<u32> for <#= enum_rust_name #> {
+    fn from(value: u32) -> Self {
+        match value {
+<# for enum_value in &enum_def.value_definitions { #>
+            <#= enum_value.value #> => <#= enum_rust_name #>::<#= enum_value.identifier.name #>, <# } #>
+            _ => panic!(&format!("Could not convert {} to enum <#= enum_rust_name #>.", value))
+        }
+    }
 }
 <# } #>
 /* Types. */<# for type_name in &self.types { let type_def = self.get_type_definition(type_name); #>
