@@ -167,10 +167,7 @@ pub(crate) mod internal {
         fn from(update: &Worker_ComponentUpdate) -> Self {
             ComponentUpdate {
                 component_id: update.component_id,
-                schema_type: SchemaComponentUpdate {
-                    component_id: update.component_id,
-                    internal: update.schema_type,
-                },
+                schema_type: unsafe { SchemaComponentUpdate::from_raw(update.schema_type) },
                 user_handle: update.user_handle,
                 _marker: PhantomData,
             }
@@ -396,10 +393,7 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     update: *mut Schema_ComponentUpdate,
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
-    let schema_update = schema::SchemaComponentUpdate {
-        component_id: C::ID,
-        internal: update,
-    };
+    let schema_update = schema::SchemaComponentUpdate::from_raw(update);
     let deserialized_result = C::from_update(&schema_update);
     if let Ok(deserialized_update) = deserialized_result {
         *handle_out = handle_allocate(deserialized_update);
