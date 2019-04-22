@@ -16,6 +16,7 @@ use structopt::StructOpt;
 
 mod connection_handler;
 #[rustfmt::skip]
+#[allow(clippy::all)]
 mod generated;
 mod opt;
 
