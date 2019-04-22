@@ -343,7 +343,7 @@ impl Package {
             )
         } else if value_type.enum_reference.is_some() {
             format!(
-                "{}.field::<u32>({}).add(({}) as u32)",
+                "{}.field::<u32>({}).add({}.into())",
                 schema_object, field_id, expression
             )
         } else if let Some(ref type_ref) = value_type.type_reference {
@@ -413,7 +413,7 @@ impl Package {
                     .get_enum_definition(&enum_type.qualified_name)
                     .identifier,
             );
-            format!("({}) as {}", schema_expr, enum_name)
+            format!("{}::from({})", enum_name, schema_expr)
         } else if let Some(ref type_ref) = value_type.type_reference {
             let type_name = self.rust_fqname(
                 &self

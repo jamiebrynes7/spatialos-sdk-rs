@@ -1,6 +1,3 @@
-# Generated bindings to SpatialOS components, shouldn't be committed.
-src/generated.rs
-
 # SpatialOS generated
 .improbable/
 logs/
