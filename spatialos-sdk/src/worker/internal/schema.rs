@@ -1,8 +1,8 @@
 use crate::worker::component::ComponentId;
+use crate::worker::EntityId;
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 use std::slice;
-use crate::worker::EntityId;
 
 pub type FieldId = u32;
 
@@ -437,7 +437,9 @@ impl<'a> SchemaPrimitiveField<EntityId> for SchemaFieldContainer<'a, SchemaEntit
         EntityId::new(unsafe { Schema_GetEntityId(self.container.internal, self.field_id) })
     }
     fn index(&self, index: usize) -> EntityId {
-        EntityId::new(unsafe { Schema_IndexEntityId(self.container.internal, self.field_id, index as u32)})
+        EntityId::new(unsafe {
+            Schema_IndexEntityId(self.container.internal, self.field_id, index as u32)
+        })
     }
     fn count(&self) -> usize {
         unsafe { Schema_GetEntityIdCount(self.container.internal, self.field_id) as usize }
