@@ -25,8 +25,8 @@ impl From<u32> for <#= enum_rust_name #> {
 }
 
 impl <#= enum_rust_name #> {
-    pub(crate) fn as_u32(&self) -> u32 {
-        match &self {
+    pub(crate) fn as_u32(self) -> u32 {
+        match self {
             <# for enum_value in &enum_def.value_definitions { #>
             <#= enum_rust_name #>::<#= enum_value.identifier.name #> => <#= enum_value.value #>, <# } #>
         }

@@ -44,8 +44,8 @@ impl From<u32> for TestEnum {
 }
 
 impl TestEnum {
-    pub(crate) fn as_u32(&self) -> u32 {
-        match &self {
+    pub(crate) fn as_u32(self) -> u32 {
+        match self {
             
             TestEnum::FIRST => 0, 
             TestEnum::SECOND => 1, 
