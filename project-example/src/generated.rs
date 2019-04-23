@@ -25,6 +25,34 @@ use std::collections::BTreeMap;
 use super::super::generated as generated;
 
 /* Enums. */
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum TestEnum {
+
+    FIRST,
+    SECOND,
+}
+
+impl From<u32> for TestEnum {
+    fn from(value: u32) -> Self {
+        match value {
+
+            0 => TestEnum::FIRST, 
+            1 => TestEnum::SECOND, 
+            _ => panic!(format!("Could not convert {} to enum TestEnum.", value))
+        }
+    }
+}
+
+impl TestEnum {
+    pub(crate) fn as_u32(&self) -> u32 {
+        match &self {
+            
+            TestEnum::FIRST => 0, 
+            TestEnum::SECOND => 1, 
+        }
+    }
+}
+
 /* Types. */
 #[derive(Debug, Clone)]
 pub struct CommandData {
@@ -170,6 +198,134 @@ impl Component for EntityIdTest {
 }
 
 inventory::submit!(VTable::new::<EntityIdTest>());
+
+#[derive(Debug, Clone)]
+pub struct EnumTestComponent {
+    pub test: generated::example::TestEnum,
+}
+impl TypeConversion for EnumTestComponent {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+            test: generated::example::TestEnum::from(input.field::<SchemaEnum>(1).get_or_default()),
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        output.field::<SchemaEnum>(1).add(input.test.as_u32());
+        Ok(())
+    }
+}
+impl ComponentData<EnumTestComponent> for EnumTestComponent {
+    fn merge(&mut self, update: EnumTestComponentUpdate) {
+        if let Some(value) = update.test { self.test = value; }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct EnumTestComponentUpdate {
+    pub test: Option<generated::example::TestEnum>,
+}
+impl TypeConversion for EnumTestComponentUpdate {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        let mut output = Self {
+            test: None,
+        };
+        let _field_test = input.field::<SchemaEnum>(1);
+        if _field_test.count() > 0 {
+            let field = &_field_test;
+            output.test = Some(generated::example::TestEnum::from(field.get_or_default()));
+        }
+        Ok(output)
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        if let Some(value) = input.test {
+            output.field::<SchemaEnum>(1).add(value.as_u32());
+        }
+        Ok(())
+    }
+}
+impl ComponentUpdate<EnumTestComponent> for EnumTestComponentUpdate {
+    fn merge(&mut self, update: EnumTestComponentUpdate) {
+        if update.test.is_some() { self.test = update.test; }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum EnumTestComponentCommandRequest {
+}
+
+#[derive(Debug, Clone)]
+pub enum EnumTestComponentCommandResponse {
+}
+
+impl Component for EnumTestComponent {
+    type Update = generated::example::EnumTestComponentUpdate;
+    type CommandRequest = generated::example::EnumTestComponentCommandRequest;
+    type CommandResponse = generated::example::EnumTestComponentCommandResponse;
+
+    const ID: ComponentId = 2002;
+
+    fn from_data(data: &SchemaComponentData) -> Result<generated::example::EnumTestComponent, String> {
+        <generated::example::EnumTestComponent as TypeConversion>::from_type(&data.fields())
+    }
+
+    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EnumTestComponentUpdate, String> {
+        <generated::example::EnumTestComponentUpdate as TypeConversion>::from_type(&update.fields())
+    }
+
+    fn from_request(request: &SchemaCommandRequest) -> Result<generated::example::EnumTestComponentCommandRequest, String> {
+        match request.command_index() {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EnumTestComponent.", request.command_index()))
+        }
+    }
+
+    fn from_response(response: &SchemaCommandResponse) -> Result<generated::example::EnumTestComponentCommandResponse, String> {
+        match response.command_index() {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EnumTestComponent.", response.command_index()))
+        }
+    }
+
+    fn to_data(data: &generated::example::EnumTestComponent) -> Result<SchemaComponentData, String> {
+        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        <generated::example::EnumTestComponent as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        Ok(serialized_data)
+    }
+
+    fn to_update(update: &generated::example::EnumTestComponentUpdate) -> Result<SchemaComponentUpdate, String> {
+        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        <generated::example::EnumTestComponentUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        Ok(serialized_update)
+    }
+
+    fn to_request(request: &generated::example::EnumTestComponentCommandRequest) -> Result<SchemaCommandRequest, String> {
+        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        match request {
+            _ => unreachable!()
+        }
+        Ok(serialized_request)
+    }
+
+    fn to_response(response: &generated::example::EnumTestComponentCommandResponse) -> Result<SchemaCommandResponse, String> {
+        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        match response {
+            _ => unreachable!()
+        }
+        Ok(serialized_response)
+    }
+
+    fn get_request_command_index(request: &generated::example::EnumTestComponentCommandRequest) -> u32 {
+        match request {
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_response_command_index(response: &generated::example::EnumTestComponentCommandResponse) -> u32 {
+        match response {
+            _ => unreachable!(),
+        }
+    }
+}
+
+inventory::submit!(VTable::new::<EnumTestComponent>());
 
 #[derive(Debug, Clone)]
 pub struct Example {
