@@ -41,7 +41,7 @@ mkdir -p "./temp"
 
 curl -sSL $SPATIAL_URL --output ./temp/spatial
 chmod +x ./temp/spatial
-PATH=$PATH:$(pwd)/temp/
+export PATH=$PATH:$(pwd)/temp/
 
 export RUST_BACKTRACE=1
 
@@ -50,14 +50,12 @@ export RUST_BACKTRACE=1
 mkdir -p ~/.improbable/oauth2
 echo $SPATIAL_OAUTH > ~/.improbable/oauth2/oauth2_refresh_token
 
-cargo run --bin download_sdk -- -d dependencies -s 13.5.1
-
-rm -rf "./temp"
-
 rustup component add rustfmt-preview
 rustup component add clippy-preview
 
 cargo install --path cargo-spatial --force
+
+cargo spatial --verbose download sdk --sdk-version 13.6.0
 
 # HACK: It doesn't make sense to do codegen in the install step, but it needs
 # to be done before we attempt to build since it doesn't happen automatically.

@@ -435,6 +435,8 @@ impl Connection for WorkerConnection {
                 request_id.id,
                 &raw_response,
             );
+
+            component::handle_free::<C::CommandResponse>(raw_response.user_handle);
         }
     }
 
@@ -476,6 +478,8 @@ impl Connection for WorkerConnection {
                 &component_update,
                 &params,
             );
+
+            component::handle_free::<C::Update>(component_update.user_handle);
         }
     }
 
