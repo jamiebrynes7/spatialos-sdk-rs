@@ -10,9 +10,15 @@ pub use inventory;
 pub type ComponentId = u32;
 pub type UserHandle = *mut raw::c_void;
 
-// A trait that's implemented by a component to convert to/from schema handle types.
+/// A component type as defined in a schema file.
 pub trait Component: SchemaObjectType {
     const ID: ComponentId;
+
+    type Update: Update<Component = Self>;
+}
+
+pub trait Update: Sized {
+    type Component: Component<Update = Self>;
 }
 
 /// Additional parameters for sending component updates.
@@ -26,7 +32,6 @@ pub trait Component: SchemaObjectType {
 /// the [tap] crate is recommended. The examples below demonstrate this.
 ///
 /// # Parameters
-///
 ///
 /// * `loopback` (disabled by default) - Allow the update to be sent back to the worker
 ///   without waiting to be routed through SpatialOS. This allows the worker to receive

@@ -31,6 +31,19 @@ impl SchemaObjectType for CustomComponent {
 
 impl Component for CustomComponent {
     const ID: ComponentId = 1234;
+    type Update = CustomComponentUpdate;
+}
+
+pub struct CustomComponentUpdate {
+    pub name: Option<String>,
+    pub count: Option<i32>,
+    pub targets: Option<Vec<EntityId>>,
+    pub target_names: Option<BTreeMap<EntityId, String>>,
+    pub byte_collection: Option<Vec<Vec<u8>>>,
+}
+
+impl Update for CustomComponentUpdate {
+    type Component = CustomComponent;
 }
 
 fn main() {}

@@ -122,7 +122,7 @@ pub trait Connection {
     fn send_component_update<C: Component>(
         &mut self,
         entity_id: EntityId,
-        update: (), //C::Update,
+        update: C::Update,
         parameters: UpdateParameters,
     );
 
@@ -462,28 +462,27 @@ impl Connection for WorkerConnection {
     fn send_component_update<C: Component>(
         &mut self,
         entity_id: EntityId,
-        update: (), //C::Update,
+        update: C::Update,
         parameters: UpdateParameters,
     ) {
-        unimplemented!();
-        // let component_update = Worker_ComponentUpdate {
-        //     reserved: ptr::null_mut(),
-        //     component_id: C::ID,
-        //     schema_type: ptr::null_mut(),
-        //     user_handle: component::handle_allocate(update),
-        // };
+        let component_update = Worker_ComponentUpdate {
+            reserved: ptr::null_mut(),
+            component_id: C::ID,
+            schema_type: ptr::null_mut(),
+            user_handle: component::handle_allocate(update),
+        };
 
-        // let params = parameters.to_worker_sdk();
-        // unsafe {
-        //     Worker_Alpha_Connection_SendComponentUpdate(
-        //         self.connection_ptr.get(),
-        //         entity_id.id,
-        //         &component_update,
-        //         &params,
-        //     );
+        let params = parameters.to_worker_sdk();
+        unsafe {
+            Worker_Alpha_Connection_SendComponentUpdate(
+                self.connection_ptr.get(),
+                entity_id.id,
+                &component_update,
+                &params,
+            );
 
-        //     component::handle_free::<C::Update>(component_update.user_handle);
-        // }
+            component::handle_free::<C::Update>(component_update.user_handle);
+        }
     }
 
     fn send_component_interest(
