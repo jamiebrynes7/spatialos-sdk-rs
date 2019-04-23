@@ -326,7 +326,7 @@ unsafe extern "C" fn vtable_component_update_free<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
-    handle_free::<C>(handle);
+    handle_free::<C::Update>(handle);
 }
 
 unsafe extern "C" fn vtable_component_update_copy<C: Component>(
@@ -334,7 +334,7 @@ unsafe extern "C" fn vtable_component_update_copy<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) -> *mut raw::c_void {
-    handle_copy::<C>(handle)
+    handle_copy::<C::Update>(handle)
 }
 
 unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
@@ -354,14 +354,12 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     // }
 }
 
-unsafe extern "C" fn vtable_component_update_serialize<C>(
+unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
     _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
     update: *mut *mut Schema_ComponentUpdate,
-) where
-    C: Component,
-{
+) {
     unimplemented!();
     // let data: &C::Update = &*(handle as *const _);
     // *update = SchemaComponentUpdate::new(data).into_raw();
