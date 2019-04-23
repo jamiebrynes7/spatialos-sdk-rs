@@ -19,7 +19,16 @@ impl From<u32> for <#= enum_rust_name #> {
         match value {
 <# for enum_value in &enum_def.value_definitions { #>
             <#= enum_value.value #> => <#= enum_rust_name #>::<#= enum_value.identifier.name #>, <# } #>
-            _ => panic!(&format!("Could not convert {} to enum <#= enum_rust_name #>.", value))
+            _ => panic!(format!("Could not convert {} to enum <#= enum_rust_name #>.", value))
+        }
+    }
+}
+
+impl <#= enum_rust_name #> {
+    pub(crate) fn as_u32(&self) -> u32 {
+        match &self {
+            <# for enum_value in &enum_def.value_definitions { #>
+            <#= enum_rust_name #>::<#= enum_value.identifier.name #> => <#= enum_value.value #>, <# } #>
         }
     }
 }
