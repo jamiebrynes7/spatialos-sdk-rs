@@ -365,20 +365,21 @@ impl Connection for WorkerConnection {
         payload: EntityQueryRequest,
         timeout_millis: Option<u32>,
     ) -> RequestId<EntityQueryRequest> {
-        unsafe {
-            let timeout = match timeout_millis {
-                Some(c) => &c,
-                None => ptr::null(),
-            };
+        unimplemented!()
+        // unsafe {
+        //     let timeout = match timeout_millis {
+        //         Some(c) => &c,
+        //         None => ptr::null(),
+        //     };
 
-            let worker_query = payload.0.to_worker_sdk();
-            let id = Worker_Connection_SendEntityQueryRequest(
-                self.connection_ptr.get(),
-                &worker_query.query,
-                timeout,
-            );
-            RequestId::new(id)
-        }
+        //     let worker_query = payload.0.to_worker_sdk();
+        //     let id = Worker_Connection_SendEntityQueryRequest(
+        //         self.connection_ptr.get(),
+        //         &worker_query.query,
+        //         timeout,
+        //     );
+        //     RequestId::new(id)
+        // }
     }
 
     fn send_command_request<C: Component>(
@@ -422,22 +423,23 @@ impl Connection for WorkerConnection {
         request_id: RequestId<IncomingCommandRequest>,
         response: (), //C::CommandResponse,
     ) {
-        unsafe {
-            let raw_response = Worker_CommandResponse {
-                reserved: ptr::null_mut(),
-                component_id: C::ID,
-                schema_type: ptr::null_mut(),
-                user_handle: component::handle_allocate(response),
-            };
+        unimplemented!();
+        // unsafe {
+        //     let raw_response = Worker_CommandResponse {
+        //         reserved: ptr::null_mut(),
+        //         component_id: C::ID,
+        //         schema_type: ptr::null_mut(),
+        //         user_handle: component::handle_allocate(response),
+        //     };
 
-            Worker_Connection_SendCommandResponse(
-                self.connection_ptr.get(),
-                request_id.id,
-                &raw_response,
-            );
+        //     Worker_Connection_SendCommandResponse(
+        //         self.connection_ptr.get(),
+        //         request_id.id,
+        //         &raw_response,
+        //     );
 
-            component::handle_free::<C::CommandResponse>(raw_response.user_handle);
-        }
+        //     component::handle_free::<C::CommandResponse>(raw_response.user_handle);
+        // }
     }
 
     fn send_command_failure(
@@ -463,24 +465,25 @@ impl Connection for WorkerConnection {
         update: (), //C::Update,
         parameters: UpdateParameters,
     ) {
-        let component_update = Worker_ComponentUpdate {
-            reserved: ptr::null_mut(),
-            component_id: C::ID,
-            schema_type: ptr::null_mut(),
-            user_handle: component::handle_allocate(update),
-        };
+        unimplemented!();
+        // let component_update = Worker_ComponentUpdate {
+        //     reserved: ptr::null_mut(),
+        //     component_id: C::ID,
+        //     schema_type: ptr::null_mut(),
+        //     user_handle: component::handle_allocate(update),
+        // };
 
-        let params = parameters.to_worker_sdk();
-        unsafe {
-            Worker_Alpha_Connection_SendComponentUpdate(
-                self.connection_ptr.get(),
-                entity_id.id,
-                &component_update,
-                &params,
-            );
+        // let params = parameters.to_worker_sdk();
+        // unsafe {
+        //     Worker_Alpha_Connection_SendComponentUpdate(
+        //         self.connection_ptr.get(),
+        //         entity_id.id,
+        //         &component_update,
+        //         &params,
+        //     );
 
-            component::handle_free::<C::Update>(component_update.user_handle);
-        }
+        //     component::handle_free::<C::Update>(component_update.user_handle);
+        // }
     }
 
     fn send_component_interest(
