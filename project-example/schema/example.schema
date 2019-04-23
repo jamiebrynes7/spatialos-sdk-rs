@@ -25,3 +25,9 @@ component Rotate {
     /// The radius of the rotation.
     double radius = 3;
 }
+
+component EntityIdTest {
+    id = 2001;
+
+    EntityId eid = 1;
+}

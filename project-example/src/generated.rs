@@ -44,6 +44,134 @@ impl TypeConversion for CommandData {
 
 /* Components. */ 
 #[derive(Debug, Clone)]
+pub struct EntityIdTest {
+    pub eid: spatialos_sdk::worker::EntityId,
+}
+impl TypeConversion for EntityIdTest {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+            eid: input.field::<SchemaEntityId>(1).get_or_default(),
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        output.field::<SchemaEntityId>(1).add(input.eid);
+        Ok(())
+    }
+}
+impl ComponentData<EntityIdTest> for EntityIdTest {
+    fn merge(&mut self, update: EntityIdTestUpdate) {
+        if let Some(value) = update.eid { self.eid = value; }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct EntityIdTestUpdate {
+    pub eid: Option<spatialos_sdk::worker::EntityId>,
+}
+impl TypeConversion for EntityIdTestUpdate {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        let mut output = Self {
+            eid: None,
+        };
+        let _field_eid = input.field::<SchemaEntityId>(1);
+        if _field_eid.count() > 0 {
+            let field = &_field_eid;
+            output.eid = Some(field.get_or_default());
+        }
+        Ok(output)
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        if let Some(value) = input.eid {
+            output.field::<SchemaEntityId>(1).add(value);
+        }
+        Ok(())
+    }
+}
+impl ComponentUpdate<EntityIdTest> for EntityIdTestUpdate {
+    fn merge(&mut self, update: EntityIdTestUpdate) {
+        if update.eid.is_some() { self.eid = update.eid; }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum EntityIdTestCommandRequest {
+}
+
+#[derive(Debug, Clone)]
+pub enum EntityIdTestCommandResponse {
+}
+
+impl Component for EntityIdTest {
+    type Update = generated::example::EntityIdTestUpdate;
+    type CommandRequest = generated::example::EntityIdTestCommandRequest;
+    type CommandResponse = generated::example::EntityIdTestCommandResponse;
+
+    const ID: ComponentId = 2001;
+
+    fn from_data(data: &SchemaComponentData) -> Result<generated::example::EntityIdTest, String> {
+        <generated::example::EntityIdTest as TypeConversion>::from_type(&data.fields())
+    }
+
+    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EntityIdTestUpdate, String> {
+        <generated::example::EntityIdTestUpdate as TypeConversion>::from_type(&update.fields())
+    }
+
+    fn from_request(request: &SchemaCommandRequest) -> Result<generated::example::EntityIdTestCommandRequest, String> {
+        match request.command_index() {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EntityIdTest.", request.command_index()))
+        }
+    }
+
+    fn from_response(response: &SchemaCommandResponse) -> Result<generated::example::EntityIdTestCommandResponse, String> {
+        match response.command_index() {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EntityIdTest.", response.command_index()))
+        }
+    }
+
+    fn to_data(data: &generated::example::EntityIdTest) -> Result<SchemaComponentData, String> {
+        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        <generated::example::EntityIdTest as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        Ok(serialized_data)
+    }
+
+    fn to_update(update: &generated::example::EntityIdTestUpdate) -> Result<SchemaComponentUpdate, String> {
+        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        <generated::example::EntityIdTestUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        Ok(serialized_update)
+    }
+
+    fn to_request(request: &generated::example::EntityIdTestCommandRequest) -> Result<SchemaCommandRequest, String> {
+        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        match request {
+            _ => unreachable!()
+        }
+        Ok(serialized_request)
+    }
+
+    fn to_response(response: &generated::example::EntityIdTestCommandResponse) -> Result<SchemaCommandResponse, String> {
+        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        match response {
+            _ => unreachable!()
+        }
+        Ok(serialized_response)
+    }
+
+    fn get_request_command_index(request: &generated::example::EntityIdTestCommandRequest) -> u32 {
+        match request {
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_response_command_index(response: &generated::example::EntityIdTestCommandResponse) -> u32 {
+        match response {
+            _ => unreachable!(),
+        }
+    }
+}
+
+inventory::submit!(VTable::new::<EntityIdTest>());
+
+#[derive(Debug, Clone)]
 pub struct Example {
     pub x: f32,
 }
