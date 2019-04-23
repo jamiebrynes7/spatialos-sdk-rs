@@ -31,3 +31,14 @@ component EntityIdTest {
 
     EntityId eid = 1;
 }
+
+enum TestEnum {
+    FIRST = 0;
+    SECOND = 1;
+}
+
+component EnumTestComponent {
+    id = 2002;
+
+    TestEnum test = 1;
+}

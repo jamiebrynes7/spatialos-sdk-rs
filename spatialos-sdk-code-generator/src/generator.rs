@@ -343,7 +343,7 @@ impl Package {
             )
         } else if value_type.enum_reference.is_some() {
             format!(
-                "{}.field::<u32>({}).add({}.into())",
+                "{}.field::<SchemaEnum>({}).add({}.as_u32())",
                 schema_object, field_id, expression
             )
         } else if let Some(ref type_ref) = value_type.type_reference {
