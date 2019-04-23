@@ -14,7 +14,13 @@ use crate::worker::{
     EntityId,
 };
 use spatialos_sdk_sys::worker::*;
-use std::{collections::BTreeMap, marker::PhantomData, mem, ptr::NonNull};
+use std::{
+    collections::BTreeMap,
+    mem,
+    ops::{Deref, DerefMut},
+    ptr::NonNull,
+    slice,
+};
 
 pub type FieldId = u32;
 
@@ -140,6 +146,32 @@ impl<'owner> ObjectMut<'owner> {
     }
 }
 
+impl<'a> AsRef<Schema_Object> for ObjectMut<'a> {
+    fn as_ref(&self) -> &Schema_Object {
+        self.raw
+    }
+}
+
+impl<'a> AsMut<Schema_Object> for ObjectMut<'a> {
+    fn as_mut(&mut self) -> &mut Schema_Object {
+        self.raw
+    }
+}
+
+impl<'a> Deref for ObjectMut<'a> {
+    type Target = Schema_Object;
+
+    fn deref(&self) -> &Self::Target {
+        self.raw
+    }
+}
+
+impl<'a> DerefMut for ObjectMut<'a> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.raw
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct ObjectRef<'a> {
     raw: &'a Schema_Object,
@@ -158,6 +190,20 @@ impl<'a> ObjectRef<'a> {
         let mut result = Vec::new();
         T::get_field_list(self, field, &mut result);
         result
+    }
+}
+
+impl<'a> AsRef<Schema_Object> for ObjectRef<'a> {
+    fn as_ref(&self) -> &Schema_Object {
+        self.raw
+    }
+}
+
+impl<'a> Deref for ObjectRef<'a> {
+    type Target = Schema_Object;
+
+    fn deref(&self) -> &Self::Target {
+        self.raw
     }
 }
 
@@ -324,20 +370,39 @@ macro_rules! impl_primitive_field {
         }
 
         impl ArrayField for $schema_type {
-            fn add_field_list<'owner>(
-                object: &mut ObjectMut<'owner>,
-                field: FieldId,
-                data: &[Self::RustType],
-            ) {
-                unimplemented!();
-                // unsafe {
-                //     $schema_add_list(
-                //         object.raw,
-                //         field,
-                //         data.as_ptr() as *const _,
-                //         data.len() as u32,
-                //     );
-                // }
+            fn add_field_list(object: &mut ObjectMut, field: FieldId, data: &[Self::RustType]) {
+                // Determine how large the buffer needs to be.
+                //
+                // NOTE: We allocate extra padding when allocating the buffer in order to have room
+                // to adjust the alignment of the buffer to match the alignment of `Self::RustType`
+                // and still have enough room in the buffer for the right number of elements.
+                let byte_len = {
+                    let data_len = data.len() * mem::size_of::<Self::RustType>();
+                    let padding = mem::align_of::<Self::RustType>() - 1;
+                    data_len + padding
+                };
+
+                // Allocate a buffer that is owned by `object`.
+                let buffer = unsafe {
+                    let data_ptr = Schema_AllocateBuffer(object.as_mut(), byte_len as _);
+                    let buffer = slice::from_raw_parts_mut(data_ptr, byte_len);
+
+                    // Convert the byte buffer into a correctly-alligned slice of the data type.
+                    let (_prefix, buffer, _suffix) = buffer.align_to_mut::<Self::RustType>();
+                    buffer
+                };
+
+                // Populate the buffer.
+                buffer.copy_from_slice(data);
+
+                unsafe {
+                    $schema_add_list(
+                        object.raw,
+                        field,
+                        buffer.as_ptr() as *const _,
+                        buffer.len() as u32,
+                    );
+                }
             }
 
             fn get_field_list(object: ObjectRef, field: FieldId, data: &mut Vec<Self::RustType>) {
@@ -661,10 +726,17 @@ impl IndexedField for Vec<u8> {
 }
 
 fn add_bytes<'owner>(object: &mut ObjectMut<'owner>, field: FieldId, bytes: &[u8]) {
-    unimplemented!();
-    // unsafe {
-    //     Schema_AddBytes(object.raw, field, bytes.as_ptr(), bytes.len() as u32);
-    // }
+    // Create a buffer owned by `object` and populate that buffer with `bytes`.
+    let buffer = unsafe {
+        let data = Schema_AllocateBuffer(object.as_mut(), bytes.len() as _);
+        slice::from_raw_parts_mut(data, bytes.len())
+    };
+    buffer.copy_from_slice(bytes);
+
+    // Add `buffer` to `object` as the field.
+    unsafe {
+        Schema_AddBytes(object.raw, field, buffer.as_ptr(), buffer.len() as _);
+    }
 }
 
 fn get_bytes(object: ObjectRef<'_>, field: FieldId) -> &[u8] {
