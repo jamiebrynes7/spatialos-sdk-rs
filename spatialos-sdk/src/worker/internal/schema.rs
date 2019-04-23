@@ -2,6 +2,7 @@ use crate::worker::component::ComponentId;
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 use std::slice;
+use crate::worker::EntityId;
 
 pub type FieldId = u32;
 
@@ -422,15 +423,6 @@ impl_primitive_field!(
     Schema_AddSfixed64List
 );
 impl_primitive_field!(
-    i64,
-    SchemaEntityId,
-    Schema_GetEntityId,
-    Schema_IndexEntityId,
-    Schema_GetEntityIdCount,
-    Schema_AddEntityId,
-    Schema_AddEntityIdList
-);
-impl_primitive_field!(
     u32,
     SchemaEnum,
     Schema_GetEnum,
@@ -439,6 +431,36 @@ impl_primitive_field!(
     Schema_AddEnum,
     Schema_AddEnumList
 );
+
+impl<'a> SchemaPrimitiveField<EntityId> for SchemaFieldContainer<'a, SchemaEntityId> {
+    fn get_or_default(&self) -> EntityId {
+        EntityId::new(unsafe { Schema_GetEntityId(self.container.internal, self.field_id) })
+    }
+    fn index(&self, index: usize) -> EntityId {
+        EntityId::new(unsafe { Schema_IndexEntityId(self.container.internal, self.field_id, index as u32)})
+    }
+    fn count(&self) -> usize {
+        unsafe { Schema_GetEntityIdCount(self.container.internal, self.field_id) as usize }
+    }
+
+    fn add(&mut self, value: EntityId) {
+        unsafe {
+            Schema_AddEntityId(self.container.internal, self.field_id, value.id);
+        }
+    }
+    fn add_list(&mut self, value: &[EntityId]) {
+        let converted_list: Vec<i64> = value.iter().map(|v| v.id).collect();
+        unsafe {
+            let ptr = converted_list.as_ptr();
+            Schema_AddEntityIdList(
+                self.container.internal,
+                self.field_id,
+                ptr,
+                value.len() as u32,
+            );
+        }
+    }
+}
 
 impl<'a> SchemaPrimitiveField<bool> for SchemaFieldContainer<'a, SchemaBool> {
     fn get_or_default(&self) -> bool {
