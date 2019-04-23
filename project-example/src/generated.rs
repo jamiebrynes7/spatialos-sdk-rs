@@ -25,7 +25,7 @@ use std::collections::BTreeMap;
 use super::super::generated as generated;
 
 /* Enums. */
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TestEnum {
 
     FIRST,
