@@ -86,7 +86,7 @@ impl UpdateParameters {
 #[derive(Debug)]
 pub(crate) struct ComponentDataRef<'a> {
     pub component_id: ComponentId,
-    pub schema_type: schema::ComponentDataRef<'a>,
+    pub schema_type: &'a schema::ComponentData,
     pub user_handle: *mut Worker_ComponentDataHandle,
 }
 
@@ -94,7 +94,7 @@ impl<'a> ComponentDataRef<'a> {
     pub unsafe fn from_raw(data: &'a Worker_ComponentData) -> Self {
         Self {
             component_id: data.component_id,
-            schema_type: schema::ComponentDataRef::from_raw(&*data.schema_type),
+            schema_type: schema::ComponentData::from_raw(data.schema_type),
             user_handle: data.user_handle,
         }
     }
@@ -305,7 +305,7 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     schema_data: *mut Schema_ComponentData,
     handle_out: *mut *mut Worker_ComponentDataHandle,
 ) -> u8 {
-    let schema_data = schema::ComponentDataRef::from_raw(&*schema_data);
+    let schema_data = schema::ComponentData::from_raw(schema_data);
     let component = schema_data.deserialize::<C>();
     *handle_out = handle_allocate(component);
     1

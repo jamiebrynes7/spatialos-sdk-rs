@@ -1,6 +1,6 @@
 use crate::worker::{
     component::{self, Component, ComponentDataRef, ComponentId, UserHandle, DATABASE},
-    schema,
+    schema::{self, owned::Owned},
 };
 use maybe_owned::MaybeOwned;
 use spatialos_sdk_sys::worker::Worker_ComponentData;
@@ -9,7 +9,7 @@ use std::{collections::HashMap, ptr, slice};
 
 #[derive(Debug)]
 enum ComponentData {
-    SchemaData(schema::ComponentData),
+    SchemaData(Owned<schema::ComponentData>),
     UserHandle(UserHandle),
 }
 

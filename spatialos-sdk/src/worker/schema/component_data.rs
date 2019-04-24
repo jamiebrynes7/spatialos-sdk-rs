@@ -3,7 +3,6 @@ use crate::worker::{
     schema::{object::Object, owned::*, SchemaObjectType},
 };
 use spatialos_sdk_sys::worker::*;
-use std::{mem, ptr::NonNull};
 
 /// Serialized schema data for a component, owned by the Rust SDK.
 ///
@@ -14,19 +13,23 @@ use std::{mem, ptr::NonNull};
 #[derive(Debug)]
 pub struct ComponentData(Schema_ComponentData);
 
-impl Destroy for ComponentData {
-    unsafe fn destroy(inst: *mut Self) {
-        Schema_DestroyComponentData(inst as *mut _);
+impl TypeWrapper for ComponentData {
+    type Raw = Schema_ComponentData;
+
+    unsafe fn destroy(inst: *mut Self::Raw) {
+        Schema_DestroyComponentData(inst);
     }
 }
 
 impl ComponentData {
     pub fn new<C: Component>(component: &C) -> Owned<Self> {
         // Create the underlying `Schema_ComponentData` and retrieve the fields object.
-        let mut result = unsafe { Owned::new(Schema_CreateComponentData(C::ID) as *mut _) };
+        let mut result: Owned<Self> = unsafe { Owned::new(Schema_CreateComponentData(C::ID)) };
 
         // Populate the schema data from the component.
-        component.into_object(result.fields_mut());
+        let component_data = &mut *result;
+        let fields: &mut Object = component_data.fields_mut();
+        component.into_object(fields);
 
         result
     }
@@ -45,6 +48,10 @@ impl ComponentData {
 
     pub fn deserialize<T: SchemaObjectType>(&self) -> T {
         T::from_object(self.fields())
+    }
+
+    pub(crate) unsafe fn from_raw<'a>(raw: *mut Schema_ComponentData) -> &'a Self {
+        &*(raw as *mut _)
     }
 
     pub(crate) fn as_ptr(&self) -> *mut Schema_ComponentData {

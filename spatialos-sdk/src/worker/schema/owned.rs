@@ -4,15 +4,18 @@ use std::{
     ptr::NonNull,
 };
 
-pub trait Destroy {
-    unsafe fn destroy(me: *mut Self);
+pub trait TypeWrapper {
+    type Raw;
+
+    unsafe fn destroy(me: *mut Self::Raw);
 }
 
 /// Like `Box`, but for SpatialOS schema types.
-pub struct Owned<T: Destroy>(NonNull<T>);
+#[derive(Debug)]
+pub struct Owned<T: TypeWrapper>(NonNull<T::Raw>);
 
-impl<T: Destroy> Owned<T> {
-    pub unsafe fn new(raw: *mut T) -> Self {
+impl<T: TypeWrapper> Owned<T> {
+    pub unsafe fn new(raw: *mut T::Raw) -> Self {
         Self(NonNull::new(raw).expect("Cannot create `Owned` from null pointer"))
     }
 
@@ -22,14 +25,14 @@ impl<T: Destroy> Owned<T> {
     /// ensure that the appropriate steps are taken to free the data. If the raw data is
     /// passed to the C API, the C SDK will take ownership of the data and will free it
     /// when it's done.
-    pub fn into_raw(self) -> *mut T {
+    pub fn into_raw(self) -> *mut T::Raw {
         let raw = self.0.as_ptr();
         mem::forget(self);
         raw
     }
 }
 
-impl<T: Destroy> Drop for Owned<T> {
+impl<T: TypeWrapper> Drop for Owned<T> {
     fn drop(&mut self) {
         unsafe {
             T::destroy(self.0.as_ptr());
@@ -37,16 +40,16 @@ impl<T: Destroy> Drop for Owned<T> {
     }
 }
 
-impl<T: Destroy> Deref for Owned<T> {
+impl<T: TypeWrapper> Deref for Owned<T> {
     type Target = T;
 
     fn deref(&self) -> &T {
-        unsafe { self.0.as_ref() }
+        unsafe { &*self.0.cast().as_ptr() }
     }
 }
 
-impl<T: Destroy> DerefMut for Owned<T> {
+impl<T: TypeWrapper> DerefMut for Owned<T> {
     fn deref_mut(&mut self) -> &mut T {
-        unsafe { self.0.as_mut() }
+        unsafe { &mut *self.0.cast().as_ptr() }
     }
 }
