@@ -53,3 +53,5 @@ impl<T: TypeWrapper> DerefMut for Owned<T> {
         unsafe { &mut *self.0.cast().as_ptr() }
     }
 }
+
+unsafe impl<T: TypeWrapper + Send> Send for Owned<T> {}

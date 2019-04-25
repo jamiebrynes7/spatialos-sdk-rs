@@ -1,7 +1,8 @@
 use crate::worker::schema::{ArrayField, FieldId, SchemaField};
 use spatialos_sdk_sys::worker::*;
+use std::marker::PhantomData;
 
-pub struct Object(Schema_Object);
+pub struct Object(PhantomData<*mut Schema_Object>);
 
 impl Object {
     pub(crate) unsafe fn from_raw<'a>(raw: *const Schema_Object) -> &'a Self {
@@ -34,3 +35,5 @@ impl Object {
         self as *const _ as *mut _
     }
 }
+
+unsafe impl Send for Object {}

@@ -3,6 +3,7 @@ use crate::worker::{
     schema::{object::Object, owned::*, SchemaObjectType},
 };
 use spatialos_sdk_sys::worker::*;
+use std::marker::PhantomData;
 
 /// Serialized schema data for a component, owned by the Rust SDK.
 ///
@@ -11,7 +12,7 @@ use spatialos_sdk_sys::worker::*;
 /// tracks this borrow, such that an `OwnedComponentData` cannot outlive the
 /// data it borrows.
 #[derive(Debug)]
-pub struct ComponentData(Schema_ComponentData);
+pub struct ComponentData(PhantomData<*mut Schema_ComponentData>);
 
 impl TypeWrapper for ComponentData {
     type Raw = Schema_ComponentData;
@@ -58,3 +59,5 @@ impl ComponentData {
         self as *const _ as *mut _
     }
 }
+
+unsafe impl Send for ComponentData {}
