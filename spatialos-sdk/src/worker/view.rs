@@ -18,6 +18,10 @@ pub struct View {
     data: HashMap<ComponentId, HashMap<EntityId, OwnedComponentData>>,
     authority: HashMap<ComponentId, HashMap<EntityId, Authority>>,
     entities: HashSet<EntityId>,
+
+    entities_added: HashSet<EntityId>,
+    entities_removed: HashSet<EntityId>,
+    components_updated: HashMap<ComponentId, Vec<EntityId>>
 }
 
 impl View {
@@ -26,14 +30,26 @@ impl View {
             data: HashMap::new(),
             authority: HashMap::new(),
             entities: HashSet::new(),
+            entities_added: HashSet::new(),
+            entities_removed: HashSet::new(),
+            components_updated: HashMap::new()
         };
 
         for id in DATABASE.get_registered_component_ids() {
             view.data.insert(id, HashMap::new());
             view.authority.insert(id, HashMap::new());
+            view.components_updated.insert(id, Vec::new());
         }
 
         view
+    }
+
+    pub fn clear_transient_data(&mut self) {
+        self.entities_added.clear();
+        self.entities_removed.clear();
+        for (_, vec) in &mut self.components_updated {
+            vec.clear();
+        }
     }
 
     pub fn process_ops(&mut self, ops: &OpList) {
@@ -50,23 +66,23 @@ impl View {
         }
     }
 
-    pub fn get_component<C: Component>(&self, entity_id: &EntityId) -> Option<&C> {
+    pub fn get_component<C: Component>(&self, entity_id: EntityId) -> Option<&C> {
         self.data
             .get(&C::ID)
             .unwrap()
-            .get(entity_id)
+            .get(&entity_id)
             .map(|data| unsafe { (&*((*data).user_handle as *const C)) })
     }
 
-    pub fn get_authority<C: Component>(&self, entity_id: &EntityId) -> Option<Authority> {
+    pub fn get_authority<C: Component>(&self, entity_id: EntityId) -> Option<Authority> {
         self.authority
             .get(&C::ID)
             .unwrap()
-            .get(entity_id)
+            .get(&entity_id)
             .map(|data| data.clone())
     }
 
-    pub fn is_authoritative<C: Component>(&self, entity_id: &EntityId) -> bool {
+    pub fn is_authoritative<C: Component>(&self, entity_id: EntityId) -> bool {
         self.get_authority::<C>(entity_id)
             .map_or(false, |auth| auth == Authoritative)
     }
@@ -75,22 +91,32 @@ impl View {
         ViewEntityIterator::new(self)
     }
 
-    pub fn has_entity(&self, entity_id: &EntityId) -> bool {
-        self.entities.contains(entity_id)
+    pub fn has_entity(&self, entity_id: EntityId) -> bool {
+        self.entities.contains(&entity_id)
+    }
+
+    pub fn was_entity_added(&self, entity_id: EntityId) -> bool {
+        self.entities_added.contains(&entity_id)
+    }
+
+    pub fn was_entity_removed(&self, entity_id: EntityId) -> bool {
+        self.entities_removed.contains(&entity_id)
     }
 
     pub fn query<'a, T: ViewQuery<'a>>(&'a self) -> (impl Iterator<Item = T> + 'a) {
         self.iter_entities()
-            .filter(move |id| T::filter(self, id))
-            .map(move |id| T::select(self, id.clone()))
+            .filter(move |id| T::filter(self, **id))
+            .map(move |id| T::select(self, *id))
     }
 
     fn add_entity(&mut self, entity_id: EntityId) {
         self.entities.insert(entity_id);
+        self.entities_added.insert(entity_id);
     }
 
     fn remove_entity(&mut self, entity_id: EntityId) {
         self.entities.remove(&entity_id);
+        self.entities_removed.insert(entity_id);
     }
 
     fn add_component(&mut self, op: &AddComponentOp) {
@@ -131,6 +157,7 @@ impl View {
             .get_mut(&op.entity_id)
             .unwrap();
         unsafe { merge(data.user_handle, op.component_update.user_handle) };
+        self.components_updated.get_mut(&op.component_id).unwrap().push(op.entity_id);
     }
 }
 
@@ -149,7 +176,7 @@ impl<'a> ViewEntityIterator<'a> {
 }
 
 pub trait ViewQuery<'a> {
-    fn filter(view: &View, entity_id: &EntityId) -> bool;
+    fn filter(view: &View, entity_id: EntityId) -> bool;
     fn select(view: &'a View, entity_id: EntityId) -> Self;
 }
 
