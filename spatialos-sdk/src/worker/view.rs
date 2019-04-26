@@ -3,7 +3,7 @@ use crate::worker::{
     component::internal::{ComponentData, CommandRequest, CommandResponse},
     component::{Component, ComponentId, DATABASE},
     op::*,
-    Authority, EntityId,
+    Authority, EntityId, RequestId
 };
 use spatialos_sdk_sys::{
     worker::Worker_AcquireComponentData, worker::Worker_ComponentData,
@@ -16,6 +16,7 @@ use std::{
     collections::{hash_map::HashMap, HashSet},
     ops::Deref,
 };
+use crate::worker::commands::{IncomingCommandRequest, OutgoingCommandRequest};
 
 pub struct View {
     data: HashMap<ComponentId, HashMap<EntityId, OwnedComponentData>>,
@@ -26,8 +27,8 @@ pub struct View {
     entities_removed: HashSet<EntityId>,
     components_updated: HashMap<ComponentId, Vec<EntityId>>,
 
-    command_requests: HashMap<ComponentId, HashMap<EntityId, Vec<OwnedCommandRequestData>>>,
-    command_responses: HashMap<ComponentId, HashMap<EntityId, Vec<Result<OwnedCommandResponseData, String>>>>
+    command_requests: HashMap<ComponentId, HashMap<EntityId, Vec<(RequestId<IncomingCommandRequest>, OwnedCommandRequestData)>>>,
+    command_responses: HashMap<ComponentId, HashMap<EntityId, Vec<(RequestId<OutgoingCommandRequest>, Result<OwnedCommandResponseData, String>)>>>
 }
 
 impl View {
@@ -49,7 +50,7 @@ impl View {
             view.authority.insert(id, HashMap::new());
             view.components_updated.insert(id, Vec::new());
             view.command_requests.insert(id, HashMap::new());
-            view.command_requests.insert(id, HashMap::new());
+            view.command_responses.insert(id, HashMap::new());
         }
 
         view
@@ -81,6 +82,7 @@ impl View {
                 WorkerOp::ComponentUpdate(op) => self.handle_component_update(&op),
                 WorkerOp::AuthorityChange(op) => self.set_authority(&op),
                 WorkerOp::CommandRequest(op) => self.handle_command_request(&op),
+                WorkerOp::CommandResponse(op) => self.handle_command_response(&op),
                 _ => {}
             }
         }
@@ -89,15 +91,39 @@ impl View {
     pub fn get_component<C: Component>(&self, entity_id: EntityId) -> Option<&C> {
         self.data
             .get(&C::ID)
-            .unwrap()
+            .expect("Error")
             .get(&entity_id)
             .map(|data| unsafe { (&*((*data).user_handle as *const C)) })
+    }
+
+    pub fn get_command_requests<C: Component>(&self, entity_id: EntityId) -> Option<Vec<(RequestId<IncomingCommandRequest>, &C::CommandRequest)>> {
+        self.command_requests
+            .get(&C::ID)
+            .expect("Error")
+            .get(&entity_id)
+            .map(|vec| vec.iter().map(|(id, data)| unsafe {
+                (*id, (&*((*data).user_handle as *const C::CommandRequest)))
+            }).collect())
+    }
+
+    pub fn get_command_responses<C: Component>(&self, entity_id: EntityId) -> Option<Vec<(RequestId<OutgoingCommandRequest>, Result<&C::CommandResponse, String>)>> {
+        self.command_responses
+            .get(&C::ID)
+            .expect("Error")
+            .get(&entity_id)
+            .map(|vec|
+                     vec.iter().map(|(id, result)| match result {
+                         Ok(ref data) => (*id, Ok(unsafe {
+                             (&*((*data).user_handle as *const C::CommandResponse)) })),
+                         Err(e) => (*id, Err(e.clone()))
+                     }).collect()
+            )
     }
 
     pub fn get_authority<C: Component>(&self, entity_id: EntityId) -> Option<Authority> {
         self.authority
             .get(&C::ID)
-            .unwrap()
+            .expect("Error")
             .get(&entity_id)
             .map(|data| data.clone())
     }
@@ -121,6 +147,14 @@ impl View {
 
     pub fn was_entity_removed(&self, entity_id: EntityId) -> bool {
         self.entities_removed.contains(&entity_id)
+    }
+
+    pub fn has_command_requests<C: Component>(&self, entity_id: EntityId) -> bool {
+        self.command_requests.get(&C::ID).expect("Error").contains_key(&entity_id)
+    }
+
+    pub fn has_command_responses<C: Component>(&self, entity_id: EntityId) -> bool {
+        self.command_responses.get(&C::ID).expect("Error").contains_key(&entity_id)
     }
 
     pub fn iter_entities_removed(&self) -> impl Iterator<Item = &EntityId> {
@@ -147,7 +181,7 @@ impl View {
         let data = OwnedComponentData::from(op.data());
         self.data
             .get_mut(&op.component_id)
-            .unwrap()
+            .expect("Error")
             .insert(op.entity_id, data);
     }
 
@@ -155,43 +189,43 @@ impl View {
         let mut _data = self
             .data
             .get_mut(&op.component_id)
-            .unwrap()
+            .expect("Error")
             .remove(&op.entity_id)
-            .unwrap();
+            .expect("Error");
 
         self.authority
             .get_mut(&op.component_id)
-            .unwrap()
+            .expect("Error")
             .remove(&op.entity_id);
     }
 
     fn set_authority(&mut self, op: &AuthorityChangeOp) {
         self.authority
             .get_mut(&op.component_id)
-            .unwrap()
+            .expect("Error")
             .insert(op.entity_id, op.authority);
     }
 
     fn handle_component_update(&mut self, op: &ComponentUpdateOp) {
-        let merge = DATABASE.get_merge_method(op.component_id).unwrap();
+        let merge = DATABASE.get_merge_method(op.component_id).expect("Error");
         let data = self
             .data
             .get_mut(&op.component_id)
-            .unwrap()
+            .expect("Error")
             .get_mut(&op.entity_id)
-            .unwrap();
+            .expect("Error");
         unsafe { merge(data.user_handle, op.component_update.user_handle) };
-        self.components_updated.get_mut(&op.component_id).unwrap().push(op.entity_id);
+        self.components_updated.get_mut(&op.component_id).expect("Error").push(op.entity_id);
     }
 
     fn handle_command_request(&mut self, op: &CommandRequestOp) {
         let data = OwnedCommandRequestData::from(op.data());
         let entry = self.command_requests
             .get_mut(&op.component_id)
-            .unwrap()
+            .expect("Error")
             .entry(op.entity_id)
             .or_default()
-            .push(data);
+            .push((op.request_id, data));
     }
 
     fn handle_command_response(&mut self, op: &CommandResponseOp) {
@@ -207,10 +241,10 @@ impl View {
 
         self.command_responses
             .get_mut(&op.component_id)
-            .unwrap()
+            .expect("Error")
             .entry(op.entity_id)
             .or_default()
-            .push(data);
+            .push((op.request_id, data));
     }
 }
 

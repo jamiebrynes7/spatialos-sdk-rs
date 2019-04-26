@@ -50,7 +50,7 @@ impl EntityId {
     Hash(bound = "")
 )]
 pub struct RequestId<T> {
-    id: u32,
+    pub id: u32,
     _type: PhantomData<*const T>,
 }
 
