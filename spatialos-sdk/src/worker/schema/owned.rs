@@ -1,3 +1,20 @@
+//! A pointer type for owned schema data types.
+//!
+//! When you own an instance of some schema data type, such as
+//! [`ComponentData`], the [`Owned`] smart pointer handles automatically
+//! destroying the object when it goes out of scope. In this way, it behaves like
+//! [`Box`] for SpatialOS-specific types.
+//!
+//! You cannot directly create an `Owned<T>`, instead each type that can be owned
+//! directly will provide its own type-appropriate constructors. See
+//! [`ComponentData::new`] for an example.
+//!
+//! [`ComponentData`]: ../struct.ComponentData.html
+//! [`ComponentData::new`]: ../struct.ComponentData.html#method.new
+//! [`Owned`]: struct.Owned.html
+//! [`Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
+
+pub(crate) use self::private::TypeWrapper;
 use std::{
     mem,
     ops::{Deref, DerefMut},
