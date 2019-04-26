@@ -103,6 +103,10 @@ impl View {
         self.entities_removed.contains(&entity_id)
     }
 
+    pub fn iter_entities_removed(&self) -> impl Iterator<Item = &EntityId> {
+        self.entities_removed.iter()
+    }
+
     pub fn query<'a, T: ViewQuery<'a>>(&'a self) -> (impl Iterator<Item = T> + 'a) {
         self.iter_entities()
             .filter(move |id| T::filter(self, **id))
