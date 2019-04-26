@@ -1,3 +1,5 @@
+// This test verifies that `schema::ComponentData` is not `Sync`.
+
 extern crate spatialos_sdk;
 
 use spatialos_sdk::worker::{component::*, schema::{self, *}};
