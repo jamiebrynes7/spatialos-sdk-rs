@@ -25,3 +25,20 @@ component Rotate {
     /// The radius of the rotation.
     double radius = 3;
 }
+
+component EntityIdTest {
+    id = 2001;
+
+    EntityId eid = 1;
+}
+
+enum TestEnum {
+    FIRST = 0;
+    SECOND = 1;
+}
+
+component EnumTestComponent {
+    id = 2002;
+
+    TestEnum test = 1;
+}

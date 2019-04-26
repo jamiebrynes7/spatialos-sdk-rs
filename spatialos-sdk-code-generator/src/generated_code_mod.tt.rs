@@ -8,7 +8,7 @@ use <#= vec!["super".to_string(); self.depth() + 1].join("::") #>::generated as 
 let enum_def = self.get_enum_definition(enum_name);
 let enum_rust_name = self.rust_name(&enum_def.identifier);
 #>
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum <#= enum_rust_name #> {
 <# for enum_value in &enum_def.value_definitions { #>
     <#= enum_value.identifier.name #>,<# } #>
@@ -19,7 +19,16 @@ impl From<u32> for <#= enum_rust_name #> {
         match value {
 <# for enum_value in &enum_def.value_definitions { #>
             <#= enum_value.value #> => <#= enum_rust_name #>::<#= enum_value.identifier.name #>, <# } #>
-            _ => panic!(&format!("Could not convert {} to enum <#= enum_rust_name #>.", value))
+            _ => panic!(format!("Could not convert {} to enum <#= enum_rust_name #>.", value))
+        }
+    }
+}
+
+impl <#= enum_rust_name #> {
+    pub(crate) fn as_u32(self) -> u32 {
+        match self {
+            <# for enum_value in &enum_def.value_definitions { #>
+            <#= enum_rust_name #>::<#= enum_value.identifier.name #> => <#= enum_value.value #>, <# } #>
         }
     }
 }
