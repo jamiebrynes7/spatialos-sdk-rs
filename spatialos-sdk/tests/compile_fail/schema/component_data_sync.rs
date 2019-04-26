@@ -1,7 +1,7 @@
 extern crate spatialos_sdk;
 
 use spatialos_sdk::worker::{component::*, schema::{self, *}};
-use std::thread;
+use std::{thread, sync::Arc};
 
 pub struct CustomComponent;
 
@@ -27,11 +27,14 @@ impl Update for CustomComponentUpdate {
 }
 
 fn main() {
-    let component_data = ComponentData::new(&CustomComponent);
+    let component_data = Arc::new(ComponentData::new(&CustomComponent));
 
-    thread::spawn(|| { //~ ERROR cannot be shared between threads safely
-        let _ = component_data.deserialize::<CustomComponent>();
-    });
+    {
+        let component_data = component_data.clone();
+        thread::spawn(move || { //~ ERROR cannot be shared between threads safely
+            let _ = component_data.deserialize::<CustomComponent>();
+        });
+    }
 
     let _ = component_data.deserialize::<CustomComponent>();
 }
