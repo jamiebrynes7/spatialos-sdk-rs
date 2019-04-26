@@ -10,7 +10,7 @@ pub struct CustomComponent {
 }
 
 impl SchemaObjectType for CustomComponent {
-    fn from_object(object: ObjectRef) -> Self {
+    fn from_object(object: &Object) -> Self {
         Self {
             name: object.field::<String>(0),
             count: object.field::<SchemaSfixed32>(1),
@@ -20,7 +20,7 @@ impl SchemaObjectType for CustomComponent {
         }
     }
 
-    fn into_object<'owner>(&self, object: &mut ObjectMut<'owner>) {
+    fn into_object(&self, object: &mut Object) {
         object.add_field::<String>(0, &self.name);
         object.add_field::<SchemaSfixed32>(1, &self.count);
         object.add_field_array::<EntityId>(2, &self.targets);
