@@ -621,6 +621,10 @@ impl<'a> CommandRequestOp<'a> {
         }
     }
 
+    pub(crate) fn data(&self) -> &component::internal::CommandRequest<'a> {
+        &self.request
+    }
+
     fn schema(&self) -> &SchemaCommandRequest {
         &self.request.schema_type
     }
@@ -648,6 +652,11 @@ impl<'a> CommandResponse<'a> {
             None
         }
     }
+
+    pub(crate) fn data(&self) -> &component::internal::CommandResponse<'a> {
+        &self.response
+    }
+
 
     fn schema(&self) -> &SchemaCommandResponse {
         &self.response.schema_type

@@ -1,13 +1,16 @@
 use crate::worker::Authority::Authoritative;
 use crate::worker::{
-    component::internal::ComponentData,
+    component::internal::{ComponentData, CommandRequest, CommandResponse},
     component::{Component, ComponentId, DATABASE},
     op::*,
     Authority, EntityId,
 };
 use spatialos_sdk_sys::{
     worker::Worker_AcquireComponentData, worker::Worker_ComponentData,
-    worker::Worker_ReleaseComponentData,
+    worker::Worker_ReleaseComponentData, worker::Worker_CommandRequest,
+    worker::Worker_AcquireCommandRequest, worker::Worker_ReleaseCommandRequest,
+    worker::Worker_CommandResponse, worker::Worker_AcquireCommandResponse,
+    worker::Worker_ReleaseCommandResponse
 };
 use std::{
     collections::{hash_map::HashMap, HashSet},
@@ -21,7 +24,10 @@ pub struct View {
 
     entities_added: HashSet<EntityId>,
     entities_removed: HashSet<EntityId>,
-    components_updated: HashMap<ComponentId, Vec<EntityId>>
+    components_updated: HashMap<ComponentId, Vec<EntityId>>,
+
+    command_requests: HashMap<ComponentId, HashMap<EntityId, Vec<OwnedCommandRequestData>>>,
+    command_responses: HashMap<ComponentId, HashMap<EntityId, Vec<Result<OwnedCommandResponseData, String>>>>
 }
 
 impl View {
@@ -32,13 +38,18 @@ impl View {
             entities: HashSet::new(),
             entities_added: HashSet::new(),
             entities_removed: HashSet::new(),
-            components_updated: HashMap::new()
+            components_updated: HashMap::new(),
+
+            command_requests: HashMap::new(),
+            command_responses: HashMap::new()
         };
 
         for id in DATABASE.get_registered_component_ids() {
             view.data.insert(id, HashMap::new());
             view.authority.insert(id, HashMap::new());
             view.components_updated.insert(id, Vec::new());
+            view.command_requests.insert(id, HashMap::new());
+            view.command_requests.insert(id, HashMap::new());
         }
 
         view
@@ -49,6 +60,14 @@ impl View {
         self.entities_removed.clear();
         for (_, vec) in &mut self.components_updated {
             vec.clear();
+        }
+
+        for (_, map) in &mut self.command_requests {
+            map.clear();
+        }
+
+        for (_, map) in &mut self.command_responses {
+            map.clear();
         }
     }
 
@@ -61,6 +80,7 @@ impl View {
                 WorkerOp::RemoveComponent(op) => self.remove_component(&op),
                 WorkerOp::ComponentUpdate(op) => self.handle_component_update(&op),
                 WorkerOp::AuthorityChange(op) => self.set_authority(&op),
+                WorkerOp::CommandRequest(op) => self.handle_command_request(&op),
                 _ => {}
             }
         }
@@ -163,6 +183,35 @@ impl View {
         unsafe { merge(data.user_handle, op.component_update.user_handle) };
         self.components_updated.get_mut(&op.component_id).unwrap().push(op.entity_id);
     }
+
+    fn handle_command_request(&mut self, op: &CommandRequestOp) {
+        let data = OwnedCommandRequestData::from(op.data());
+        let entry = self.command_requests
+            .get_mut(&op.component_id)
+            .unwrap()
+            .entry(op.entity_id)
+            .or_default()
+            .push(data);
+    }
+
+    fn handle_command_response(&mut self, op: &CommandResponseOp) {
+        let data = match &op.response {
+            StatusCode::Success(resp) => Ok(OwnedCommandResponseData::from(resp.data())),
+            StatusCode::Timeout(message) => Err(message.clone()),
+            StatusCode::NotFound(message) => Err(message.clone()),
+            StatusCode::AuthorityLost(message) => Err(message.clone()),
+            StatusCode::PermissionDenied(message) => Err(message.clone()),
+            StatusCode::ApplicationError(message) => Err(message.clone()),
+            StatusCode::InternalError(message) => Err(message.clone()),
+        };
+
+        self.command_responses
+            .get_mut(&op.component_id)
+            .unwrap()
+            .entry(op.entity_id)
+            .or_default()
+            .push(data);
+    }
 }
 
 pub struct ViewEntityIterator<'a> {
@@ -222,5 +271,73 @@ impl Deref for OwnedComponentData {
 impl Drop for OwnedComponentData {
     fn drop(&mut self) {
         unsafe { Worker_ReleaseComponentData(&mut self.data) };
+    }
+}
+
+
+struct OwnedCommandRequestData {
+    data: Worker_CommandRequest,
+}
+
+impl<'a> From<&'a CommandRequest<'a>> for OwnedCommandRequestData {
+    fn from(data: &CommandRequest) -> Self {
+        let mut internal = Worker_CommandRequest {
+            reserved: data.reserved,
+            component_id: data.component_id,
+            schema_type: data.schema_type.internal,
+            user_handle: data.user_handle as *mut _,
+        };
+
+        OwnedCommandRequestData {
+            data: unsafe { *Worker_AcquireCommandRequest(&mut internal) },
+        }
+    }
+}
+
+impl Deref for OwnedCommandRequestData {
+    type Target = Worker_CommandRequest;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl Drop for OwnedCommandRequestData {
+    fn drop(&mut self) {
+        unsafe { Worker_ReleaseCommandRequest(&mut self.data) };
+    }
+}
+
+
+struct OwnedCommandResponseData {
+    data: Worker_CommandResponse,
+}
+
+impl From<&'_ CommandResponse<'_>> for OwnedCommandResponseData {
+    fn from(data: &CommandResponse) -> Self {
+        let mut internal = Worker_CommandResponse {
+            reserved: data.reserved,
+            component_id: data.component_id,
+            schema_type: data.schema_type.internal,
+            user_handle: data.user_handle as *mut _,
+        };
+
+        OwnedCommandResponseData {
+            data: unsafe { *Worker_AcquireCommandResponse(&mut internal) },
+        }
+    }
+}
+
+impl Deref for OwnedCommandResponseData {
+    type Target = Worker_CommandResponse;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl Drop for OwnedCommandResponseData {
+    fn drop(&mut self) {
+        unsafe { Worker_ReleaseCommandResponse(&mut self.data) };
     }
 }

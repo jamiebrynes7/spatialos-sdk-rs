@@ -185,6 +185,7 @@ pub(crate) mod internal {
         pub component_id: ComponentId,
         pub schema_type: SchemaCommandRequest,
         pub user_handle: *const Worker_CommandRequestHandle,
+        pub reserved: *mut ::std::os::raw::c_void,
 
         // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
         // type-erased pointer that may be null, so we just mark that we're borrowing
@@ -202,6 +203,7 @@ pub(crate) mod internal {
                 },
                 user_handle: request.user_handle,
                 _marker: PhantomData,
+                reserved: request.reserved
             }
         }
     }
@@ -211,6 +213,7 @@ pub(crate) mod internal {
         pub component_id: ComponentId,
         pub schema_type: SchemaCommandResponse,
         pub user_handle: *const Worker_CommandResponseHandle,
+        pub reserved: *mut ::std::os::raw::c_void,
 
         // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
         // type-erased pointer that may be null, so we just mark that we're borrowing
@@ -228,6 +231,7 @@ pub(crate) mod internal {
                 },
                 user_handle: response.user_handle,
                 _marker: PhantomData,
+                reserved: response.reserved
             }
         }
     }
