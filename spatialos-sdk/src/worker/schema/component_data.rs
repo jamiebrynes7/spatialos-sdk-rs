@@ -14,7 +14,7 @@ use std::marker::PhantomData;
 #[derive(Debug)]
 pub struct ComponentData(PhantomData<*mut Schema_ComponentData>);
 
-impl TypeWrapper for ComponentData {
+impl OwnableImpl for ComponentData {
     type Raw = Schema_ComponentData;
 
     unsafe fn destroy(inst: *mut Self::Raw) {

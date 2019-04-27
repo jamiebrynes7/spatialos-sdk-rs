@@ -14,25 +14,35 @@
 //! [`Owned`]: struct.Owned.html
 //! [`Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 
-pub(crate) use self::private::TypeWrapper;
 use std::{
     mem,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
 
-pub trait TypeWrapper {
-    type Raw;
+pub(crate) use self::private::OwnableImpl;
 
-    unsafe fn destroy(me: *mut Self::Raw);
+pub(crate) mod private {
+    /// Private imlementation of the `Ownable` trait. Used to hide implementation
+    /// details and seal the trait from downstream implementations.
+    pub trait OwnableImpl {
+        type Raw;
+        unsafe fn destroy(me: *mut Self::Raw);
+    }
 }
 
-/// Like `Box`, but for SpatialOS schema types.
-#[derive(Debug)]
-pub struct Owned<T: TypeWrapper>(NonNull<T::Raw>);
+pub trait Ownable: OwnableImpl {}
 
-impl<T: TypeWrapper> Owned<T> {
-    pub unsafe fn new(raw: *mut T::Raw) -> Self {
+impl<T> Ownable for T where T: OwnableImpl {}
+
+/// Like `Box`, but for SpatialOS schema types.
+///
+/// See the [module-level documentation](./index.html) for more.
+#[derive(Debug)]
+pub struct Owned<T: Ownable>(NonNull<T::Raw>);
+
+impl<T: Ownable> Owned<T> {
+    pub(crate) unsafe fn new(raw: *mut T::Raw) -> Self {
         Self(NonNull::new(raw).expect("Cannot create `Owned` from null pointer"))
     }
 
@@ -42,14 +52,14 @@ impl<T: TypeWrapper> Owned<T> {
     /// ensure that the appropriate steps are taken to free the data. If the raw data is
     /// passed to the C API, the C SDK will take ownership of the data and will free it
     /// when it's done.
-    pub fn into_raw(self) -> *mut T::Raw {
+    pub(crate) fn into_raw(self) -> *mut T::Raw {
         let raw = self.0.as_ptr();
         mem::forget(self);
         raw
     }
 }
 
-impl<T: TypeWrapper> Drop for Owned<T> {
+impl<T: Ownable> Drop for Owned<T> {
     fn drop(&mut self) {
         unsafe {
             T::destroy(self.0.as_ptr());
@@ -57,7 +67,7 @@ impl<T: TypeWrapper> Drop for Owned<T> {
     }
 }
 
-impl<T: TypeWrapper> Deref for Owned<T> {
+impl<T: Ownable> Deref for Owned<T> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -65,10 +75,10 @@ impl<T: TypeWrapper> Deref for Owned<T> {
     }
 }
 
-impl<T: TypeWrapper> DerefMut for Owned<T> {
+impl<T: Ownable> DerefMut for Owned<T> {
     fn deref_mut(&mut self) -> &mut T {
         unsafe { &mut *self.0.cast().as_ptr() }
     }
 }
 
-unsafe impl<T: TypeWrapper + Send> Send for Owned<T> {}
+unsafe impl<T: Ownable + Send> Send for Owned<T> {}
