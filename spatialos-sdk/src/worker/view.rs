@@ -203,6 +203,13 @@ impl View {
         self.entities_removed.contains(&entity_id)
     }
 
+    pub fn was_component_updated<C: Component>(&self, entity_id: EntityId) -> bool {
+        self.components_updated
+            .get(&C::ID)
+            .unwrap()
+            .contains(&entity_id)
+    }
+
     pub fn has_command_requests<C: Component>(&self, entity_id: EntityId) -> bool {
         self.command_requests
             .get(&C::ID)
