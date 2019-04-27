@@ -1,5 +1,6 @@
 use crate::worker::{
-    component::{self, Component, ComponentDataRef, ComponentId, UserHandle, DATABASE},
+    component::{Component, ComponentDataRef, ComponentId, DATABASE},
+    handle::UserHandle,
     schema::{self, owned::Owned},
 };
 use maybe_owned::MaybeOwned;
@@ -43,9 +44,8 @@ impl Entity {
 
         self.pre_add_check(C::ID)?;
 
-        let user_handle = component::handle_allocate(component);
         self.components
-            .insert(C::ID, ComponentData::UserHandle(user_handle));
+            .insert(C::ID, ComponentData::UserHandle(UserHandle::new(component)));
 
         Ok(())
     }
@@ -68,25 +68,32 @@ impl Entity {
     /// data or user handles. If the raw data is passed to the C API using
     /// `Worker_Connection_SendCreateEntityRequest`, the C API will take ownership of
     /// the data and will free it when it's done.
-    pub(crate) fn into_raw(mut self) -> Vec<Worker_ComponentData> {
-        self.components
-            .drain()
-            .map(|(id, component_data)| match component_data {
-                ComponentData::SchemaData(schema_data) => Worker_ComponentData {
+    pub(crate) fn into_raw(mut self) -> (Vec<Worker_ComponentData>, Vec<UserHandle>) {
+        let mut components = Vec::with_capacity(self.components.len());
+        let mut handles = Vec::with_capacity(self.components.len());
+
+        for (id, component_data) in self.components.drain() {
+            match component_data {
+                ComponentData::SchemaData(schema_data) => components.push(Worker_ComponentData {
                     reserved: ptr::null_mut(),
                     component_id: id,
                     schema_type: schema_data.into_raw(),
                     user_handle: ptr::null_mut(),
-                },
+                }),
 
-                ComponentData::UserHandle(handle) => Worker_ComponentData {
-                    reserved: ptr::null_mut(),
-                    component_id: id,
-                    schema_type: ptr::null_mut(),
-                    user_handle: handle,
-                },
-            })
-            .collect()
+                ComponentData::UserHandle(handle) => {
+                    components.push(Worker_ComponentData {
+                        reserved: ptr::null_mut(),
+                        component_id: id,
+                        schema_type: ptr::null_mut(),
+                        user_handle: handle.raw(),
+                    });
+                    handles.push(handle);
+                }
+            }
+        }
+
+        (components, handles)
     }
 
     fn pre_add_check(&self, id: ComponentId) -> Result<(), String> {
@@ -98,28 +105,6 @@ impl Entity {
         }
 
         Ok(())
-    }
-}
-
-impl Drop for Entity {
-    fn drop(&mut self) {
-        for (id, component_data) in self.components.drain() {
-            match component_data {
-                ComponentData::SchemaData(_) => {}
-
-                ComponentData::UserHandle(user_handle) => {
-                    let vtable = DATABASE.get_vtable(id).unwrap();
-
-                    let free_data_func = vtable.component_data_free.unwrap_or_else(|| {
-                        panic!("No component_data_free method defined for compnent {}", id)
-                    });
-
-                    unsafe {
-                        free_data_func(id, ptr::null_mut(), user_handle);
-                    }
-                }
-            }
-        }
     }
 }
 

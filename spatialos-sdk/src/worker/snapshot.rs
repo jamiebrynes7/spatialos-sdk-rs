@@ -35,7 +35,7 @@ impl SnapshotOutputStream {
     }
 
     pub fn write_entity(&mut self, id: EntityId, entity: Entity) -> Result<(), String> {
-        let components = entity.into_raw();
+        let (components, _handles) = entity.into_raw();
 
         let wrk_entity = Worker_Entity {
             entity_id: id.id,

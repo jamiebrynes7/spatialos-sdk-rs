@@ -1,14 +1,16 @@
-use crate::worker::schema::{self, SchemaObjectType};
+use crate::worker::{
+    handle,
+    schema::{self, SchemaObjectType},
+};
 use maybe_owned::MaybeOwned;
 use spatialos_sdk_sys::worker::*;
-use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
+use std::{collections::hash_map::HashMap, os::raw, ptr};
 
 // Re-export inventory so generated code doesn't require the user to add inventory to their
 // Cargo.toml
 pub use inventory;
 
 pub type ComponentId = u32;
-pub type UserHandle = *mut raw::c_void;
 
 /// A component type as defined in a schema file.
 pub trait Component: SchemaObjectType {
@@ -237,21 +239,6 @@ impl ComponentDatabase {
 unsafe impl Sync for ComponentDatabase {}
 unsafe impl Send for ComponentDatabase {}
 
-pub(crate) fn handle_allocate<T>(data: T) -> UserHandle {
-    Arc::into_raw(Arc::new(data)) as *mut _
-}
-
-pub(crate) unsafe fn handle_free<T>(handle: UserHandle) {
-    let _ = Arc::<T>::from_raw(handle as *const _);
-}
-
-pub(crate) unsafe fn handle_copy<T>(handle: UserHandle) -> UserHandle {
-    let original = Arc::<T>::from_raw(handle as *const _);
-    let copy = original.clone();
-    mem::forget(original);
-    Arc::into_raw(copy) as *mut _
-}
-
 pub struct VTable {
     vtable: Worker_ComponentVtable,
 }
@@ -288,7 +275,7 @@ unsafe extern "C" fn vtable_component_data_free<C: Component>(
     _user_data: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
-    handle_free::<C>(handle);
+    handle::drop_raw::<C>(handle);
 }
 
 unsafe extern "C" fn vtable_component_data_copy<C: Component>(
@@ -296,7 +283,7 @@ unsafe extern "C" fn vtable_component_data_copy<C: Component>(
     _user_data: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) -> *mut raw::c_void {
-    handle_copy::<C>(handle)
+    handle::clone_raw::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
@@ -307,7 +294,7 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
 ) -> u8 {
     let schema_data = schema::ComponentData::from_raw(schema_data);
     let component = schema_data.deserialize::<C>();
-    *handle_out = handle_allocate(component);
+    *handle_out = handle::allocate_raw(component);
     1
 }
 
@@ -326,7 +313,7 @@ unsafe extern "C" fn vtable_component_update_free<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
-    handle_free::<C::Update>(handle);
+    handle::drop_raw::<C::Update>(handle);
 }
 
 unsafe extern "C" fn vtable_component_update_copy<C: Component>(
@@ -334,7 +321,7 @@ unsafe extern "C" fn vtable_component_update_copy<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) -> *mut raw::c_void {
-    handle_copy::<C::Update>(handle)
+    handle::clone_raw::<C::Update>(handle)
 }
 
 unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
@@ -347,7 +334,7 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     // let schema_update = SchemaComponentUpdate::from_raw(update);
     // let deserialized_result = C::from_update(&schema_update);
     // if let Ok(deserialized_update) = deserialized_result {
-    //     *handle_out = handle_allocate(deserialized_update);
+    //     *handle_out = handle::allocate(deserialized_update);
     //     1
     // } else {
     //     0
@@ -370,7 +357,7 @@ unsafe extern "C" fn vtable_command_request_free<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
-    handle_free::<C>(handle)
+    handle::drop_raw::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_command_request_copy<C: Component>(
@@ -378,7 +365,7 @@ unsafe extern "C" fn vtable_command_request_copy<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) -> *mut raw::c_void {
-    handle_copy::<C>(handle)
+    handle::clone_raw::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
@@ -394,7 +381,7 @@ unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
     // };
     // let deserialized_result = C::from_request(&schema_request);
     // if let Ok(deserialized_request) = deserialized_result {
-    //     *handle_out = handle_allocate(deserialized_request);
+    //     *handle_out = handle::allocate(deserialized_request);
     //     1
     // } else {
     //     0
@@ -422,7 +409,7 @@ unsafe extern "C" fn vtable_command_response_free<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
-    handle_free::<C>(handle)
+    handle::drop_raw::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_command_response_copy<C: Component>(
@@ -430,7 +417,7 @@ unsafe extern "C" fn vtable_command_response_copy<C: Component>(
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) -> *mut raw::c_void {
-    handle_copy::<C>(handle)
+    handle::clone_raw::<C>(handle)
 }
 
 unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(
@@ -446,7 +433,7 @@ unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(
     // };
     // let deserialized_result = C::from_response(&schema_response);
     // if let Ok(deserialized_response) = deserialized_result {
-    //     *handle_out = handle_allocate(deserialized_response);
+    //     *handle_out = handle::allocate(deserialized_response);
     //     1
     // } else {
     //     0

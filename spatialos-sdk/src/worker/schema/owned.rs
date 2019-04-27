@@ -35,9 +35,11 @@ pub trait Ownable: OwnableImpl {}
 
 impl<T> Ownable for T where T: OwnableImpl {}
 
-/// Like `Box`, but for SpatialOS schema types.
+/// Like [`Box`], but for SpatialOS schema types.
 ///
-/// See the [module-level documentation](./index.html) for more.
+/// See the [module-level documentation](index.html) for more.
+///
+/// [`Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 #[derive(Debug)]
 pub struct Owned<T: Ownable>(NonNull<T::Raw>);
 

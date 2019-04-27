@@ -1,15 +1,18 @@
-use crate::ptr::MutPtr;
-use crate::worker::{
-    alpha,
-    commands::*,
-    component::{self, Component, UpdateParameters},
-    entity::Entity,
-    internal::utils::cstr_to_string,
-    locator::*,
-    metrics::Metrics,
-    op::OpList,
-    parameters::ConnectionParameters,
-    {EntityId, InterestOverride, LogLevel, RequestId},
+use crate::{
+    ptr::MutPtr,
+    worker::{
+        alpha,
+        commands::*,
+        component::{Component, UpdateParameters},
+        entity::Entity,
+        handle::UserHandle,
+        internal::utils::cstr_to_string,
+        locator::*,
+        metrics::Metrics,
+        op::OpList,
+        parameters::ConnectionParameters,
+        {EntityId, InterestOverride, LogLevel, RequestId},
+    },
 };
 use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
@@ -327,7 +330,7 @@ impl Connection for WorkerConnection {
             Some(e) => &e.id,
             None => ptr::null(),
         };
-        let components = entity.into_raw();
+        let (components, _handles) = entity.into_raw();
         let id = unsafe {
             Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),
@@ -465,11 +468,12 @@ impl Connection for WorkerConnection {
         update: C::Update,
         parameters: UpdateParameters,
     ) {
+        let user_handle = UserHandle::new(update);
         let component_update = Worker_ComponentUpdate {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             schema_type: ptr::null_mut(),
-            user_handle: component::handle_allocate(update),
+            user_handle: user_handle.raw(),
         };
 
         let params = parameters.to_worker_sdk();
@@ -480,8 +484,6 @@ impl Connection for WorkerConnection {
                 &component_update,
                 &params,
             );
-
-            component::handle_free::<C::Update>(component_update.user_handle);
         }
     }
 
