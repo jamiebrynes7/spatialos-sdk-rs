@@ -1,22 +1,22 @@
+use crate::worker::commands::{IncomingCommandRequest, OutgoingCommandRequest};
 use crate::worker::Authority::Authoritative;
 use crate::worker::{
-    component::internal::{ComponentData, CommandRequest, CommandResponse},
+    component::internal::{CommandRequest, CommandResponse, ComponentData},
     component::{Component, ComponentId, DATABASE},
     op::*,
-    Authority, EntityId, RequestId
+    Authority, EntityId, RequestId,
 };
 use spatialos_sdk_sys::{
-    worker::Worker_AcquireComponentData, worker::Worker_ComponentData,
-    worker::Worker_ReleaseComponentData, worker::Worker_CommandRequest,
-    worker::Worker_AcquireCommandRequest, worker::Worker_ReleaseCommandRequest,
-    worker::Worker_CommandResponse, worker::Worker_AcquireCommandResponse,
-    worker::Worker_ReleaseCommandResponse
+    worker::Worker_AcquireCommandRequest, worker::Worker_AcquireCommandResponse,
+    worker::Worker_AcquireComponentData, worker::Worker_CommandRequest,
+    worker::Worker_CommandResponse, worker::Worker_ComponentData,
+    worker::Worker_ReleaseCommandRequest, worker::Worker_ReleaseCommandResponse,
+    worker::Worker_ReleaseComponentData,
 };
 use std::{
     collections::{hash_map::HashMap, HashSet},
     ops::Deref,
 };
-use crate::worker::commands::{IncomingCommandRequest, OutgoingCommandRequest};
 
 pub struct View {
     data: HashMap<ComponentId, HashMap<EntityId, OwnedComponentData>>,
@@ -27,8 +27,20 @@ pub struct View {
     entities_removed: HashSet<EntityId>,
     components_updated: HashMap<ComponentId, Vec<EntityId>>,
 
-    command_requests: HashMap<ComponentId, HashMap<EntityId, Vec<(RequestId<IncomingCommandRequest>, OwnedCommandRequestData)>>>,
-    command_responses: HashMap<ComponentId, HashMap<EntityId, Vec<(RequestId<OutgoingCommandRequest>, Result<OwnedCommandResponseData, String>)>>>
+    command_requests: HashMap<
+        ComponentId,
+        HashMap<EntityId, Vec<(RequestId<IncomingCommandRequest>, OwnedCommandRequestData)>>,
+    >,
+    command_responses: HashMap<
+        ComponentId,
+        HashMap<
+            EntityId,
+            Vec<(
+                RequestId<OutgoingCommandRequest>,
+                StatusCode<OwnedCommandResponseData>,
+            )>,
+        >,
+    >,
 }
 
 impl View {
@@ -42,7 +54,7 @@ impl View {
             components_updated: HashMap::new(),
 
             command_requests: HashMap::new(),
-            command_responses: HashMap::new()
+            command_responses: HashMap::new(),
         };
 
         for id in DATABASE.get_registered_component_ids() {
@@ -96,28 +108,70 @@ impl View {
             .map(|data| unsafe { (&*((*data).user_handle as *const C)) })
     }
 
-    pub fn get_command_requests<C: Component>(&self, entity_id: EntityId) -> Option<Vec<(RequestId<IncomingCommandRequest>, &C::CommandRequest)>> {
+    pub fn get_command_requests<C: Component>(
+        &self,
+        entity_id: EntityId,
+    ) -> Option<Vec<(RequestId<IncomingCommandRequest>, &C::CommandRequest)>> {
         self.command_requests
             .get(&C::ID)
             .expect("Error")
             .get(&entity_id)
-            .map(|vec| vec.iter().map(|(id, data)| unsafe {
-                (*id, (&*((*data).user_handle as *const C::CommandRequest)))
-            }).collect())
+            .map(|vec| {
+                vec.iter()
+                    .map(|(id, data)| unsafe {
+                        (*id, (&*((*data).user_handle as *const C::CommandRequest)))
+                    })
+                    .collect()
+            })
     }
 
-    pub fn get_command_responses<C: Component>(&self, entity_id: EntityId) -> Option<Vec<(RequestId<OutgoingCommandRequest>, Result<&C::CommandResponse, String>)>> {
+    pub fn get_command_responses<C: Component>(
+        &self,
+        entity_id: EntityId,
+    ) -> Option<
+        Vec<(
+            RequestId<OutgoingCommandRequest>,
+            StatusCode<&C::CommandResponse>,
+        )>,
+    > {
         self.command_responses
             .get(&C::ID)
             .expect("Error")
             .get(&entity_id)
-            .map(|vec|
-                     vec.iter().map(|(id, result)| match result {
-                         Ok(ref data) => (*id, Ok(unsafe {
-                             (&*((*data).user_handle as *const C::CommandResponse)) })),
-                         Err(e) => (*id, Err(e.clone()))
-                     }).collect()
-            )
+            .map(|vec| {
+                vec.iter()
+                    .map(|(id, result)| {
+                        (
+                            *id,
+                            map_command_response(result, |data| unsafe {
+                                (&*((*data).user_handle as *const C::CommandResponse))
+                            }),
+                        )
+                    })
+                    .collect()
+            })
+    }
+
+    pub fn get_command_response<C: Component>(&self, entity_id: EntityId, request_id: RequestId<OutgoingCommandRequest>) -> Option<StatusCode<&C::CommandResponse>> {
+        let maybe_vec = self.command_responses
+            .get(&C::ID)
+            .expect("Error")
+            .get(&entity_id);
+
+        match maybe_vec {
+            Some(vec) => {
+                for (id, code) in vec {
+                    if *id == request_id {
+                        return Some(map_command_response(code, |data| unsafe {
+                            (&*((*data).user_handle as *const C::CommandResponse))
+                        }));
+                    }
+                }
+
+                None
+            },
+            None => None
+        }
     }
 
     pub fn get_authority<C: Component>(&self, entity_id: EntityId) -> Option<Authority> {
@@ -150,11 +204,17 @@ impl View {
     }
 
     pub fn has_command_requests<C: Component>(&self, entity_id: EntityId) -> bool {
-        self.command_requests.get(&C::ID).expect("Error").contains_key(&entity_id)
+        self.command_requests
+            .get(&C::ID)
+            .expect("Error")
+            .contains_key(&entity_id)
     }
 
     pub fn has_command_responses<C: Component>(&self, entity_id: EntityId) -> bool {
-        self.command_responses.get(&C::ID).expect("Error").contains_key(&entity_id)
+        self.command_responses
+            .get(&C::ID)
+            .expect("Error")
+            .contains_key(&entity_id)
     }
 
     pub fn iter_entities_removed(&self) -> impl Iterator<Item = &EntityId> {
@@ -215,12 +275,16 @@ impl View {
             .get_mut(&op.entity_id)
             .expect("Error");
         unsafe { merge(data.user_handle, op.component_update.user_handle) };
-        self.components_updated.get_mut(&op.component_id).expect("Error").push(op.entity_id);
+        self.components_updated
+            .get_mut(&op.component_id)
+            .expect("Error")
+            .push(op.entity_id);
     }
 
     fn handle_command_request(&mut self, op: &CommandRequestOp) {
         let data = OwnedCommandRequestData::from(op.data());
-        let entry = self.command_requests
+        let entry = self
+            .command_requests
             .get_mut(&op.component_id)
             .expect("Error")
             .entry(op.entity_id)
@@ -229,15 +293,9 @@ impl View {
     }
 
     fn handle_command_response(&mut self, op: &CommandResponseOp) {
-        let data = match &op.response {
-            StatusCode::Success(resp) => Ok(OwnedCommandResponseData::from(resp.data())),
-            StatusCode::Timeout(message) => Err(message.clone()),
-            StatusCode::NotFound(message) => Err(message.clone()),
-            StatusCode::AuthorityLost(message) => Err(message.clone()),
-            StatusCode::PermissionDenied(message) => Err(message.clone()),
-            StatusCode::ApplicationError(message) => Err(message.clone()),
-            StatusCode::InternalError(message) => Err(message.clone()),
-        };
+        let data = map_command_response(&op.response, |resp| {
+            OwnedCommandResponseData::from(resp.data())
+        });
 
         self.command_responses
             .get_mut(&op.component_id)
@@ -245,6 +303,18 @@ impl View {
             .entry(op.entity_id)
             .or_default()
             .push((op.request_id, data));
+    }
+}
+
+fn map_command_response<T, U, F: FnOnce(&T) -> U>(status: &StatusCode<T>, f: F) -> StatusCode<U> {
+    match status {
+        StatusCode::Success(resp) => StatusCode::Success(f(resp)),
+        StatusCode::Timeout(message) => StatusCode::Timeout(message.clone()),
+        StatusCode::NotFound(message) => StatusCode::NotFound(message.clone()),
+        StatusCode::AuthorityLost(message) => StatusCode::AuthorityLost(message.clone()),
+        StatusCode::PermissionDenied(message) => StatusCode::PermissionDenied(message.clone()),
+        StatusCode::ApplicationError(message) => StatusCode::ApplicationError(message.clone()),
+        StatusCode::InternalError(message) => StatusCode::InternalError(message.clone()),
     }
 }
 
@@ -308,7 +378,6 @@ impl Drop for OwnedComponentData {
     }
 }
 
-
 struct OwnedCommandRequestData {
     data: Worker_CommandRequest,
 }
@@ -341,7 +410,6 @@ impl Drop for OwnedCommandRequestData {
         unsafe { Worker_ReleaseCommandRequest(&mut self.data) };
     }
 }
-
 
 struct OwnedCommandResponseData {
     data: Worker_CommandResponse,

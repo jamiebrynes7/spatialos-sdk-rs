@@ -203,7 +203,7 @@ pub(crate) mod internal {
                 },
                 user_handle: request.user_handle,
                 _marker: PhantomData,
-                reserved: request.reserved
+                reserved: request.reserved,
             }
         }
     }
@@ -231,7 +231,7 @@ pub(crate) mod internal {
                 },
                 user_handle: response.user_handle,
                 _marker: PhantomData,
-                reserved: response.reserved
+                reserved: response.reserved,
             }
         }
     }

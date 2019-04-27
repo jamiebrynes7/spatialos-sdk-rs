@@ -86,7 +86,7 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum StatusCode<T> {
     Success(T),
     Timeout(String),
@@ -656,7 +656,6 @@ impl<'a> CommandResponse<'a> {
     pub(crate) fn data(&self) -> &component::internal::CommandResponse<'a> {
         &self.response
     }
-
 
     fn schema(&self) -> &SchemaCommandResponse {
         &self.response.schema_type

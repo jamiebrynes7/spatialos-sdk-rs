@@ -3,7 +3,7 @@ use generated::{example, improbable};
 use rand::Rng;
 use spatialos_sdk::worker::{
     commands::{EntityQueryRequest, ReserveEntityIdsRequest},
-    component::{UpdateParameters},
+    component::UpdateParameters,
     connection::{Connection, WorkerConnection},
     entity_builder::EntityBuilder,
     metrics::{HistogramMetric, Metrics},
@@ -52,7 +52,9 @@ impl<'a, 'b: 'a> ViewQuery<'b> for RotatorQuery<'a> {
     fn select(view: &'b View, entity_id: EntityId) -> RotatorQuery<'a> {
         RotatorQuery {
             id: entity_id.clone(),
-            position: view.get_component::<improbable::Position>(&entity_id).unwrap(),
+            position: view
+                .get_component::<improbable::Position>(&entity_id)
+                .unwrap(),
             rotate: view.get_component::<example::Rotate>(&entity_id).unwrap(),
         }
     }
@@ -82,7 +84,6 @@ fn logic_loop(c: &mut WorkerConnection) {
 
     let create_request_id = c.send_create_entity_request(entity, None, None);
     println!("Create entity request ID: {:?}", create_request_id);
-
 
     let mut view = View::new();
     let update_params = UpdateParameters::default().tap(|params| params.allow_loopback());
@@ -212,15 +213,18 @@ fn create_entities(c: &mut WorkerConnection, number: u32) {
     for _ in 0..number {
         let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, "rusty");
 
-        builder.add_component(example::Rotate {
-            angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
-            radius: rng.gen_range(20.0, 100.0),
-            center: improbable::Vector3d {
-                x: rng.gen_range(-50.0, 50.0),
-                y: 0.0,
-                z: rng.gen_range(-50.0, 50.0),
-            }
-        }, "rusty");
+        builder.add_component(
+            example::Rotate {
+                angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
+                radius: rng.gen_range(20.0, 100.0),
+                center: improbable::Vector3d {
+                    x: rng.gen_range(-50.0, 50.0),
+                    y: 0.0,
+                    z: rng.gen_range(-50.0, 50.0),
+                },
+            },
+            "rusty",
+        );
 
         builder.set_entity_acl_write_access("rusty");
 
