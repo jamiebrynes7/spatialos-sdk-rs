@@ -15,6 +15,9 @@
 
 use std::{mem, os::raw, sync::Arc};
 
+/// Raw pointer to data contained in a [`UserHandle`].
+///
+/// [`UserHandle`]: struct.UserHandle.html
 pub type RawHandle = *mut raw::c_void;
 
 /// Type-erased [`Arc`], used to pass user-defined data types to the C API.
@@ -90,14 +93,37 @@ impl Drop for UserHandle {
     }
 }
 
+/// Directly allocates a raw handle for `data`.
 pub fn allocate_raw<T>(data: T) -> RawHandle {
     Arc::into_raw(Arc::new(data)) as *mut _
 }
 
+/// Directly drops a raw handle.
+///
+/// This is functionally equivalent to using [`UserHandle::from_raw`] to reconstruct
+/// the handle, then immediately dropping it.
+///
+/// # Safety
+///
+/// This function must be called with the correct type `T` for the specified handle.
+/// Failing to do so will cause the data to be treated as the wrong type, which will
+/// result in undefined behavior.
+///
+/// [`UserHandle::from_raw`]: struct.UserHandle.html#method.from_raw
 pub unsafe fn drop_raw<T>(handle: RawHandle) {
     let _ = Arc::<T>::from_raw(handle as *const _);
 }
 
+/// Directly clones a raw handle.
+///
+/// This function reconstructs the raw handle, clones it, and returns the new raw
+/// handle. As such, it increases the ref count for the handle by one.
+///
+/// # Safety
+///
+/// This function must be called with the correct type `T` for the specified handle.
+/// Failing to do so will cause the data to be treated as the wrong type, which will
+/// result in undefined behavior.
 pub unsafe fn clone_raw<T>(handle: RawHandle) -> RawHandle {
     let original = Arc::<T>::from_raw(handle as *const _);
     let copy = original.clone();
