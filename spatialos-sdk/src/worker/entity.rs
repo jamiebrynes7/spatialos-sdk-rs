@@ -68,6 +68,12 @@ impl Entity {
     /// data or user handles. If the raw data is passed to the C API using
     /// `Worker_Connection_SendCreateEntityRequest`, the C API will take ownership of
     /// the data and will free it when it's done.
+    ///
+    /// Additionally, this function returns any user handles that are owned by the
+    /// entity. The returned `Worker_ComponentData` objects borrow data from the user
+    /// handles, and so the user handles must remain in scope until the component data
+    /// has been passed to the C API. At that point, the C API will have had a chance
+    /// to clone the handles, and so it is safe to drop the returned handles.
     pub(crate) fn into_raw(mut self) -> (Vec<Worker_ComponentData>, Vec<UserHandle>) {
         let mut components = Vec::with_capacity(self.components.len());
         let mut handles = Vec::with_capacity(self.components.len());
