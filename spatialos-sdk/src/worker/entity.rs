@@ -27,14 +27,14 @@ impl Entity {
         }
     }
 
-    pub fn add<C: Component>(&mut self, component: C) -> Result<(), String> {
+    pub fn add<C: Component + Send>(&mut self, component: C) -> Result<(), String> {
         // TODO: Actually do something to determine if we should add it as a handle or
         // serialize it immediately.
         self.add_handle(component)
     }
 
     /// Adds `component` without serializing it,
-    pub fn add_handle<C: Component>(&mut self, component: C) -> Result<(), String> {
+    pub fn add_handle<C: Component + Send>(&mut self, component: C) -> Result<(), String> {
         if !DATABASE.has_vtable(C::ID) {
             panic!(
                 "Cannot add component (ID {}) as a handle because it does not have a vtable setup",
@@ -145,62 +145,39 @@ impl<'a> EntityQuery<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::worker::entity::Entity;
-    use std::{cell::RefCell, rc::Rc};
+    use crate::worker::{component::inventory, entity::Entity};
+    use std::sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    };
 
-    macro_rules! dummy_component {
-        ($component:ident, $update:ident) => {
-            impl $crate::worker::schema::SchemaObjectType for $component {
-                fn from_object(_: &$crate::worker::schema::Object) -> Self {
-                    unimplemented!()
-                }
-
-                fn into_object(&self, _: &mut $crate::worker::schema::Object) {
-                    unimplemented!();
-                }
-            }
-
-            impl $crate::worker::component::Component for $component {
-                const ID: $crate::worker::component::ComponentId = 1234;
-                type Update = $update;
-            }
-
-            $crate::worker::component::inventory::submit!(
-                $crate::worker::component::VTable::new::<$component>()
-            );
-
-            pub struct $update;
-
-            impl $crate::worker::component::Update for $update {
-                type Component = $component;
-            }
-        };
-    }
-
-    pub struct TestComponent(Rc<RefCell<bool>>);
+    pub struct TestComponent(Arc<AtomicBool>);
     dummy_component!(TestComponent, TestComponentUpdate);
 
     impl Drop for TestComponent {
         fn drop(&mut self) {
-            self.0.replace(true);
+            self.0.store(true, Ordering::SeqCst);
         }
     }
 
     #[test]
     fn free_handle_on_drop_entity() {
-        let was_dropped = Rc::new(RefCell::new(false));
+        let was_dropped = Arc::new(AtomicBool::new(false));
 
         {
             let mut entity = Entity::new();
             let _ = entity.add_handle(TestComponent(was_dropped.clone()));
         }
 
-        assert!(*was_dropped.borrow(), "Component handle wasn't dropped");
+        assert!(
+            was_dropped.load(Ordering::SeqCst),
+            "Component handle wasn't dropped"
+        );
     }
 
     #[test]
     fn free_handle_on_drop_entity_into_raw() {
-        let was_dropped = Rc::new(RefCell::new(false));
+        let was_dropped = Arc::new(AtomicBool::new(false));
 
         {
             let mut entity = Entity::new();
@@ -208,6 +185,9 @@ mod test {
             let _ = entity.into_raw();
         }
 
-        assert!(*was_dropped.borrow(), "Component handle wasn't dropped");
+        assert!(
+            was_dropped.load(Ordering::SeqCst),
+            "Component handle wasn't dropped"
+        );
     }
 }

@@ -35,7 +35,7 @@ impl EntityBuilder {
         builder
     }
 
-    pub fn add<C: Component, T: Into<String>>(
+    pub fn add<C: Component + Send, T: Into<String>>(
         &mut self,
         data: C,
         write_layer: T,
@@ -57,7 +57,7 @@ impl EntityBuilder {
         Ok(())
     }
 
-    pub fn add_handle<C: Component, T: Into<String>>(
+    pub fn add_handle<C: Component + Send, T: Into<String>>(
         &mut self,
         data: C,
         write_layer: T,
