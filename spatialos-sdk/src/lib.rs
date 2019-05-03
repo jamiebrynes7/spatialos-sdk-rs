@@ -1,5 +1,8 @@
 extern crate spatialos_sdk_sys;
 
+// TODO: Where should this live? We only need it for tests in order to reduce
+// boilerplate, but it needs to live in the crate because we use it for both
+// internal and external tests.
 #[macro_export]
 macro_rules! dummy_component {
     ($component:ident, $update:ident) => {
