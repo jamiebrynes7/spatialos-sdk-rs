@@ -19,7 +19,7 @@ pub trait Component: SchemaObjectType {
     type Update: Update<Component = Self>;
 }
 
-pub trait Update: Sized {
+pub trait Update: schema::ObjectUpdate {
     type Component: Component<Update = Self>;
 }
 

@@ -79,6 +79,33 @@ impl<T: SchemaObjectType> IndexedField for T {
     }
 }
 
+/// A type that represents an update to
+pub trait FieldUpdate {
+    type RustType: Sized;
+
+    // TODO: We should create a separate `ObjectUpdate` type so that we can't confuse
+    // update schema objects with regular schema objects.
+    fn get_update(object: &Object, field: FieldId) -> Option<Self::RustType>;
+    fn add_update(object: &mut Object, field: FieldId);
+}
+
+pub trait ObjectUpdate: Sized {
+    fn from_update(object: &Object) -> Self;
+    fn into_update(object: &mut Object);
+}
+
+impl<T: ObjectUpdate> FieldUpdate for T {
+    type RustType = Self;
+
+    fn get_update(_object: &Object, _field: FieldId) -> Option<Self::RustType> {
+        unimplemented!()
+    }
+
+    fn add_update(_object: &mut Object, _field: FieldId) {
+        unimplemented!();
+    }
+}
+
 // =================================================================================================
 // Schema Conversion Implementations for Primitive Types
 // =================================================================================================

@@ -1,4 +1,4 @@
-use crate::worker::schema::{ArrayField, FieldId, SchemaField};
+use crate::worker::schema::{ArrayField, FieldId, FieldUpdate, SchemaField};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -29,6 +29,10 @@ impl Object {
 
     pub fn add_field_array<T: ArrayField>(&mut self, field: FieldId, value: &[T::RustType]) {
         T::add_field_list(self, field, value);
+    }
+
+    pub fn field_update<T: FieldUpdate>(&self, field: FieldId) -> Option<T::RustType> {
+        T::get_update(self, field)
     }
 
     pub fn as_ptr(&self) -> *mut Schema_Object {
