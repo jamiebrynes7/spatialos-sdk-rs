@@ -52,6 +52,10 @@ impl ObjectUpdate for CustomComponentUpdate {
             byte_collection: object.field_update::<Vec<Vec<u8>>>(4),
         }
     }
+
+    fn into_update(object: &mut Object) {
+        unimplemented!();
+    }
 }
 
 impl Update for CustomComponentUpdate {

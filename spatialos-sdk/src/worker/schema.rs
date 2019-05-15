@@ -8,7 +8,10 @@
 //! * There are two Rust types for each C type: An immutable, borrowed version; And
 //!   a mutable, owned version.
 
-use crate::worker::{internal::Sealed, EntityId};
+use crate::worker::{
+    internal::{FieldUpdateSealed, SchemaFieldSealed},
+    EntityId,
+};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::BTreeMap, mem, slice};
 
@@ -24,7 +27,7 @@ pub type FieldId = u32;
 // Schema Conversion Traits
 // =================================================================================================
 
-pub trait SchemaField: Sized + Sealed {
+pub trait SchemaField: Sized + SchemaFieldSealed {
     type RustType: Sized;
 
     fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType);
@@ -50,7 +53,7 @@ pub trait SchemaObjectType: Sized {
     fn from_object(object: &Object) -> Self;
 }
 
-impl<T: SchemaObjectType> Sealed for T {}
+impl<T: SchemaObjectType> SchemaFieldSealed for T {}
 
 impl<T: SchemaObjectType> SchemaField for T {
     type RustType = Self;
@@ -79,8 +82,7 @@ impl<T: SchemaObjectType> IndexedField for T {
     }
 }
 
-/// A type that represents an update to
-pub trait FieldUpdate {
+pub trait FieldUpdate: Sized + FieldUpdateSealed {
     type RustType: Sized;
 
     // TODO: We should create a separate `ObjectUpdate` type so that we can't confuse
@@ -89,10 +91,13 @@ pub trait FieldUpdate {
     fn add_update(object: &mut Object, field: FieldId);
 }
 
+/// A type
 pub trait ObjectUpdate: Sized {
     fn from_update(object: &Object) -> Self;
     fn into_update(object: &mut Object);
 }
+
+impl<T: ObjectUpdate> FieldUpdateSealed for T {}
 
 impl<T: ObjectUpdate> FieldUpdate for T {
     type RustType = Self;
@@ -161,7 +166,7 @@ macro_rules! impl_primitive_field {
         $schema_add_list:ident,
         $schema_get_list:ident,
     ) => {
-        impl Sealed for $schema_type {}
+        impl SchemaFieldSealed for $schema_type {}
 
         impl SchemaField for $schema_type {
             type RustType = $rust_type;
@@ -403,7 +408,7 @@ impl_primitive_field!(
     Schema_GetBoolList,
 );
 
-impl<T: IndexedField> Sealed for Option<T> {}
+impl<T: IndexedField> SchemaFieldSealed for Option<T> {}
 
 impl<T: IndexedField> SchemaField for Option<T> {
     type RustType = Option<T::RustType>;
@@ -422,7 +427,7 @@ impl<T: IndexedField> SchemaField for Option<T> {
     }
 }
 
-impl<K, V> Sealed for BTreeMap<K, V>
+impl<K, V> SchemaFieldSealed for BTreeMap<K, V>
 where
     K: IndexedField,
     V: IndexedField,
@@ -463,7 +468,7 @@ where
     }
 }
 
-impl<T: IndexedField> Sealed for Vec<T> {}
+impl<T: IndexedField> SchemaFieldSealed for Vec<T> {}
 
 impl<T: IndexedField> SchemaField for Vec<T> {
     type RustType = Vec<T::RustType>;
@@ -486,7 +491,7 @@ impl<T: IndexedField> SchemaField for Vec<T> {
     }
 }
 
-impl Sealed for String {}
+impl SchemaFieldSealed for String {}
 
 impl SchemaField for String {
     type RustType = Self;
@@ -516,7 +521,7 @@ impl IndexedField for String {
     }
 }
 
-impl Sealed for Vec<u8> {}
+impl SchemaFieldSealed for Vec<u8> {}
 
 impl SchemaField for Vec<u8> {
     type RustType = Self;
