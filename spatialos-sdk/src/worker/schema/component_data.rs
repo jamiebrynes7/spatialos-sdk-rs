@@ -14,14 +14,6 @@ use std::marker::PhantomData;
 #[derive(Debug)]
 pub struct ComponentData(PhantomData<*mut Schema_ComponentData>);
 
-impl OwnableImpl for ComponentData {
-    type Raw = Schema_ComponentData;
-
-    unsafe fn destroy(inst: *mut Self::Raw) {
-        Schema_DestroyComponentData(inst);
-    }
-}
-
 impl ComponentData {
     pub fn new<C: Component>(component: &C) -> Owned<Self> {
         // Create the underlying `Schema_ComponentData` and retrieve the fields object.
@@ -57,6 +49,14 @@ impl ComponentData {
 
     pub(crate) fn as_ptr(&self) -> *mut Schema_ComponentData {
         self as *const _ as *mut _
+    }
+}
+
+impl OwnableImpl for ComponentData {
+    type Raw = Schema_ComponentData;
+
+    unsafe fn destroy(inst: *mut Self::Raw) {
+        Schema_DestroyComponentData(inst);
     }
 }
 

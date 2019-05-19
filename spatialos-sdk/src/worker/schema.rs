@@ -18,8 +18,9 @@ use std::{collections::BTreeMap, mem, slice};
 mod component_data;
 mod object;
 pub mod owned;
+mod update;
 
-pub use self::{component_data::*, object::*};
+pub use self::{component_data::*, object::*, update::*};
 
 pub type FieldId = u32;
 
@@ -85,16 +86,14 @@ impl<T: SchemaObjectType> IndexedField for T {
 pub trait FieldUpdate: Sized + FieldUpdateSealed {
     type RustType: Sized;
 
-    // TODO: We should create a separate `ObjectUpdate` type so that we can't confuse
-    // update schema objects with regular schema objects.
-    fn get_update(object: &Object, field: FieldId) -> Option<Self::RustType>;
-    fn add_update(object: &mut Object, field: FieldId);
+    fn get_update(object: &Update, field: FieldId) -> Option<Self::RustType>;
+    fn add_update(object: &mut Update, field: FieldId);
 }
 
 /// A type
 pub trait ObjectUpdate: Sized {
-    fn from_update(object: &Object) -> Self;
-    fn into_update(object: &mut Object);
+    fn from_update(object: &Update) -> Self;
+    fn into_update(object: &mut Update);
 }
 
 impl<T: ObjectUpdate> FieldUpdateSealed for T {}
@@ -102,11 +101,11 @@ impl<T: ObjectUpdate> FieldUpdateSealed for T {}
 impl<T: ObjectUpdate> FieldUpdate for T {
     type RustType = Self;
 
-    fn get_update(_object: &Object, _field: FieldId) -> Option<Self::RustType> {
+    fn get_update(_object: &Update, _field: FieldId) -> Option<Self::RustType> {
         unimplemented!()
     }
 
-    fn add_update(_object: &mut Object, _field: FieldId) {
+    fn add_update(_object: &mut Update, _field: FieldId) {
         unimplemented!();
     }
 }
