@@ -30,26 +30,32 @@ pub type FieldId = u32;
 
 pub trait SchemaField: Sized + SchemaFieldSealed {
     type RustType: Sized;
-
-    fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType);
+    type UpdateType: Sized;
 
     fn get_field(object: &Object, field: FieldId) -> Self::RustType;
+    fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType);
+
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::UpdateType>;
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::UpdateType);
 }
 
 pub trait IndexedField: SchemaField {
     fn field_count(object: &Object, field: FieldId) -> u32;
-
     fn index_field(object: &Object, field: FieldId, index: u32) -> Self::RustType;
 }
 
 pub trait ArrayField: IndexedField {
+    fn get_field_list(object: &Object, field: FieldId, data: &mut Vec<Self::RustType>);
     fn add_field_list(object: &mut Object, field: FieldId, data: &[Self::RustType]);
 
-    fn get_field_list(object: &Object, field: FieldId, data: &mut Vec<Self::RustType>);
+    fn get_update_list(update: &ComponentUpdate, field: FieldId, data: &mut Vec<Self::UpdateType>);
+    fn add_update_list(update: &mut ComponentUpdate, field: FieldId, data: &[Self::UpdateType]);
 }
 
 /// A type that can be deserialized from an entire `SchemaObject`.
 pub trait SchemaObjectType: Sized {
+    type UpdateType: ObjectUpdate;
+
     fn into_object(&self, object: &mut Object);
     fn from_object(object: &Object) -> Self;
 }
@@ -58,6 +64,7 @@ impl<T: SchemaObjectType> SchemaFieldSealed for T {}
 
 impl<T: SchemaObjectType> SchemaField for T {
     type RustType = Self;
+    type UpdateType = <Self as SchemaObjectType>::UpdateType;
 
     fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType) {
         let field_object =
@@ -68,6 +75,14 @@ impl<T: SchemaObjectType> SchemaField for T {
     fn get_field(object: &Object, field: FieldId) -> Self::RustType {
         let field_object = unsafe { Object::from_raw(Schema_GetObject(object.as_ptr(), field)) };
         T::from_object(field_object)
+    }
+
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::UpdateType> {
+        unimplemented!()
+    }
+
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::UpdateType) {
+        unimplemented!();
     }
 }
 
@@ -83,31 +98,10 @@ impl<T: SchemaObjectType> IndexedField for T {
     }
 }
 
-pub trait FieldUpdate: Sized + FieldUpdateSealed {
-    type RustType: Sized;
-
-    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType>;
-    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType);
-}
-
-/// A type
+/// A type representing an update to an existing schema type.
 pub trait ObjectUpdate: Sized {
-    fn from_update(object: &ComponentUpdate) -> Self;
-    fn into_update(&self, object: &mut ComponentUpdate);
-}
-
-impl<T: ObjectUpdate> FieldUpdateSealed for T {}
-
-impl<T: ObjectUpdate> FieldUpdate for T {
-    type RustType = Self;
-
-    fn get_update(_object: &ComponentUpdate, _field: FieldId) -> Option<Self::RustType> {
-        unimplemented!()
-    }
-
-    fn add_update(_object: &mut ComponentUpdate, _field: FieldId, _value: &Self) {
-        unimplemented!();
-    }
+    fn from_update(update: &ComponentUpdate) -> Self;
+    fn into_update(&self, update: &mut ComponentUpdate);
 }
 
 // =================================================================================================
@@ -169,6 +163,7 @@ macro_rules! impl_primitive_field {
 
         impl SchemaField for $schema_type {
             type RustType = $rust_type;
+            type UpdateType = $rust_type;
 
             fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType) {
                 let value = (*value).into();
@@ -180,6 +175,18 @@ macro_rules! impl_primitive_field {
             #[allow(clippy::useless_transmute, clippy::transmute_int_to_bool)]
             fn get_field(object: &Object, field: FieldId) -> Self::RustType {
                 unsafe { mem::transmute($schema_get(object.as_ptr(), field)) }
+            }
+
+            fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+                if Self::field_count(update.fields(), field) > 0 {
+                    Some(Self::get_field(update.fields(), field))
+                } else {
+                    None
+                }
+            }
+
+            fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
+                Self::add_field(update.fields_mut(), field, value);
             }
         }
 
@@ -244,23 +251,21 @@ macro_rules! impl_primitive_field {
                     $schema_get_list(object.as_ptr(), field, data.as_mut_ptr() as *mut _);
                 }
             }
-        }
 
-        impl FieldUpdateSealed for $schema_type {}
-
-        impl FieldUpdate for $schema_type {
-            type RustType = $rust_type;
-
-            fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-                if Self::field_count(update.fields(), field) > 0 {
-                    Some(Self::get_field(update.fields(), field))
-                } else {
-                    None
-                }
+            fn get_update_list(
+                update: &ComponentUpdate,
+                field: FieldId,
+                data: &mut Vec<Self::UpdateType>,
+            ) {
+                unimplemented!();
             }
 
-            fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-                Self::add_field(update.fields_mut(), field, value);
+            fn add_update_list(
+                update: &mut ComponentUpdate,
+                field: FieldId,
+                data: &[Self::UpdateType],
+            ) {
+                unimplemented!();
             }
         }
     };
@@ -429,6 +434,7 @@ impl<T: IndexedField> SchemaFieldSealed for Option<T> {}
 
 impl<T: IndexedField> SchemaField for Option<T> {
     type RustType = Option<T::RustType>;
+    type UpdateType = Option<T::UpdateType>;
 
     fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType) {
         if let Some(value) = value {
@@ -442,25 +448,16 @@ impl<T: IndexedField> SchemaField for Option<T> {
             _ => Some(T::get_field(object, field)),
         }
     }
-}
 
-impl<T: IndexedField + FieldUpdate> FieldUpdateSealed for Option<T> {}
-
-impl<T> FieldUpdate for Option<T>
-where
-    T: IndexedField + FieldUpdate<RustType = <T as SchemaField>::RustType>,
-{
-    type RustType = Option<<T as FieldUpdate>::RustType>;
-
-    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::UpdateType> {
         if T::field_count(update.fields(), field) > 0 {
-            Some(Some(T::get_field(update.fields(), field)))
+            Some(T::get_update(update, field))
         } else {
             None
         }
     }
 
-    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::UpdateType) {
         match value {
             Some(value) => {
                 update.add::<T>(field, value);
@@ -486,6 +483,7 @@ where
     K::RustType: Ord,
 {
     type RustType = BTreeMap<K::RustType, V::RustType>;
+    type UpdateType = BTreeMap<K::RustType, V::UpdateType>;
 
     fn add_field(object: &mut Object, field: FieldId, map: &Self::RustType) {
         // Create a key-value pair object for each entry in the map.
@@ -510,12 +508,21 @@ where
 
         result
     }
+
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::UpdateType> {
+        unimplemented!()
+    }
+
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::UpdateType) {
+        unimplemented!();
+    }
 }
 
 impl<T: IndexedField> SchemaFieldSealed for Vec<T> {}
 
 impl<T: IndexedField> SchemaField for Vec<T> {
     type RustType = Vec<T::RustType>;
+    type UpdateType = Vec<T::UpdateType>;
 
     fn add_field(object: &mut Object, field: FieldId, values: &Self::RustType) {
         for value in values {
@@ -533,12 +540,21 @@ impl<T: IndexedField> SchemaField for Vec<T> {
 
         result
     }
+
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::UpdateType> {
+        unimplemented!()
+    }
+
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::UpdateType) {
+        unimplemented!();
+    }
 }
 
 impl SchemaFieldSealed for String {}
 
 impl SchemaField for String {
     type RustType = Self;
+    type UpdateType = Self;
 
     fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType) {
         add_bytes(object, field, value.as_bytes());
@@ -549,6 +565,14 @@ impl SchemaField for String {
         std::str::from_utf8(bytes)
             .expect("Schema string was invalid UTF-8")
             .into()
+    }
+
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::UpdateType> {
+        unimplemented!()
+    }
+
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::UpdateType) {
+        unimplemented!();
     }
 }
 
@@ -569,6 +593,7 @@ impl SchemaFieldSealed for Vec<u8> {}
 
 impl SchemaField for Vec<u8> {
     type RustType = Self;
+    type UpdateType = Self;
 
     fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType) {
         add_bytes(object, field, value);
@@ -576,6 +601,14 @@ impl SchemaField for Vec<u8> {
 
     fn get_field(object: &Object, field: FieldId) -> Self::RustType {
         get_bytes(object, field).into()
+    }
+
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::UpdateType> {
+        unimplemented!()
+    }
+
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::UpdateType) {
+        unimplemented!();
     }
 }
 

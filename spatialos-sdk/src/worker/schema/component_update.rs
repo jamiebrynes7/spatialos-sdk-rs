@@ -1,6 +1,6 @@
 use crate::worker::{
     component::{Component, ComponentId, Update},
-    schema::{owned::*, FieldId, FieldUpdate, Object},
+    schema::{owned::*, FieldId, Object, SchemaField},
 };
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
@@ -25,11 +25,11 @@ impl ComponentUpdate {
         unsafe { Schema_GetComponentUpdateComponentId(self.as_ptr()) }
     }
 
-    pub fn field<T: FieldUpdate>(&self, field: FieldId) -> Option<T::RustType> {
+    pub fn field<T: SchemaField>(&self, field: FieldId) -> Option<T::UpdateType> {
         T::get_update(self, field)
     }
 
-    pub fn add<T: FieldUpdate>(&mut self, field: FieldId, value: &T::RustType) {
+    pub fn add<T: SchemaField>(&mut self, field: FieldId, value: &T::UpdateType) {
         T::add_update(self, field, value);
     }
 

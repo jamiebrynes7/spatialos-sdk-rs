@@ -12,9 +12,12 @@ pub struct CustomComponent {
     pub target_names: BTreeMap<EntityId, String>,
     pub byte_collection: Vec<Vec<u8>>,
     pub id: Option<u32>,
+    pub nested: NestedType,
 }
 
 impl SchemaObjectType for CustomComponent {
+    type UpdateType = CustomComponentUpdate;
+
     fn from_object(object: &schema::Object) -> Self {
         Self {
             name: object.field::<Option<String>>(0),
@@ -23,6 +26,7 @@ impl SchemaObjectType for CustomComponent {
             target_names: object.field::<BTreeMap<EntityId, String>>(3),
             byte_collection: object.field::<Vec<Vec<u8>>>(4),
             id: object.field::<Option<SchemaUint32>>(5),
+            nested: object.field::<NestedType>(6),
         }
     }
 
@@ -33,6 +37,7 @@ impl SchemaObjectType for CustomComponent {
         object.add_field::<BTreeMap<EntityId, String>>(3, &self.target_names);
         object.add_field::<Vec<Vec<u8>>>(4, &self.byte_collection);
         object.add_field::<Option<SchemaUint32>>(5, &self.id);
+        object.add_field::<NestedType>(6, &self.nested);
     }
 }
 
@@ -48,6 +53,7 @@ pub struct CustomComponentUpdate {
     pub target_names: Option<BTreeMap<EntityId, String>>,
     pub byte_collection: Option<Vec<Vec<u8>>>,
     pub id: Option<Option<u32>>,
+    pub nested: Option<NestedTypeUpdate>,
 }
 
 impl ObjectUpdate for CustomComponentUpdate {
@@ -59,6 +65,7 @@ impl ObjectUpdate for CustomComponentUpdate {
             target_names: update.field::<BTreeMap<EntityId, String>>(3),
             byte_collection: update.field::<Vec<Vec<u8>>>(4),
             id: update.field::<Option<SchemaUint32>>(5),
+            nested: update.field::<NestedType>(6),
         };
 
         for cleared in update.cleared() {
@@ -93,6 +100,36 @@ impl ObjectUpdate for CustomComponentUpdate {
 
 impl Update for CustomComponentUpdate {
     type Component = CustomComponent;
+}
+
+pub struct NestedType {
+    pub name: String,
+}
+
+impl SchemaObjectType for NestedType {
+    type UpdateType = NestedTypeUpdate;
+
+    fn from_object(_object: &schema::Object) -> Self {
+        unimplemented!()
+    }
+
+    fn into_object(&self, _object: &mut schema::Object) {
+        unimplemented!();
+    }
+}
+
+pub struct NestedTypeUpdate {
+    pub name: Option<String>,
+}
+
+impl ObjectUpdate for NestedTypeUpdate {
+    fn from_update(_update: &schema::ComponentUpdate) -> Self {
+        unimplemented!()
+    }
+
+    fn into_update(&self, _update: &mut schema::ComponentUpdate) {
+        unimplemented!();
+    }
 }
 
 fn main() {}
