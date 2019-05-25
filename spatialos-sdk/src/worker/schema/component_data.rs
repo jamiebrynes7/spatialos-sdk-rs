@@ -16,7 +16,7 @@ pub struct ComponentData(PhantomData<*mut Schema_ComponentData>);
 
 impl ComponentData {
     pub fn new<C: Component>(component: &C) -> Owned<Self> {
-        // Create the underlying `Schema_ComponentData` and retrieve the fields object.
+        // Create the underlying `Schema_ComponentData` and wrap it in a smart pointer.
         let mut result: Owned<Self> = unsafe { Owned::new(Schema_CreateComponentData(C::ID)) };
 
         // Populate the schema data from the component.

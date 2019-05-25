@@ -16,11 +16,11 @@ use spatialos_sdk_sys::worker::*;
 use std::{collections::BTreeMap, mem, slice};
 
 mod component_data;
+mod component_update;
 mod object;
 pub mod owned;
-mod update;
 
-pub use self::{component_data::*, object::*, update::*};
+pub use self::{component_data::*, component_update::*, object::*};
 
 pub type FieldId = u32;
 
@@ -86,14 +86,14 @@ impl<T: SchemaObjectType> IndexedField for T {
 pub trait FieldUpdate: Sized + FieldUpdateSealed {
     type RustType: Sized;
 
-    fn get_update(object: &Update, field: FieldId) -> Option<Self::RustType>;
-    fn add_update(object: &mut Update, field: FieldId, value: &Self::RustType);
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType>;
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType);
 }
 
 /// A type
 pub trait ObjectUpdate: Sized {
-    fn from_update(object: &Update) -> Self;
-    fn into_update(object: &mut Update);
+    fn from_update(object: &ComponentUpdate) -> Self;
+    fn into_update(&self, object: &mut ComponentUpdate);
 }
 
 impl<T: ObjectUpdate> FieldUpdateSealed for T {}
@@ -101,11 +101,11 @@ impl<T: ObjectUpdate> FieldUpdateSealed for T {}
 impl<T: ObjectUpdate> FieldUpdate for T {
     type RustType = Self;
 
-    fn get_update(_object: &Update, _field: FieldId) -> Option<Self::RustType> {
+    fn get_update(_object: &ComponentUpdate, _field: FieldId) -> Option<Self::RustType> {
         unimplemented!()
     }
 
-    fn add_update(_object: &mut Update, _field: FieldId, _value: &Self) {
+    fn add_update(_object: &mut ComponentUpdate, _field: FieldId, _value: &Self) {
         unimplemented!();
     }
 }
@@ -251,16 +251,16 @@ macro_rules! impl_primitive_field {
         impl FieldUpdate for $schema_type {
             type RustType = $rust_type;
 
-            fn get_update(update: &Update, field: FieldId) -> Option<Self::RustType> {
-                if Self::field_count(update.as_object(), field) > 0 {
-                    Some(Self::get_field(update.as_object(), field))
+            fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+                if Self::field_count(update.fields(), field) > 0 {
+                    Some(Self::get_field(update.fields(), field))
                 } else {
                     None
                 }
             }
 
-            fn add_update(update: &mut Update, field: FieldId, value: &Self::RustType) {
-                Self::add_field(update.as_object_mut(), field, value);
+            fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
+                Self::add_field(update.fields_mut(), field, value);
             }
         }
     };
@@ -440,6 +440,33 @@ impl<T: IndexedField> SchemaField for Option<T> {
         match T::field_count(object, field) {
             0 => None,
             _ => Some(T::get_field(object, field)),
+        }
+    }
+}
+
+impl<T: IndexedField + FieldUpdate> FieldUpdateSealed for Option<T> {}
+
+impl<T> FieldUpdate for Option<T>
+where
+    T: IndexedField + FieldUpdate<RustType = <T as SchemaField>::RustType>,
+{
+    type RustType = Option<<T as FieldUpdate>::RustType>;
+
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+        if T::field_count(update.fields(), field) > 0 {
+            Some(Some(T::get_field(update.fields(), field)))
+        } else {
+            None
+        }
+    }
+
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
+        match value {
+            Some(value) => {
+                update.add::<T>(field, value);
+            }
+
+            None => update.add_cleared(field),
         }
     }
 }
