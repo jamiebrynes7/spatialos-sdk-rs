@@ -1,4 +1,8 @@
-use spatialos_sdk::worker::{component::*, schema::*, EntityId};
+use spatialos_sdk::worker::{
+    component::*,
+    schema::{self, *},
+    EntityId,
+};
 use std::collections::BTreeMap;
 
 pub struct CustomComponent {
@@ -10,7 +14,7 @@ pub struct CustomComponent {
 }
 
 impl SchemaObjectType for CustomComponent {
-    fn from_object(object: &Object) -> Self {
+    fn from_object(object: &schema::Object) -> Self {
         Self {
             name: object.field::<Option<String>>(0),
             count: object.field::<SchemaSfixed32>(1),
@@ -20,7 +24,7 @@ impl SchemaObjectType for CustomComponent {
         }
     }
 
-    fn into_object(&self, object: &mut Object) {
+    fn into_object(&self, object: &mut schema::Object) {
         object.add_field::<Option<String>>(0, &self.name);
         object.add_field::<SchemaSfixed32>(1, &self.count);
         object.add_field_array::<EntityId>(2, &self.targets);
@@ -43,17 +47,17 @@ pub struct CustomComponentUpdate {
 }
 
 impl ObjectUpdate for CustomComponentUpdate {
-    fn from_update(object: &Object) -> Self {
+    fn from_update(object: &schema::Update) -> Self {
         Self {
-            name: object.field_update::<Option<String>>(0),
-            count: object.field_update::<SchemaSfixed32>(1),
-            targets: object.field_update::<Vec<EntityId>>(2),
-            target_names: object.field_update::<BTreeMap<EntityId, string>>(3),
-            byte_collection: object.field_update::<Vec<Vec<u8>>>(4),
+            name: object.field::<Option<String>>(0),
+            count: object.field::<SchemaSfixed32>(1),
+            targets: object.field::<Vec<EntityId>>(2),
+            target_names: object.field::<BTreeMap<EntityId, String>>(3),
+            byte_collection: object.field::<Vec<Vec<u8>>>(4),
         }
     }
 
-    fn into_update(object: &mut Object) {
+    fn into_update(object: &mut schema::Update) {
         unimplemented!();
     }
 }

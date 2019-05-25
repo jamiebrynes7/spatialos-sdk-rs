@@ -1,4 +1,4 @@
-use crate::worker::schema::{FieldId, FieldUpdate};
+use crate::worker::schema::{FieldId, FieldUpdate, Object};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -19,6 +19,14 @@ impl Update {
 
     pub(crate) unsafe fn from_raw_mut<'a>(raw: *mut Schema_Object) -> &'a mut Self {
         &mut *(raw as *mut _)
+    }
+
+    pub(crate) fn as_object(&self) -> &Object {
+        unsafe { &*(self as *const _ as *const _) }
+    }
+
+    pub(crate) fn as_object_mut(&mut self) -> &mut Object {
+        unsafe { &mut *(self as *mut _ as *mut _) }
     }
 
     pub fn field<T: FieldUpdate>(&self, field: FieldId) -> Option<T::RustType> {

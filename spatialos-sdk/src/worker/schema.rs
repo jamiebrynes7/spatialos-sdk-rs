@@ -87,7 +87,7 @@ pub trait FieldUpdate: Sized + FieldUpdateSealed {
     type RustType: Sized;
 
     fn get_update(object: &Update, field: FieldId) -> Option<Self::RustType>;
-    fn add_update(object: &mut Update, field: FieldId);
+    fn add_update(object: &mut Update, field: FieldId, value: &Self::RustType);
 }
 
 /// A type
@@ -105,7 +105,7 @@ impl<T: ObjectUpdate> FieldUpdate for T {
         unimplemented!()
     }
 
-    fn add_update(_object: &mut Update, _field: FieldId) {
+    fn add_update(_object: &mut Update, _field: FieldId, _value: &Self) {
         unimplemented!();
     }
 }
@@ -243,6 +243,24 @@ macro_rules! impl_primitive_field {
                     data.set_len(count);
                     $schema_get_list(object.as_ptr(), field, data.as_mut_ptr() as *mut _);
                 }
+            }
+        }
+
+        impl FieldUpdateSealed for $schema_type {}
+
+        impl FieldUpdate for $schema_type {
+            type RustType = $rust_type;
+
+            fn get_update(update: &Update, field: FieldId) -> Option<Self::RustType> {
+                if Self::field_count(update.as_object(), field) > 0 {
+                    Some(Self::get_field(update.as_object(), field))
+                } else {
+                    None
+                }
+            }
+
+            fn add_update(update: &mut Update, field: FieldId, value: &Self::RustType) {
+                Self::add_field(update.as_object_mut(), field, value);
             }
         }
     };
