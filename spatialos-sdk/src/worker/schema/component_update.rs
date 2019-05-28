@@ -25,11 +25,11 @@ impl ComponentUpdate {
         unsafe { Schema_GetComponentUpdateComponentId(self.as_ptr()) }
     }
 
-    pub fn field<T: SchemaField>(&self, field: FieldId) -> Option<T::UpdateType> {
+    pub fn field<T: SchemaField>(&self, field: FieldId) -> Option<T::RustType> {
         T::get_update(self, field)
     }
 
-    pub fn add<T: SchemaField>(&mut self, field: FieldId, value: &T::UpdateType) {
+    pub fn add<T: SchemaField>(&mut self, field: FieldId, value: &T::RustType) {
         T::add_update(self, field, value);
     }
 
@@ -44,7 +44,31 @@ impl ComponentUpdate {
     /// # Examples
     ///
     /// ```
-    /// # let mut update = ComponentUpdate::new();
+    /// # // TODO: Use a pre-existing component, rather than having to define one here.
+    /// # use spatialos_sdk::worker::{component::*, schema::{self, *}};
+    /// # use std::{thread, sync::Arc};
+    /// #
+    /// # pub struct CustomComponent;
+    /// #
+    /// # impl Component for CustomComponent {
+    /// #     const ID: ComponentId = 7777;
+    /// #     type Update = CustomComponentUpdate;
+    /// # }
+    /// #
+    /// # impl SchemaObjectType for CustomComponent {
+    /// #     fn from_object(object: &Object) -> Self { Self }
+    /// #     fn into_object(&self, object: &mut Object) {}
+    /// # }
+    /// #
+    /// # pub struct CustomComponentUpdate;
+    /// #
+    /// # impl Update for CustomComponentUpdate {
+    /// #     type Component = CustomComponent;
+    /// #
+    /// #     fn from_update(update: &ComponentUpdate) -> Self { Self }
+    /// #     fn into_update(&self, update: &mut ComponentUpdate) {}
+    /// # }
+    /// # let mut update = ComponentUpdate::new(&CustomComponentUpdate);
     /// for cleared in update.cleared() {
     ///     // Clear the specified field.
     /// }

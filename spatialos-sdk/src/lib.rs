@@ -7,8 +7,6 @@ extern crate spatialos_sdk_sys;
 macro_rules! dummy_component {
     ($component:ident, $update:ident) => {
         impl $crate::worker::schema::SchemaObjectType for $component {
-            type UpdateType = $update;
-
             fn from_object(_: &$crate::worker::schema::Object) -> Self {
                 unimplemented!()
             }
@@ -27,7 +25,9 @@ macro_rules! dummy_component {
 
         pub struct $update;
 
-        impl $crate::worker::schema::ObjectUpdate for $update {
+        impl $crate::worker::component::Update for $update {
+            type Component = $component;
+
             fn from_update(_: &$crate::worker::schema::ComponentUpdate) -> Self {
                 unimplemented!()
             }
@@ -35,10 +35,6 @@ macro_rules! dummy_component {
             fn into_update(&self, _: &mut $crate::worker::schema::ComponentUpdate) {
                 unimplemented!();
             }
-        }
-
-        impl $crate::worker::component::Update for $update {
-            type Component = $component;
         }
     };
 }

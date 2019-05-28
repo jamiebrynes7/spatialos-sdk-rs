@@ -26,6 +26,14 @@ pub struct CustomComponentUpdate;
 
 impl Update for CustomComponentUpdate {
     type Component = CustomComponent;
+
+    fn from_update(update: &ComponentUpdate) -> Self {
+        unimplemented!()
+    }
+
+    fn into_update(&self, update: &mut ComponentUpdate) {
+        unimplemented!();
+    }
 }
 
 fn main() {

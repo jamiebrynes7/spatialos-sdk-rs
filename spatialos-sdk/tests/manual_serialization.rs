@@ -16,8 +16,6 @@ pub struct CustomComponent {
 }
 
 impl SchemaObjectType for CustomComponent {
-    type UpdateType = CustomComponentUpdate;
-
     fn from_object(object: &schema::Object) -> Self {
         Self {
             name: object.field::<Option<String>>(0),
@@ -46,6 +44,7 @@ impl Component for CustomComponent {
     type Update = CustomComponentUpdate;
 }
 
+#[allow(clippy::option_option)]
 pub struct CustomComponentUpdate {
     pub name: Option<Option<String>>,
     pub count: Option<i32>,
@@ -53,10 +52,12 @@ pub struct CustomComponentUpdate {
     pub target_names: Option<BTreeMap<EntityId, String>>,
     pub byte_collection: Option<Vec<Vec<u8>>>,
     pub id: Option<Option<u32>>,
-    pub nested: Option<NestedTypeUpdate>,
+    pub nested: Option<NestedType>,
 }
 
-impl ObjectUpdate for CustomComponentUpdate {
+impl Update for CustomComponentUpdate {
+    type Component = CustomComponent;
+
     fn from_update(update: &schema::ComponentUpdate) -> Self {
         let mut result = Self {
             name: update.field::<Option<String>>(0),
@@ -82,7 +83,7 @@ impl ObjectUpdate for CustomComponentUpdate {
                 4 => {
                     result.byte_collection = Some(Default::default());
                 }
-                4 => {
+                5 => {
                     result.id = Some(Default::default());
                 }
 
@@ -93,13 +94,9 @@ impl ObjectUpdate for CustomComponentUpdate {
         result
     }
 
-    fn into_update(&self, object: &mut schema::ComponentUpdate) {
+    fn into_update(&self, _update: &mut schema::ComponentUpdate) {
         unimplemented!();
     }
-}
-
-impl Update for CustomComponentUpdate {
-    type Component = CustomComponent;
 }
 
 pub struct NestedType {
@@ -107,27 +104,11 @@ pub struct NestedType {
 }
 
 impl SchemaObjectType for NestedType {
-    type UpdateType = NestedTypeUpdate;
-
     fn from_object(_object: &schema::Object) -> Self {
         unimplemented!()
     }
 
     fn into_object(&self, _object: &mut schema::Object) {
-        unimplemented!();
-    }
-}
-
-pub struct NestedTypeUpdate {
-    pub name: Option<String>,
-}
-
-impl ObjectUpdate for NestedTypeUpdate {
-    fn from_update(_update: &schema::ComponentUpdate) -> Self {
-        unimplemented!()
-    }
-
-    fn into_update(&self, _update: &mut schema::ComponentUpdate) {
         unimplemented!();
     }
 }
