@@ -526,14 +526,14 @@ impl SchemaField for String {
     }
 
     fn get_field(object: &Object, field: FieldId) -> Self::RustType {
-        let bytes = object.get_bytes(field);
+        let bytes = object.bytes_field(field);
         std::str::from_utf8(bytes)
             .expect("Schema string was invalid UTF-8")
             .into()
     }
 
     fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        if update.fields().bytes_count(field) > 0 {
+        if update.fields().bytes_field_count(field) > 0 {
             Some(Self::get_field(update.fields(), field))
         } else {
             None
@@ -543,11 +543,11 @@ impl SchemaField for String {
 
 impl IndexedField for String {
     fn field_count(object: &Object, field: FieldId) -> u32 {
-        object.bytes_count(field)
+        object.bytes_field_count(field)
     }
 
     fn index_field(object: &Object, field: FieldId, index: u32) -> Self::RustType {
-        let bytes = object.index_bytes(field, index);
+        let bytes = object.index_bytes_field(field, index);
         std::str::from_utf8(bytes)
             .expect("Schema string was invalid UTF-8")
             .into()
@@ -564,11 +564,11 @@ impl SchemaField for Vec<u8> {
     }
 
     fn get_field(object: &Object, field: FieldId) -> Self::RustType {
-        object.get_bytes(field).into()
+        object.bytes_field(field).into()
     }
 
     fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        if update.fields().bytes_count(field) > 0 {
+        if update.fields().bytes_field_count(field) > 0 {
             Some(Self::get_field(update.fields(), field))
         } else {
             None
@@ -578,10 +578,10 @@ impl SchemaField for Vec<u8> {
 
 impl IndexedField for Vec<u8> {
     fn field_count(object: &Object, field: FieldId) -> u32 {
-        object.bytes_count(field)
+        object.bytes_field_count(field)
     }
 
     fn index_field(object: &Object, field: FieldId, index: u32) -> Self::RustType {
-        object.index_bytes(field, index).into()
+        object.index_bytes_field(field, index).into()
     }
 }

@@ -31,20 +31,28 @@ impl Object {
         T::add_field_list(self, field, value);
     }
 
-    pub fn object_field(&self, field: FieldId) -> &Object {
+    pub(crate) fn object_field(&self, field: FieldId) -> &Object {
         unsafe { Object::from_raw(Schema_GetObject(self.as_ptr(), field)) }
     }
 
-    pub fn add_object_field(&mut self, field: FieldId) -> &mut Object {
+    pub(crate) fn add_object_field(&mut self, field: FieldId) -> &mut Object {
         unsafe { Object::from_raw_mut(Schema_AddObject(self.as_ptr(), field)) }
     }
 
-    pub fn object_field_count(&self, field: FieldId) -> u32 {
+    pub(crate) fn object_field_count(&self, field: FieldId) -> u32 {
         unsafe { Schema_GetObjectCount(self.as_ptr(), field) }
     }
 
-    pub fn index_object_field(&self, field: FieldId, index: u32) -> &Object {
+    pub(crate) fn index_object_field(&self, field: FieldId, index: u32) -> &Object {
         unsafe { Object::from_raw(Schema_IndexObject(self.as_ptr(), field, index)) }
+    }
+
+    pub(crate) fn bytes_field(&self, field: FieldId) -> &[u8] {
+        unsafe {
+            let data = Schema_GetBytes(self.as_ptr(), field);
+            let len = Schema_GetBytesLength(self.as_ptr(), field);
+            std::slice::from_raw_parts(data, len as usize)
+        }
     }
 
     pub(crate) fn add_bytes(&mut self, field: FieldId, bytes: &[u8]) {
@@ -61,20 +69,11 @@ impl Object {
         }
     }
 
-    pub(crate) fn bytes_count(&self, field: FieldId) -> u32 {
+    pub(crate) fn bytes_field_count(&self, field: FieldId) -> u32 {
         unsafe { Schema_GetBytesCount(self.as_ptr(), field) }
     }
 
-    pub(crate) fn get_bytes(&self, field: FieldId) -> &[u8] {
-        unsafe {
-            let data = Schema_GetBytes(self.as_ptr(), field);
-            let len = Schema_GetBytesLength(self.as_ptr(), field);
-            std::slice::from_raw_parts(data, len as usize)
-        }
-    }
-
-
-    pub(crate) fn index_bytes(&self, field: FieldId, index: u32) -> &[u8] {
+    pub(crate) fn index_bytes_field(&self, field: FieldId, index: u32) -> &[u8] {
         unsafe {
             let data = Schema_IndexBytes(self.as_ptr(), field, index);
             let len = Schema_IndexBytesLength(self.as_ptr(), field, index);
