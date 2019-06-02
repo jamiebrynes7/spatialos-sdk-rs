@@ -31,7 +31,15 @@ impl Object {
         T::add_field_list(self, field, value);
     }
 
-    pub fn as_ptr(&self) -> *mut Schema_Object {
+    pub fn object_field(&self, field: FieldId) -> &Object {
+        unsafe { Object::from_raw(Schema_GetObject(self.as_ptr(), field)) }
+    }
+
+    pub fn add_object_field(&mut self, field: FieldId) -> &mut Object {
+        unsafe { Object::from_raw_mut(Schema_AddObject(self.as_ptr(), field)) }
+    }
+
+    pub(crate) fn as_ptr(&self) -> *mut Schema_Object {
         self as *const _ as *mut _
     }
 }

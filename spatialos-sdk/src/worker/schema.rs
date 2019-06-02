@@ -1,7 +1,4 @@
-use crate::worker::{
-    internal::{FieldUpdateSealed, SchemaFieldSealed},
-    EntityId,
-};
+use crate::worker::{internal::SchemaFieldSealed, EntityId};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::BTreeMap, mem, slice};
 
@@ -53,28 +50,27 @@ impl<T: SchemaObjectType> SchemaField for T {
     type RustType = Self;
 
     fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType) {
-        let field_object =
-            unsafe { Object::from_raw_mut(Schema_AddObject(object.as_ptr(), field)) };
+        let field_object = object.add_object_field(field);
         value.into_object(field_object);
     }
 
     fn get_field(object: &Object, field: FieldId) -> Self::RustType {
-        let field_object = unsafe { Object::from_raw(Schema_GetObject(object.as_ptr(), field)) };
+        let field_object = object.object_field(field);
         T::from_object(field_object)
     }
 
     fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
         if T::field_count(update.fields(), field) > 0 {
-            let field_object =
-                unsafe { Object::from_raw(Schema_GetObject(update.fields().as_ptr(), field)) };
-            Some(T::from_object(update.fields()))
+            let field_object = update.fields().object_field(field);
+            Some(T::from_object(field_object))
         } else {
             None
         }
     }
 
     fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-        unimplemented!();
+        let field_object = update.fields_mut().add_object_field(field);
+        value.into_object(field_object);
     }
 }
 
