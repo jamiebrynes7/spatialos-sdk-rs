@@ -22,7 +22,10 @@ pub trait SchemaField: Sized + SchemaFieldSealed {
     fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType);
 
     fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType>;
-    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType);
+
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
+        Self::add_field(update.fields_mut(), field, value);
+    }
 }
 
 pub trait IndexedField: SchemaField {
@@ -35,7 +38,10 @@ pub trait ArrayField: IndexedField {
     fn add_field_list(object: &mut Object, field: FieldId, data: &[Self::RustType]);
 
     fn get_update_list(update: &ComponentUpdate, field: FieldId, data: &mut Vec<Self::RustType>);
-    fn add_update_list(update: &mut ComponentUpdate, field: FieldId, data: &[Self::RustType]);
+
+    fn add_update_list(update: &mut ComponentUpdate, field: FieldId, data: &[Self::RustType]) {
+        Self::add_field_list(update.fields_mut(), field, data);
+    }
 }
 
 /// A type that can be deserialized from an entire `SchemaObject`.
@@ -66,10 +72,6 @@ impl<T: SchemaObjectType> SchemaField for T {
         } else {
             None
         }
-    }
-
-    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-        Self::add_field(update.fields_mut(), field, value);
     }
 }
 
@@ -163,10 +165,6 @@ macro_rules! impl_primitive_field {
                     None
                 }
             }
-
-            fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-                Self::add_field(update.fields_mut(), field, value);
-            }
         }
 
         impl IndexedField for $schema_type {
@@ -237,14 +235,6 @@ macro_rules! impl_primitive_field {
                 data: &mut Vec<Self::RustType>,
             ) {
                 Self::get_field_list(update.fields(), field, data);
-            }
-
-            fn add_update_list(
-                update: &mut ComponentUpdate,
-                field: FieldId,
-                data: &[Self::RustType],
-            ) {
-                Self::add_field_list(update.fields_mut(), field, data);
             }
         }
     };
@@ -493,10 +483,6 @@ where
             None
         }
     }
-
-    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-        Self::add_field(update.fields_mut(), field, value);
-    }
 }
 
 impl<T: IndexedField> SchemaFieldSealed for Vec<T> {}
@@ -528,10 +514,6 @@ impl<T: IndexedField> SchemaField for Vec<T> {
             None
         }
     }
-
-    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-        Self::add_field(update.fields_mut(), field, value);
-    }
 }
 
 impl SchemaFieldSealed for String {}
@@ -552,10 +534,6 @@ impl SchemaField for String {
 
     fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
         unimplemented!()
-    }
-
-    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-        Self::add_field(update.fields_mut(), field, value);
     }
 }
 
@@ -587,10 +565,6 @@ impl SchemaField for Vec<u8> {
 
     fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
         unimplemented!()
-    }
-
-    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-        Self::add_field(update.fields_mut(), field, value);
     }
 }
 
