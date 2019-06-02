@@ -80,8 +80,7 @@ impl<T: SchemaObjectType> IndexedField for T {
     }
 
     fn index_field(object: &Object, field: FieldId, index: u32) -> Self::RustType {
-        let field_object =
-            unsafe { Object::from_raw(Schema_IndexObject(object.as_ptr(), field, index)) };
+        let field_object = object.index_object_field(field, index);
         T::from_object(field_object)
     }
 }
@@ -467,19 +466,19 @@ where
     fn add_field(object: &mut Object, field: FieldId, map: &Self::RustType) {
         // Create a key-value pair object for each entry in the map.
         for (key, value) in map {
-            let pair = unsafe { Object::from_raw_mut(Schema_AddObject(object.as_ptr(), field)) };
+            let pair = object.add_object_field(field);
             pair.add_field::<K>(SCHEMA_MAP_KEY_FIELD_ID, key);
             pair.add_field::<V>(SCHEMA_MAP_VALUE_FIELD_ID, value);
         }
     }
 
     fn get_field(object: &Object, field: FieldId) -> Self::RustType {
-        // Load each of the key-value pairs from the map object.
-        let count = K::field_count(object, field);
         let mut result = BTreeMap::new();
+
+        // Load each of the key-value pairs from the map object.
+        let count = object.object_field_count(field);
         for index in 0..count {
-            let pair =
-                unsafe { Object::from_raw(Schema_IndexObject(object.as_ptr(), field, index)) };
+            let pair = object.index_object_field(field, index);
             let key = K::get_field(pair, SCHEMA_MAP_KEY_FIELD_ID);
             let value = V::get_field(pair, SCHEMA_MAP_VALUE_FIELD_ID);
             result.insert(key, value);
@@ -489,11 +488,15 @@ where
     }
 
     fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        unimplemented!()
+        if update.fields().object_field_count(field) > 0 {
+            Some(Self::get_field(update.fields(), field))
+        } else {
+            None
+        }
     }
 
     fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-        unimplemented!();
+        Self::add_field(update.fields_mut(), field, value);
     }
 }
 

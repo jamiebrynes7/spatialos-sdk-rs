@@ -39,6 +39,14 @@ impl Object {
         unsafe { Object::from_raw_mut(Schema_AddObject(self.as_ptr(), field)) }
     }
 
+    pub fn object_field_count(&self, field: FieldId) -> u32 {
+        unsafe { Schema_GetObjectCount(self.as_ptr(), field) }
+    }
+
+    pub fn index_object_field(&self, field: FieldId, index: u32) -> &Object {
+        unsafe { Object::from_raw(Schema_IndexObject(self.as_ptr(), field, index)) }
+    }
+
     pub(crate) fn as_ptr(&self) -> *mut Schema_Object {
         self as *const _ as *mut _
     }
