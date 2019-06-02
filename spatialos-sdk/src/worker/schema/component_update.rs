@@ -21,8 +21,24 @@ impl ComponentUpdate {
         result
     }
 
+    pub(crate) unsafe fn from_raw<'a>(raw: *mut Schema_ComponentUpdate) -> &'a Self {
+        &*(raw as *mut _)
+    }
+
     pub fn component_id(&self) -> ComponentId {
         unsafe { Schema_GetComponentUpdateComponentId(self.as_ptr()) }
+    }
+
+    pub fn deserialize<U: Update>(&self) -> U {
+        // TODO: Does it make sense to assert here? Or should we allow for runtime recovery
+        // in this case?
+        assert_eq!(
+            self.component_id(),
+            U::Component::ID,
+            "Attempting to deserialize component update into incorrect type"
+        );
+
+        U::from_update(self)
     }
 
     pub fn field<T: SchemaField>(&self, field: FieldId) -> Option<T::RustType> {

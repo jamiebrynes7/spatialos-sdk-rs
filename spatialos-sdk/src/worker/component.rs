@@ -1,6 +1,6 @@
 use crate::worker::{
     handle,
-    schema::{self, SchemaObjectType, ComponentUpdate},
+    schema::{self, ComponentUpdate, SchemaObjectType},
 };
 use maybe_owned::MaybeOwned;
 use spatialos_sdk_sys::worker::*;
@@ -117,29 +117,6 @@ impl<'a> ComponentDataRef<'a> {
         }
     }
 }
-
-// #[derive(Debug)]
-// pub struct ComponentUpdate<'a> {
-//     pub component_id: ComponentId,
-//     pub schema_type: SchemaComponentUpdate<'a>,
-//     pub user_handle: *const Worker_ComponentUpdateHandle,
-
-//     // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-//     // type-erased pointer that may be null, so we just mark that we're borrowing
-//     // *something*.
-//     pub _marker: PhantomData<&'a ()>,
-// }
-
-// impl<'a> From<&'a Worker_ComponentUpdate> for ComponentUpdate<'a> {
-//     fn from(update: &Worker_ComponentUpdate) -> Self {
-//         ComponentUpdate {
-//             component_id: update.component_id,
-//             schema_type: unsafe { SchemaComponentUpdate::from_raw(update.schema_type) },
-//             user_handle: update.user_handle,
-//             _marker: PhantomData,
-//         }
-//     }
-// }
 
 // #[derive(Debug)]
 // pub struct CommandRequest<'a> {
@@ -298,6 +275,8 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     let schema_data = schema::ComponentData::from_raw(schema_data);
     let component = schema_data.deserialize::<C>();
     *handle_out = handle::allocate_raw(component);
+
+    // TODO: Do we need to do proper error handling support here?
     1
 }
 
@@ -333,15 +312,12 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     update: *mut Schema_ComponentUpdate,
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
-    unimplemented!()
-    // let schema_update = SchemaComponentUpdate::from_raw(update);
-    // let deserialized_result = C::from_update(&schema_update);
-    // if let Ok(deserialized_update) = deserialized_result {
-    //     *handle_out = handle::allocate(deserialized_update);
-    //     1
-    // } else {
-    //     0
-    // }
+    let update = ComponentUpdate::from_raw(update);
+    let data = update.deserialize::<C::Update>();
+    *handle_out = handle::allocate_raw(data);
+
+    // TODO: Do we need to do proper error handling support here?
+    1
 }
 
 unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
@@ -350,9 +326,8 @@ unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
     handle: *mut raw::c_void,
     update: *mut *mut Schema_ComponentUpdate,
 ) {
-    unimplemented!();
-    // let data: &C::Update = &*(handle as *const _);
-    // *update = SchemaComponentUpdate::new(data).into_raw();
+    let data: &C::Update = &*(handle as *const _);
+    *update = ComponentUpdate::new(data).into_raw();
 }
 
 unsafe extern "C" fn vtable_command_request_free<C: Component>(
