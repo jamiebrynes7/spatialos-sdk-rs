@@ -533,7 +533,11 @@ impl SchemaField for String {
     }
 
     fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        unimplemented!()
+        if update.fields().bytes_count(field) > 0 {
+            Some(Self::get_field(update.fields(), field))
+        } else {
+            None
+        }
     }
 }
 
@@ -564,7 +568,11 @@ impl SchemaField for Vec<u8> {
     }
 
     fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        unimplemented!()
+        if update.fields().bytes_count(field) > 0 {
+            Some(Self::get_field(update.fields(), field))
+        } else {
+            None
+        }
     }
 }
 
