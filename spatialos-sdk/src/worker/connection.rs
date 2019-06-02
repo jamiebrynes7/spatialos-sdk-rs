@@ -10,6 +10,7 @@ use crate::{
         locator::*,
         metrics::Metrics,
         op::OpList,
+        schema::{owned::Owned, ComponentUpdate},
         parameters::ConnectionParameters,
         {EntityId, InterestOverride, LogLevel, RequestId},
     },
@@ -126,6 +127,13 @@ pub trait Connection {
         &mut self,
         entity_id: EntityId,
         update: C::Update,
+        parameters: UpdateParameters,
+    );
+
+    fn send_component_update_serialized(
+        &mut self,
+        entity_id: EntityId,
+        update: Owned<ComponentUpdate>,
         parameters: UpdateParameters,
     );
 
@@ -474,6 +482,30 @@ impl Connection for WorkerConnection {
             component_id: C::ID,
             schema_type: ptr::null_mut(),
             user_handle: user_handle.raw(),
+        };
+
+        let params = parameters.to_worker_sdk();
+        unsafe {
+            Worker_Alpha_Connection_SendComponentUpdate(
+                self.connection_ptr.get(),
+                entity_id.id,
+                &component_update,
+                &params,
+            );
+        }
+    }
+
+    fn send_component_update_serialized(
+        &mut self,
+        entity_id: EntityId,
+        update: Owned<ComponentUpdate>,
+        parameters: UpdateParameters,
+    ) {
+        let component_update = Worker_ComponentUpdate {
+            reserved: ptr::null_mut(),
+            component_id: update.component_id(),
+            schema_type: update.as_ptr(),
+            user_handle: ptr::null_mut(),
         };
 
         let params = parameters.to_worker_sdk();

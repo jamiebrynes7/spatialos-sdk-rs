@@ -107,7 +107,7 @@ impl ComponentUpdate {
         unsafe { Object::from_raw_mut(Schema_GetComponentUpdateFields(self.as_ptr())) }
     }
 
-    fn as_ptr(&self) -> *mut Schema_ComponentUpdate {
+    pub(crate) fn as_ptr(&self) -> *mut Schema_ComponentUpdate {
         self as *const _ as *mut _
     }
 }
