@@ -69,14 +69,13 @@ impl<T: SchemaObjectType> SchemaField for T {
     }
 
     fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-        let field_object = update.fields_mut().add_object_field(field);
-        value.into_object(field_object);
+        Self::add_field(update.fields_mut(), field, value);
     }
 }
 
 impl<T: SchemaObjectType> IndexedField for T {
     fn field_count(object: &Object, field: FieldId) -> u32 {
-        unsafe { Schema_GetObjectCount(object.as_ptr(), field) }
+        object.object_field_count(field)
     }
 
     fn index_field(object: &Object, field: FieldId, index: u32) -> Self::RustType {
@@ -523,11 +522,15 @@ impl<T: IndexedField> SchemaField for Vec<T> {
     }
 
     fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        unimplemented!()
+        if T::field_count(update.fields(), field) > 0 {
+            Some(Self::get_field(update.fields(), field))
+        } else {
+            None
+        }
     }
 
     fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-        unimplemented!();
+        Self::add_field(update.fields_mut(), field, value);
     }
 }
 
@@ -537,11 +540,11 @@ impl SchemaField for String {
     type RustType = Self;
 
     fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType) {
-        add_bytes(object, field, value.as_bytes());
+        object.add_bytes(field, value.as_bytes());
     }
 
     fn get_field(object: &Object, field: FieldId) -> Self::RustType {
-        let bytes = get_bytes(object, field);
+        let bytes = object.get_bytes(field);
         std::str::from_utf8(bytes)
             .expect("Schema string was invalid UTF-8")
             .into()
@@ -552,17 +555,17 @@ impl SchemaField for String {
     }
 
     fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-        unimplemented!();
+        Self::add_field(update.fields_mut(), field, value);
     }
 }
 
 impl IndexedField for String {
     fn field_count(object: &Object, field: FieldId) -> u32 {
-        unsafe { Schema_GetBytesCount(object.as_ptr(), field) }
+        object.bytes_count(field)
     }
 
     fn index_field(object: &Object, field: FieldId, index: u32) -> Self::RustType {
-        let bytes = index_bytes(object, field, index);
+        let bytes = object.index_bytes(field, index);
         std::str::from_utf8(bytes)
             .expect("Schema string was invalid UTF-8")
             .into()
@@ -575,11 +578,11 @@ impl SchemaField for Vec<u8> {
     type RustType = Self;
 
     fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType) {
-        add_bytes(object, field, value);
+        object.add_bytes(field, value);
     }
 
     fn get_field(object: &Object, field: FieldId) -> Self::RustType {
-        get_bytes(object, field).into()
+        object.get_bytes(field).into()
     }
 
     fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
@@ -587,46 +590,16 @@ impl SchemaField for Vec<u8> {
     }
 
     fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
-        unimplemented!();
+        Self::add_field(update.fields_mut(), field, value);
     }
 }
 
 impl IndexedField for Vec<u8> {
     fn field_count(object: &Object, field: FieldId) -> u32 {
-        unsafe { Schema_GetBytesCount(object.as_ptr(), field) }
+        object.bytes_count(field)
     }
 
     fn index_field(object: &Object, field: FieldId, index: u32) -> Self::RustType {
-        index_bytes(object, field, index).into()
-    }
-}
-
-fn add_bytes(object: &mut Object, field: FieldId, bytes: &[u8]) {
-    // Create a buffer owned by `object` and populate that buffer with `bytes`.
-    let buffer = unsafe {
-        let data = Schema_AllocateBuffer(object.as_ptr(), bytes.len() as _);
-        slice::from_raw_parts_mut(data, bytes.len())
-    };
-    buffer.copy_from_slice(bytes);
-
-    // Add `buffer` to `object` as the field.
-    unsafe {
-        Schema_AddBytes(object.as_ptr(), field, buffer.as_ptr(), buffer.len() as _);
-    }
-}
-
-fn get_bytes(object: &Object, field: FieldId) -> &[u8] {
-    unsafe {
-        let data = Schema_GetBytes(object.as_ptr(), field);
-        let len = Schema_GetBytesLength(object.as_ptr(), field);
-        std::slice::from_raw_parts(data, len as usize)
-    }
-}
-
-fn index_bytes(object: &Object, field: FieldId, index: u32) -> &[u8] {
-    unsafe {
-        let data = Schema_IndexBytes(object.as_ptr(), field, index);
-        let len = Schema_IndexBytesLength(object.as_ptr(), field, index);
-        std::slice::from_raw_parts(data, len as usize)
+        object.index_bytes(field, index).into()
     }
 }
