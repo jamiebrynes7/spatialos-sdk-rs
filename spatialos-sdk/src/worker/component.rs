@@ -118,6 +118,36 @@ impl<'a> ComponentDataRef<'a> {
     }
 }
 
+#[derive(Debug)]
+pub(crate) struct ComponentUpdateRef<'a> {
+    pub component_id: ComponentId,
+    pub schema_type: &'a schema::ComponentUpdate,
+    pub user_handle: *mut Worker_ComponentUpdateHandle,
+}
+
+impl<'a> ComponentUpdateRef<'a> {
+    pub unsafe fn from_raw(data: &'a Worker_ComponentUpdate) -> Self {
+        Self {
+            component_id: data.component_id,
+            schema_type: schema::ComponentUpdate::from_raw(data.schema_type),
+            user_handle: data.user_handle,
+        }
+    }
+
+    pub fn get<C: Component>(&self) -> Option<MaybeOwned<'a, C::Update>> {
+        if C::ID != self.component_id {
+            return None;
+        }
+
+        if !self.user_handle.is_null() {
+            let component = unsafe { *(self.user_handle as *const _) };
+            Some(MaybeOwned::Borrowed(component))
+        } else {
+            Some(MaybeOwned::Owned(self.schema_type.deserialize()))
+        }
+    }
+}
+
 // #[derive(Debug)]
 // pub struct CommandRequest<'a> {
 //     pub component_id: ComponentId,

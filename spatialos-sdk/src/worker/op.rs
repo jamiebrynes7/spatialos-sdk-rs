@@ -104,7 +104,7 @@ pub enum WorkerOp<'a> {
     RemoveEntity(RemoveEntityOp),
     AddComponent(AddComponentOp<'a>),
     RemoveComponent(RemoveComponentOp),
-    ComponentUpdate,
+    ComponentUpdate(ComponentUpdateOp<'a>),
     AuthorityChange(AuthorityChangeOp),
     CommandRequest,
     CommandResponse,
@@ -196,16 +196,16 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     };
                     WorkerOp::AuthorityChange(authority_change_op)
                 }
+
                 Worker_OpType_WORKER_OP_TYPE_COMPONENT_UPDATE => {
-                    // let op = &erased_op.component_update;
-                    // let component_update_op = ComponentUpdateOp {
-                    //     entity_id: EntityId::new(op.entity_id),
-                    //     component_id: op.update.component_id,
-                    //     component_update: internal::ComponentUpdate::from(&op.update),
-                    // };
-                    // WorkerOp::ComponentUpdate(component_update_op)
-                    WorkerOp::ComponentUpdate
+                    let op = &erased_op.component_update;
+                    let component_update_op = ComponentUpdateOp {
+                        entity_id: EntityId::new(op.entity_id),
+                        component_update: ComponentUpdateRef::from_raw(&op.update),
+                    };
+                    WorkerOp::ComponentUpdate(component_update_op)
                 }
+
                 Worker_OpType_WORKER_OP_TYPE_COMMAND_REQUEST => {
                     // let op = &erased_op.command_request;
                     // let attribute_set = cstr_array_to_vec_string(
@@ -560,25 +560,17 @@ pub struct AuthorityChangeOp {
     pub authority: Authority,
 }
 
-// #[derive(Debug)]
-// pub struct ComponentUpdateOp<'a> {
-//     pub entity_id: EntityId,
-//     pub component_id: ComponentId,
-//     pub component_update: component::internal::ComponentUpdate<'a>,
-// }
+#[derive(Debug)]
+pub struct ComponentUpdateOp<'a> {
+    pub entity_id: EntityId,
+    component_update: ComponentUpdateRef<'a>,
+}
 
-// impl<'a> ComponentUpdateOp<'a> {
-//     pub fn get<C: Component>(&self) -> Option<&C::Update> {
-//         // TODO: Deserialize schema_type if user_handle is null.
-//         if C::ID == self.component_update.component_id
-//             && !self.component_update.user_handle.is_null()
-//         {
-//             Some(unsafe { &*(self.component_update.user_handle as *const _) })
-//         } else {
-//             None
-//         }
-//     }
-// }
+impl<'a> ComponentUpdateOp<'a> {
+    pub fn get<C: Component>(&self) -> Option<MaybeOwned<'a, C::Update>> {
+        self.component_update.get::<C>()
+    }
+}
 
 // #[derive(Debug)]
 // pub struct CommandRequestOp<'a> {
