@@ -238,7 +238,7 @@ macro_rules! impl_primitive_field {
                 field: FieldId,
                 data: &mut Vec<Self::RustType>,
             ) {
-                unimplemented!();
+                Self::get_field_list(update.fields(), field, data);
             }
 
             fn add_update_list(
@@ -246,7 +246,7 @@ macro_rules! impl_primitive_field {
                 field: FieldId,
                 data: &[Self::RustType],
             ) {
-                unimplemented!();
+                Self::add_field_list(update.fields_mut(), field, data);
             }
         }
     };
