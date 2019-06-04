@@ -10,8 +10,8 @@ use crate::{
         locator::*,
         metrics::Metrics,
         op::OpList,
-        schema::{owned::Owned, ComponentUpdate},
         parameters::ConnectionParameters,
+        schema::{owned::Owned, ComponentUpdate},
         {EntityId, InterestOverride, LogLevel, RequestId},
     },
 };

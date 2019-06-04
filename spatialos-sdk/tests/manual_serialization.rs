@@ -62,7 +62,7 @@ impl Update for CustomComponentUpdate {
         let mut result = Self {
             name: update.field::<Option<String>>(0),
             count: update.field::<SchemaSfixed32>(1),
-            targets: update.field::<Vec<EntityId>>(2),
+            targets: update.field_array::<EntityId>(2),
             target_names: update.field::<BTreeMap<EntityId, String>>(3),
             byte_collection: update.field::<Vec<Vec<u8>>>(4),
             id: update.field::<Option<SchemaUint32>>(5),
@@ -94,8 +94,34 @@ impl Update for CustomComponentUpdate {
         result
     }
 
-    fn into_update(&self, _update: &mut schema::ComponentUpdate) {
-        unimplemented!();
+    fn into_update(&self, update: &mut schema::ComponentUpdate) {
+        if let Some(name) = &self.name {
+            update.add_field::<Option<String>>(0, name);
+        }
+
+        if let Some(count) = &self.count {
+            update.add_field::<SchemaSfixed32>(1, count);
+        }
+
+        if let Some(target) = &self.targets {
+            update.add_field_array::<EntityId>(2, target);
+        }
+
+        if let Some(target_names) = &self.target_names {
+            update.add_field::<BTreeMap<EntityId, String>>(3, target_names);
+        }
+
+        if let Some(byte_collection) = &self.byte_collection {
+            update.add_field::<Vec<Vec<u8>>>(4, byte_collection);
+        }
+
+        if let Some(id) = &self.id {
+            update.add_field::<Option<SchemaUint32>>(5, id);
+        }
+
+        if let Some(nested) = &self.nested {
+            update.add_field::<NestedType>(6, nested);
+        }
     }
 }
 

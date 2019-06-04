@@ -19,9 +19,18 @@ pub trait SchemaField: Sized + SchemaFieldSealed {
     type RustType: Sized;
 
     fn get_field(object: &Object, field: FieldId) -> Self::RustType;
+
     fn add_field(object: &mut Object, field: FieldId, value: &Self::RustType);
 
-    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType>;
+    fn has_update(update: &ComponentUpdate, field: FieldId) -> bool;
+
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+        if Self::has_update(update, field) {
+            Some(Self::get_field(update.fields(), field))
+        } else {
+            None
+        }
+    }
 
     fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
         Self::add_field(update.fields_mut(), field, value);
@@ -33,15 +42,18 @@ pub trait IndexedField: SchemaField {
     fn index_field(object: &Object, field: FieldId, index: u32) -> Self::RustType;
 }
 
+/// A type that can be efficiently added to a schema object as a list.
+///
+/// Since types that are serialized/deserialized as a list are copied directly into
+/// the schema object, any types that implement this trait must be ABI-compatible
+/// with the underlying C API. This means that only primitive types (including
+/// [`EntityId`]) implement `ArrayField`.
+///
+/// [`EntityId`]
 pub trait ArrayField: IndexedField {
     fn get_field_list(object: &Object, field: FieldId, data: &mut Vec<Self::RustType>);
+
     fn add_field_list(object: &mut Object, field: FieldId, data: &[Self::RustType]);
-
-    fn get_update_list(update: &ComponentUpdate, field: FieldId, data: &mut Vec<Self::RustType>);
-
-    fn add_update_list(update: &mut ComponentUpdate, field: FieldId, data: &[Self::RustType]) {
-        Self::add_field_list(update.fields_mut(), field, data);
-    }
 }
 
 /// A type that can be deserialized from an entire `SchemaObject`.
@@ -65,13 +77,8 @@ impl<T: SchemaObjectType> SchemaField for T {
         T::from_object(field_object)
     }
 
-    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        if T::field_count(update.fields(), field) > 0 {
-            let field_object = update.fields().object_field(field);
-            Some(T::from_object(field_object))
-        } else {
-            None
-        }
+    fn has_update(update: &ComponentUpdate, field: FieldId) -> bool {
+        update.fields().object_field_count(field) > 0
     }
 }
 
@@ -158,12 +165,8 @@ macro_rules! impl_primitive_field {
                 unsafe { mem::transmute($schema_get(object.as_ptr(), field)) }
             }
 
-            fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-                if Self::field_count(update.fields(), field) > 0 {
-                    Some(Self::get_field(update.fields(), field))
-                } else {
-                    None
-                }
+            fn has_update(update: &ComponentUpdate, field: FieldId) -> bool {
+                Self::field_count(update.fields(), field) > 0
             }
         }
 
@@ -227,14 +230,6 @@ macro_rules! impl_primitive_field {
                     data.set_len(count);
                     $schema_get_list(object.as_ptr(), field, data.as_mut_ptr() as *mut _);
                 }
-            }
-
-            fn get_update_list(
-                update: &ComponentUpdate,
-                field: FieldId,
-                data: &mut Vec<Self::RustType>,
-            ) {
-                Self::get_field_list(update.fields(), field, data);
             }
         }
     };
@@ -417,18 +412,14 @@ impl<T: IndexedField> SchemaField for Option<T> {
         }
     }
 
-    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        if T::field_count(update.fields(), field) > 0 {
-            Some(T::get_update(update, field))
-        } else {
-            None
-        }
+    fn has_update(update: &ComponentUpdate, field: FieldId) -> bool {
+        T::field_count(update.fields(), field) > 0
     }
 
     fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
         match value {
             Some(value) => {
-                update.add::<T>(field, value);
+                update.add_field::<T>(field, value);
             }
 
             None => update.add_cleared(field),
@@ -476,11 +467,15 @@ where
         result
     }
 
-    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        if update.fields().object_field_count(field) > 0 {
-            Some(Self::get_field(update.fields(), field))
+    fn has_update(update: &ComponentUpdate, field: FieldId) -> bool {
+        update.fields().object_field_count(field) > 0
+    }
+
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
+        if !value.is_empty() {
+            Self::add_field(update.fields_mut(), field, value);
         } else {
-            None
+            update.add_cleared(field);
         }
     }
 }
@@ -507,11 +502,15 @@ impl<T: IndexedField> SchemaField for Vec<T> {
         result
     }
 
-    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        if T::field_count(update.fields(), field) > 0 {
-            Some(Self::get_field(update.fields(), field))
+    fn has_update(update: &ComponentUpdate, field: FieldId) -> bool {
+        T::field_count(update.fields(), field) > 0
+    }
+
+    fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
+        if !value.is_empty() {
+            Self::add_field(update.fields_mut(), field, value);
         } else {
-            None
+            update.add_cleared(field);
         }
     }
 }
@@ -532,12 +531,8 @@ impl SchemaField for String {
             .into()
     }
 
-    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        if update.fields().bytes_field_count(field) > 0 {
-            Some(Self::get_field(update.fields(), field))
-        } else {
-            None
-        }
+    fn has_update(update: &ComponentUpdate, field: FieldId) -> bool {
+        update.fields().bytes_field_count(field) > 0
     }
 }
 
@@ -567,12 +562,8 @@ impl SchemaField for Vec<u8> {
         object.bytes_field(field).into()
     }
 
-    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        if update.fields().bytes_field_count(field) > 0 {
-            Some(Self::get_field(update.fields(), field))
-        } else {
-            None
-        }
+    fn has_update(update: &ComponentUpdate, field: FieldId) -> bool {
+        update.fields().bytes_field_count(field) > 0
     }
 }
 
