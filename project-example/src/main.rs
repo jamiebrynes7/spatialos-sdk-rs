@@ -1,3 +1,6 @@
+extern crate spatial_specs;
+extern crate specs;
+
 use crate::{connection_handler::*, opt::*};
 use generated::{example, improbable};
 use rand::Rng;
@@ -18,6 +21,7 @@ mod connection_handler;
 #[rustfmt::skip]
 mod generated;
 mod opt;
+mod specs_example;
 
 fn main() {
     let opt = Opt::from_args();
@@ -29,25 +33,14 @@ fn main() {
     println!("Connected as: {}", worker_connection.get_worker_id());
 
     exercise_connection_code_paths(&mut worker_connection);
-    logic_loop(&mut worker_connection);
+
+    create_entity(&mut worker_connection);
+
+    specs_example::run_game(worker_connection);
 }
 
-fn logic_loop(c: &mut WorkerConnection) {
-    /// Local tracking of the state of an entity's components. We only track the
-    /// `Rotate` component because it's the only one we care about for this demo.
-    #[derive(Debug, Default)]
-    struct EntityState {
-        has_authority: bool,
-        rotate: Option<example::Rotate>,
-    }
-
+fn create_entity(c: &mut WorkerConnection) {
     let mut rng = rand::thread_rng();
-
-    // Store the currently-visible state of the world. Entities/components are added
-    // and removed from the world as we get ops notifying us of those changes. The
-    // data in `world` also tracks which `Rotate` components we currently have
-    // authority over, so that we know which ones we need to be updating.
-    let mut world = HashMap::new();
 
     let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, "rusty");
 
@@ -70,6 +63,24 @@ fn logic_loop(c: &mut WorkerConnection) {
 
     let create_request_id = c.send_create_entity_request(entity, None, None);
     println!("Create entity request ID: {:?}", create_request_id);
+}
+
+fn logic_loop(c: &mut WorkerConnection) {
+    /// Local tracking of the state of an entity's components. We only track the
+    /// `Rotate` component because it's the only one we care about for this demo.
+    #[derive(Debug, Default)]
+    struct EntityState {
+        has_authority: bool,
+        rotate: Option<example::Rotate>,
+    }
+
+    // Store the currently-visible state of the world. Entities/components are added
+    // and removed from the world as we get ops notifying us of those changes. The
+    // data in `world` also tracks which `Rotate` components we currently have
+    // authority over, so that we know which ones we need to be updating.
+    let mut world = HashMap::new();
+
+    create_entity(c);
 
     loop {
         let ops = c.get_op_list(0);

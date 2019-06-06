@@ -1,6 +1,6 @@
 {
   "template": "small",
-  "dimensionsInWorldUnits" : {
+  "dimensionsInWorldUnits": {
     "x": 1000,
     "z": 1000
   },
@@ -9,8 +9,11 @@
       {
         "layer": "rusty",
         "rectangle_grid": {
-          "cols": 2,
-          "rows": 2
+          "cols": 1,
+          "rows": 1
+        },
+        "options": {
+          "manual_worker_connection_only": true
         }
       }
     ]

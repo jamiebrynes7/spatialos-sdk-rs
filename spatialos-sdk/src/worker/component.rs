@@ -26,11 +26,11 @@ where
 }
 
 // A trait that's implemented by a component to convert to/from schema handle types.
-pub trait Component
+pub trait Component: TypeConversion
 where
     Self: std::marker::Sized,
 {
-    type Update;
+    type Update: TypeConversion;
     type CommandRequest;
     type CommandResponse;
 
