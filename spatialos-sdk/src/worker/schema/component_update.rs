@@ -1,6 +1,6 @@
 use crate::worker::{
     component::{Component, ComponentId, Update},
-    schema::{owned::*, ArrayField, FieldId, Object, SchemaField},
+    schema::{owned::*, ArrayField, FieldId, Object, SchemaField, SchemaObjectType},
 };
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
@@ -65,6 +65,27 @@ impl ComponentUpdate {
         unsafe {
             Schema_AddComponentUpdateClearedField(self.as_ptr(), field);
         }
+    }
+
+    pub fn event<T: SchemaObjectType>(&self, field: FieldId) -> Vec<T> {
+        self.events().field::<Vec<T>>(field)
+    }
+
+    // NOTE: Due to the way the schema traits are setup, we need to take `events` as a
+    // `&Vec<T>` instead of a `&[T]` (which would be more idiomatic). It's not practical
+    // (and maybe not even possible) to adjust the traits to accept `&[T]` when adding a
+    // list field, so we settle for suprressing the warning in this case.
+    #[allow(clippy::ptr_arg)]
+    pub fn add_event<T: SchemaObjectType>(&mut self, field: FieldId, events: &Vec<T>) {
+        self.events_mut().add_field::<Vec<T>>(field, events);
+    }
+
+    pub(crate) fn events(&self) -> &Object {
+        unsafe { Object::from_raw(Schema_GetComponentUpdateEvents(self.as_ptr())) }
+    }
+
+    pub(crate) fn events_mut(&mut self) -> &mut Object {
+        unsafe { Object::from_raw_mut(Schema_GetComponentUpdateEvents(self.as_ptr())) }
     }
 
     /// Returns an iterator over any cleared fields included in this update.

@@ -1,3 +1,30 @@
+//! Example code for the following schema defintions:
+//!
+//! ```schema
+//! component CustomComponent {
+//!     id = 1234;
+//!
+//!     option<string> name = 1;
+//!     int32 count = 2;
+//!     list<EntityId> targets = 3;
+//!     list<bytes> byte_collection = 4;
+//!     option<uint32> id = 5;
+//!     NestedType nested = 6;
+//!     list<bool> events = 7;
+//!
+//!     event NestedType nested;
+//!     event CoolEvent cool_event;
+//! }
+//!
+//! type NestedType {
+//!     string name = 1;
+//! }
+//!
+//! type CoolEvent {
+//!     option<bytes> some_data = 1;
+//! }
+//! ```
+
 use spatialos_sdk::worker::{
     component::*,
     schema::{self, *},
@@ -5,6 +32,7 @@ use spatialos_sdk::worker::{
 };
 use std::collections::BTreeMap;
 
+#[derive(Debug, Default)]
 pub struct CustomComponent {
     pub name: Option<String>,
     pub count: i32,
@@ -41,11 +69,12 @@ impl SchemaObjectType for CustomComponent {
 
 impl Component for CustomComponent {
     const ID: ComponentId = 1234;
-    type Update = CustomComponentUpdate;
+    type Update = CustomComponentFieldsUpdate;
+    type Events = CustomComponentEvents;
 }
 
 #[allow(clippy::option_option)]
-pub struct CustomComponentUpdate {
+pub struct CustomComponentFieldsUpdate {
     pub name: Option<Option<String>>,
     pub count: Option<i32>,
     pub targets: Option<Vec<EntityId>>,
@@ -55,11 +84,32 @@ pub struct CustomComponentUpdate {
     pub nested: Option<NestedType>,
 }
 
-impl Update for CustomComponentUpdate {
+#[derive(Debug, Default)]
+pub struct CustomComponentEvents {
+    pub nested: Vec<NestedType>,
+    pub cool_event: Vec<CoolEvent>,
+}
+
+impl Events for CustomComponentEvents {
     type Component = CustomComponent;
 
     fn from_update(update: &schema::ComponentUpdate) -> Self {
-        let mut result = Self {
+        CustomComponentEvents {
+            nested: update.event::<NestedType>(1),
+            cool_event: update.event::<CoolEvent>(2),
+        }
+    }
+
+    fn into_update(&self, _update: &mut schema::ComponentUpdate) {
+        unimplemented!();
+    }
+}
+
+impl Update for CustomComponentFieldsUpdate {
+    type Component = CustomComponent;
+
+    fn from_update(update: &schema::ComponentUpdate) -> Self {
+        let mut result = CustomComponentFieldsUpdate {
             name: update.field::<Option<String>>(0),
             count: update.field::<SchemaSfixed32>(1),
             targets: update.field_array::<EntityId>(2),
@@ -125,11 +175,27 @@ impl Update for CustomComponentUpdate {
     }
 }
 
+#[derive(Debug, Default)]
 pub struct NestedType {
     pub name: String,
 }
 
 impl SchemaObjectType for NestedType {
+    fn from_object(_object: &schema::Object) -> Self {
+        unimplemented!()
+    }
+
+    fn into_object(&self, _object: &mut schema::Object) {
+        unimplemented!();
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct CoolEvent {
+    pub some_data: Option<Vec<u8>>,
+}
+
+impl SchemaObjectType for CoolEvent {
     fn from_object(_object: &schema::Object) -> Self {
         unimplemented!()
     }
