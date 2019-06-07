@@ -32,17 +32,16 @@ fn main() {
 
     println!("Connected as: {}", worker_connection.get_worker_id());
 
-    exercise_connection_code_paths(&mut worker_connection);
-
-    create_entity(&mut worker_connection);
+    create_entity(&mut worker_connection, true);
+    create_entity(&mut worker_connection, false);
 
     specs_example::run_game(worker_connection);
 }
 
-fn create_entity(c: &mut WorkerConnection) {
+fn create_entity(c: &mut WorkerConnection, has_authority: bool) {
     let mut rng = rand::thread_rng();
 
-    let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, "rusty");
+    let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, if has_authority {"rusty"}else{"other"});
 
     builder.add_component(
         example::Rotate {
@@ -80,7 +79,7 @@ fn logic_loop(c: &mut WorkerConnection) {
     // authority over, so that we know which ones we need to be updating.
     let mut world = HashMap::new();
 
-    create_entity(c);
+    create_entity(c, true);
 
     loop {
         let ops = c.get_op_list(0);
