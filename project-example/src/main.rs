@@ -1,4 +1,4 @@
-extern crate spatial_specs;
+extern crate spatialos_specs;
 extern crate specs;
 
 use crate::{connection_handler::*, opt::*};

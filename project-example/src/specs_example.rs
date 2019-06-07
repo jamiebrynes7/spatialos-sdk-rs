@@ -1,9 +1,9 @@
 use specs::prelude::*;
 
 use spatialos_sdk::worker::connection::WorkerConnection;
-use spatial_specs::spatial_reader::*;
-use spatial_specs::spatial_writer::*;
-use spatial_specs::storage::*;
+use spatialos_specs::spatial_reader::*;
+use spatialos_specs::spatial_writer::*;
+use spatialos_specs::storage::*;
 
 use crate::generated::improbable::*;
 
