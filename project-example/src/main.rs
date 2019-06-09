@@ -41,7 +41,8 @@ fn main() {
 fn create_entity(c: &mut WorkerConnection, has_authority: bool) {
     let mut rng = rand::thread_rng();
 
-    let mut builder = EntityBuilder::new(0.0, 0.0, 0.0, if has_authority {"rusty"}else{"other"});
+    let mut builder =
+        EntityBuilder::new(0.0, 0.0, 0.0, if has_authority { "rusty" } else { "other" });
 
     builder.add_component(
         example::Rotate {

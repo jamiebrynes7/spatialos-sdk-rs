@@ -32,8 +32,8 @@ where
     Self: std::marker::Sized + Sync + Send + Clone + Debug,
 {
     type Update: TypeConversion + Clone;
-    type CommandRequest;
-    type CommandResponse;
+    type CommandRequest: Sync + Send + Clone;
+    type CommandResponse: Sync + Send + Clone;
 
     const ID: ComponentId;
 
