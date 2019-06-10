@@ -34,14 +34,14 @@ impl<'a> System<'a> for SysA {
             pos.coords.x = rng.gen();
 
             // TODO: Make closure accept SystemData
-            example_command_sender.send_command(
+            example_command_sender.send_command::<_, Self::SystemData>(
                 *entity_id,
                 ExampleCommandRequest::TestCommand(CommandData { value: 17 }),
                 |res, response| {
-                    println!("response {:?}", response);
-                },
-                |status_code| {
-                    println!("failure {:?}", status_code);
+                    match response {
+                        Ok(response) => println!("response {:?}", response),
+                        Err(err) => println!("error {:?}", err)
+                    };
                 }
             );
         }
