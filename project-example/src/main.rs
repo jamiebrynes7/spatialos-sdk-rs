@@ -33,7 +33,7 @@ fn main() {
     println!("Connected as: {}", worker_connection.get_worker_id());
 
     create_entity(&mut worker_connection, true);
-    create_entity(&mut worker_connection, false);
+    // create_entity(&mut worker_connection, false);
 
     specs_example::run_game(worker_connection);
 }
@@ -53,6 +53,12 @@ fn create_entity(c: &mut WorkerConnection, has_authority: bool) {
                 y: 0.0,
                 z: rng.gen_range(-50.0, 50.0),
             },
+        },
+        "rusty",
+    );
+    builder.add_component(
+        example::Example {
+            x: 60.0
         },
         "rusty",
     );

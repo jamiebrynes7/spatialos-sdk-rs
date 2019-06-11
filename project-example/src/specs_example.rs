@@ -8,6 +8,7 @@ use spatialos_specs::storage::*;
 use crate::generated::example::*;
 use crate::generated::improbable::*;
 use spatialos_specs::commands::*;
+use spatialos_specs::entities::*;
 use spatialos_specs::*;
 
 use std::thread;
@@ -19,25 +20,30 @@ struct SysA;
 
 impl<'a> System<'a> for SysA {
     type SystemData = (
-        ReadStorage<'a, EntityId>,
+        SpatialEntities<'a>,
         SpatialWriteStorage<'a, Position>,
         CommandSender<'a, Example>,
     );
 
-    fn run(&mut self, (entity_id, mut pos, mut example_command_sender): Self::SystemData) {
+    fn run(&mut self, (entities, mut pos, mut example_command_sender): Self::SystemData) {
         println!("\n");
 
         let mut rng = rand::thread_rng();
 
-        for (entity_id, pos) in (&entity_id, &mut pos).join() {
+        for (entity, pos) in (&entities, &mut pos).join() {
             println!("write: {:?}", pos.coords);
             pos.coords.x = rng.gen();
 
-            // TODO: Make closure accept SystemData
-            example_command_sender.send_command::<_, Self::SystemData>(
-                *entity_id,
-                ExampleCommandRequest::TestCommand(CommandData { value: 17 }),
-                |res, response| {
+            let this_entity = *entity;
+
+            example_command_sender.send_command(
+                this_entity,
+                ExampleCommandRequest::TestCommand(CommandData { value: rng.gen() }),
+                move |res, response| {
+
+                    let mut storage = SpatialWriteStorage::<Position>::fetch(res);
+                    storage.get_mut(this_entity).unwrap().coords.x = 5.0;
+
                     match response {
                         Ok(response) => println!("response {:?}", response),
                         Err(err) => println!("error {:?}", err)
@@ -60,7 +66,7 @@ impl<'a> System<'a> for SysB {
 
                 match request {
                     ExampleCommandRequest::TestCommand(command_data) => {
-                        Some(ExampleCommandResponse::TestCommand(command_data.clone()))
+                        Some(ExampleCommandResponse::TestCommand(CommandData { value: command_data.value }))
                     }
                 }
             });
