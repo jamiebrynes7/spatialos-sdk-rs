@@ -4,17 +4,41 @@ use spatialos_sdk::worker::connection::WorkerConnection;
 use spatialos_specs::spatial_reader::*;
 use spatialos_specs::spatial_writer::*;
 use spatialos_specs::storage::*;
+use spatialos_sdk::worker::entity::Entity as WorkerEntity;
+use spatialos_sdk::worker::entity_builder::EntityBuilder;
 
 use crate::generated::example::*;
 use crate::generated::improbable::*;
 use spatialos_specs::commands::*;
 use spatialos_specs::entities::*;
+use spatialos_specs::system_commands::*;
 use spatialos_specs::*;
 
 use std::thread;
 use std::time::Duration;
 
 use rand::Rng;
+
+
+
+fn create_player_entity(has_authority: bool) -> WorkerEntity {
+    let mut rng = rand::thread_rng();
+
+    let mut builder =
+        EntityBuilder::new(0.0, 0.0, 0.0, if has_authority { "rusty" } else { "other" });
+
+    builder.add_component(
+        Example {
+            x: 60.0
+        },
+        "rusty",
+    );
+    builder.set_metadata("Rotator", "rusty");
+    builder.set_entity_acl_write_access("rusty");
+
+    builder.build().unwrap()
+}
+
 
 struct SysA;
 
@@ -48,6 +72,12 @@ impl<'a> System<'a> for SysA {
                         Ok(response) => println!("response {:?}", response),
                         Err(err) => println!("error {:?}", err)
                     };
+
+                    let player_entity = create_player_entity(true);
+
+                    <SystemCommandSender as SystemData>::fetch(res).create_entity(player_entity, |res, entity_id| {
+                        println!("created entity! {:?}", entity_id);
+                    })
                 }
             );
         }
