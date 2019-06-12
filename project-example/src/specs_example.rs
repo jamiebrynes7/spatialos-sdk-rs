@@ -75,9 +75,10 @@ impl<'a> System<'a> for SysA {
 
                     let player_entity = create_player_entity(true);
 
-                    <SystemCommandSender as SystemData>::fetch(res).create_entity(player_entity, |res, entity_id| {
+                    SystemCommandSender::fetch(res).create_entity(player_entity, |res, entity_id| {
                         println!("created entity! {:?}", entity_id);
-                    })
+                        let sender = SystemCommandSender::fetch(res);
+                    });
                 }
             );
         }
