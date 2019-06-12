@@ -14,5 +14,3 @@ uuid = { version = "0.7", features = ["v4"] }
 structopt = "0.2.14"
 rand = "0.6.5"
 tap = "0.3.0"
-specs = "0.14.3"
-spatialos-specs = { path = "../../spatialos-specs"}
