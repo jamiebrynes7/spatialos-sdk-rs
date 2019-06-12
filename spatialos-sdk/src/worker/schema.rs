@@ -49,7 +49,7 @@ pub trait IndexedField: SchemaField {
 /// with the underlying C API. This means that only primitive types (including
 /// [`EntityId`]) implement `ArrayField`.
 ///
-/// [`EntityId`]
+/// [`EntityId`]: ../struct.EntityId.html
 pub trait ArrayField: IndexedField {
     fn get_field_list(object: &Object, field: FieldId, data: &mut Vec<Self::RustType>);
 
