@@ -31,7 +31,7 @@ pub trait Component: TypeConversion + ComponentData<Self>
 where
     Self: std::marker::Sized + Sync + Send + Clone + Debug,
 {
-    type Update: TypeConversion + Clone;
+    type Update: TypeConversion + ComponentUpdate<Self> + Clone + Sync + Send;
     type CommandRequest: Sync + Send + Clone;
     type CommandResponse: Sync + Send + Clone;
 
