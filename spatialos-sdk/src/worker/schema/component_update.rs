@@ -66,6 +66,12 @@ impl ComponentUpdate {
         }
     }
 
+    pub fn field_cleared(&self, field: FieldId) -> bool {
+        // TODO: Implement this using `Schema_IsComponentUpdateFieldCleared` once we update
+        // to SDK 13.8.
+        self.cleared().any(|cleared_field| field == cleared_field)
+    }
+
     /// Returns an iterator over any cleared fields included in this update.
     ///
     /// # Examples
