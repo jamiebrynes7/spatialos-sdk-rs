@@ -420,10 +420,7 @@ impl<T: IndexedField> SchemaField for Option<T> {
         if update.field_cleared(field) {
             Some(None)
         } else {
-            match Self::get_field(update.fields(), field) {
-                Some(value) => Some(Some(value)),
-                None => None,
-            }
+            Self::get_field(update.fields(), field).map(Some)
         }
     }
 
