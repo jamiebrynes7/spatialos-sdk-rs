@@ -29,16 +29,15 @@ impl ComponentUpdate {
         unsafe { Schema_GetComponentUpdateComponentId(self.as_ptr()) }
     }
 
-    pub fn deserialize<U: Update>(&self) -> U {
-        // TODO: Does it make sense to assert here? Or should we allow for runtime recovery
-        // in this case?
-        assert_eq!(
-            self.component_id(),
-            U::Component::ID,
-            "Attempting to deserialize component update into incorrect type"
-        );
-
-        U::from_update(self)
+    /// Deserializes the component update into the specified update type.
+    ///
+    /// Returns `None` if `U` is not the correct update type.
+    pub fn deserialize<U: Update>(&self) -> Option<U> {
+        if self.component_id() == U::Component::ID {
+            Some(U::from_update(self))
+        } else {
+            None
+        }
     }
 
     pub fn field<T: SchemaField>(&self, field: FieldId) -> Option<T::RustType> {
@@ -65,6 +64,12 @@ impl ComponentUpdate {
         unsafe {
             Schema_AddComponentUpdateClearedField(self.as_ptr(), field);
         }
+    }
+
+    pub fn field_cleared(&self, field: FieldId) -> bool {
+        // TODO: Implement this using `Schema_IsComponentUpdateFieldCleared` once we update
+        // to SDK 13.8.
+        self.cleared().any(|cleared_field| field == cleared_field)
     }
 
     pub fn event<T: SchemaObjectType>(&self, field: FieldId) -> Vec<T> {

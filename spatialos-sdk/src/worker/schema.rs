@@ -49,7 +49,7 @@ pub trait IndexedField: SchemaField {
 /// with the underlying C API. This means that only primitive types (including
 /// [`EntityId`]) implement `ArrayField`.
 ///
-/// [`EntityId`]
+/// [`EntityId`]: ../struct.EntityId.html
 pub trait ArrayField: IndexedField {
     fn get_field_list(object: &Object, field: FieldId, data: &mut Vec<Self::RustType>);
 
@@ -413,7 +413,15 @@ impl<T: IndexedField> SchemaField for Option<T> {
     }
 
     fn has_update(update: &ComponentUpdate, field: FieldId) -> bool {
-        T::field_count(update.fields(), field) > 0
+        T::field_count(update.fields(), field) > 0 || update.field_cleared(field)
+    }
+
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+        if update.field_cleared(field) {
+            Some(None)
+        } else {
+            Self::get_field(update.fields(), field).map(Some)
+        }
     }
 
     fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
@@ -468,7 +476,17 @@ where
     }
 
     fn has_update(update: &ComponentUpdate, field: FieldId) -> bool {
-        update.fields().object_field_count(field) > 0
+        update.fields().object_field_count(field) > 0 || update.field_cleared(field)
+    }
+
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+        if update.field_cleared(field) {
+            Some(Default::default())
+        } else if update.fields().object_field_count(field) > 0 {
+            Some(Self::get_field(update.fields(), field))
+        } else {
+            None
+        }
     }
 
     fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {
@@ -503,7 +521,17 @@ impl<T: IndexedField> SchemaField for Vec<T> {
     }
 
     fn has_update(update: &ComponentUpdate, field: FieldId) -> bool {
-        T::field_count(update.fields(), field) > 0
+        T::field_count(update.fields(), field) > 0 || update.field_cleared(field)
+    }
+
+    fn get_update(update: &ComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+        if update.field_cleared(field) {
+            Some(Default::default())
+        } else if update.fields().object_field_count(field) > 0 {
+            Some(Self::get_field(update.fields(), field))
+        } else {
+            None
+        }
     }
 
     fn add_update(update: &mut ComponentUpdate, field: FieldId, value: &Self::RustType) {

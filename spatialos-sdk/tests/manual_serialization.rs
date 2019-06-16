@@ -109,7 +109,7 @@ impl Update for CustomComponentFieldsUpdate {
     type Component = CustomComponent;
 
     fn from_update(update: &schema::ComponentUpdate) -> Self {
-        let mut result = CustomComponentFieldsUpdate {
+        Self {
             name: update.field::<Option<String>>(0),
             count: update.field::<SchemaSfixed32>(1),
             targets: update.field_array::<EntityId>(2),
@@ -117,31 +117,7 @@ impl Update for CustomComponentFieldsUpdate {
             byte_collection: update.field::<Vec<Vec<u8>>>(4),
             id: update.field::<Option<SchemaUint32>>(5),
             nested: update.field::<NestedType>(6),
-        };
-
-        for cleared in update.cleared() {
-            match cleared {
-                0 => {
-                    result.name = Some(Default::default());
-                }
-                2 => {
-                    result.targets = Some(Default::default());
-                }
-                3 => {
-                    result.target_names = Some(Default::default());
-                }
-                4 => {
-                    result.byte_collection = Some(Default::default());
-                }
-                5 => {
-                    result.id = Some(Default::default());
-                }
-
-                _ => {}
-            }
         }
-
-        result
     }
 
     fn into_update(&self, update: &mut schema::ComponentUpdate) {

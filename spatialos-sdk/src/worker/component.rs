@@ -161,7 +161,7 @@ impl<'a> ComponentUpdateRef<'a> {
             let component = unsafe { *(self.user_handle as *const _) };
             Some(MaybeOwned::Borrowed(component))
         } else {
-            Some(MaybeOwned::Owned(self.schema_type.deserialize()))
+            Some(MaybeOwned::Owned(self.schema_type.deserialize().unwrap()))
         }
     }
 }
