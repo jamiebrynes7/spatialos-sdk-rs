@@ -12,7 +12,7 @@
 //!     NestedType nested = 6;
 //!     list<bool> events = 7;
 //!
-//!     event NestedType nested;
+//!     event NestedType nested_event;
 //!     event CoolEvent cool_event;
 //! }
 //!
@@ -69,12 +69,11 @@ impl SchemaObjectType for CustomComponent {
 
 impl Component for CustomComponent {
     const ID: ComponentId = 1234;
-    type Update = CustomComponentFieldsUpdate;
-    type Events = CustomComponentEvents;
+    type Update = CustomComponentUpdate;
 }
 
 #[allow(clippy::option_option)]
-pub struct CustomComponentFieldsUpdate {
+pub struct CustomComponentUpdate {
     pub name: Option<Option<String>>,
     pub count: Option<i32>,
     pub targets: Option<Vec<EntityId>>,
@@ -82,30 +81,12 @@ pub struct CustomComponentFieldsUpdate {
     pub byte_collection: Option<Vec<Vec<u8>>>,
     pub id: Option<Option<u32>>,
     pub nested: Option<NestedType>,
-}
 
-#[derive(Debug, Default)]
-pub struct CustomComponentEvents {
-    pub nested: Vec<NestedType>,
+    pub nested_event: Vec<NestedType>,
     pub cool_event: Vec<CoolEvent>,
 }
 
-impl Events for CustomComponentEvents {
-    type Component = CustomComponent;
-
-    fn from_update(update: &schema::ComponentUpdate) -> Self {
-        CustomComponentEvents {
-            nested: update.event::<NestedType>(1),
-            cool_event: update.event::<CoolEvent>(2),
-        }
-    }
-
-    fn into_update(&self, _update: &mut schema::ComponentUpdate) {
-        unimplemented!();
-    }
-}
-
-impl Update for CustomComponentFieldsUpdate {
+impl Update for CustomComponentUpdate {
     type Component = CustomComponent;
 
     fn from_update(update: &schema::ComponentUpdate) -> Self {
@@ -117,6 +98,9 @@ impl Update for CustomComponentFieldsUpdate {
             byte_collection: update.field::<Vec<Vec<u8>>>(4),
             id: update.field::<Option<SchemaUint32>>(5),
             nested: update.field::<NestedType>(6),
+
+            nested_event: update.event::<NestedType>(1),
+            cool_event: update.event::<CoolEvent>(2),
         }
     }
 
@@ -147,6 +131,14 @@ impl Update for CustomComponentFieldsUpdate {
 
         if let Some(nested) = &self.nested {
             update.add_field::<NestedType>(6, nested);
+        }
+
+        if !self.nested_event.is_empty() {
+            update.add_event(1, &self.nested_event);
+        }
+
+        if !self.cool_event.is_empty() {
+            update.add_event(2, &self.cool_event);
         }
     }
 }

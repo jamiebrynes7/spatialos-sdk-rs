@@ -17,7 +17,6 @@ pub trait Component: SchemaObjectType {
     const ID: ComponentId;
 
     type Update: Update<Component = Self>;
-    type Events: Events<Component = Self>;
 }
 
 pub trait Update: Sized {
@@ -25,23 +24,6 @@ pub trait Update: Sized {
 
     fn from_update(update: &ComponentUpdate) -> Self;
     fn into_update(&self, update: &mut ComponentUpdate);
-}
-
-pub trait Events: Sized {
-    type Component: Component<Events = Self>;
-
-    fn from_update(update: &ComponentUpdate) -> Self;
-    fn into_update(&self, update: &mut ComponentUpdate);
-}
-
-pub struct UpdateData<C: Component> {
-    // TODO: Is it necessary to split fields and events into separate structs? This is
-    // only necessary if you're allowed to have an event with the same name as a field.
-    // If that's not allowed, then we can keep everything simple and generate a single
-    // struct that contains both the fields and events for an update. I should test it
-    // out and see whether or not the schema compiler allows it.
-    pub fields: C::Update,
-    pub events: C::Events,
 }
 
 /// Additional parameters for sending component updates.
