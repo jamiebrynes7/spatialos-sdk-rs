@@ -15,7 +15,7 @@
 1. Clone this repository.
 2. Install cargo-spatial: `cargo install --path ./cargo-spatial --force`
 3. Set the `SPATIAL_LIB_DIR` environment variable to the location of the dependencies: `export SPATIAL_LIB_DIR=$(pwd)/dependencies`.
-4. Run `cargo spatial download sdk --sdk-version 13.6.0` to download the C API dependencies.
+4. Run `cargo spatial download sdk --sdk-version 14.0.0` to download the C API dependencies.
 5. Run `cd spatialos-sdk && cargo build`.
 
 If these steps complete successfully, the `spatialos-sdk` crate has been built and linked successfully and can be used in user code.
@@ -67,7 +67,7 @@ cargo test -p spatialos-sdk-code-generator -- --nocapture
 To update the Rust bindings found in `spatialos-sdk-sys` run the following command from the root of the repository:
 
 ```bash
-cargo run --bin generate_bindings -- -i ./dependencies/win/include/improbable/ -o ./spatialos-sdk-sys/src/
+cargo run --bin generate_bindings -- -i ./dependencies/headers/include/improbable/ -o ./spatialos-sdk-sys/src/
 ```
 
 Note that this depends on `bindgen` which has `clang` as a dependency. See [here](https://rust-lang.github.io/rust-bindgen/requirements.html) for more info.

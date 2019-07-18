@@ -7,11 +7,7 @@ use std::path::Path;
 #[cfg(windows)]
 lazy_static! {
     static ref LIBS: Vec<&'static str> = vec![
-        "worker",
-        "grpc++",
-        "grpc",
-        "gpr",
-        "libprotobuf",
+        "improbable_worker",
         "RakNetLibStatic",
         "ssl",
         "zlibstatic",
@@ -21,11 +17,7 @@ lazy_static! {
 #[cfg(unix)]
 lazy_static! {
     static ref LIBS: Vec<&'static str> = vec![
-        "worker",
-        "grpc++",
-        "grpc",
-        "gpr",
-        "protobuf",
+        "improbable_worker",
         "RakNetLibStatic",
         "ssl",
         "z",
@@ -33,11 +25,11 @@ lazy_static! {
 }
 
 #[cfg(target_os = "linux")]
-static PACKAGE_DIR: &str = "linux/lib";
+static PACKAGE_DIR: &str = "linux";
 #[cfg(target_os = "macos")]
-static PACKAGE_DIR: &str = "macos/lib";
+static PACKAGE_DIR: &str = "macos";
 #[cfg(target_os = "windows")]
-static PACKAGE_DIR: &str = "win\\lib";
+static PACKAGE_DIR: &str = "win";
 
 fn main() {
     let lib_dir = match env::var("SPATIAL_LIB_DIR") {

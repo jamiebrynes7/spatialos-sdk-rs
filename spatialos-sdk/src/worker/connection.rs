@@ -1,6 +1,5 @@
 use crate::ptr::MutPtr;
 use crate::worker::{
-    alpha,
     commands::*,
     component::{self, Component, UpdateParameters},
     entity::Entity,
@@ -218,7 +217,7 @@ impl WorkerConnection {
         WorkerConnectionFuture::new(future_ptr)
     }
 
-    pub fn connect_locator_async(
+    pub fn connect_locator_and_queue_async(
         locator: &Locator,
         deployment_name: &str,
         params: &ConnectionParameters,
@@ -231,7 +230,7 @@ impl WorkerConnection {
         let callback_ptr = Box::into_raw(callback) as *mut ::std::os::raw::c_void;
 
         unsafe {
-            let ptr = Worker_Locator_ConnectAsync(
+            let ptr = Worker_Locator_ConnectAndQueueAsync(
                 locator.locator,
                 deployment_name_cstr.as_ptr(),
                 &connection_params,
@@ -246,15 +245,14 @@ impl WorkerConnection {
         }
     }
 
-    pub fn connect_alpha_locator_async(
-        locator: &alpha::Locator,
+    pub fn connect_locator_async(
+        locator: &Locator,
         params: &ConnectionParameters,
     ) -> WorkerConnectionFuture {
         let connection_params = params.to_worker_sdk();
 
         unsafe {
-            let ptr = Worker_Alpha_Locator_ConnectAsync(locator.internal, &connection_params);
-
+            let ptr = Worker_Locator_ConnectAsync(locator.locator, &connection_params);
             WorkerConnectionFuture::new(ptr)
         }
     }
@@ -327,12 +325,12 @@ impl Connection for WorkerConnection {
             Some(e) => &e.id,
             None => ptr::null(),
         };
-        let component_data = entity.raw_component_data();
+        let mut component_data = entity.raw_component_data();
         let id = unsafe {
             Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),
                 component_data.components.len() as _,
-                component_data.components.as_ptr(),
+                component_data.components.as_mut_ptr(),
                 entity_id,
                 timeout,
             )
@@ -395,9 +393,10 @@ impl Connection for WorkerConnection {
             None => ptr::null(),
         };
 
-        let command_request = Worker_CommandRequest {
+        let mut command_request = Worker_CommandRequest {
             reserved: ptr::null_mut(),
             component_id: C::ID,
+            command_index,
             schema_type: ptr::null_mut(),
             user_handle: component::handle_allocate(request),
         };
@@ -406,8 +405,7 @@ impl Connection for WorkerConnection {
             Worker_Connection_SendCommandRequest(
                 self.connection_ptr.get(),
                 entity_id.id,
-                &command_request,
-                command_index,
+                &mut command_request,
                 timeout,
                 &params.to_worker_sdk(),
             )
@@ -426,9 +424,10 @@ impl Connection for WorkerConnection {
         response: C::CommandResponse,
     ) {
         unsafe {
-            let raw_response = Worker_CommandResponse {
+            let mut raw_response = Worker_CommandResponse {
                 reserved: ptr::null_mut(),
                 component_id: C::ID,
+                command_index: C::get_response_command_index(&response),
                 schema_type: ptr::null_mut(),
                 user_handle: component::handle_allocate(response),
             };
@@ -436,7 +435,7 @@ impl Connection for WorkerConnection {
             Worker_Connection_SendCommandResponse(
                 self.connection_ptr.get(),
                 request_id.id,
-                &raw_response,
+                &mut raw_response,
             );
 
             component::handle_free::<C::CommandResponse>(raw_response.user_handle);
@@ -466,7 +465,7 @@ impl Connection for WorkerConnection {
         update: C::Update,
         parameters: UpdateParameters,
     ) {
-        let component_update = Worker_ComponentUpdate {
+        let mut component_update = Worker_ComponentUpdate {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             schema_type: ptr::null_mut(),
@@ -475,10 +474,10 @@ impl Connection for WorkerConnection {
 
         let params = parameters.to_worker_sdk();
         unsafe {
-            Worker_Alpha_Connection_SendComponentUpdate(
+            Worker_Connection_SendComponentUpdate(
                 self.connection_ptr.get(),
                 entity_id.id,
-                &component_update,
+                &mut component_update,
                 &params,
             );
 
@@ -567,7 +566,7 @@ impl Connection for WorkerConnection {
 
         let mut data: Option<String> = None;
         unsafe {
-            Worker_Connection_GetFlag(
+            Worker_Connection_GetWorkerFlag(
                 self.connection_ptr.get(),
                 flag_name.as_ptr(),
                 (&mut data as *mut Option<String>) as *mut ::std::os::raw::c_void,

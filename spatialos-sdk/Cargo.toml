@@ -3,7 +3,7 @@ name = "spatialos-sdk"
 version = "0.0.0"
 authors = [
     "Jamie Brynes <jamiebrynes7@gmail.com>",
-    "David Avedissian <git@dga.me.uk>"
+    "David Avedissian <git@dga.dev>"
 ]
 edition = "2018"
 

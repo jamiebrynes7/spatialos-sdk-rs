@@ -18,38 +18,33 @@ impl SnapshotOutputStream {
             component_vtables: DATABASE.to_worker_sdk(),
             default_component_vtable: std::ptr::null(),
         };
+        let stream_ptr = unsafe { Worker_SnapshotOutputStream_Create(filename_cstr.as_ptr(), &params) };
 
-        let ptr = unsafe { Worker_SnapshotOutputStream_Create(filename_cstr.as_ptr(), &params) };
-
-        let stream = SnapshotOutputStream { ptr };
-
-        let err_ptr = unsafe { Worker_SnapshotOutputStream_GetError(ptr) };
-        if !err_ptr.is_null() {
-            unsafe { Worker_SnapshotOutputStream_Destroy(ptr) };
-            return Err(cstr_to_string(err_ptr));
+        let state = unsafe { Worker_SnapshotOutputStream_GetState(stream_ptr) };
+        match Worker_StreamState::from(state.stream_state) {
+            Worker_StreamState_WORKER_STREAM_STATE_GOOD => Ok(SnapshotOutputStream { ptr: stream_ptr }),
+            _ => {
+                unsafe { Worker_SnapshotOutputStream_Destroy(stream_ptr) };
+                Err(cstr_to_string(state.error_message))
+            }
         }
-
-        Ok(stream)
     }
 
     pub fn write_entity(&mut self, id: EntityId, entity: &Entity) -> Result<(), String> {
         let components = entity.raw_component_data();
-
         let wrk_entity = Worker_Entity {
             entity_id: id.id,
             components: components.components.as_ptr(),
             component_count: components.components.len() as u32,
         };
 
-        let success =
-            unsafe { Worker_SnapshotOutputStream_WriteEntity(self.ptr, &wrk_entity) != 0 };
-
-        if success {
-            Ok(())
-        } else {
-            let msg_cstr = unsafe { Worker_SnapshotOutputStream_GetError(self.ptr) };
-            let msg = cstr_to_string(msg_cstr);
-            Err(msg)
+        let state = unsafe {
+            Worker_SnapshotOutputStream_WriteEntity(self.ptr, &wrk_entity);
+            Worker_SnapshotOutputStream_GetState(self.ptr)
+        };
+        match Worker_StreamState::from(state.stream_state) {
+            Worker_StreamState_WORKER_STREAM_STATE_GOOD => Ok(()),
+            _ => Err(cstr_to_string(state.error_message))
         }
     }
 }
@@ -74,19 +69,16 @@ impl SnapshotInputStream {
             default_component_vtable: std::ptr::null(),
         };
 
-        let ptr = unsafe { Worker_SnapshotInputStream_Create(filename_cstr.as_ptr(), &params) };
+        let stream_ptr = unsafe { Worker_SnapshotInputStream_Create(filename_cstr.as_ptr(), &params) };
 
-        let stream = SnapshotInputStream { ptr };
-
-        let err_ptr = unsafe { Worker_SnapshotInputStream_GetError(ptr) };
-        if !err_ptr.is_null() {
-            unsafe {
-                Worker_SnapshotInputStream_Destroy(ptr);
+        let state = unsafe { Worker_SnapshotInputStream_GetState(stream_ptr) };
+        match Worker_StreamState::from(state.stream_state) {
+            Worker_StreamState_WORKER_STREAM_STATE_GOOD => Ok(SnapshotInputStream { ptr: stream_ptr }),
+            _ => {
+                unsafe { Worker_SnapshotInputStream_Destroy(stream_ptr) };
+                Err(cstr_to_string(state.error_message))
             }
-            return Err(cstr_to_string(err_ptr));
         }
-
-        Ok(stream)
     }
 
     pub fn has_next(&mut self) -> bool {
@@ -94,16 +86,15 @@ impl SnapshotInputStream {
     }
 
     pub fn read_entity(&mut self) -> Result<Entity, String> {
-        let wrk_entity_ptr = unsafe { Worker_SnapshotInputStream_ReadEntity(self.ptr) };
-        let err_ptr = unsafe { Worker_SnapshotInputStream_GetError(self.ptr) };
+        let entity_ptr = unsafe { Worker_SnapshotInputStream_ReadEntity(self.ptr) };
+        let state = unsafe { Worker_SnapshotInputStream_GetState(self.ptr) };
 
-        if !err_ptr.is_null() {
-            return Err(cstr_to_string(err_ptr));
+        match Worker_StreamState::from(state.stream_state) {
+            Worker_StreamState_WORKER_STREAM_STATE_GOOD => unsafe {
+                Entity::from_worker_sdk(&*entity_ptr)
+            },
+            _ => Err(cstr_to_string(state.error_message))
         }
-
-        let wrk_entity = unsafe { *wrk_entity_ptr };
-
-        unsafe { Entity::from_worker_sdk(&wrk_entity) }
     }
 }
 

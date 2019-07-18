@@ -10,7 +10,7 @@ use spatialos_sdk_sys::worker::{
     Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_ENTITY_ID,
     Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_NOT,
     Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_OR,
-    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_SPHERE, Worker_Constraint__bindgen_ty_1,
+    Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_SPHERE, Worker_Constraint_Union,
     Worker_EntityIdConstraint, Worker_EntityQuery, Worker_NotConstraint, Worker_OrConstraint,
     Worker_SphereConstraint,
 };
@@ -108,7 +108,7 @@ impl QueryConstraint {
         // Allocate the vector required to store this data. Use a dummy placeholder for the data.
         let dummy_constraint = Worker_Constraint {
             constraint_type: Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_ENTITY_ID as u8,
-            __bindgen_anon_1: Worker_Constraint__bindgen_ty_1 {
+            constraint: Worker_Constraint_Union {
                 entity_id_constraint: Worker_EntityIdConstraint { entity_id: 0 },
             },
         };
@@ -132,7 +132,7 @@ impl QueryConstraint {
             QueryConstraint::EntityId(id) => {
                 let constraint = Worker_Constraint {
                     constraint_type: Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_ENTITY_ID as u8,
-                    __bindgen_anon_1: Worker_Constraint__bindgen_ty_1 {
+                    constraint: Worker_Constraint_Union {
                         entity_id_constraint: Worker_EntityIdConstraint { entity_id: id.id },
                     },
                 };
@@ -142,7 +142,7 @@ impl QueryConstraint {
             QueryConstraint::Component(component_id) => {
                 let constraint = Worker_Constraint {
                     constraint_type: Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_COMPONENT as u8,
-                    __bindgen_anon_1: Worker_Constraint__bindgen_ty_1 {
+                    constraint: Worker_Constraint_Union {
                         component_constraint: Worker_ComponentConstraint {
                             component_id: *component_id,
                         },
@@ -154,7 +154,7 @@ impl QueryConstraint {
             QueryConstraint::Sphere(x, y, z, radius) => {
                 let constraint = Worker_Constraint {
                     constraint_type: Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_SPHERE as u8,
-                    __bindgen_anon_1: Worker_Constraint__bindgen_ty_1 {
+                    constraint: Worker_Constraint_Union {
                         sphere_constraint: Worker_SphereConstraint {
                             x: *x,
                             y: *y,
@@ -182,7 +182,7 @@ impl QueryConstraint {
 
                 let constraint = Worker_Constraint {
                     constraint_type: Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_AND as u8,
-                    __bindgen_anon_1: Worker_Constraint__bindgen_ty_1 {
+                    constraint: Worker_Constraint_Union {
                         and_constraint: Worker_AndConstraint {
                             constraint_count: constraints.len() as u32,
                             constraints: &mut underlying_data[current_index]
@@ -209,7 +209,7 @@ impl QueryConstraint {
 
                 let constraint = Worker_Constraint {
                     constraint_type: Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_OR as u8,
-                    __bindgen_anon_1: Worker_Constraint__bindgen_ty_1 {
+                    constraint: Worker_Constraint_Union {
                         or_constraint: Worker_OrConstraint {
                             constraint_count: constraints.len() as u32,
                             constraints: &mut underlying_data[current_index]
@@ -227,7 +227,7 @@ impl QueryConstraint {
 
                 let constraint = Worker_Constraint {
                     constraint_type: Worker_ConstraintType_WORKER_CONSTRAINT_TYPE_NOT as u8,
-                    __bindgen_anon_1: Worker_Constraint__bindgen_ty_1 {
+                    constraint: Worker_Constraint_Union {
                         not_constraint: Worker_NotConstraint {
                             constraint: &mut underlying_data[current_index]
                                 as *mut Worker_Constraint,
@@ -298,7 +298,7 @@ mod test {
                 );
                 unsafe {
                     let bindgen_constraint =
-                        worker_constraint.__bindgen_anon_1.entity_id_constraint;
+                        worker_constraint.constraint.entity_id_constraint;
                     assert_eq!(id.id, bindgen_constraint.entity_id);
                 }
             }
@@ -309,7 +309,7 @@ mod test {
                 );
                 unsafe {
                     let bindgen_constraint =
-                        worker_constraint.__bindgen_anon_1.component_constraint;
+                        worker_constraint.constraint.component_constraint;
                     assert_eq!(*component_id, bindgen_constraint.component_id);
                 }
             }
@@ -319,7 +319,7 @@ mod test {
                     worker_constraint.constraint_type
                 );
                 unsafe {
-                    let bindgen_constraint = worker_constraint.__bindgen_anon_1.sphere_constraint;
+                    let bindgen_constraint = worker_constraint.constraint.sphere_constraint;
                     assert_eq!(*x, bindgen_constraint.x);
                     assert_eq!(*y, bindgen_constraint.y);
                     assert_eq!(*z, bindgen_constraint.z);
@@ -332,7 +332,7 @@ mod test {
                     worker_constraint.constraint_type
                 );
                 unsafe {
-                    let bindgen_constraint = worker_constraint.__bindgen_anon_1.and_constraint;
+                    let bindgen_constraint = worker_constraint.constraint.and_constraint;
                     assert_ne!(::std::ptr::null_mut(), bindgen_constraint.constraints);
                     assert_eq!(
                         other_constraints.len() as u32,
@@ -353,7 +353,7 @@ mod test {
                     worker_constraint.constraint_type
                 );
                 unsafe {
-                    let bindgen_constraint = worker_constraint.__bindgen_anon_1.or_constraint;
+                    let bindgen_constraint = worker_constraint.constraint.or_constraint;
                     assert_ne!(::std::ptr::null_mut(), bindgen_constraint.constraints);
                     assert_eq!(
                         other_constraints.len() as u32,
@@ -374,7 +374,7 @@ mod test {
                     worker_constraint.constraint_type
                 );
                 unsafe {
-                    let bindgen_constraint = worker_constraint.__bindgen_anon_1.not_constraint;
+                    let bindgen_constraint = worker_constraint.constraint.not_constraint;
                     assert_ne!(::std::ptr::null_mut(), bindgen_constraint.constraint);
 
                     is_constraint_valid(

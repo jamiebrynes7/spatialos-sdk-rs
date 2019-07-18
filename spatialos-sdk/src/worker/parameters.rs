@@ -101,6 +101,7 @@ impl ConnectionParameters {
             built_in_metrics_report_period_millis: self.built_in_metrics_report_period_millis,
             protocol_logging: self.protocol_logging.to_worker_sdk(),
             enable_protocol_logging_at_startup: self.enable_protocol_logging_at_startup as u8,
+            enable_dynamic_components: 0,
             thread_affinity: self.thread_affinity.to_worker_sdk(),
             component_vtable_count: if self.use_internal_serialization {
                 DATABASE.len() as u32
@@ -135,39 +136,46 @@ impl ProtocolType {
         Worker_RakNetNetworkParameters,
         Worker_TcpNetworkParameters,
         Worker_KcpNetworkParameters,
+        Worker_Alpha_ModularUdpNetworkParameters,
     ) {
         match self {
             ProtocolType::Tcp(params) => {
                 let tcp_params = params.to_worker_sdk();
                 let raknet_params = RakNetNetworkParameters::default().to_worker_sdk();
                 let kcp_params = KcpNetworkParameters::default().to_worker_sdk();
+                let modular_udp_params = ModularUdpNetworkParameters::default().to_worker_sdk();
                 (
                     Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8,
                     raknet_params,
                     tcp_params,
                     kcp_params,
+                    modular_udp_params,
                 )
             }
             ProtocolType::RakNet(params) => {
                 let tcp_params = TcpNetworkParameters::default().to_worker_sdk();
                 let raknet_params = params.to_worker_sdk();
                 let kcp_params = KcpNetworkParameters::default().to_worker_sdk();
+                let modular_udp_params = ModularUdpNetworkParameters::default().to_worker_sdk();
                 (
                     Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8,
                     raknet_params,
                     tcp_params,
                     kcp_params,
+                    modular_udp_params,
                 )
             }
             ProtocolType::Kcp(params) => {
                 let tcp_params = TcpNetworkParameters::default().to_worker_sdk();
                 let raknet_params = RakNetNetworkParameters::default().to_worker_sdk();
                 let kcp_params = params.to_worker_sdk();
+                let modular_udp_params = ModularUdpNetworkParameters::default().to_worker_sdk();
                 (
                     Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8,
                     raknet_params,
                     tcp_params,
                     kcp_params,
+                    modular_udp_params,
                 )
             }
         }
@@ -192,7 +200,7 @@ impl NetworkParameters {
     }
 
     pub(crate) fn to_worker_sdk(&self) -> Worker_NetworkParameters {
-        let (protocol_type, raknet_params, tcp_params, kcp_params) =
+        let (protocol_type, raknet_params, tcp_params, kcp_params, modular_udp_params) =
             self.protocol_params.to_worker_sdk();
         Worker_NetworkParameters {
             use_external_ip: self.use_external_ip as u8,
@@ -200,6 +208,7 @@ impl NetworkParameters {
             raknet: raknet_params,
             tcp: tcp_params,
             kcp: kcp_params,
+            modular_udp: modular_udp_params,
             connection_timeout_millis: self.connection_timeout_millis,
             default_command_timeout_millis: self.default_command_timeout_millis,
         }
@@ -301,6 +310,28 @@ impl KcpNetworkParameters {
                 .unwrap_or(&ErasureCodecParameters::default())
                 .to_worker_sdk(),
             heartbeat: self.heartbeat_params.to_worker_sdk(),
+        }
+    }
+}
+
+pub struct ModularUdpNetworkParameters {
+}
+
+impl ModularUdpNetworkParameters {
+    pub fn default() -> Self {
+        ModularUdpNetworkParameters {}
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_ModularUdpNetworkParameters {
+        Worker_Alpha_ModularUdpNetworkParameters {
+            security_type: Worker_NetworkSecurityType_WORKER_NETWORK_SECURITY_TYPE_INSECURE as u8,
+            downstream_kcp: ::std::ptr::null(),
+            upstream_kcp: ::std::ptr::null(),
+            downstream_erasure_codec: ::std::ptr::null(),
+            upstream_erasure_codec: ::std::ptr::null(),
+            downstream_heartbeat: ::std::ptr::null(),
+            upstream_heartbeat: ::std::ptr::null(),
+            flow_control: ::std::ptr::null(),
         }
     }
 }
