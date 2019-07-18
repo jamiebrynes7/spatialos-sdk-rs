@@ -1,6 +1,10 @@
 package example;
 
-import "improbable/vector3.schema";
+type Vector3d {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
 
 type CommandData {
     int32 value = 1;
@@ -20,7 +24,7 @@ component Rotate {
     double angle = 1;
 
     /// The center of the circle
-    improbable.Vector3d center = 2;
+    Vector3d center = 2;
 
     /// The radius of the rotation.
     double radius = 3;

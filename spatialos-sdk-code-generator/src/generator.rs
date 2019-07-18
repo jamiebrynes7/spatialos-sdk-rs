@@ -4,22 +4,6 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
-fn get_package_path<'a>(
-    package_names: &BTreeSet<Vec<String>>,
-    identifier: &'a Identifier,
-) -> &'a [String] {
-    // Strange construct here. A range is 1..N (1 inclusive, N exclusive). We want to iterate from N-1 to 1, so
-    // we build a range iterator from 1..N, then reverse it.
-    for i in (1..identifier.path.len()).rev() {
-        let subpath = &identifier.path[..i];
-        if package_names.contains(&subpath.to_vec()) {
-            return subpath;
-        }
-    }
-    // This should be unreachable, as `package_names` _must_ contain the corresponding package.
-    unreachable!();
-}
-
 fn get_rust_primitive_type_tag(primitive_type: &PrimitiveType) -> &str {
     match primitive_type {
         PrimitiveType::Invalid => panic!("Encountered invalid primitive."),
@@ -38,11 +22,12 @@ fn get_rust_primitive_type_tag(primitive_type: &PrimitiveType) -> &str {
         PrimitiveType::Double => "SchemaDouble",
         PrimitiveType::String => "SchemaString",
         PrimitiveType::EntityId => "SchemaEntityId",
+        PrimitiveType::Entity => panic!("Entity serialization unimplemented."),
         PrimitiveType::Bytes => "SchemaBytes",
     }
 }
 
-fn get_schema_type(value_type: &ValueTypeReference) -> &str {
+fn get_schema_type(value_type: &TypeReference) -> &str {
     if let Some(ref primitive_type) = value_type.primitive_reference {
         get_rust_primitive_type_tag(&primitive_type)
     } else if value_type.enum_reference.is_some() {
@@ -100,58 +85,74 @@ impl Package {
         self.path.len()
     }
 
-    fn rust_name(&self, identifier: &Identifier) -> String {
-        identifier.path[self.path.len()..].join("_")
+    fn rust_name(&self, qualified_name: &str) -> String {
+        let tokens: Vec<&str> = qualified_name.split('.').collect();
+        tokens[self.path.len()..].join("_")
     }
 
-    fn rust_fqname(&self, identifier: &Identifier) -> String {
+    fn rust_fqname(&self, qualified_name: &str) -> String {
         let gen_code = self.generated_code.borrow();
-        let identifier_package = gen_code.get_package(identifier);
+        let identifier_package = gen_code.get_package(qualified_name);
 
         [
             "generated".to_string(),
             identifier_package.path.join("::"),
-            identifier_package.rust_name(identifier),
+            identifier_package.rust_name(qualified_name),
         ]
         .join("::")
     }
 
     fn get_enum_definition(&self, qualified_name: &str) -> EnumDefinition {
-        self.generated_code.borrow().enums[&qualified_name.to_string()].clone()
-    }
-
-    fn get_type_definition(&self, qualified_name: &str) -> TypeDefinition {
-        self.generated_code.borrow().types[&qualified_name.to_string()].clone()
-    }
-
-    fn get_component_definition(&self, qualified_name: &str) -> ComponentDefinition {
-        self.generated_code.borrow().components[&qualified_name.to_string()].clone()
-    }
-
-    fn resolve_enum_reference(&self, reference: &EnumReference) -> EnumDefinition {
         self.generated_code
             .borrow()
-            .resolve_enum_reference(reference)
+            .enums
+            .get(&qualified_name.to_string())
+            .unwrap_or_else(|| panic!("Unable to find enum {}", qualified_name))
             .clone()
     }
 
-    fn resolve_type_reference(&self, reference: &TypeReference) -> TypeDefinition {
+    fn get_type_definition(&self, qualified_name: &str) -> TypeDefinition {
         self.generated_code
             .borrow()
-            .resolve_type_reference(reference)
+            .types
+            .get(&qualified_name.to_string())
+            .unwrap_or_else(|| panic!("Unable to find type {}", qualified_name))
+            .clone()
+    }
+
+    fn get_component_definition(&self, qualified_name: &str) -> ComponentDefinition {
+        self.generated_code
+            .borrow()
+            .components
+            .get(&qualified_name.to_string())
+            .unwrap_or_else(|| panic!("Unable to find component {}", qualified_name))
+            .clone()
+    }
+
+    fn resolve_enum_reference(&self, qualified_name: &str) -> EnumDefinition {
+        self.generated_code
+            .borrow()
+            .resolve_enum_reference(qualified_name)
+            .clone()
+    }
+
+    fn resolve_type_reference(&self, qualified_name: &str) -> TypeDefinition {
+        self.generated_code
+            .borrow()
+            .resolve_type_reference(qualified_name)
             .clone()
     }
 
     fn get_component_fields(&self, component: &ComponentDefinition) -> Vec<FieldDefinition> {
         if let Some(ref data_definition) = component.data_definition {
-            let data_type = self.resolve_type_reference(data_definition);
-            data_type.field_definitions.clone()
+            let data_type = self.resolve_type_reference(&data_definition);
+            data_type.fields.clone()
         } else {
-            component.field_definitions.clone()
+            component.fields.clone()
         }
     }
 
-    fn generate_value_type_reference(&self, value_type: &ValueTypeReference) -> String {
+    fn generate_rust_type_name(&self, value_type: &TypeReference) -> String {
         if let Some(ref primitive) = value_type.primitive_reference {
             match primitive {
                 PrimitiveType::Invalid => panic!("Encountered invalid primitive."),
@@ -164,36 +165,37 @@ impl Package {
                 PrimitiveType::Double => "f64",
                 PrimitiveType::String => "String",
                 PrimitiveType::EntityId => "spatialos_sdk::worker::EntityId",
+                PrimitiveType::Entity => panic!("Entity serialization unimplemented."),
                 PrimitiveType::Bytes => "Vec<u8>",
             }
             .to_string()
         } else if let Some(ref enum_ref) = value_type.enum_reference {
-            self.rust_fqname(&self.resolve_enum_reference(&enum_ref).identifier)
+            self.rust_fqname(&self.resolve_enum_reference(&enum_ref).qualified_name)
         } else if let Some(ref type_ref) = value_type.type_reference {
-            self.rust_fqname(&self.resolve_type_reference(&type_ref).identifier)
+            self.rust_fqname(&self.resolve_type_reference(&type_ref).qualified_name)
         } else {
-            panic!("Unknown value type reference. {:?}", value_type);
+            panic!("Unknown type reference. {:?}", value_type);
         }
     }
 
     fn generate_field_type(&self, field: &FieldDefinition) -> String {
         if let Some(ref singular) = field.singular_type {
-            self.generate_value_type_reference(&singular.type_reference)
+            self.generate_rust_type_name(&singular.type_reference)
         } else if let Some(ref option) = field.option_type {
             format!(
                 "Option<{}>",
-                self.generate_value_type_reference(&option.inner_type)
+                self.generate_rust_type_name(&option.inner_type)
             )
         } else if let Some(ref list) = field.list_type {
             format!(
                 "Vec<{}>",
-                self.generate_value_type_reference(&list.inner_type)
+                self.generate_rust_type_name(&list.inner_type)
             )
         } else if let Some(ref map) = field.map_type {
             format!(
                 "BTreeMap<{}, {}>",
-                self.generate_value_type_reference(&map.key_type),
-                self.generate_value_type_reference(&map.value_type)
+                self.generate_rust_type_name(&map.key_type),
+                self.generate_rust_type_name(&map.value_type)
             )
         } else {
             panic!("Unknown field type. {:?}", field)
@@ -216,7 +218,7 @@ impl Package {
 
     // Some types need to be borrowed when serializing (such as strings or objects). This helper function returns true
     // if this is required.
-    fn type_needs_borrow(&self, type_ref: &ValueTypeReference) -> bool {
+    fn type_needs_borrow(&self, type_ref: &TypeReference) -> bool {
         if let Some(ref primitive) = type_ref.primitive_reference {
             match primitive {
                 PrimitiveType::String => true,
@@ -323,7 +325,7 @@ impl Package {
     fn serialize_type(
         &self,
         field_id: u32,
-        value_type: &ValueTypeReference,
+        value_type: &TypeReference,
         expression: &str,
         schema_object: &str,
     ) -> String {
@@ -349,8 +351,8 @@ impl Package {
         } else if let Some(ref type_ref) = value_type.type_reference {
             let type_definition = self.rust_fqname(
                 &self
-                    .get_type_definition(&type_ref.qualified_name)
-                    .identifier,
+                    .get_type_definition(type_ref)
+                    .qualified_name,
             );
             format!(
                 "<{} as TypeConversion>::to_type(&{}, &mut {}.field::<SchemaObject>({}).add())?",
@@ -404,21 +406,21 @@ impl Package {
 
     // Generates an expression which deserializes a value from a schema type in 'schema_expr'. In the non primitive
     // case, this expression is of type Result<GeneratedType, String>, otherwise it is just T (where T is the primitive type).
-    fn deserialize_type(&self, value_type: &ValueTypeReference, schema_expr: &str) -> String {
+    fn deserialize_type(&self, value_type: &TypeReference, schema_expr: &str) -> String {
         if value_type.primitive_reference.is_some() {
             schema_expr.to_string()
         } else if let Some(ref enum_type) = value_type.enum_reference {
             let enum_name = self.rust_fqname(
                 &self
-                    .get_enum_definition(&enum_type.qualified_name)
-                    .identifier,
+                    .get_enum_definition(enum_type)
+                    .qualified_name,
             );
             format!("{}::from({})", enum_name, schema_expr)
         } else if let Some(ref type_ref) = value_type.type_reference {
             let type_name = self.rust_fqname(
                 &self
-                    .get_type_definition(&type_ref.qualified_name)
-                    .identifier,
+                    .get_type_definition(type_ref)
+                    .qualified_name,
             );
             format!(
                 "<{} as TypeConversion>::from_type(&{})",
@@ -433,7 +435,7 @@ impl Package {
     // using ? operator if the deserialize expression results in a Result<_, String> type.
     fn deserialize_type_unwrapped(
         &self,
-        value_type: &ValueTypeReference,
+        value_type: &TypeReference,
         schema_expr: &str,
     ) -> String {
         let deserialize_expr = self.deserialize_type(value_type, schema_expr);
@@ -455,17 +457,17 @@ struct GeneratedCode {
 }
 
 impl GeneratedCode {
-    fn resolve_type_reference(&self, reference: &TypeReference) -> &TypeDefinition {
-        &self.types[&reference.qualified_name]
+    fn resolve_type_reference(&self, qualified_name: &str) -> &TypeDefinition {
+        &self.types[qualified_name]
     }
 
-    fn resolve_enum_reference(&self, reference: &EnumReference) -> &EnumDefinition {
-        &self.enums[&reference.qualified_name]
+    fn resolve_enum_reference(&self, qualified_name: &str) -> &EnumDefinition {
+        &self.enums[qualified_name]
     }
 
-    pub fn get_package(&self, identifier: &Identifier) -> &Package {
+    pub fn get_package(&self, qualified_name: &str) -> &Package {
         let mut package = self.root_package.as_ref().unwrap();
-        let path = &identifier.path;
+        let path: Vec<&str> = qualified_name.split('.').collect();
         let mut current_part = 0;
 
         while current_part < path.len() {
@@ -484,18 +486,18 @@ impl GeneratedCode {
 // This function ensures that given a path ["example", "foo"] and the root package, it will create
 // 2 packages with the following structure:
 //   Package("root", [Package("example", [Package("foo", [])])])
-fn get_or_create_packages<'a>(package: &'a mut Package, path: &[String]) -> &'a mut Package {
+fn get_or_create_packages<'a>(package: &'a mut Package, path: &[&str]) -> &'a mut Package {
     if path.is_empty() {
         return package;
     }
     // Given a package, and a path. If that package does not have any subpackages with the name of the "next"
     // package in the FQN, create it.
-    let package_name = &path[0];
+    let package_name = path[0];
     let mut package_path = package.path.clone();
-    package_path.push(package_name.clone());
+    package_path.push(package_name.to_string());
     if !package.subpackages.contains_key(package_name) {
         package.subpackages.insert(
-            package_name.clone(),
+            package_name.to_string(),
             Package::new(
                 Rc::clone(&package.generated_code),
                 package_name,
@@ -542,8 +544,6 @@ fn generate_module(package: &Package) -> String {
 }
 
 pub fn generate_code(bundle: SchemaBundle) -> String {
-    let v1 = bundle.v1.unwrap();
-
     // Set up the root package.
     let generated_code = Rc::new(RefCell::new(GeneratedCode {
         root_package: None,
@@ -553,74 +553,28 @@ pub fn generate_code(bundle: SchemaBundle) -> String {
         components: BTreeMap::new(),
     }));
     let mut root_package = Package::new(Rc::clone(&generated_code), "", vec![]);
-
-    // Generate a list of unique packages. Essentially, go through all type/component/enum definitions and generate a unique
-    // set of package names by adding all fully qualified names, then generating a set of "possible" package names by taking
-    // the FQN path of each identifier, minus the last element (e.g. `foo.bar.Baz` -> `foo.bar`). The final package list is
-    // all "possible" package names, minus any names that are also FQNs of a type/enum/component.
-    let mut fqn_set: BTreeSet<Vec<String>> = BTreeSet::new();
-    let mut package_names: BTreeSet<Vec<String>> = BTreeSet::new();
-    for type_def in &v1.type_definitions {
-        let path = &type_def.identifier.path;
-        fqn_set.insert(path.clone());
-        package_names.insert(path[..path.len() - 1].to_vec());
-    }
-    for component in &v1.component_definitions {
-        let path = &component.identifier.path;
-        fqn_set.insert(path.clone());
-        package_names.insert(path[..path.len() - 1].to_vec());
-    }
-    for enum_def in &v1.enum_definitions {
-        let path = &enum_def.identifier.path;
-        fqn_set.insert(path.clone());
-        package_names.insert(path[..path.len() - 1].to_vec());
-    }
-    package_names = package_names.difference(&fqn_set).cloned().collect();
-
-    // Iterate over everything a 2nd time (and move definitions out of the AST), using the set of package names generated above.
-    for type_def in v1.type_definitions {
-        let mut package = get_or_create_packages(
+    for file in bundle.schema_files {
+        let package = get_or_create_packages(
             &mut root_package,
-            get_package_path(&package_names, &type_def.identifier),
+            file.package.name.split('.').collect::<Vec<&str>>().as_slice()
         );
-        let qualified_name = type_def.identifier.qualified_name.clone();
-        generated_code
-            .borrow_mut()
-            .types
-            .insert(qualified_name.clone(), type_def);
-        package.types.insert(qualified_name.clone());
+        for type_def in file.types {
+            // TODO: handle outer type.
+            package.types.insert(type_def.qualified_name.clone());
+            generated_code.borrow_mut().types.insert(type_def.qualified_name.clone(), type_def);
+        }
+        for enum_def in file.enums {
+            // TODO: handle outer type.
+            package.enums.insert(enum_def.qualified_name.clone());
+            generated_code.borrow_mut().enums.insert(enum_def.qualified_name.clone(), enum_def);
+        }
+        for component_def in file.components {
+            package.components.insert(component_def.qualified_name.clone());
+            generated_code.borrow_mut().components.insert(component_def.qualified_name.clone(), component_def);
+        }
     }
-    for component in v1.component_definitions {
-        let mut package = get_or_create_packages(
-            &mut root_package,
-            get_package_path(&package_names, &component.identifier),
-        );
-        let qualified_name = component.identifier.qualified_name.clone();
-        generated_code
-            .borrow_mut()
-            .components
-            .insert(qualified_name.clone(), component);
-        package.components.insert(qualified_name.clone());
-    }
-    for enum_def in v1.enum_definitions {
-        let mut package = get_or_create_packages(
-            &mut root_package,
-            get_package_path(&package_names, &enum_def.identifier),
-        );
-        let qualified_name = enum_def.identifier.qualified_name.clone();
-        generated_code
-            .borrow_mut()
-            .enums
-            .insert(qualified_name.clone(), enum_def);
-        package.enums.insert(qualified_name.clone());
-    }
-    /*
-    for pkg in &generated_code.borrow().packages {
-        println!("Found package: {}", pkg.qualified_name);
-    }
-    */
     generated_code.borrow_mut().root_package = Some(root_package);
-    //println!("{:#?}", generated_code.root_package.as_mut().unwrap());
+    println!("{:#?}", generated_code.borrow_mut().types);
     let generated_code_ref = generated_code.borrow();
     generate_module(&generated_code_ref.root_package.as_ref().unwrap())
 }

@@ -1,0 +1,297 @@
+{
+ "schemaFiles": [
+  {
+   "canonicalPath": "example.schema",
+   "package": {
+    "sourceReference": {
+     "line": 1,
+     "column": 1
+    },
+    "name": "example"
+   },
+   "imports": [],
+   "enums": [
+    {
+     "sourceReference": {
+      "line": 39,
+      "column": 1
+     },
+     "annotations": [],
+     "qualifiedName": "example.TestEnum",
+     "name": "TestEnum",
+     "outerType": "",
+     "values": [
+      {
+       "sourceReference": {
+        "line": 40,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "FIRST",
+       "value": 0
+      },
+      {
+       "sourceReference": {
+        "line": 41,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "SECOND",
+       "value": 1
+      }
+     ]
+    }
+   ],
+   "types": [
+    {
+     "sourceReference": {
+      "line": 3,
+      "column": 1
+     },
+     "annotations": [],
+     "qualifiedName": "example.Vector3d",
+     "name": "Vector3d",
+     "outerType": "",
+     "fields": [
+      {
+       "sourceReference": {
+        "line": 4,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "x",
+       "fieldId": 1,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "primitive": "Float"
+        }
+       }
+      },
+      {
+       "sourceReference": {
+        "line": 5,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "y",
+       "fieldId": 2,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "primitive": "Float"
+        }
+       }
+      },
+      {
+       "sourceReference": {
+        "line": 6,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "z",
+       "fieldId": 3,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "primitive": "Float"
+        }
+       }
+      }
+     ]
+    },
+    {
+     "sourceReference": {
+      "line": 9,
+      "column": 1
+     },
+     "annotations": [],
+     "qualifiedName": "example.CommandData",
+     "name": "CommandData",
+     "outerType": "",
+     "fields": [
+      {
+       "sourceReference": {
+        "line": 10,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "value",
+       "fieldId": 1,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "primitive": "Int32"
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "components": [
+    {
+     "sourceReference": {
+      "line": 13,
+      "column": 1
+     },
+     "annotations": [],
+     "qualifiedName": "example.Example",
+     "name": "Example",
+     "componentId": 1000,
+     "dataDefinition": "",
+     "fields": [
+      {
+       "sourceReference": {
+        "line": 15,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "x",
+       "fieldId": 1,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "primitive": "Float"
+        }
+       }
+      }
+     ],
+     "events": [],
+     "commands": [
+      {
+       "sourceReference": {
+        "line": 13,
+        "column": 1
+       },
+       "annotations": [],
+       "name": "test_command",
+       "requestType": "example.CommandData",
+       "responseType": "example.CommandData",
+       "commandIndex": 1
+      }
+     ]
+    },
+    {
+     "sourceReference": {
+      "line": 20,
+      "column": 1
+     },
+     "annotations": [],
+     "qualifiedName": "example.Rotate",
+     "name": "Rotate",
+     "componentId": 1001,
+     "dataDefinition": "",
+     "fields": [
+      {
+       "sourceReference": {
+        "line": 24,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "angle",
+       "fieldId": 1,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "primitive": "Double"
+        }
+       }
+      },
+      {
+       "sourceReference": {
+        "line": 27,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "center",
+       "fieldId": 2,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "type": "example.Vector3d"
+        }
+       }
+      },
+      {
+       "sourceReference": {
+        "line": 30,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "radius",
+       "fieldId": 3,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "primitive": "Double"
+        }
+       }
+      }
+     ],
+     "events": [],
+     "commands": []
+    },
+    {
+     "sourceReference": {
+      "line": 33,
+      "column": 1
+     },
+     "annotations": [],
+     "qualifiedName": "example.EntityIdTest",
+     "name": "EntityIdTest",
+     "componentId": 2001,
+     "dataDefinition": "",
+     "fields": [
+      {
+       "sourceReference": {
+        "line": 36,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "eid",
+       "fieldId": 1,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "primitive": "EntityId"
+        }
+       }
+      }
+     ],
+     "events": [],
+     "commands": []
+    },
+    {
+     "sourceReference": {
+      "line": 44,
+      "column": 1
+     },
+     "annotations": [],
+     "qualifiedName": "example.EnumTestComponent",
+     "name": "EnumTestComponent",
+     "componentId": 2002,
+     "dataDefinition": "",
+     "fields": [
+      {
+       "sourceReference": {
+        "line": 47,
+        "column": 5
+       },
+       "annotations": [],
+       "name": "test",
+       "fieldId": 1,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "enum": "example.TestEnum"
+        }
+       }
+      }
+     ],
+     "events": [],
+     "commands": []
+    }
+   ]
+  }
+ ]
+}
