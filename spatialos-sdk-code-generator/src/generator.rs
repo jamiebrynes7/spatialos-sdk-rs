@@ -222,6 +222,8 @@ impl Package {
         if let Some(ref primitive) = type_ref.primitive_reference {
             match primitive {
                 PrimitiveType::String => true,
+                PrimitiveType::Bytes => true,
+                PrimitiveType::Entity => true,
                 _ => false,
             }
         } else if type_ref.enum_reference.is_some() {
@@ -574,7 +576,7 @@ pub fn generate_code(bundle: SchemaBundle) -> String {
         }
     }
     generated_code.borrow_mut().root_package = Some(root_package);
-    println!("{:#?}", generated_code.borrow_mut().types);
+    // println!("{:#?}", generated_code.borrow_mut().root_package);
     let generated_code_ref = generated_code.borrow();
     generate_module(&generated_code_ref.root_package.as_ref().unwrap())
 }

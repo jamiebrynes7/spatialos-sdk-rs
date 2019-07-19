@@ -32,7 +32,7 @@ pub struct SchemaObject {
 }
 
 impl SchemaComponentUpdate {
-    pub fn new(component_id: ComponentId) -> SchemaComponentUpdate {
+    pub fn new() -> SchemaComponentUpdate {
         SchemaComponentUpdate {
             internal: unsafe { Schema_CreateComponentUpdate() },
         }

@@ -173,44 +173,44 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
         <<#= self.rust_fqname(&component.qualified_name) #>Update as TypeConversion>::from_type(&update.fields())
     }
 
-    fn from_request(request: &SchemaCommandRequest) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandRequest, String> {
-        match request.command_index() {<#
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandRequest, String> {
+        match command_index {<#
             for command in &component.commands {
             #>
             <#= command.command_index #> => {
                 let result = <<#= self.rust_fqname(&command.request_type) #> as TypeConversion>::from_type(&request.object());
                 result.and_then(|deserialized| Ok(<#= self.rust_name(&component.qualified_name) #>CommandRequest::<#= command.name.to_camel_case() #>(deserialized)))
             },<# } #>
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component <#= self.rust_name(&component.qualified_name) #>.", request.command_index()))
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component <#= self.rust_name(&component.qualified_name) #>.", command_index))
         }
     }
 
-    fn from_response(response: &SchemaCommandResponse) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandResponse, String> {
-        match response.command_index() {<#
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandResponse, String> {
+        match command_index {<#
             for command in &component.commands {
             #>
             <#= command.command_index #> => {
                 let result = <<#= self.rust_fqname(&command.response_type) #> as TypeConversion>::from_type(&response.object());
                 result.and_then(|deserialized| Ok(<#= self.rust_name(&component.qualified_name) #>CommandResponse::<#= command.name.to_camel_case() #>(deserialized)))
             },<# } #>
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component <#= self.rust_name(&component.qualified_name) #>.", response.command_index()))
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component <#= self.rust_name(&component.qualified_name) #>.", command_index))
         }
     }
 
     fn to_data(data: &<#= self.rust_fqname(&component.qualified_name) #>) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        let mut serialized_data = SchemaComponentData::new();
         <<#= self.rust_fqname(&component.qualified_name) #> as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &<#= self.rust_fqname(&component.qualified_name) #>Update) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        let mut serialized_update = SchemaComponentUpdate::new();
         <<#= self.rust_fqname(&component.qualified_name) #>Update as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
     fn to_request(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> Result<SchemaCommandRequest, String> {
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        let mut serialized_request = SchemaCommandRequest::new();
         match request {<#
             for command in &component.commands {
             #>
@@ -223,7 +223,7 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
     }
 
     fn to_response(response: &<#= self.rust_fqname(&component.qualified_name) #>CommandResponse) -> Result<SchemaCommandResponse, String> {
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        let mut serialized_response = SchemaCommandResponse::new();
         match response {<#
             for command in &component.commands {
             #>

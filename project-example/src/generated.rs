@@ -70,6 +70,28 @@ impl TypeConversion for CommandData {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct Vector3d {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+impl TypeConversion for Vector3d {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+            x: input.field::<SchemaDouble>(1).get_or_default(),
+            y: input.field::<SchemaDouble>(2).get_or_default(),
+            z: input.field::<SchemaDouble>(3).get_or_default(),
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        output.field::<SchemaDouble>(1).add(input.x);
+        output.field::<SchemaDouble>(2).add(input.y);
+        output.field::<SchemaDouble>(3).add(input.z);
+        Ok(())
+    }
+}
+
 /* Components. */ 
 #[derive(Debug, Clone)]
 pub struct EntityIdTest {
@@ -144,32 +166,32 @@ impl Component for EntityIdTest {
         <generated::example::EntityIdTestUpdate as TypeConversion>::from_type(&update.fields())
     }
 
-    fn from_request(request: &SchemaCommandRequest) -> Result<generated::example::EntityIdTestCommandRequest, String> {
-        match request.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EntityIdTest.", request.command_index()))
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EntityIdTestCommandRequest, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EntityIdTest.", command_index))
         }
     }
 
-    fn from_response(response: &SchemaCommandResponse) -> Result<generated::example::EntityIdTestCommandResponse, String> {
-        match response.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EntityIdTest.", response.command_index()))
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::EntityIdTestCommandResponse, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EntityIdTest.", command_index))
         }
     }
 
     fn to_data(data: &generated::example::EntityIdTest) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        let mut serialized_data = SchemaComponentData::new();
         <generated::example::EntityIdTest as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::EntityIdTestUpdate) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        let mut serialized_update = SchemaComponentUpdate::new();
         <generated::example::EntityIdTestUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
     fn to_request(request: &generated::example::EntityIdTestCommandRequest) -> Result<SchemaCommandRequest, String> {
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
@@ -177,7 +199,7 @@ impl Component for EntityIdTest {
     }
 
     fn to_response(response: &generated::example::EntityIdTestCommandResponse) -> Result<SchemaCommandResponse, String> {
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
@@ -272,32 +294,32 @@ impl Component for EnumTestComponent {
         <generated::example::EnumTestComponentUpdate as TypeConversion>::from_type(&update.fields())
     }
 
-    fn from_request(request: &SchemaCommandRequest) -> Result<generated::example::EnumTestComponentCommandRequest, String> {
-        match request.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EnumTestComponent.", request.command_index()))
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EnumTestComponentCommandRequest, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EnumTestComponent.", command_index))
         }
     }
 
-    fn from_response(response: &SchemaCommandResponse) -> Result<generated::example::EnumTestComponentCommandResponse, String> {
-        match response.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EnumTestComponent.", response.command_index()))
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::EnumTestComponentCommandResponse, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EnumTestComponent.", command_index))
         }
     }
 
     fn to_data(data: &generated::example::EnumTestComponent) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        let mut serialized_data = SchemaComponentData::new();
         <generated::example::EnumTestComponent as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::EnumTestComponentUpdate) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        let mut serialized_update = SchemaComponentUpdate::new();
         <generated::example::EnumTestComponentUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
     fn to_request(request: &generated::example::EnumTestComponentCommandRequest) -> Result<SchemaCommandRequest, String> {
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
@@ -305,7 +327,7 @@ impl Component for EnumTestComponent {
     }
 
     fn to_response(response: &generated::example::EnumTestComponentCommandResponse) -> Result<SchemaCommandResponse, String> {
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
@@ -402,40 +424,40 @@ impl Component for Example {
         <generated::example::ExampleUpdate as TypeConversion>::from_type(&update.fields())
     }
 
-    fn from_request(request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest, String> {
-        match request.command_index() {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest, String> {
+        match command_index {
             1 => {
                 let result = <generated::example::CommandData as TypeConversion>::from_type(&request.object());
                 result.and_then(|deserialized| Ok(ExampleCommandRequest::TestCommand(deserialized)))
             },
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Example.", request.command_index()))
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Example.", command_index))
         }
     }
 
-    fn from_response(response: &SchemaCommandResponse) -> Result<generated::example::ExampleCommandResponse, String> {
-        match response.command_index() {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::ExampleCommandResponse, String> {
+        match command_index {
             1 => {
                 let result = <generated::example::CommandData as TypeConversion>::from_type(&response.object());
                 result.and_then(|deserialized| Ok(ExampleCommandResponse::TestCommand(deserialized)))
             },
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Example.", response.command_index()))
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Example.", command_index))
         }
     }
 
     fn to_data(data: &generated::example::Example) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        let mut serialized_data = SchemaComponentData::new();
         <generated::example::Example as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::ExampleUpdate) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        let mut serialized_update = SchemaComponentUpdate::new();
         <generated::example::ExampleUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
     fn to_request(request: &generated::example::ExampleCommandRequest) -> Result<SchemaCommandRequest, String> {
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        let mut serialized_request = SchemaCommandRequest::new();
         match request {
             ExampleCommandRequest::TestCommand(ref data) => {
                 <generated::example::CommandData as TypeConversion>::to_type(data, &mut serialized_request.object_mut())?;
@@ -446,7 +468,7 @@ impl Component for Example {
     }
 
     fn to_response(response: &generated::example::ExampleCommandResponse) -> Result<SchemaCommandResponse, String> {
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        let mut serialized_response = SchemaCommandResponse::new();
         match response {
             ExampleCommandResponse::TestCommand(ref data) => {
                 <generated::example::CommandData as TypeConversion>::to_type(data, &mut serialized_response.object_mut())?;
@@ -476,20 +498,20 @@ inventory::submit!(VTable::new::<Example>());
 #[derive(Debug, Clone)]
 pub struct Rotate {
     pub angle: f64,
-    pub center: generated::improbable::Vector3d,
+    pub center: generated::example::Vector3d,
     pub radius: f64,
 }
 impl TypeConversion for Rotate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
             angle: input.field::<SchemaDouble>(1).get_or_default(),
-            center: <generated::improbable::Vector3d as TypeConversion>::from_type(&input.field::<SchemaObject>(2).get_or_default())?,
+            center: <generated::example::Vector3d as TypeConversion>::from_type(&input.field::<SchemaObject>(2).get_or_default())?,
             radius: input.field::<SchemaDouble>(3).get_or_default(),
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.field::<SchemaDouble>(1).add(input.angle);
-        <generated::improbable::Vector3d as TypeConversion>::to_type(&&input.center, &mut output.field::<SchemaObject>(2).add())?;
+        <generated::example::Vector3d as TypeConversion>::to_type(&&input.center, &mut output.field::<SchemaObject>(2).add())?;
         output.field::<SchemaDouble>(3).add(input.radius);
         Ok(())
     }
@@ -505,7 +527,7 @@ impl ComponentData<Rotate> for Rotate {
 #[derive(Debug, Clone, Default)]
 pub struct RotateUpdate {
     pub angle: Option<f64>,
-    pub center: Option<generated::improbable::Vector3d>,
+    pub center: Option<generated::example::Vector3d>,
     pub radius: Option<f64>,
 }
 impl TypeConversion for RotateUpdate {
@@ -523,7 +545,7 @@ impl TypeConversion for RotateUpdate {
         let _field_center = input.field::<SchemaObject>(2);
         if _field_center.count() > 0 {
             let field = &_field_center;
-            output.center = Some(<generated::improbable::Vector3d as TypeConversion>::from_type(&field.get_or_default())?);
+            output.center = Some(<generated::example::Vector3d as TypeConversion>::from_type(&field.get_or_default())?);
         }
         let _field_radius = input.field::<SchemaDouble>(3);
         if _field_radius.count() > 0 {
@@ -537,7 +559,7 @@ impl TypeConversion for RotateUpdate {
             output.field::<SchemaDouble>(1).add(value);
         }
         if let Some(ref value) = input.center {
-            <generated::improbable::Vector3d as TypeConversion>::to_type(&value, &mut output.field::<SchemaObject>(2).add())?;
+            <generated::example::Vector3d as TypeConversion>::to_type(&value, &mut output.field::<SchemaObject>(2).add())?;
         }
         if let Some(value) = input.radius {
             output.field::<SchemaDouble>(3).add(value);
@@ -576,32 +598,32 @@ impl Component for Rotate {
         <generated::example::RotateUpdate as TypeConversion>::from_type(&update.fields())
     }
 
-    fn from_request(request: &SchemaCommandRequest) -> Result<generated::example::RotateCommandRequest, String> {
-        match request.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Rotate.", request.command_index()))
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::RotateCommandRequest, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Rotate.", command_index))
         }
     }
 
-    fn from_response(response: &SchemaCommandResponse) -> Result<generated::example::RotateCommandResponse, String> {
-        match response.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Rotate.", response.command_index()))
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::RotateCommandResponse, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Rotate.", command_index))
         }
     }
 
     fn to_data(data: &generated::example::Rotate) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        let mut serialized_data = SchemaComponentData::new();
         <generated::example::Rotate as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::RotateUpdate) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        let mut serialized_update = SchemaComponentUpdate::new();
         <generated::example::RotateUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
     fn to_request(request: &generated::example::RotateCommandRequest) -> Result<SchemaCommandRequest, String> {
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
@@ -609,7 +631,7 @@ impl Component for Rotate {
     }
 
     fn to_response(response: &generated::example::RotateCommandResponse) -> Result<SchemaCommandResponse, String> {
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
@@ -877,50 +899,6 @@ impl TypeConversion for EdgeLength {
 }
 
 #[derive(Debug, Clone)]
-pub struct Vector3d {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
-}
-impl TypeConversion for Vector3d {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
-            x: input.field::<SchemaDouble>(1).get_or_default(),
-            y: input.field::<SchemaDouble>(2).get_or_default(),
-            z: input.field::<SchemaDouble>(3).get_or_default(),
-        })
-    }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        output.field::<SchemaDouble>(1).add(input.x);
-        output.field::<SchemaDouble>(2).add(input.y);
-        output.field::<SchemaDouble>(3).add(input.z);
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Vector3f {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-impl TypeConversion for Vector3f {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
-            x: input.field::<SchemaFloat>(1).get_or_default(),
-            y: input.field::<SchemaFloat>(2).get_or_default(),
-            z: input.field::<SchemaFloat>(3).get_or_default(),
-        })
-    }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        output.field::<SchemaFloat>(1).add(input.x);
-        output.field::<SchemaFloat>(2).add(input.y);
-        output.field::<SchemaFloat>(3).add(input.z);
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct WorkerAttributeSet {
     pub attribute: Vec<String>,
 }
@@ -1041,32 +1019,32 @@ impl Component for EntityAcl {
         <generated::improbable::EntityAclUpdate as TypeConversion>::from_type(&update.fields())
     }
 
-    fn from_request(request: &SchemaCommandRequest) -> Result<generated::improbable::EntityAclCommandRequest, String> {
-        match request.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EntityAcl.", request.command_index()))
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::EntityAclCommandRequest, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EntityAcl.", command_index))
         }
     }
 
-    fn from_response(response: &SchemaCommandResponse) -> Result<generated::improbable::EntityAclCommandResponse, String> {
-        match response.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EntityAcl.", response.command_index()))
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::EntityAclCommandResponse, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EntityAcl.", command_index))
         }
     }
 
     fn to_data(data: &generated::improbable::EntityAcl) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::EntityAcl as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::EntityAclUpdate) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::EntityAclUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::EntityAclCommandRequest) -> Result<SchemaCommandRequest, String> {
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
@@ -1074,7 +1052,7 @@ impl Component for EntityAcl {
     }
 
     fn to_response(response: &generated::improbable::EntityAclCommandResponse) -> Result<SchemaCommandResponse, String> {
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
@@ -1169,32 +1147,32 @@ impl Component for Interest {
         <generated::improbable::InterestUpdate as TypeConversion>::from_type(&update.fields())
     }
 
-    fn from_request(request: &SchemaCommandRequest) -> Result<generated::improbable::InterestCommandRequest, String> {
-        match request.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Interest.", request.command_index()))
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::InterestCommandRequest, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Interest.", command_index))
         }
     }
 
-    fn from_response(response: &SchemaCommandResponse) -> Result<generated::improbable::InterestCommandResponse, String> {
-        match response.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Interest.", response.command_index()))
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::InterestCommandResponse, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Interest.", command_index))
         }
     }
 
     fn to_data(data: &generated::improbable::Interest) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::Interest as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::InterestUpdate) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::InterestUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::InterestCommandRequest) -> Result<SchemaCommandRequest, String> {
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
@@ -1202,7 +1180,7 @@ impl Component for Interest {
     }
 
     fn to_response(response: &generated::improbable::InterestCommandResponse) -> Result<SchemaCommandResponse, String> {
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
@@ -1297,32 +1275,32 @@ impl Component for Metadata {
         <generated::improbable::MetadataUpdate as TypeConversion>::from_type(&update.fields())
     }
 
-    fn from_request(request: &SchemaCommandRequest) -> Result<generated::improbable::MetadataCommandRequest, String> {
-        match request.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Metadata.", request.command_index()))
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::MetadataCommandRequest, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Metadata.", command_index))
         }
     }
 
-    fn from_response(response: &SchemaCommandResponse) -> Result<generated::improbable::MetadataCommandResponse, String> {
-        match response.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Metadata.", response.command_index()))
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::MetadataCommandResponse, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Metadata.", command_index))
         }
     }
 
     fn to_data(data: &generated::improbable::Metadata) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::Metadata as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::MetadataUpdate) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::MetadataUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::MetadataCommandRequest) -> Result<SchemaCommandRequest, String> {
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
@@ -1330,7 +1308,7 @@ impl Component for Metadata {
     }
 
     fn to_response(response: &generated::improbable::MetadataCommandResponse) -> Result<SchemaCommandResponse, String> {
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
@@ -1410,32 +1388,32 @@ impl Component for Persistence {
         <generated::improbable::PersistenceUpdate as TypeConversion>::from_type(&update.fields())
     }
 
-    fn from_request(request: &SchemaCommandRequest) -> Result<generated::improbable::PersistenceCommandRequest, String> {
-        match request.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Persistence.", request.command_index()))
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PersistenceCommandRequest, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Persistence.", command_index))
         }
     }
 
-    fn from_response(response: &SchemaCommandResponse) -> Result<generated::improbable::PersistenceCommandResponse, String> {
-        match response.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Persistence.", response.command_index()))
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::PersistenceCommandResponse, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Persistence.", command_index))
         }
     }
 
     fn to_data(data: &generated::improbable::Persistence) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::Persistence as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::PersistenceUpdate) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::PersistenceUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::PersistenceCommandRequest) -> Result<SchemaCommandRequest, String> {
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
@@ -1443,7 +1421,7 @@ impl Component for Persistence {
     }
 
     fn to_response(response: &generated::improbable::PersistenceCommandResponse) -> Result<SchemaCommandResponse, String> {
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
@@ -1538,32 +1516,32 @@ impl Component for Position {
         <generated::improbable::PositionUpdate as TypeConversion>::from_type(&update.fields())
     }
 
-    fn from_request(request: &SchemaCommandRequest) -> Result<generated::improbable::PositionCommandRequest, String> {
-        match request.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Position.", request.command_index()))
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PositionCommandRequest, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Position.", command_index))
         }
     }
 
-    fn from_response(response: &SchemaCommandResponse) -> Result<generated::improbable::PositionCommandResponse, String> {
-        match response.command_index() {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Position.", response.command_index()))
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::PositionCommandResponse, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Position.", command_index))
         }
     }
 
     fn to_data(data: &generated::improbable::Position) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::ID);
+        let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::Position as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::PositionUpdate) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
+        let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::PositionUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::PositionCommandRequest) -> Result<SchemaCommandRequest, String> {
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+        let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
@@ -1571,7 +1549,7 @@ impl Component for Position {
     }
 
     fn to_response(response: &generated::improbable::PositionCommandResponse) -> Result<SchemaCommandResponse, String> {
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+        let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
@@ -1594,4 +1572,538 @@ impl Component for Position {
 inventory::submit!(VTable::new::<Position>());
 
 
+
+pub mod restricted {
+use spatialos_sdk::worker::internal::schema::*;
+use spatialos_sdk::worker::component::*;
+use std::collections::BTreeMap;
+
+use super::super::super::generated as generated;
+
+/* Enums. */
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Connection_ConnectionStatus {
+
+    UNKNOWN,
+    AWAITING_WORKER_CONNECTION,
+    CONNECTED,
+    DISCONNECTED,
+}
+
+impl From<u32> for Connection_ConnectionStatus {
+    fn from(value: u32) -> Self {
+        match value {
+
+            0 => Connection_ConnectionStatus::UNKNOWN, 
+            1 => Connection_ConnectionStatus::AWAITING_WORKER_CONNECTION, 
+            2 => Connection_ConnectionStatus::CONNECTED, 
+            3 => Connection_ConnectionStatus::DISCONNECTED, 
+            _ => panic!(format!("Could not convert {} to enum Connection_ConnectionStatus.", value))
+        }
+    }
+}
+
+impl Connection_ConnectionStatus {
+    pub(crate) fn as_u32(self) -> u32 {
+        match self {
+            
+            Connection_ConnectionStatus::UNKNOWN => 0, 
+            Connection_ConnectionStatus::AWAITING_WORKER_CONNECTION => 1, 
+            Connection_ConnectionStatus::CONNECTED => 2, 
+            Connection_ConnectionStatus::DISCONNECTED => 3, 
+        }
+    }
+}
+
+/* Types. */
+#[derive(Debug, Clone)]
+pub struct Connection {
+    pub status: generated::improbable::restricted::Connection_ConnectionStatus,
+    pub data_latency_ms: u32,
+    pub connected_since_utc: u64,
+}
+impl TypeConversion for Connection {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+            status: generated::improbable::restricted::Connection_ConnectionStatus::from(input.field::<SchemaEnum>(1).get_or_default()),
+            data_latency_ms: input.field::<SchemaUint32>(2).get_or_default(),
+            connected_since_utc: input.field::<SchemaUint64>(3).get_or_default(),
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        output.field::<SchemaEnum>(1).add(input.status.as_u32());
+        output.field::<SchemaUint32>(2).add(input.data_latency_ms);
+        output.field::<SchemaUint64>(3).add(input.connected_since_utc);
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DisconnectRequest {
+}
+impl TypeConversion for DisconnectRequest {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DisconnectResponse {
+}
+impl TypeConversion for DisconnectResponse {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PlayerIdentity {
+    pub player_identifier: String,
+    pub provider: String,
+    pub metadata: Vec<u8>,
+}
+impl TypeConversion for PlayerIdentity {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+            player_identifier: input.field::<SchemaString>(1).get_or_default(),
+            provider: input.field::<SchemaString>(2).get_or_default(),
+            metadata: input.field::<SchemaBytes>(3).get_or_default(),
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        output.field::<SchemaString>(1).add(&&input.player_identifier);
+        output.field::<SchemaString>(2).add(&&input.provider);
+        output.field::<SchemaBytes>(3).add(&&input.metadata);
+        Ok(())
+    }
+}
+
+/* Components. */ 
+#[derive(Debug, Clone)]
+pub struct PlayerClient {
+    pub player_identity: generated::improbable::restricted::PlayerIdentity,
+}
+impl TypeConversion for PlayerClient {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+            player_identity: <generated::improbable::restricted::PlayerIdentity as TypeConversion>::from_type(&input.field::<SchemaObject>(1).get_or_default())?,
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        <generated::improbable::restricted::PlayerIdentity as TypeConversion>::to_type(&&input.player_identity, &mut output.field::<SchemaObject>(1).add())?;
+        Ok(())
+    }
+}
+impl ComponentData<PlayerClient> for PlayerClient {
+    fn merge(&mut self, update: PlayerClientUpdate) {
+        if let Some(value) = update.player_identity { self.player_identity = value; }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct PlayerClientUpdate {
+    pub player_identity: Option<generated::improbable::restricted::PlayerIdentity>,
+}
+impl TypeConversion for PlayerClientUpdate {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        let mut output = Self {
+            player_identity: None,
+        };
+        let _field_player_identity = input.field::<SchemaObject>(1);
+        if _field_player_identity.count() > 0 {
+            let field = &_field_player_identity;
+            output.player_identity = Some(<generated::improbable::restricted::PlayerIdentity as TypeConversion>::from_type(&field.get_or_default())?);
+        }
+        Ok(output)
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        if let Some(ref value) = input.player_identity {
+            <generated::improbable::restricted::PlayerIdentity as TypeConversion>::to_type(&value, &mut output.field::<SchemaObject>(1).add())?;
+        }
+        Ok(())
+    }
+}
+impl ComponentUpdate<PlayerClient> for PlayerClientUpdate {
+    fn merge(&mut self, update: PlayerClientUpdate) {
+        if update.player_identity.is_some() { self.player_identity = update.player_identity; }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum PlayerClientCommandRequest {
+}
+
+#[derive(Debug, Clone)]
+pub enum PlayerClientCommandResponse {
+}
+
+impl Component for PlayerClient {
+    type Update = generated::improbable::restricted::PlayerClientUpdate;
+    type CommandRequest = generated::improbable::restricted::PlayerClientCommandRequest;
+    type CommandResponse = generated::improbable::restricted::PlayerClientCommandResponse;
+
+    const ID: ComponentId = 61;
+
+    fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::PlayerClient, String> {
+        <generated::improbable::restricted::PlayerClient as TypeConversion>::from_type(&data.fields())
+    }
+
+    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::PlayerClientUpdate, String> {
+        <generated::improbable::restricted::PlayerClientUpdate as TypeConversion>::from_type(&update.fields())
+    }
+
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::PlayerClientCommandRequest, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component PlayerClient.", command_index))
+        }
+    }
+
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::PlayerClientCommandResponse, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component PlayerClient.", command_index))
+        }
+    }
+
+    fn to_data(data: &generated::improbable::restricted::PlayerClient) -> Result<SchemaComponentData, String> {
+        let mut serialized_data = SchemaComponentData::new();
+        <generated::improbable::restricted::PlayerClient as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        Ok(serialized_data)
+    }
+
+    fn to_update(update: &generated::improbable::restricted::PlayerClientUpdate) -> Result<SchemaComponentUpdate, String> {
+        let mut serialized_update = SchemaComponentUpdate::new();
+        <generated::improbable::restricted::PlayerClientUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        Ok(serialized_update)
+    }
+
+    fn to_request(request: &generated::improbable::restricted::PlayerClientCommandRequest) -> Result<SchemaCommandRequest, String> {
+        let mut serialized_request = SchemaCommandRequest::new();
+        match request {
+            _ => unreachable!()
+        }
+        Ok(serialized_request)
+    }
+
+    fn to_response(response: &generated::improbable::restricted::PlayerClientCommandResponse) -> Result<SchemaCommandResponse, String> {
+        let mut serialized_response = SchemaCommandResponse::new();
+        match response {
+            _ => unreachable!()
+        }
+        Ok(serialized_response)
+    }
+
+    fn get_request_command_index(request: &generated::improbable::restricted::PlayerClientCommandRequest) -> u32 {
+        match request {
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_response_command_index(response: &generated::improbable::restricted::PlayerClientCommandResponse) -> u32 {
+        match response {
+            _ => unreachable!(),
+        }
+    }
+}
+
+inventory::submit!(VTable::new::<PlayerClient>());
+
+#[derive(Debug, Clone)]
+pub struct System {
+}
+impl TypeConversion for System {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        Ok(())
+    }
+}
+impl ComponentData<System> for System {
+    fn merge(&mut self, update: SystemUpdate) {
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct SystemUpdate {
+}
+impl TypeConversion for SystemUpdate {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        let mut output = Self {
+        };
+        Ok(output)
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        Ok(())
+    }
+}
+impl ComponentUpdate<System> for SystemUpdate {
+    fn merge(&mut self, update: SystemUpdate) {
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum SystemCommandRequest {
+}
+
+#[derive(Debug, Clone)]
+pub enum SystemCommandResponse {
+}
+
+impl Component for System {
+    type Update = generated::improbable::restricted::SystemUpdate;
+    type CommandRequest = generated::improbable::restricted::SystemCommandRequest;
+    type CommandResponse = generated::improbable::restricted::SystemCommandResponse;
+
+    const ID: ComponentId = 59;
+
+    fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::System, String> {
+        <generated::improbable::restricted::System as TypeConversion>::from_type(&data.fields())
+    }
+
+    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::SystemUpdate, String> {
+        <generated::improbable::restricted::SystemUpdate as TypeConversion>::from_type(&update.fields())
+    }
+
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::SystemCommandRequest, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component System.", command_index))
+        }
+    }
+
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::SystemCommandResponse, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component System.", command_index))
+        }
+    }
+
+    fn to_data(data: &generated::improbable::restricted::System) -> Result<SchemaComponentData, String> {
+        let mut serialized_data = SchemaComponentData::new();
+        <generated::improbable::restricted::System as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        Ok(serialized_data)
+    }
+
+    fn to_update(update: &generated::improbable::restricted::SystemUpdate) -> Result<SchemaComponentUpdate, String> {
+        let mut serialized_update = SchemaComponentUpdate::new();
+        <generated::improbable::restricted::SystemUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        Ok(serialized_update)
+    }
+
+    fn to_request(request: &generated::improbable::restricted::SystemCommandRequest) -> Result<SchemaCommandRequest, String> {
+        let mut serialized_request = SchemaCommandRequest::new();
+        match request {
+            _ => unreachable!()
+        }
+        Ok(serialized_request)
+    }
+
+    fn to_response(response: &generated::improbable::restricted::SystemCommandResponse) -> Result<SchemaCommandResponse, String> {
+        let mut serialized_response = SchemaCommandResponse::new();
+        match response {
+            _ => unreachable!()
+        }
+        Ok(serialized_response)
+    }
+
+    fn get_request_command_index(request: &generated::improbable::restricted::SystemCommandRequest) -> u32 {
+        match request {
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_response_command_index(response: &generated::improbable::restricted::SystemCommandResponse) -> u32 {
+        match response {
+            _ => unreachable!(),
+        }
+    }
+}
+
+inventory::submit!(VTable::new::<System>());
+
+#[derive(Debug, Clone)]
+pub struct Worker {
+    pub worker_id: String,
+    pub worker_type: String,
+    pub connection: generated::improbable::restricted::Connection,
+}
+impl TypeConversion for Worker {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+            worker_id: input.field::<SchemaString>(1).get_or_default(),
+            worker_type: input.field::<SchemaString>(2).get_or_default(),
+            connection: <generated::improbable::restricted::Connection as TypeConversion>::from_type(&input.field::<SchemaObject>(3).get_or_default())?,
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        output.field::<SchemaString>(1).add(&&input.worker_id);
+        output.field::<SchemaString>(2).add(&&input.worker_type);
+        <generated::improbable::restricted::Connection as TypeConversion>::to_type(&&input.connection, &mut output.field::<SchemaObject>(3).add())?;
+        Ok(())
+    }
+}
+impl ComponentData<Worker> for Worker {
+    fn merge(&mut self, update: WorkerUpdate) {
+        if let Some(value) = update.worker_id { self.worker_id = value; }
+        if let Some(value) = update.worker_type { self.worker_type = value; }
+        if let Some(value) = update.connection { self.connection = value; }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct WorkerUpdate {
+    pub worker_id: Option<String>,
+    pub worker_type: Option<String>,
+    pub connection: Option<generated::improbable::restricted::Connection>,
+}
+impl TypeConversion for WorkerUpdate {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        let mut output = Self {
+            worker_id: None,
+            worker_type: None,
+            connection: None,
+        };
+        let _field_worker_id = input.field::<SchemaString>(1);
+        if _field_worker_id.count() > 0 {
+            let field = &_field_worker_id;
+            output.worker_id = Some(field.get_or_default());
+        }
+        let _field_worker_type = input.field::<SchemaString>(2);
+        if _field_worker_type.count() > 0 {
+            let field = &_field_worker_type;
+            output.worker_type = Some(field.get_or_default());
+        }
+        let _field_connection = input.field::<SchemaObject>(3);
+        if _field_connection.count() > 0 {
+            let field = &_field_connection;
+            output.connection = Some(<generated::improbable::restricted::Connection as TypeConversion>::from_type(&field.get_or_default())?);
+        }
+        Ok(output)
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        if let Some(ref value) = input.worker_id {
+            output.field::<SchemaString>(1).add(&value);
+        }
+        if let Some(ref value) = input.worker_type {
+            output.field::<SchemaString>(2).add(&value);
+        }
+        if let Some(ref value) = input.connection {
+            <generated::improbable::restricted::Connection as TypeConversion>::to_type(&value, &mut output.field::<SchemaObject>(3).add())?;
+        }
+        Ok(())
+    }
+}
+impl ComponentUpdate<Worker> for WorkerUpdate {
+    fn merge(&mut self, update: WorkerUpdate) {
+        if update.worker_id.is_some() { self.worker_id = update.worker_id; }
+        if update.worker_type.is_some() { self.worker_type = update.worker_type; }
+        if update.connection.is_some() { self.connection = update.connection; }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum WorkerCommandRequest {
+    Disconnect(generated::improbable::restricted::DisconnectRequest),
+}
+
+#[derive(Debug, Clone)]
+pub enum WorkerCommandResponse {
+    Disconnect(generated::improbable::restricted::DisconnectResponse),
+}
+
+impl Component for Worker {
+    type Update = generated::improbable::restricted::WorkerUpdate;
+    type CommandRequest = generated::improbable::restricted::WorkerCommandRequest;
+    type CommandResponse = generated::improbable::restricted::WorkerCommandResponse;
+
+    const ID: ComponentId = 60;
+
+    fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::Worker, String> {
+        <generated::improbable::restricted::Worker as TypeConversion>::from_type(&data.fields())
+    }
+
+    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::WorkerUpdate, String> {
+        <generated::improbable::restricted::WorkerUpdate as TypeConversion>::from_type(&update.fields())
+    }
+
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::WorkerCommandRequest, String> {
+        match command_index {
+            1 => {
+                let result = <generated::improbable::restricted::DisconnectRequest as TypeConversion>::from_type(&request.object());
+                result.and_then(|deserialized| Ok(WorkerCommandRequest::Disconnect(deserialized)))
+            },
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Worker.", command_index))
+        }
+    }
+
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::WorkerCommandResponse, String> {
+        match command_index {
+            1 => {
+                let result = <generated::improbable::restricted::DisconnectResponse as TypeConversion>::from_type(&response.object());
+                result.and_then(|deserialized| Ok(WorkerCommandResponse::Disconnect(deserialized)))
+            },
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Worker.", command_index))
+        }
+    }
+
+    fn to_data(data: &generated::improbable::restricted::Worker) -> Result<SchemaComponentData, String> {
+        let mut serialized_data = SchemaComponentData::new();
+        <generated::improbable::restricted::Worker as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        Ok(serialized_data)
+    }
+
+    fn to_update(update: &generated::improbable::restricted::WorkerUpdate) -> Result<SchemaComponentUpdate, String> {
+        let mut serialized_update = SchemaComponentUpdate::new();
+        <generated::improbable::restricted::WorkerUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        Ok(serialized_update)
+    }
+
+    fn to_request(request: &generated::improbable::restricted::WorkerCommandRequest) -> Result<SchemaCommandRequest, String> {
+        let mut serialized_request = SchemaCommandRequest::new();
+        match request {
+            WorkerCommandRequest::Disconnect(ref data) => {
+                <generated::improbable::restricted::DisconnectRequest as TypeConversion>::to_type(data, &mut serialized_request.object_mut())?;
+            },
+            _ => unreachable!()
+        }
+        Ok(serialized_request)
+    }
+
+    fn to_response(response: &generated::improbable::restricted::WorkerCommandResponse) -> Result<SchemaCommandResponse, String> {
+        let mut serialized_response = SchemaCommandResponse::new();
+        match response {
+            WorkerCommandResponse::Disconnect(ref data) => {
+                <generated::improbable::restricted::DisconnectResponse as TypeConversion>::to_type(data, &mut serialized_response.object_mut())?;
+            },
+            _ => unreachable!()
+        }
+        Ok(serialized_response)
+    }
+
+    fn get_request_command_index(request: &generated::improbable::restricted::WorkerCommandRequest) -> u32 {
+        match request {
+            WorkerCommandRequest::Disconnect(_) => 1,
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_response_command_index(response: &generated::improbable::restricted::WorkerCommandResponse) -> u32 {
+        match response {
+            WorkerCommandResponse::Disconnect(_) => 1,
+            _ => unreachable!(),
+        }
+    }
+}
+
+inventory::submit!(VTable::new::<Worker>());
+
+
+}
 }

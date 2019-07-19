@@ -55,7 +55,7 @@ fn logic_loop(c: &mut WorkerConnection) {
         example::Rotate {
             angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
             radius: rng.gen_range(20.0, 100.0),
-            center: improbable::Vector3d {
+            center: example::Vector3d {
                 x: rng.gen_range(-50.0, 50.0),
                 y: 0.0,
                 z: rng.gen_range(-50.0, 50.0),

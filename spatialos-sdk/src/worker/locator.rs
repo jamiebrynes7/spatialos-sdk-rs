@@ -12,11 +12,11 @@ pub struct Locator {
 }
 
 impl Locator {
-    pub fn new<T: Into<Vec<u8>>>(hostname: T, params: &LocatorParameters) -> Self {
+    pub fn new<T: Into<Vec<u8>>>(hostname: T, port: u16, params: &LocatorParameters) -> Self {
         unsafe {
             let hostname = CString::new(hostname).unwrap();
             let worker_params = params.to_worker_sdk();
-            let ptr = Worker_Locator_Create(hostname.as_ptr(), 0, &worker_params);
+            let ptr = Worker_Locator_Create(hostname.as_ptr(), port, &worker_params);
             assert!(!ptr.is_null());
             Locator { locator: ptr }
         }
@@ -75,7 +75,7 @@ impl Drop for Locator {
 }
 
 pub struct LocatorParameters {
-    pub project_name: CString,
+    pub project_name: Option<CString>,
     pub credentials: LocatorCredentials,
     pub use_insecure_connection: bool,
     pub logging: Option<ProtocolLoggingParameters>,
@@ -87,7 +87,10 @@ impl LocatorParameters {
         let (credentials_type, login_token, steam, player_identity) = credentials;
 
         Worker_LocatorParameters {
-            project_name: self.project_name.as_ptr(),
+            project_name: match self.project_name {
+                Some(ref project_name) => project_name.as_ptr(),
+                None => ::std::ptr::null()
+            },
             credentials_type,
             login_token,
             steam,
@@ -101,14 +104,18 @@ impl LocatorParameters {
         }
     }
 
-    pub fn new<T: AsRef<str>>(project_name: T, credentials: LocatorCredentials) -> Self {
+    pub fn new(credentials: LocatorCredentials) -> Self {
         LocatorParameters {
-            project_name: CString::new(project_name.as_ref())
-                .expect("`project_name` contains a null byte"),
+            project_name: None,
             credentials,
             use_insecure_connection: false,
             logging: None,
         }
+    }
+
+    pub fn with_project_name<T: AsRef<str>>(mut self, project_name: T) -> Self {
+        self.project_name = Some(CString::new(project_name.as_ref()).expect("`project_name` contains a null byte"));
+        self
     }
 
     pub fn with_insecure_connection(mut self) -> Self {

@@ -1,10 +1,9 @@
 use crate::{Command, Opt};
 use futures::{Async, Future};
 use spatialos_sdk::worker::{
-    alpha::{self, LoginTokensRequest, PlayerIdentityCredentials, PlayerIdentityTokenRequest},
     connection::{WorkerConnection, WorkerConnectionFuture},
     constants::{LOCATOR_HOSTNAME, LOCATOR_PORT, RECEPTIONIST_PORT},
-    locator::{Locator, LocatorCredentials, LocatorParameters},
+    locator::{Locator, LocatorCredentials, LocatorParameters, LoginTokensRequest, PlayerIdentityCredentials, PlayerIdentityTokenRequest},
     parameters::ConnectionParameters,
 };
 use uuid::Uuid;
@@ -44,10 +43,10 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
             project_name,
         } => {
             let params =
-                LocatorParameters::new(project_name, LocatorCredentials::login_token(token));
-            let locator = Locator::new(LOCATOR_HOSTNAME, &params);
+                LocatorParameters::new(LocatorCredentials::login_token(token)).with_project_name(project_name);
+            let locator = Locator::new(LOCATOR_HOSTNAME, LOCATOR_PORT, &params);
             let deployment = get_deployment(&locator)?;
-            WorkerConnection::connect_locator_async(
+            WorkerConnection::connect_locator_and_queue_async(
                 &locator,
                 &deployment,
                 &ConnectionParameters::new(worker_type)
@@ -60,7 +59,7 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
         Command::DevelopmentAuthentication { dev_auth_token } => {
             let mut request = PlayerIdentityTokenRequest::new(dev_auth_token, "player-id")
                 .with_display_name("My Player");
-            let future = alpha::Locator::create_development_player_identity_token(
+            let future = Locator::create_development_player_identity_token(
                 LOCATOR_HOSTNAME,
                 LOCATOR_PORT,
                 &mut request,
@@ -69,7 +68,7 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
             let pit = future.wait()?;
             let mut request =
                 LoginTokensRequest::new(pit.player_identity_token.as_str(), worker_type.as_str());
-            let future = alpha::Locator::create_development_login_tokens(
+            let future = Locator::create_development_login_tokens(
                 LOCATOR_HOSTNAME,
                 LOCATOR_PORT,
                 &mut request,
@@ -82,18 +81,18 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
             }
 
             let token = &response.login_tokens[0];
-            let credentials = PlayerIdentityCredentials::new(
+            let credentials = LocatorCredentials::player_identity(
                 pit.player_identity_token.as_str(),
                 token.login_token.as_str(),
             );
-            let alpha_locator = alpha::Locator::new(
+            let locator = Locator::new(
                 LOCATOR_HOSTNAME,
                 LOCATOR_PORT,
-                &alpha::LocatorParameters::new(credentials),
+                &LocatorParameters::new(credentials),
             );
 
-            WorkerConnection::connect_alpha_locator_async(
-                &alpha_locator,
+            WorkerConnection::connect_locator_async(
+                &locator,
                 &ConnectionParameters::new(worker_type)
                     .using_tcp()
                     .using_external_ip(true)
