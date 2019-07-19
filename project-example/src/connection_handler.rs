@@ -3,7 +3,10 @@ use futures::{Async, Future};
 use spatialos_sdk::worker::{
     connection::{WorkerConnection, WorkerConnectionFuture},
     constants::{LOCATOR_HOSTNAME, LOCATOR_PORT, RECEPTIONIST_PORT},
-    locator::{Locator, LocatorCredentials, LocatorParameters, LoginTokensRequest, PlayerIdentityCredentials, PlayerIdentityTokenRequest},
+    locator::{
+        Locator, LocatorCredentials, LocatorParameters, LoginTokensRequest,
+        PlayerIdentityTokenRequest,
+    },
     parameters::ConnectionParameters,
 };
 use uuid::Uuid;
@@ -42,8 +45,8 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
             token,
             project_name,
         } => {
-            let params =
-                LocatorParameters::new(LocatorCredentials::login_token(token)).with_project_name(project_name);
+            let params = LocatorParameters::new(LocatorCredentials::login_token(token))
+                .with_project_name(project_name);
             let locator = Locator::new(LOCATOR_HOSTNAME, LOCATOR_PORT, &params);
             let deployment = get_deployment(&locator)?;
             WorkerConnection::connect_locator_and_queue_async(

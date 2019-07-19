@@ -41,7 +41,7 @@ where
     fn from_update(update: &schema::SchemaComponentUpdate) -> Result<Self::Update, String>;
     fn from_request(
         command_index: CommandIndex,
-        request: &schema::SchemaCommandRequest
+        request: &schema::SchemaCommandRequest,
     ) -> Result<Self::CommandRequest, String>;
     fn from_response(
         command_index: CommandIndex,
@@ -50,9 +50,7 @@ where
 
     fn to_data(data: &Self) -> Result<schema::SchemaComponentData, String>;
     fn to_update(update: &Self::Update) -> Result<schema::SchemaComponentUpdate, String>;
-    fn to_request(
-        request: &Self::CommandRequest
-    ) -> Result<schema::SchemaCommandRequest, String>;
+    fn to_request(request: &Self::CommandRequest) -> Result<schema::SchemaCommandRequest, String>;
     fn to_response(
         response: &Self::CommandResponse,
     ) -> Result<schema::SchemaCommandResponse, String>;
@@ -353,9 +351,7 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     data: *mut Schema_ComponentData,
     handle_out: *mut *mut Worker_ComponentDataHandle,
 ) -> u8 {
-    let schema_data = schema::SchemaComponentData {
-        internal: data,
-    };
+    let schema_data = schema::SchemaComponentData { internal: data };
     let deserialized_result = C::from_data(&schema_data);
     if let Ok(deserialized_data) = deserialized_result {
         *handle_out = handle_allocate(deserialized_data);
@@ -401,9 +397,7 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     update: *mut Schema_ComponentUpdate,
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
-    let schema_update = schema::SchemaComponentUpdate {
-        internal: update,
-    };
+    let schema_update = schema::SchemaComponentUpdate { internal: update };
     let deserialized_result = C::from_update(&schema_update);
     if let Ok(deserialized_update) = deserialized_result {
         *handle_out = handle_allocate(deserialized_update);
@@ -453,9 +447,7 @@ unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
     request: *mut Schema_CommandRequest,
     handle_out: *mut *mut Worker_CommandRequestHandle,
 ) -> u8 {
-    let schema_request = schema::SchemaCommandRequest {
-        internal: request,
-    };
+    let schema_request = schema::SchemaCommandRequest { internal: request };
     let deserialized_result = C::from_request(command_index, &schema_request);
     if let Ok(deserialized_request) = deserialized_result {
         *handle_out = handle_allocate(deserialized_request);
@@ -506,9 +498,7 @@ unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(
     response: *mut Schema_CommandResponse,
     handle_out: *mut *mut Worker_CommandRequestHandle,
 ) -> u8 {
-    let schema_response = schema::SchemaCommandResponse {
-        internal: response,
-    };
+    let schema_response = schema::SchemaCommandResponse { internal: response };
     let deserialized_result = C::from_response(command_index, &schema_response);
     if let Ok(deserialized_response) = deserialized_result {
         *handle_out = handle_allocate(deserialized_response);

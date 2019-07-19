@@ -89,7 +89,7 @@ impl LocatorParameters {
         Worker_LocatorParameters {
             project_name: match self.project_name {
                 Some(ref project_name) => project_name.as_ptr(),
-                None => ::std::ptr::null()
+                None => ::std::ptr::null(),
             },
             credentials_type,
             login_token,
@@ -114,7 +114,8 @@ impl LocatorParameters {
     }
 
     pub fn with_project_name<T: AsRef<str>>(mut self, project_name: T) -> Self {
-        self.project_name = Some(CString::new(project_name.as_ref()).expect("`project_name` contains a null byte"));
+        self.project_name =
+            Some(CString::new(project_name.as_ref()).expect("`project_name` contains a null byte"));
         self
     }
 
@@ -147,14 +148,19 @@ impl LocatorCredentials {
     }
 
     pub fn player_identity<S: AsRef<str>, T: AsRef<str>>(pit: S, token: T) -> Self {
-        LocatorCredentials::PlayerIdentity(
-            PlayerIdentityCredentials::new(pit, token)
-        )
+        LocatorCredentials::PlayerIdentity(PlayerIdentityCredentials::new(pit, token))
     }
 }
 
 impl LocatorCredentials {
-    fn to_worker_sdk(&self) -> (u8, Worker_LoginTokenCredentials, Worker_SteamCredentials, Worker_PlayerIdentityCredentials) {
+    fn to_worker_sdk(
+        &self,
+    ) -> (
+        u8,
+        Worker_LoginTokenCredentials,
+        Worker_SteamCredentials,
+        Worker_PlayerIdentityCredentials,
+    ) {
         match self {
             LocatorCredentials::LoginToken(token) => (
                 Worker_LocatorCredentialsTypes_WORKER_LOCATOR_LOGIN_TOKEN_CREDENTIALS as u8,
@@ -168,7 +174,7 @@ impl LocatorCredentials {
                 Worker_PlayerIdentityCredentials {
                     player_identity_token: ::std::ptr::null(),
                     login_token: ::std::ptr::null(),
-                }
+                },
             ),
             LocatorCredentials::Steam(steam_credentials) => (
                 Worker_LocatorCredentialsTypes_WORKER_LOCATOR_STEAM_CREDENTIALS as u8,
@@ -182,7 +188,7 @@ impl LocatorCredentials {
                 Worker_PlayerIdentityCredentials {
                     player_identity_token: ::std::ptr::null(),
                     login_token: ::std::ptr::null(),
-                }
+                },
             ),
             LocatorCredentials::PlayerIdentity(player_identity_credentials) => (
                 Worker_LocatorCredentialsTypes_WORKER_LOCATOR_PLAYER_IDENTITY_CREDENTIALS as u8,
@@ -194,9 +200,11 @@ impl LocatorCredentials {
                     deployment_tag: ::std::ptr::null(),
                 },
                 Worker_PlayerIdentityCredentials {
-                    player_identity_token: player_identity_credentials.player_identity_token.as_ptr(),
+                    player_identity_token: player_identity_credentials
+                        .player_identity_token
+                        .as_ptr(),
                     login_token: player_identity_credentials.login_token.as_ptr(),
-                }
+                },
             ),
         }
     }
@@ -363,7 +371,6 @@ pub(crate) extern "C" fn queue_status_callback_handler(
     }
 }
 
-
 pub struct PlayerIdentityTokenRequest {
     pub dev_auth_token: CString,
     pub player_id: CString,
@@ -515,8 +522,8 @@ impl Future for PlayerIdentityTokenFuture {
     }
 
     fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
-        where
-            Self: Sized,
+    where
+        Self: Sized,
     {
         if self.consumed {
             return Err("PlayerIdentityTokenFuture has already been consumed".to_owned());
@@ -585,9 +592,9 @@ impl LoginTokensResponse {
                 response.login_tokens,
                 response.login_token_count as usize,
             )
-                .iter()
-                .map(|token| LoginTokenDetails::from_worker_sdk(token))
-                .collect::<Vec<LoginTokenDetails>>();
+            .iter()
+            .map(|token| LoginTokenDetails::from_worker_sdk(token))
+            .collect::<Vec<LoginTokenDetails>>();
 
             LoginTokensResponse {
                 login_tokens: tokens,
@@ -690,8 +697,8 @@ impl Future for LoginTokensFuture {
     }
 
     fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
-        where
-            Self: Sized,
+    where
+        Self: Sized,
     {
         if self.consumed {
             return Err("LoginTokensFuture has already been consumed".to_owned());

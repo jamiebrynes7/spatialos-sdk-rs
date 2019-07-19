@@ -187,10 +187,7 @@ impl Package {
                 self.generate_rust_type_name(&option.inner_type)
             )
         } else if let Some(ref list) = field.list_type {
-            format!(
-                "Vec<{}>",
-                self.generate_rust_type_name(&list.inner_type)
-            )
+            format!("Vec<{}>", self.generate_rust_type_name(&list.inner_type))
         } else if let Some(ref map) = field.map_type {
             format!(
                 "BTreeMap<{}, {}>",
@@ -351,11 +348,8 @@ impl Package {
                 schema_object, field_id, expression
             )
         } else if let Some(ref type_ref) = value_type.type_reference {
-            let type_definition = self.rust_fqname(
-                &self
-                    .get_type_definition(type_ref)
-                    .qualified_name,
-            );
+            let type_definition =
+                self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
             format!(
                 "<{} as TypeConversion>::to_type(&{}, &mut {}.field::<SchemaObject>({}).add())?",
                 type_definition, expression, schema_object, field_id
@@ -412,18 +406,10 @@ impl Package {
         if value_type.primitive_reference.is_some() {
             schema_expr.to_string()
         } else if let Some(ref enum_type) = value_type.enum_reference {
-            let enum_name = self.rust_fqname(
-                &self
-                    .get_enum_definition(enum_type)
-                    .qualified_name,
-            );
+            let enum_name = self.rust_fqname(&self.get_enum_definition(enum_type).qualified_name);
             format!("{}::from({})", enum_name, schema_expr)
         } else if let Some(ref type_ref) = value_type.type_reference {
-            let type_name = self.rust_fqname(
-                &self
-                    .get_type_definition(type_ref)
-                    .qualified_name,
-            );
+            let type_name = self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
             format!(
                 "<{} as TypeConversion>::from_type(&{})",
                 type_name, schema_expr
@@ -435,11 +421,7 @@ impl Package {
 
     // Generates an expression which deserializes a value from a schema type in 'schema_expr'. Also unwraps the result
     // using ? operator if the deserialize expression results in a Result<_, String> type.
-    fn deserialize_type_unwrapped(
-        &self,
-        value_type: &TypeReference,
-        schema_expr: &str,
-    ) -> String {
+    fn deserialize_type_unwrapped(&self, value_type: &TypeReference, schema_expr: &str) -> String {
         let deserialize_expr = self.deserialize_type(value_type, schema_expr);
         if value_type.type_reference.is_some() {
             format!("{}?", deserialize_expr)
@@ -558,21 +540,36 @@ pub fn generate_code(bundle: SchemaBundle) -> String {
     for file in bundle.schema_files {
         let package = get_or_create_packages(
             &mut root_package,
-            file.package.name.split('.').collect::<Vec<&str>>().as_slice()
+            file.package
+                .name
+                .split('.')
+                .collect::<Vec<&str>>()
+                .as_slice(),
         );
         for type_def in file.types {
             // TODO: handle outer type.
             package.types.insert(type_def.qualified_name.clone());
-            generated_code.borrow_mut().types.insert(type_def.qualified_name.clone(), type_def);
+            generated_code
+                .borrow_mut()
+                .types
+                .insert(type_def.qualified_name.clone(), type_def);
         }
         for enum_def in file.enums {
             // TODO: handle outer type.
             package.enums.insert(enum_def.qualified_name.clone());
-            generated_code.borrow_mut().enums.insert(enum_def.qualified_name.clone(), enum_def);
+            generated_code
+                .borrow_mut()
+                .enums
+                .insert(enum_def.qualified_name.clone(), enum_def);
         }
         for component_def in file.components {
-            package.components.insert(component_def.qualified_name.clone());
-            generated_code.borrow_mut().components.insert(component_def.qualified_name.clone(), component_def);
+            package
+                .components
+                .insert(component_def.qualified_name.clone());
+            generated_code
+                .borrow_mut()
+                .components
+                .insert(component_def.qualified_name.clone(), component_def);
         }
     }
     generated_code.borrow_mut().root_package = Some(root_package);

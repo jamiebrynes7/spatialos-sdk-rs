@@ -84,15 +84,27 @@ impl EntityBuilder {
             return Err(e);
         }
 
-        unsafe { self.entity.add_serialized(POSITION_COMPONENT_ID, self.serialize_position())? };
-        unsafe { self.entity.add_serialized(ENTITY_ACL_COMPONENT_ID, self.serialize_acl())? };
+        unsafe {
+            self.entity
+                .add_serialized(POSITION_COMPONENT_ID, self.serialize_position())?
+        };
+        unsafe {
+            self.entity
+                .add_serialized(ENTITY_ACL_COMPONENT_ID, self.serialize_acl())?
+        };
 
         if self.metadata.is_some() {
-            unsafe { self.entity.add_serialized(METADATA_COMPONENT_ID, self.serialize_metadata())? }
+            unsafe {
+                self.entity
+                    .add_serialized(METADATA_COMPONENT_ID, self.serialize_metadata())?
+            }
         }
 
         if self.is_persistent {
-            unsafe { self.entity.add_serialized(PERSISTENCE_COMPONENT_ID, self.serialize_persistence())? }
+            unsafe {
+                self.entity
+                    .add_serialized(PERSISTENCE_COMPONENT_ID, self.serialize_persistence())?
+            }
         }
 
         Ok(self.entity)

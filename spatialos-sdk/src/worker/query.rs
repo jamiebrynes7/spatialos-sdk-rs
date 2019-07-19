@@ -297,8 +297,7 @@ mod test {
                     worker_constraint.constraint_type
                 );
                 unsafe {
-                    let bindgen_constraint =
-                        worker_constraint.constraint.entity_id_constraint;
+                    let bindgen_constraint = worker_constraint.constraint.entity_id_constraint;
                     assert_eq!(id.id, bindgen_constraint.entity_id);
                 }
             }
@@ -308,8 +307,7 @@ mod test {
                     worker_constraint.constraint_type
                 );
                 unsafe {
-                    let bindgen_constraint =
-                        worker_constraint.constraint.component_constraint;
+                    let bindgen_constraint = worker_constraint.constraint.component_constraint;
                     assert_eq!(*component_id, bindgen_constraint.component_id);
                 }
             }

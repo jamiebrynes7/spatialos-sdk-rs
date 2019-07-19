@@ -1,8 +1,8 @@
 use serde::{Deserialize, Deserializer};
 
 fn empty_string_is_none<'de, D>(d: D) -> Result<Option<String>, D::Error>
-    where
-        D: Deserializer<'de>,
+where
+    D: Deserializer<'de>,
 {
     let o: Option<String> = Option::deserialize(d)?;
     Ok(o.filter(|s| !s.is_empty()))

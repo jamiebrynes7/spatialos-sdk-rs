@@ -314,8 +314,7 @@ impl KcpNetworkParameters {
     }
 }
 
-pub struct ModularUdpNetworkParameters {
-}
+pub struct ModularUdpNetworkParameters {}
 
 impl ModularUdpNetworkParameters {
     pub fn default() -> Self {

@@ -18,11 +18,14 @@ impl SnapshotOutputStream {
             component_vtables: DATABASE.to_worker_sdk(),
             default_component_vtable: std::ptr::null(),
         };
-        let stream_ptr = unsafe { Worker_SnapshotOutputStream_Create(filename_cstr.as_ptr(), &params) };
+        let stream_ptr =
+            unsafe { Worker_SnapshotOutputStream_Create(filename_cstr.as_ptr(), &params) };
 
         let state = unsafe { Worker_SnapshotOutputStream_GetState(stream_ptr) };
         match Worker_StreamState::from(state.stream_state) {
-            Worker_StreamState_WORKER_STREAM_STATE_GOOD => Ok(SnapshotOutputStream { ptr: stream_ptr }),
+            Worker_StreamState_WORKER_STREAM_STATE_GOOD => {
+                Ok(SnapshotOutputStream { ptr: stream_ptr })
+            }
             _ => {
                 unsafe { Worker_SnapshotOutputStream_Destroy(stream_ptr) };
                 Err(cstr_to_string(state.error_message))
@@ -44,7 +47,7 @@ impl SnapshotOutputStream {
         };
         match Worker_StreamState::from(state.stream_state) {
             Worker_StreamState_WORKER_STREAM_STATE_GOOD => Ok(()),
-            _ => Err(cstr_to_string(state.error_message))
+            _ => Err(cstr_to_string(state.error_message)),
         }
     }
 }
@@ -69,11 +72,14 @@ impl SnapshotInputStream {
             default_component_vtable: std::ptr::null(),
         };
 
-        let stream_ptr = unsafe { Worker_SnapshotInputStream_Create(filename_cstr.as_ptr(), &params) };
+        let stream_ptr =
+            unsafe { Worker_SnapshotInputStream_Create(filename_cstr.as_ptr(), &params) };
 
         let state = unsafe { Worker_SnapshotInputStream_GetState(stream_ptr) };
         match Worker_StreamState::from(state.stream_state) {
-            Worker_StreamState_WORKER_STREAM_STATE_GOOD => Ok(SnapshotInputStream { ptr: stream_ptr }),
+            Worker_StreamState_WORKER_STREAM_STATE_GOOD => {
+                Ok(SnapshotInputStream { ptr: stream_ptr })
+            }
             _ => {
                 unsafe { Worker_SnapshotInputStream_Destroy(stream_ptr) };
                 Err(cstr_to_string(state.error_message))
@@ -93,7 +99,7 @@ impl SnapshotInputStream {
             Worker_StreamState_WORKER_STREAM_STATE_GOOD => unsafe {
                 Entity::from_worker_sdk(&*entity_ptr)
             },
-            _ => Err(cstr_to_string(state.error_message))
+            _ => Err(cstr_to_string(state.error_message)),
         }
     }
 }
