@@ -30,7 +30,7 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
             connect_with_external_ip,
         } => {
             let params = ConnectionParameters::new(worker_type)
-                .using_tcp()
+                .using_modular_udp()
                 .using_external_ip(connect_with_external_ip)
                 .enable_internal_serialization();
             WorkerConnection::connect_receptionist_async(

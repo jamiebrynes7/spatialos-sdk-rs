@@ -4,6 +4,8 @@ use std::{
     ffi::{CStr, CString},
     ptr,
 };
+use crate::worker::parameters::SecurityType::DTLS;
+use std::any::Any;
 
 pub struct ConnectionParameters {
     pub worker_type: CString,
@@ -57,6 +59,15 @@ impl ConnectionParameters {
 
     pub fn using_kcp_with_params(mut self, params: KcpNetworkParameters) -> Self {
         self.network.protocol_params = ProtocolType::Kcp(params);
+        self
+    }
+
+    pub fn using_modular_udp(self) -> Self {
+        self.using_modular_udp_with_params(ModularUdpNetworkParameters::default())
+    }
+
+    pub fn using_modular_udp_with_params(mut self, params: ModularUdpNetworkParameters) -> Self {
+        self.network.protocol_params = ProtocolType::ModularUdp(params);
         self
     }
 
@@ -126,6 +137,7 @@ pub enum ProtocolType {
     Tcp(TcpNetworkParameters),
     RakNet(RakNetNetworkParameters),
     Kcp(KcpNetworkParameters),
+    ModularUdp(ModularUdpNetworkParameters),
 }
 
 impl ProtocolType {
@@ -171,7 +183,20 @@ impl ProtocolType {
                 let kcp_params = params.to_worker_sdk();
                 let modular_udp_params = ModularUdpNetworkParameters::default().to_worker_sdk();
                 (
-                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_RAKNET as u8,
+                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_KCP as u8,
+                    raknet_params,
+                    tcp_params,
+                    kcp_params,
+                    modular_udp_params,
+                )
+            }
+            ProtocolType::ModularUdp(params) => {
+                let tcp_params = TcpNetworkParameters::default().to_worker_sdk();
+                let raknet_params = RakNetNetworkParameters::default().to_worker_sdk();
+                let kcp_params = KcpNetworkParameters::default().to_worker_sdk();
+                let modular_udp_params = params.to_worker_sdk();
+                (
+                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_UDP as u8,
                     raknet_params,
                     tcp_params,
                     kcp_params,
@@ -261,7 +286,7 @@ impl TcpNetworkParameters {
 }
 
 pub struct KcpNetworkParameters {
-    pub fast_transmission: bool,
+    pub fast_retransmission: bool,
     pub early_retransmission: bool,
     pub non_concessional_flow_control: bool,
     pub multiplex_level: u32,
@@ -276,7 +301,7 @@ pub struct KcpNetworkParameters {
 impl KcpNetworkParameters {
     pub fn default() -> Self {
         KcpNetworkParameters {
-            fast_transmission: WORKER_DEFAULTS_KCP_FAST_RETRANSMISSION != 0,
+            fast_retransmission: WORKER_DEFAULTS_KCP_FAST_RETRANSMISSION != 0,
             early_retransmission: WORKER_DEFAULTS_KCP_EARLY_RETRANSMISSION != 0,
             non_concessional_flow_control: WORKER_DEFAULTS_KCP_NON_CONCESSIONAL_FLOW_CONTROL != 0,
             multiplex_level: WORKER_DEFAULTS_KCP_MULTIPLEX_LEVEL,
@@ -295,7 +320,7 @@ impl KcpNetworkParameters {
 
     pub(crate) fn to_worker_sdk(&self) -> Worker_KcpNetworkParameters {
         Worker_KcpNetworkParameters {
-            fast_retransmission: self.fast_transmission as u8,
+            fast_retransmission: self.fast_retransmission as u8,
             early_retransmission: self.early_retransmission as u8,
             non_concessional_flow_control: self.non_concessional_flow_control as u8,
             multiplex_level: self.multiplex_level,
@@ -314,23 +339,121 @@ impl KcpNetworkParameters {
     }
 }
 
-pub struct ModularUdpNetworkParameters {}
+pub enum SecurityType {
+    Insecure,
+    DTLS
+}
+
+impl SecurityType {
+    pub fn default() -> Self {
+        SecurityType::Insecure
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> u8 {
+        (match self {
+            SecurityType::Insecure => Worker_NetworkSecurityType_WORKER_NETWORK_SECURITY_TYPE_INSECURE,
+            SecurityType::DTLS => Worker_NetworkSecurityType_WORKER_NETWORK_SECURITY_TYPE_DTLS,
+        }) as u8
+    }
+}
+
+pub struct ModularKcpParameters {
+    pub fast_retransmission: bool,
+    pub early_retransmission: bool,
+    pub non_concessional_flow_control: bool,
+    pub multiplex_level: u32,
+    pub update_interval_millis: u32,
+    pub min_rto_millis: u32
+}
+
+impl ModularKcpParameters {
+    pub fn default() -> Self {
+        ModularKcpParameters {
+            fast_retransmission: WORKER_DEFAULTS_KCP_FAST_RETRANSMISSION != 0,
+            early_retransmission: WORKER_DEFAULTS_KCP_EARLY_RETRANSMISSION != 0,
+            non_concessional_flow_control: WORKER_DEFAULTS_KCP_NON_CONCESSIONAL_FLOW_CONTROL != 0,
+            multiplex_level: WORKER_DEFAULTS_KCP_MULTIPLEX_LEVEL,
+            update_interval_millis: WORKER_DEFAULTS_KCP_UPDATE_INTERVAL_MILLIS,
+            min_rto_millis: WORKER_DEFAULTS_KCP_MIN_RTO_MILLIS,
+        }
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_KcpParameters {
+        Worker_Alpha_KcpParameters {
+            fast_retransmission: self.fast_retransmission as u8,
+            early_retransmission: self.early_retransmission as u8,
+            non_concessional_flow_control: self.non_concessional_flow_control as u8,
+            multiplex_level: self.multiplex_level,
+            update_interval_millis: self.update_interval_millis,
+            min_rto_millis: self.min_rto_millis,
+        }
+    }
+}
+
+pub struct FlowControlParameters {
+    pub downstream_window_size_bytes: u32,
+    pub upstream_window_size_bytes: u32,
+}
+
+impl FlowControlParameters {
+    pub fn default() -> Self {
+        FlowControlParameters {
+            downstream_window_size_bytes: WORKER_DEFAULTS_FLOW_CONTROL_DOWNSTREAM_WINDOW_SIZE_BYTES,
+            upstream_window_size_bytes: WORKER_DEFAULTS_FLOW_CONTROL_UPSTREAM_WINDOW_SIZE_BYTES,
+        }
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_FlowControlParameters {
+        Worker_Alpha_FlowControlParameters {
+            downstream_window_size_bytes: self.downstream_window_size_bytes,
+            upstream_window_size_bytes: self.upstream_window_size_bytes,
+        }
+    }
+}
+
+pub struct BidirectionalParameters<T> {
+    pub downstream: T,
+    pub upstream: T,
+}
+
+impl<T> BidirectionalParameters<T> {
+    pub fn new(parameters: T) -> Self {
+        BidirectionalParameters {
+            downstream: parameters.clone(),
+            upstream: parameters
+        }
+    }
+}
+
+pub struct ModularUdpNetworkParameters {
+    pub security_type: SecurityType,
+    pub kcp: Option<BidirectionalParameters<ModularKcpParameters>>,
+    pub erasure_codec: Option<BidirectionalParameters<ErasureCodecParameters>>,
+    pub heartbeat: Option<BidirectionalParameters<HeartbeatParameters>>,
+    pub flow_control: Option<FlowControlParameters>,
+}
 
 impl ModularUdpNetworkParameters {
     pub fn default() -> Self {
-        ModularUdpNetworkParameters {}
+        ModularUdpNetworkParameters {
+            security_type: SecurityType::Insecure,
+            kcp: Some(BidirectionalParameters::new(ModularKcpParameters::default())),
+            erasure_codec: None,
+            heartbeat: None,
+            flow_control: Some(FlowControlParameters::default())
+        }
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_ModularUdpNetworkParameters {
+    pub(crate) fn to_worker_sdk(&self) -> (Vec<Box<dyn Any>>, Worker_Alpha_ModularUdpNetworkParameters) {
         Worker_Alpha_ModularUdpNetworkParameters {
-            security_type: Worker_NetworkSecurityType_WORKER_NETWORK_SECURITY_TYPE_INSECURE as u8,
-            downstream_kcp: ::std::ptr::null(),
-            upstream_kcp: ::std::ptr::null(),
-            downstream_erasure_codec: ::std::ptr::null(),
-            upstream_erasure_codec: ::std::ptr::null(),
-            downstream_heartbeat: ::std::ptr::null(),
-            upstream_heartbeat: ::std::ptr::null(),
-            flow_control: ::std::ptr::null(),
+            security_type: self.security_type.to_worker_sdk(),
+            downstream_kcp: if let Some(params) = self.kcp { params.downstream.to_worker_sdk() } else { ::std::ptr::null() },
+            upstream_kcp: if Some(params) = self.kcp { params.upstream.to_worker_sdk() } else { ::std::ptr::null() },
+            downstream_erasure_codec: if Some(params) = self.erasure_codec { params.downstream.to_worker_sdk() } else { ::std::ptr::null() },
+            upstream_erasure_codec: if Some(params) = self.erasure_codec { params.upstream.to_worker_sdk() } else { ::std::ptr::null() },
+            downstream_heartbeat: if Some(params) = self.heartbeat { params.downstream.to_worker_sdk() } else { ::std::ptr::null() },
+            upstream_heartbeat: if Some(params) = self.heartbeat { params.upstream.to_worker_sdk() } else { ::std::ptr::null() },
+            flow_control: if Some(flow_control) = self.flow_control { flow_control.to_worker_sdk() } else { ::std::ptr::null() },
         }
     }
 }
