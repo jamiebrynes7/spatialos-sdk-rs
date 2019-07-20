@@ -542,7 +542,6 @@ pub fn generate_code(bundle: SchemaBundle) -> String {
                 .as_slice(),
         );
         for type_def in file.types {
-            // TODO: handle outer type.
             package.types.insert(type_def.qualified_name.clone());
             generated_code
                 .borrow_mut()
@@ -550,7 +549,6 @@ pub fn generate_code(bundle: SchemaBundle) -> String {
                 .insert(type_def.qualified_name.clone(), type_def);
         }
         for enum_def in file.enums {
-            // TODO: handle outer type.
             package.enums.insert(enum_def.qualified_name.clone());
             generated_code
                 .borrow_mut()

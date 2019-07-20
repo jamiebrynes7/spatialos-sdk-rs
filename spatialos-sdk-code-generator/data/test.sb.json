@@ -13,7 +13,7 @@
    "enums": [
     {
      "sourceReference": {
-      "line": 39,
+      "line": 47,
       "column": 1
      },
      "annotations": [],
@@ -23,7 +23,7 @@
      "values": [
       {
        "sourceReference": {
-        "line": 40,
+        "line": 48,
         "column": 5
        },
        "annotations": [],
@@ -32,7 +32,7 @@
       },
       {
        "sourceReference": {
-        "line": 41,
+        "line": 49,
         "column": 5
        },
        "annotations": [],
@@ -64,7 +64,7 @@
        "transient": false,
        "singularType": {
         "type": {
-         "primitive": "Float"
+         "primitive": "Double"
         }
        }
       },
@@ -79,7 +79,7 @@
        "transient": false,
        "singularType": {
         "type": {
-         "primitive": "Float"
+         "primitive": "Double"
         }
        }
       },
@@ -94,7 +94,7 @@
        "transient": false,
        "singularType": {
         "type": {
-         "primitive": "Float"
+         "primitive": "Double"
         }
        }
       }
@@ -126,12 +126,92 @@
        }
       }
      ]
+    },
+    {
+     "sourceReference": {
+      "line": 13,
+      "column": 1
+     },
+     "annotations": [],
+     "qualifiedName": "example.TestType",
+     "name": "TestType",
+     "outerType": "",
+     "fields": [
+      {
+       "sourceReference": {
+        "line": 18,
+        "column": 5
+       },
+       "annotations": [
+        {
+         "sourceReference": {
+          "line": 17,
+          "column": 5
+         },
+         "typeValue": {
+          "type": "example.TestType.Inner",
+          "fields": [
+           {
+            "sourceReference": {
+             "line": 17,
+             "column": 12
+            },
+            "name": "number",
+            "value": {
+             "sourceReference": {
+              "line": 17,
+              "column": 12
+             },
+             "floatValue": 2
+            }
+           }
+          ]
+         }
+        }
+       ],
+       "name": "value",
+       "fieldId": 1,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "primitive": "Int32"
+        }
+       }
+      }
+     ]
+    },
+    {
+     "sourceReference": {
+      "line": 14,
+      "column": 5
+     },
+     "annotations": [],
+     "qualifiedName": "example.TestType.Inner",
+     "name": "Inner",
+     "outerType": "example.TestType",
+     "fields": [
+      {
+       "sourceReference": {
+        "line": 15,
+        "column": 9
+       },
+       "annotations": [],
+       "name": "number",
+       "fieldId": 2,
+       "transient": false,
+       "singularType": {
+        "type": {
+         "primitive": "Float"
+        }
+       }
+      }
+     ]
     }
    ],
    "components": [
     {
      "sourceReference": {
-      "line": 13,
+      "line": 21,
       "column": 1
      },
      "annotations": [],
@@ -142,7 +222,7 @@
      "fields": [
       {
        "sourceReference": {
-        "line": 15,
+        "line": 23,
         "column": 5
        },
        "annotations": [],
@@ -160,7 +240,7 @@
      "commands": [
       {
        "sourceReference": {
-        "line": 13,
+        "line": 21,
         "column": 1
        },
        "annotations": [],
@@ -173,7 +253,7 @@
     },
     {
      "sourceReference": {
-      "line": 20,
+      "line": 28,
       "column": 1
      },
      "annotations": [],
@@ -184,7 +264,7 @@
      "fields": [
       {
        "sourceReference": {
-        "line": 24,
+        "line": 32,
         "column": 5
        },
        "annotations": [],
@@ -199,7 +279,7 @@
       },
       {
        "sourceReference": {
-        "line": 27,
+        "line": 35,
         "column": 5
        },
        "annotations": [],
@@ -214,7 +294,7 @@
       },
       {
        "sourceReference": {
-        "line": 30,
+        "line": 38,
         "column": 5
        },
        "annotations": [],
@@ -233,7 +313,7 @@
     },
     {
      "sourceReference": {
-      "line": 33,
+      "line": 41,
       "column": 1
      },
      "annotations": [],
@@ -244,7 +324,7 @@
      "fields": [
       {
        "sourceReference": {
-        "line": 36,
+        "line": 44,
         "column": 5
        },
        "annotations": [],
@@ -263,7 +343,7 @@
     },
     {
      "sourceReference": {
-      "line": 44,
+      "line": 52,
       "column": 1
      },
      "annotations": [],
@@ -274,7 +354,7 @@
      "fields": [
       {
        "sourceReference": {
-        "line": 47,
+        "line": 55,
         "column": 5
        },
        "annotations": [],

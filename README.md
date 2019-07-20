@@ -50,6 +50,12 @@ To build & run the test suite you will need to:
 
 ## Testing the code generator
 
+To regenerate the schema bundle, run the following:
+
+```
+./dependencies/schema-compiler/schema_compiler --schema_path=project-example/schema --schema_path=dependencies/std-lib project-example/schema/example.schema --bundle_json_out=spatialos-sdk-code-generator/data/test.sb.json
+```
+
 To run the code generator tests, run the following:
 
 ```

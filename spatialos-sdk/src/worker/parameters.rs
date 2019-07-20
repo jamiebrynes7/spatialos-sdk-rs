@@ -138,13 +138,10 @@ impl NetworkParameters {
     pub(crate) fn to_worker_sdk(&self) -> Worker_NetworkParameters {
         Worker_NetworkParameters {
             use_external_ip: self.use_external_ip as u8,
-            connection_type: 0,
-            raknet: Worker_RakNetNetworkParameters::default(),
-            tcp: Worker_TcpNetworkParameters::default(),
-            kcp: Worker_KcpNetworkParameters::default(),
-            modular_udp: Worker_Alpha_ModularUdpNetworkParameters::default(),
             connection_timeout_millis: self.connection_timeout_millis,
             default_command_timeout_millis: self.default_command_timeout_millis,
+            // Other parameters will be set when establishing a connection.
+            ..Worker_NetworkParameters::default()
         }
     }
 }

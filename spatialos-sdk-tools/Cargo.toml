@@ -9,6 +9,6 @@ name = "generate_bindings"
 path = "src/generate_bindings/main.rs"
 
 [dependencies]
-clap = "^2"
-glob = "~0.2"
+clap = "2.32.0"
+glob = "0.2"
 bindgen = "0.50"

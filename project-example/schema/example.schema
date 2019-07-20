@@ -10,6 +10,14 @@ type CommandData {
     int32 value = 1;
 }
 
+type TestType {
+    type Inner {
+        float number = 2;
+    }
+    [Inner(2.0)]
+    int32 value = 1;
+}
+
 component Example {
     id = 1000;
     float x = 1;
