@@ -217,34 +217,6 @@ impl WorkerConnection {
         WorkerConnectionFuture::new(future_ptr)
     }
 
-    pub fn connect_locator_and_queue_async(
-        locator: &Locator,
-        deployment_name: &str,
-        params: &ConnectionParameters,
-        callback: QueueStatusCallback,
-    ) -> WorkerConnectionFuture {
-        let deployment_name_cstr = CString::new(deployment_name).unwrap();
-        let connection_params = params.to_worker_sdk();
-
-        let callback = Box::new(callback);
-        let callback_ptr = Box::into_raw(callback) as *mut ::std::os::raw::c_void;
-
-        unsafe {
-            let ptr = Worker_Locator_ConnectAndQueueAsync(
-                locator.locator,
-                deployment_name_cstr.as_ptr(),
-                &connection_params,
-                callback_ptr,
-                Some(queue_status_callback_handler),
-            );
-            WorkerConnectionFuture {
-                future_ptr: ptr,
-                was_consumed: false,
-                queue_status_callback: Some(callback_ptr),
-            }
-        }
-    }
-
     pub fn connect_locator_async(
         locator: &Locator,
         params: &ConnectionParameters,
@@ -539,14 +511,6 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn get_worker_id(&self) -> &str {
-        &self.id
-    }
-
-    fn get_worker_attributes(&self) -> &[String] {
-        &self.attributes
-    }
-
     fn get_worker_flag(&mut self, name: &str) -> Option<String> {
         let flag_name = CString::new(name).unwrap();
 
@@ -584,6 +548,14 @@ impl Connection for WorkerConnection {
         assert!(!raw_op_list.is_null());
         OpList::new(raw_op_list)
     }
+
+    fn get_worker_id(&self) -> &str {
+        &self.id
+    }
+
+    fn get_worker_attributes(&self) -> &[String] {
+        &self.attributes
+    }
 }
 
 impl Drop for WorkerConnection {
@@ -600,7 +572,6 @@ unsafe impl Sync for WorkerConnection {}
 pub struct WorkerConnectionFuture {
     future_ptr: *mut Worker_ConnectionFuture,
     was_consumed: bool,
-    queue_status_callback: Option<*mut ::std::os::raw::c_void>,
 }
 
 impl WorkerConnectionFuture {
@@ -608,7 +579,6 @@ impl WorkerConnectionFuture {
         WorkerConnectionFuture {
             future_ptr: ptr,
             was_consumed: false,
-            queue_status_callback: None,
         }
     }
 }
@@ -618,10 +588,6 @@ impl Drop for WorkerConnectionFuture {
         assert!(!self.future_ptr.is_null());
         unsafe {
             Worker_ConnectionFuture_Destroy(self.future_ptr);
-
-            if let Some(ptr) = self.queue_status_callback {
-                let _callback = Box::from_raw(ptr as *mut QueueStatusCallback);
-            }
         };
     }
 }
