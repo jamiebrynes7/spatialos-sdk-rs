@@ -189,7 +189,8 @@ where
         ProtocolType::Udp(udp_params) => {
             conn_params.network.connection_type =
                 Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_UDP as u8;
-            conn_params.network.modular_udp.security_type = udp_params.security_type.to_worker_sdk();
+            conn_params.network.modular_udp.security_type =
+                udp_params.security_type.to_worker_sdk();
             // These parameters should be zero-initialized (null pointers) if they are not matched here.
             if let Some(kcp_params) = &udp_params.kcp {
                 udp_kcp_params = kcp_params.to_worker_sdk();

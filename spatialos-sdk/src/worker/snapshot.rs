@@ -16,11 +16,15 @@ pub enum SnapshotError {
 impl From<Worker_SnapshotState> for SnapshotError {
     fn from(state: Worker_SnapshotState) -> SnapshotError {
         match Worker_StreamState::from(state.stream_state) {
-                Worker_StreamState_WORKER_STREAM_STATE_BAD => SnapshotError::BadState(cstr_to_string(state.error_message)),
-                Worker_StreamState_WORKER_STREAM_STATE_INVALID_DATA => SnapshotError::InvalidData(cstr_to_string(state.error_message)),
-                Worker_StreamState_WORKER_STREAM_STATE_EOF => SnapshotError::EOF,
-                _ => SnapshotError::BadState(cstr_to_string(state.error_message)),
+            Worker_StreamState_WORKER_STREAM_STATE_BAD => {
+                SnapshotError::BadState(cstr_to_string(state.error_message))
             }
+            Worker_StreamState_WORKER_STREAM_STATE_INVALID_DATA => {
+                SnapshotError::InvalidData(cstr_to_string(state.error_message))
+            }
+            Worker_StreamState_WORKER_STREAM_STATE_EOF => SnapshotError::EOF,
+            _ => SnapshotError::BadState(cstr_to_string(state.error_message)),
+        }
     }
 }
 
@@ -52,11 +56,7 @@ impl SnapshotOutputStream {
         }
     }
 
-    pub fn write_entity(
-        &mut self,
-        id: EntityId,
-        entity: &Entity,
-    ) -> Result<(), SnapshotError> {
+    pub fn write_entity(&mut self, id: EntityId, entity: &Entity) -> Result<(), SnapshotError> {
         let components = entity.raw_component_data();
         let wrk_entity = Worker_Entity {
             entity_id: id.id,
