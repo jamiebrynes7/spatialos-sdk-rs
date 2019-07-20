@@ -289,7 +289,7 @@ impl PlayerIdentityTokenRequest {
             development_authentication_token: self.dev_auth_token.as_ptr(),
             player_id: self.player_id.as_ptr(),
             duration_seconds: match self.duration_seconds {
-                Some(ref value) => value as *const _ as *mut u32, // TODO: Remove double cast when C SDK is fixed.
+                Some(ref value) => value as *const u32,
                 None => ::std::ptr::null_mut(),
             },
             display_name: match self.display_name {

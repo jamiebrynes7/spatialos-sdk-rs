@@ -38,21 +38,13 @@ pub enum PrimitiveType {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct TypeReference {
+pub enum TypeReference {
     #[serde(rename = "primitive")]
-    pub primitive_reference: Option<PrimitiveType>,
+    Primitive(PrimitiveType),
     #[serde(rename = "enum")]
-    pub enum_reference: Option<String>,
+    Enum(String),
     #[serde(rename = "type")]
-    pub type_reference: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Value_EnumValue {
-    #[serde(rename = "enum")]
-    pub enum_reference: String,
-    pub value: String,
+    Type(String),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -67,20 +59,8 @@ pub struct Value_TypeValue_FieldValue {
 #[serde(rename_all = "camelCase")]
 pub struct Value_TypeValue {
     #[serde(rename = "type")]
-    pub type_reference: String,
-    pub fields: Vec<Value_TypeValue_FieldValue>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Value_OptionValue {
-    pub value: Option<Box<Value>>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Value_ListValue {
-    pub values: Vec<Value>,
+    type_reference: String,
+    fields: Vec<Value_TypeValue_FieldValue>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -91,30 +71,55 @@ pub struct Value_MapValue_KeyValuePair {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Value_MapValue {
-    pub values: Vec<Value_MapValue_KeyValuePair>,
+pub enum Value_Value {
+    #[serde(rename = "boolValue")]
+    BoolValue(bool),
+    #[serde(rename = "uint32Value")]
+    Uint32Value(u32),
+    #[serde(rename = "uint64Value")]
+    Uint64Value(u64),
+    #[serde(rename = "int32Value")]
+    Int32Value(i32),
+    #[serde(rename = "int64Value")]
+    Int64Value(i64),
+    #[serde(rename = "floatValue")]
+    FloatValue(f32),
+    #[serde(rename = "doubleValue")]
+    DoubleValue(f64),
+    #[serde(rename = "stringValue")]
+    StringValue(String),
+    #[serde(rename = "bytesValue")]
+    BytesValue(String),
+    #[serde(rename = "entityIdValue")]
+    EntityIdValue(i64),
+    #[serde(rename = "enumValue")]
+    EnumValue {
+        #[serde(rename = "enum")]
+        enum_reference: String,
+        value: String,
+    },
+    #[serde(rename = "typeValue")]
+    TypeValue {
+        #[serde(rename = "type")]
+        type_reference: String,
+        fields: Vec<Value_TypeValue_FieldValue>,
+    },
+    #[serde(rename = "optionValue")]
+    OptionValue { value: Box<Value> },
+    #[serde(rename = "listValue")]
+    ListValue { values: Vec<Value> },
+    #[serde(rename = "mapValue")]
+    MapValue {
+        values: Vec<Value_MapValue_KeyValuePair>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Value {
     pub source_reference: SourceReference,
-    pub bool_value: Option<bool>,
-    pub uint32_value: Option<u32>,
-    pub uint64_value: Option<u64>,
-    pub int32_value: Option<i32>,
-    pub int64_value: Option<i64>,
-    pub float_value: Option<f32>,
-    pub double_value: Option<f64>,
-    pub string_value: Option<String>,
-    pub bytes_value: Option<String>,
-    pub entity_id_value: Option<i64>,
-    pub enum_value: Option<Value_EnumValue>,
-    pub type_value: Option<Value_TypeValue>,
-    pub option_value: Option<Value_OptionValue>,
-    pub list_value: Option<Value_ListValue>,
-    pub map_value: Option<Value_MapValue>,
+    #[serde(flatten)]
+    pub value: Value_Value,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -146,28 +151,29 @@ pub struct EnumDefinition {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct FieldDefinition_SingularType {
-    #[serde(rename = "type")]
-    pub type_reference: TypeReference,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct FieldDefinition_OptionType {
-    pub inner_type: TypeReference,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct FieldDefinition_ListType {
-    pub inner_type: TypeReference,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct FieldDefinition_MapType {
-    pub key_type: TypeReference,
-    pub value_type: TypeReference,
+pub enum FieldDefinition_FieldType {
+    #[serde(rename = "singularType")]
+    Singular {
+        #[serde(rename = "type")]
+        type_reference: TypeReference,
+    },
+    #[serde(rename = "optionType")]
+    Option {
+        #[serde(rename = "innerType")]
+        inner_type: TypeReference,
+    },
+    #[serde(rename = "listType")]
+    List {
+        #[serde(rename = "innerType")]
+        inner_type: TypeReference,
+    },
+    #[serde(rename = "mapType")]
+    Map {
+        #[serde(rename = "keyType")]
+        key_type: TypeReference,
+        #[serde(rename = "valueType")]
+        value_type: TypeReference,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -178,10 +184,8 @@ pub struct FieldDefinition {
     pub name: String,
     pub field_id: u32,
     pub transient: bool,
-    pub singular_type: Option<FieldDefinition_SingularType>,
-    pub option_type: Option<FieldDefinition_OptionType>,
-    pub list_type: Option<FieldDefinition_ListType>,
-    pub map_type: Option<FieldDefinition_MapType>,
+    #[serde(flatten)]
+    pub field_type: FieldDefinition_FieldType,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
