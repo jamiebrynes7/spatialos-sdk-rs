@@ -4,7 +4,7 @@ use spatialos_sdk::worker::{
     connection::{WorkerConnection, WorkerConnectionFuture},
     constants::{LOCATOR_HOSTNAME, LOCATOR_PORT, RECEPTIONIST_PORT},
     locator::{
-        Locator, LocatorCredentials, LocatorParameters, LoginTokensRequest,
+        Locator, LocatorParameters, LoginTokensRequest, PlayerIdentityCredentials,
         PlayerIdentityTokenRequest,
     },
     parameters::ConnectionParameters,
@@ -30,7 +30,7 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
             connect_with_external_ip,
         } => {
             let params = ConnectionParameters::new(worker_type)
-                .using_modular_udp()
+                .using_udp()
                 .using_external_ip(connect_with_external_ip)
                 .enable_internal_serialization();
             WorkerConnection::connect_receptionist_async(
@@ -42,23 +42,26 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
         }
 
         Command::Locator {
-            token,
-            project_name,
+            player_identity_token,
+            login_token,
         } => {
-            let params = LocatorParameters::new(LocatorCredentials::login_token(token))
-                .with_project_name(project_name);
-            let locator = Locator::new(LOCATOR_HOSTNAME, LOCATOR_PORT, &params);
-            let deployment = get_deployment(&locator)?;
-            WorkerConnection::connect_locator_and_queue_async(
+            let locator = Locator::new(
+                LOCATOR_HOSTNAME,
+                LOCATOR_PORT,
+                &LocatorParameters::new(PlayerIdentityCredentials::new(
+                    player_identity_token,
+                    login_token,
+                )),
+            );
+            WorkerConnection::connect_locator_async(
                 &locator,
-                &deployment,
                 &ConnectionParameters::new(worker_type)
                     .using_tcp()
                     .using_external_ip(true)
                     .enable_internal_serialization(),
-                queue_status_callback,
             )
         }
+
         Command::DevelopmentAuthentication { dev_auth_token } => {
             let mut request = PlayerIdentityTokenRequest::new(dev_auth_token, "player-id")
                 .with_display_name("My Player");
@@ -84,7 +87,7 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
             }
 
             let token = &response.login_tokens[0];
-            let credentials = LocatorCredentials::player_identity(
+            let credentials = PlayerIdentityCredentials::new(
                 pit.player_identity_token.as_str(),
                 token.login_token.as_str(),
             );
@@ -109,21 +112,6 @@ pub fn get_connection(opt: Opt) -> Result<WorkerConnection, String> {
     } else {
         future.wait()
     }
-}
-
-fn queue_status_callback(_queue_status: &Result<u32, String>) -> bool {
-    true
-}
-
-fn get_deployment(locator: &Locator) -> Result<String, String> {
-    let deployment_list_future = locator.get_deployment_list_async();
-    let deployment_list = deployment_list_future.wait()?;
-
-    if deployment_list.is_empty() {
-        return Err("No deployments could be found!".to_owned());
-    }
-
-    Ok(deployment_list[0].deployment_name.clone())
 }
 
 fn get_connection_poll(future: &mut WorkerConnectionFuture) -> Result<WorkerConnection, String> {

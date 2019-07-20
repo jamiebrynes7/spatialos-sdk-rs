@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 
 use futures::{Async, Future};
 
@@ -19,17 +19,6 @@ impl Locator {
             let ptr = Worker_Locator_Create(hostname.as_ptr(), port, &worker_params);
             assert!(!ptr.is_null());
             Locator { locator: ptr }
-        }
-    }
-
-    pub fn get_deployment_list_async(&self) -> DeploymentListFuture {
-        unsafe {
-            let future_ptr = Worker_Locator_GetDeploymentListAsync(self.locator);
-            assert!(!future_ptr.is_null());
-            DeploymentListFuture {
-                internal: future_ptr,
-                consumed: false,
-            }
         }
     }
 
@@ -75,26 +64,20 @@ impl Drop for Locator {
 }
 
 pub struct LocatorParameters {
-    pub project_name: Option<CString>,
-    pub credentials: LocatorCredentials,
+    pub credentials: PlayerIdentityCredentials,
     pub use_insecure_connection: bool,
     pub logging: Option<ProtocolLoggingParameters>,
 }
 
 impl LocatorParameters {
     fn to_worker_sdk(&self) -> Worker_LocatorParameters {
-        let credentials = self.credentials.to_worker_sdk();
-        let (credentials_type, login_token, steam, player_identity) = credentials;
-
         Worker_LocatorParameters {
-            project_name: match self.project_name {
-                Some(ref project_name) => project_name.as_ptr(),
-                None => ::std::ptr::null(),
-            },
-            credentials_type,
-            login_token,
-            steam,
-            player_identity,
+            project_name: ::std::ptr::null(),
+            credentials_type:
+                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_PLAYER_IDENTITY_CREDENTIALS as u8,
+            login_token: Worker_LoginTokenCredentials::default(),
+            steam: Worker_SteamCredentials::default(),
+            player_identity: self.credentials.to_worker_sdk(),
             use_insecure_connection: self.use_insecure_connection as u8,
             logging: match self.logging {
                 Some(ref params) => params.to_worker_sdk(),
@@ -104,19 +87,12 @@ impl LocatorParameters {
         }
     }
 
-    pub fn new(credentials: LocatorCredentials) -> Self {
+    pub fn new(credentials: PlayerIdentityCredentials) -> Self {
         LocatorParameters {
-            project_name: None,
             credentials,
             use_insecure_connection: false,
             logging: None,
         }
-    }
-
-    pub fn with_project_name<T: AsRef<str>>(mut self, project_name: T) -> Self {
-        self.project_name =
-            Some(CString::new(project_name.as_ref()).expect("`project_name` contains a null byte"));
-        self
     }
 
     pub fn with_insecure_connection(mut self) -> Self {
@@ -131,97 +107,6 @@ impl LocatorParameters {
     pub fn with_logging_params(mut self, params: ProtocolLoggingParameters) -> Self {
         self.logging = Some(params);
         self
-    }
-}
-
-pub enum LocatorCredentials {
-    LoginToken(CString),
-    Steam(SteamCredentials),
-    PlayerIdentity(PlayerIdentityCredentials),
-}
-
-impl LocatorCredentials {
-    pub fn login_token<S: AsRef<str>>(token: S) -> Self {
-        LocatorCredentials::LoginToken(
-            CString::new(token.as_ref()).expect("`token` contained null byte"),
-        )
-    }
-
-    pub fn player_identity<S: AsRef<str>, T: AsRef<str>>(pit: S, token: T) -> Self {
-        LocatorCredentials::PlayerIdentity(PlayerIdentityCredentials::new(pit, token))
-    }
-}
-
-impl LocatorCredentials {
-    fn to_worker_sdk(
-        &self,
-    ) -> (
-        u8,
-        Worker_LoginTokenCredentials,
-        Worker_SteamCredentials,
-        Worker_PlayerIdentityCredentials,
-    ) {
-        match self {
-            LocatorCredentials::LoginToken(token) => (
-                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_LOGIN_TOKEN_CREDENTIALS as u8,
-                Worker_LoginTokenCredentials {
-                    token: token.as_ptr(),
-                },
-                Worker_SteamCredentials {
-                    ticket: ::std::ptr::null(),
-                    deployment_tag: ::std::ptr::null(),
-                },
-                Worker_PlayerIdentityCredentials {
-                    player_identity_token: ::std::ptr::null(),
-                    login_token: ::std::ptr::null(),
-                },
-            ),
-            LocatorCredentials::Steam(steam_credentials) => (
-                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_STEAM_CREDENTIALS as u8,
-                Worker_LoginTokenCredentials {
-                    token: ::std::ptr::null(),
-                },
-                Worker_SteamCredentials {
-                    ticket: steam_credentials.ticket.as_ptr(),
-                    deployment_tag: steam_credentials.deployment_tag.as_ptr(),
-                },
-                Worker_PlayerIdentityCredentials {
-                    player_identity_token: ::std::ptr::null(),
-                    login_token: ::std::ptr::null(),
-                },
-            ),
-            LocatorCredentials::PlayerIdentity(player_identity_credentials) => (
-                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_PLAYER_IDENTITY_CREDENTIALS as u8,
-                Worker_LoginTokenCredentials {
-                    token: ::std::ptr::null(),
-                },
-                Worker_SteamCredentials {
-                    ticket: ::std::ptr::null(),
-                    deployment_tag: ::std::ptr::null(),
-                },
-                Worker_PlayerIdentityCredentials {
-                    player_identity_token: player_identity_credentials
-                        .player_identity_token
-                        .as_ptr(),
-                    login_token: player_identity_credentials.login_token.as_ptr(),
-                },
-            ),
-        }
-    }
-}
-
-pub struct SteamCredentials {
-    pub ticket: CString,
-    pub deployment_tag: CString,
-}
-
-impl SteamCredentials {
-    pub fn new<S: AsRef<str>, T: AsRef<str>>(ticket: S, deployment_tag: T) -> Self {
-        SteamCredentials {
-            ticket: CString::new(ticket.as_ref()).expect("`ticket` contained null byte"),
-            deployment_tag: CString::new(deployment_tag.as_ref())
-                .expect("`deployment_tag` contained null byte"),
-        }
     }
 }
 
@@ -351,23 +236,6 @@ impl Drop for DeploymentListFuture {
         if !self.internal.is_null() {
             unsafe { Worker_DeploymentListFuture_Destroy(self.internal) }
         }
-    }
-}
-
-pub type QueueStatusCallback = fn(&Result<u32, String>) -> bool;
-
-pub(crate) extern "C" fn queue_status_callback_handler(
-    user_data: *mut ::std::os::raw::c_void,
-    queue_status: *const Worker_QueueStatus,
-) -> u8 {
-    unsafe {
-        let status = *queue_status;
-        let callback = *(user_data as *mut QueueStatusCallback);
-        if status.error.is_null() {
-            return callback(&Ok(status.position_in_queue)) as u8;
-        }
-        let str = CStr::from_ptr(status.error);
-        callback(&Err(str.to_string_lossy().to_string())) as u8
     }
 }
 

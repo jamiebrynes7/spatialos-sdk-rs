@@ -65,6 +65,12 @@ impl SchemaComponentUpdate {
     // TODO: Cleared fields.
 }
 
+impl Default for SchemaComponentUpdate {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SchemaComponentData {
     pub fn new() -> SchemaComponentData {
         SchemaComponentData {
@@ -82,6 +88,12 @@ impl SchemaComponentData {
         SchemaObject {
             internal: unsafe { Schema_GetComponentDataFields(self.internal) },
         }
+    }
+}
+
+impl Default for SchemaComponentData {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -105,6 +117,12 @@ impl SchemaCommandRequest {
     }
 }
 
+impl Default for SchemaCommandRequest {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SchemaCommandResponse {
     pub fn new() -> SchemaCommandResponse {
         SchemaCommandResponse {
@@ -122,6 +140,12 @@ impl SchemaCommandResponse {
         SchemaObject {
             internal: unsafe { Schema_GetCommandResponseObject(self.internal) },
         }
+    }
+}
+
+impl Default for SchemaCommandResponse {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

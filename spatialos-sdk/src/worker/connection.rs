@@ -1,4 +1,5 @@
 use crate::ptr::MutPtr;
+use crate::worker::parameters::ProtocolType;
 use crate::worker::{
     commands::*,
     component::{self, Component, UpdateParameters},
@@ -167,6 +168,55 @@ pub struct WorkerConnection {
     attributes: Vec<String>,
 }
 
+#[allow(unused_assignments)]
+fn do_connect<F>(connect: F, params: &ConnectionParameters) -> WorkerConnectionFuture
+where
+    F: FnOnce(&Worker_ConnectionParameters) -> WorkerConnectionFuture,
+{
+    let mut conn_params = params.to_worker_sdk();
+
+    // conn_params.network will not have the protocol parameters setup (due to requiring pointers to things on the stack). Therefore, we do that here.
+    let mut udp_kcp_params = Worker_Alpha_KcpParameters::default();
+    let mut udp_erasure_codec_params = Worker_ErasureCodecParameters::default();
+    let mut udp_heartbeat_params = Worker_HeartbeatParameters::default();
+    let mut udp_flow_control_params = Worker_Alpha_FlowControlParameters::default();
+    match &params.network.protocol {
+        ProtocolType::Tcp(params) => {
+            conn_params.network.connection_type =
+                Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8;
+            conn_params.network.tcp = params.to_worker_sdk();
+        }
+        ProtocolType::Udp(params) => {
+            conn_params.network.connection_type =
+                Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_UDP as u8;
+            conn_params.network.modular_udp.security_type = params.security_type.to_worker_sdk();
+            // These parameters should be zero-initialized (null pointers) if they are not matched here.
+            if let Some(params) = &params.kcp {
+                udp_kcp_params = params.to_worker_sdk();
+                conn_params.network.modular_udp.downstream_kcp = &udp_kcp_params;
+                conn_params.network.modular_udp.upstream_kcp = &udp_kcp_params;
+            }
+            if let Some(params) = &params.erasure_codec {
+                udp_erasure_codec_params = params.to_worker_sdk();
+                conn_params.network.modular_udp.downstream_erasure_codec =
+                    &udp_erasure_codec_params;
+                conn_params.network.modular_udp.upstream_erasure_codec = &udp_erasure_codec_params;
+            }
+            if let Some(params) = &params.heartbeat {
+                udp_heartbeat_params = params.to_worker_sdk();
+                conn_params.network.modular_udp.downstream_heartbeat = &udp_heartbeat_params;
+                conn_params.network.modular_udp.upstream_heartbeat = &udp_heartbeat_params;
+            }
+            if let Some(params) = &params.flow_control {
+                udp_flow_control_params = params.to_worker_sdk();
+                conn_params.network.modular_udp.flow_control = &udp_flow_control_params;
+            }
+        }
+    }
+
+    connect(&conn_params)
+}
+
 impl WorkerConnection {
     pub(crate) fn new(connection_ptr: *mut Worker_Connection) -> Self {
         unsafe {
@@ -204,29 +254,36 @@ impl WorkerConnection {
         let hostname_cstr = CString::new(hostname).expect("Received 0 byte in supplied hostname.");
         let worker_id_cstr =
             CString::new(worker_id).expect("Received 0 byte in supplied Worker ID");
-        let conn_params = params.to_worker_sdk();
-        let future_ptr = unsafe {
-            Worker_ConnectAsync(
-                hostname_cstr.as_ptr(),
-                port,
-                worker_id_cstr.as_ptr(),
-                &conn_params,
-            )
-        };
-        assert!(!future_ptr.is_null());
-        WorkerConnectionFuture::new(future_ptr)
+        do_connect(
+            move |conn_params| {
+                let future_ptr = unsafe {
+                    Worker_ConnectAsync(
+                        hostname_cstr.as_ptr(),
+                        port,
+                        worker_id_cstr.as_ptr(),
+                        conn_params,
+                    )
+                };
+                assert!(!future_ptr.is_null());
+                WorkerConnectionFuture::new(future_ptr)
+            },
+            params,
+        )
     }
 
     pub fn connect_locator_async(
         locator: &Locator,
         params: &ConnectionParameters,
     ) -> WorkerConnectionFuture {
-        let connection_params = params.to_worker_sdk();
-
-        unsafe {
-            let ptr = Worker_Locator_ConnectAsync(locator.locator, &connection_params);
-            WorkerConnectionFuture::new(ptr)
-        }
+        do_connect(
+            move |conn_params| {
+                let future_ptr =
+                    unsafe { Worker_Locator_ConnectAsync(locator.locator, conn_params) };
+                assert!(!future_ptr.is_null());
+                WorkerConnectionFuture::new(future_ptr)
+            },
+            params,
+        )
     }
 }
 
