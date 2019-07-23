@@ -55,7 +55,7 @@ rustup component add clippy-preview
 
 cargo install --path cargo-spatial --force
 
-cargo spatial --verbose download sdk --sdk-version 13.6.0
+cargo spatial --verbose download sdk --sdk-version 14.0.0
 
 # HACK: It doesn't make sense to do codegen in the install step, but it needs
 # to be done before we attempt to build since it doesn't happen automatically.
