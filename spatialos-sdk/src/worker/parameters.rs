@@ -83,7 +83,21 @@ impl ConnectionParameters {
     }
 
     pub(crate) fn flatten(&self) -> IntermediateConnectionParameters<'_> {
-        unimplemented!()
+        let protocol = match &self.network.protocol {
+            ProtocolType::Tcp(params) => IntermediateProtocolType::Tcp(params.to_worker_sdk()),
+            ProtocolType::Udp(params) => IntermediateProtocolType::Udp {
+                security_type: params.security_type.to_worker_sdk(),
+                kcp: params.kcp.as_ref().map(KcpParameters::to_worker_sdk),
+                erasure_codec: params.erasure_codec.as_ref().map(ErasureCodecParameters::to_worker_sdk),
+                heartbeat: params.heartbeat.as_ref().map(HeartbeatParameters::to_worker_sdk),
+                flow_control: params.flow_control.as_ref().map(FlowControlParameters::to_worker_sdk),
+            }
+        };
+
+        IntermediateConnectionParameters {
+            params: self,
+            protocol,
+        }
     }
 }
 
@@ -412,11 +426,11 @@ impl<'a> IntermediateConnectionParameters<'a> {
         };
 
         let network = match &self.protocol {
-            IntermediateProtocolType::Tcp(tcp_params) => {
+            &IntermediateProtocolType::Tcp(tcp) => {
                 Worker_NetworkParameters {
                     connection_type:
                         Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8,
-                    tcp: tcp_params.to_worker_sdk(),
+                    tcp,
 
                     ..partial_network_params
                 }
@@ -424,14 +438,16 @@ impl<'a> IntermediateConnectionParameters<'a> {
 
             IntermediateProtocolType::Udp {
                 security_type,
-                downstream_kcp,
-                upstream_kcp,
-                downstream_erasure_codec,
-                upstream_erasure_codec,
-                downstream_heartbeat,
-                upstream_heartbeat,
+                kcp,
+                erasure_codec,
+                heartbeat,
                 flow_control,
             } => {
+                let kcp = kcp.as_ref().map(|param| param as *const _).unwrap_or(ptr::null());
+                let erasure_codec = erasure_codec.as_ref().map(|param| param as *const _).unwrap_or(ptr::null());
+                let heartbeat = heartbeat.as_ref().map(|param| param as *const _).unwrap_or(ptr::null());
+                let flow_control = flow_control.as_ref().map(|param| param as *const _).unwrap_or(ptr::null());
+
                 Worker_NetworkParameters {
 
                     connection_type:
@@ -440,16 +456,16 @@ impl<'a> IntermediateConnectionParameters<'a> {
                     modular_udp: Worker_Alpha_ModularUdpNetworkParameters {
                         security_type: *security_type,
 
-                        downstream_kcp: downstream_kcp.as_ref().map(|param| param as *const _).unwrap_or(ptr::null()),
-                        upstream_kcp: upstream_kcp.as_ref().map(|param| param as *const _).unwrap_or(ptr::null()),
+                        downstream_kcp: kcp,
+                        upstream_kcp: kcp,
 
-                        downstream_erasure_codec: downstream_erasure_codec.as_ref().map(|param| param as *const _).unwrap_or(ptr::null()),
-                        upstream_erasure_codec: upstream_erasure_codec.as_ref().map(|param| param as *const _).unwrap_or(ptr::null()),
+                        downstream_erasure_codec: erasure_codec,
+                        upstream_erasure_codec: erasure_codec,
 
-                        downstream_heartbeat: downstream_heartbeat.as_ref().map(|param| param as *const _).unwrap_or(ptr::null()),
-                        upstream_heartbeat: upstream_heartbeat.as_ref().map(|param| param as *const _).unwrap_or(ptr::null()),
+                        downstream_heartbeat: heartbeat,
+                        upstream_heartbeat: heartbeat,
 
-                        flow_control: flow_control.as_ref().map(|param| param as *const _).unwrap_or(ptr::null()),
+                        flow_control,
                     },
 
                     ..partial_network_params
@@ -491,16 +507,13 @@ impl<'a> IntermediateConnectionParameters<'a> {
 }
 
 enum IntermediateProtocolType {
-    Tcp(TcpNetworkParameters),
+    Tcp(Worker_TcpNetworkParameters),
 
     Udp {
         security_type: u8,
-        downstream_kcp: Option<Worker_Alpha_KcpParameters>,
-        upstream_kcp: Option<Worker_Alpha_KcpParameters>,
-        downstream_erasure_codec: Option<Worker_ErasureCodecParameters>,
-        upstream_erasure_codec: Option<Worker_ErasureCodecParameters>,
-        downstream_heartbeat: Option<Worker_HeartbeatParameters>,
-        upstream_heartbeat: Option<Worker_HeartbeatParameters>,
+        kcp: Option<Worker_Alpha_KcpParameters>,
+        erasure_codec: Option<Worker_ErasureCodecParameters>,
+        heartbeat: Option<Worker_HeartbeatParameters>,
         flow_control: Option<Worker_Alpha_FlowControlParameters>,
     }
 }

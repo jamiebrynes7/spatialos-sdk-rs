@@ -1,5 +1,4 @@
 use crate::ptr::MutPtr;
-use crate::worker::parameters::ProtocolType;
 use crate::worker::{
     commands::*,
     component::{self, Component, UpdateParameters},
