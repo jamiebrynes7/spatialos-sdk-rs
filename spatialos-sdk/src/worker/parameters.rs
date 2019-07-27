@@ -88,10 +88,22 @@ impl ConnectionParameters {
             ProtocolType::Udp(params) => IntermediateProtocolType::Udp {
                 security_type: params.security_type.to_worker_sdk(),
                 kcp: params.kcp.as_ref().map(KcpParameters::to_worker_sdk),
-                erasure_codec: params.erasure_codec.as_ref().map(ErasureCodecParameters::to_worker_sdk),
-                heartbeat: params.heartbeat.as_ref().map(HeartbeatParameters::to_worker_sdk),
-                flow_control: params.flow_control.as_ref().map(FlowControlParameters::to_worker_sdk),
-            }
+
+                erasure_codec: params
+                    .erasure_codec
+                    .as_ref()
+                    .map(ErasureCodecParameters::to_worker_sdk),
+
+                heartbeat: params
+                    .heartbeat
+                    .as_ref()
+                    .map(HeartbeatParameters::to_worker_sdk),
+
+                flow_control: params
+                    .flow_control
+                    .as_ref()
+                    .map(FlowControlParameters::to_worker_sdk),
+            },
         };
 
         IntermediateConnectionParameters {
@@ -426,15 +438,13 @@ impl<'a> IntermediateConnectionParameters<'a> {
         };
 
         let network = match &self.protocol {
-            &IntermediateProtocolType::Tcp(tcp) => {
-                Worker_NetworkParameters {
-                    connection_type:
-                        Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP as u8,
-                    tcp,
+            IntermediateProtocolType::Tcp(tcp) => Worker_NetworkParameters {
+                connection_type: Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP
+                    as u8,
+                tcp: *tcp,
 
-                    ..partial_network_params
-                }
-            }
+                ..partial_network_params
+            },
 
             IntermediateProtocolType::Udp {
                 security_type,
@@ -443,15 +453,30 @@ impl<'a> IntermediateConnectionParameters<'a> {
                 heartbeat,
                 flow_control,
             } => {
-                let kcp = kcp.as_ref().map(|param| param as *const _).unwrap_or(ptr::null());
-                let erasure_codec = erasure_codec.as_ref().map(|param| param as *const _).unwrap_or(ptr::null());
-                let heartbeat = heartbeat.as_ref().map(|param| param as *const _).unwrap_or(ptr::null());
-                let flow_control = flow_control.as_ref().map(|param| param as *const _).unwrap_or(ptr::null());
+                let kcp = kcp
+                    .as_ref()
+                    .map(|param| param as *const _)
+                    .unwrap_or(ptr::null());
+
+                let erasure_codec = erasure_codec
+                    .as_ref()
+                    .map(|param| param as *const _)
+                    .unwrap_or(ptr::null());
+
+                let heartbeat = heartbeat
+                    .as_ref()
+                    .map(|param| param as *const _)
+                    .unwrap_or(ptr::null());
+
+                let flow_control = flow_control
+                    .as_ref()
+                    .map(|param| param as *const _)
+                    .unwrap_or(ptr::null());
 
                 Worker_NetworkParameters {
-
                     connection_type:
-                        Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_UDP as u8,
+                        Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_UDP
+                            as u8,
 
                     modular_udp: Worker_Alpha_ModularUdpNetworkParameters {
                         security_type: *security_type,
@@ -479,9 +504,12 @@ impl<'a> IntermediateConnectionParameters<'a> {
             send_queue_capacity: self.params.send_queue_capacity,
             receive_queue_capacity: self.params.receive_queue_capacity,
             log_message_queue_capacity: self.params.log_message_queue_capacity,
-            built_in_metrics_report_period_millis: self.params.built_in_metrics_report_period_millis,
+            built_in_metrics_report_period_millis: self
+                .params
+                .built_in_metrics_report_period_millis,
             protocol_logging: self.params.protocol_logging.to_worker_sdk(),
-            enable_protocol_logging_at_startup: self.params.enable_protocol_logging_at_startup as u8,
+            enable_protocol_logging_at_startup: self.params.enable_protocol_logging_at_startup
+                as u8,
             enable_dynamic_components: 0,
             thread_affinity: self.params.thread_affinity.to_worker_sdk(),
 
@@ -515,5 +543,5 @@ enum IntermediateProtocolType {
         erasure_codec: Option<Worker_ErasureCodecParameters>,
         heartbeat: Option<Worker_HeartbeatParameters>,
         flow_control: Option<Worker_Alpha_FlowControlParameters>,
-    }
+    },
 }
