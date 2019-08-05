@@ -82,33 +82,33 @@ impl ConnectionParameters {
         }
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_ConnectionParameters {
-        Worker_ConnectionParameters {
-            worker_type: self.worker_type.as_ptr(),
-            network: self.network.to_worker_sdk(),
-            send_queue_capacity: self.send_queue_capacity,
-            receive_queue_capacity: self.receive_queue_capacity,
-            log_message_queue_capacity: self.log_message_queue_capacity,
-            built_in_metrics_report_period_millis: self.built_in_metrics_report_period_millis,
-            protocol_logging: self.protocol_logging.to_worker_sdk(),
-            enable_protocol_logging_at_startup: self.enable_protocol_logging_at_startup as u8,
-            enable_dynamic_components: 0,
-            thread_affinity: self.thread_affinity.to_worker_sdk(),
-            component_vtable_count: if self.use_internal_serialization {
-                DATABASE.len() as u32
-            } else {
-                0
+    pub(crate) fn flatten(&self) -> IntermediateConnectionParameters<'_> {
+        let protocol = match &self.network.protocol {
+            ProtocolType::Tcp(params) => IntermediateProtocolType::Tcp(params.to_worker_sdk()),
+            ProtocolType::Udp(params) => IntermediateProtocolType::Udp {
+                security_type: params.security_type.to_worker_sdk(),
+                kcp: params.kcp.as_ref().map(KcpParameters::to_worker_sdk),
+
+                erasure_codec: params
+                    .erasure_codec
+                    .as_ref()
+                    .map(ErasureCodecParameters::to_worker_sdk),
+
+                heartbeat: params
+                    .heartbeat
+                    .as_ref()
+                    .map(HeartbeatParameters::to_worker_sdk),
+
+                flow_control: params
+                    .flow_control
+                    .as_ref()
+                    .map(FlowControlParameters::to_worker_sdk),
             },
-            component_vtables: if self.use_internal_serialization {
-                DATABASE.to_worker_sdk()
-            } else {
-                ptr::null()
-            },
-            default_component_vtable: if self.use_internal_serialization {
-                ptr::null()
-            } else {
-                &vtable::PASSTHROUGH_VTABLE
-            },
+        };
+
+        IntermediateConnectionParameters {
+            params: self,
+            protocol,
         }
     }
 }
@@ -132,16 +132,6 @@ impl NetworkParameters {
             protocol: ProtocolType::Tcp(TcpNetworkParameters::default()),
             connection_timeout_millis: u64::from(WORKER_DEFAULTS_CONNECTION_TIMEOUT_MILLIS),
             default_command_timeout_millis: WORKER_DEFAULTS_DEFAULT_COMMAND_TIMEOUT_MILLIS,
-        }
-    }
-
-    pub(crate) fn to_worker_sdk(&self) -> Worker_NetworkParameters {
-        Worker_NetworkParameters {
-            use_external_ip: self.use_external_ip as u8,
-            connection_timeout_millis: self.connection_timeout_millis,
-            default_command_timeout_millis: self.default_command_timeout_millis,
-            // Other parameters will be set when establishing a connection.
-            ..Worker_NetworkParameters::default()
         }
     }
 }
@@ -429,4 +419,129 @@ impl ThreadAffinityParameters {
             temporary_threads_affinity_mask: self.temporary_threads_affinity_mask,
         }
     }
+}
+
+/// Helper struct for converting `ConnectionParameters` into `Worker_ConnectionParameters`.
+pub(crate) struct IntermediateConnectionParameters<'a> {
+    params: &'a ConnectionParameters,
+    protocol: IntermediateProtocolType,
+}
+
+impl<'a> IntermediateConnectionParameters<'a> {
+    pub(crate) fn as_raw(&self) -> Worker_ConnectionParameters {
+        let partial_network_params = Worker_NetworkParameters {
+            use_external_ip: self.params.network.use_external_ip as u8,
+            connection_timeout_millis: self.params.network.connection_timeout_millis,
+            default_command_timeout_millis: self.params.network.default_command_timeout_millis,
+
+            ..Worker_NetworkParameters::default()
+        };
+
+        let network = match &self.protocol {
+            IntermediateProtocolType::Tcp(tcp) => Worker_NetworkParameters {
+                connection_type: Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP
+                    as u8,
+                tcp: *tcp,
+
+                ..partial_network_params
+            },
+
+            IntermediateProtocolType::Udp {
+                security_type,
+                kcp,
+                erasure_codec,
+                heartbeat,
+                flow_control,
+            } => {
+                let kcp = kcp
+                    .as_ref()
+                    .map(|param| param as *const _)
+                    .unwrap_or(ptr::null());
+
+                let erasure_codec = erasure_codec
+                    .as_ref()
+                    .map(|param| param as *const _)
+                    .unwrap_or(ptr::null());
+
+                let heartbeat = heartbeat
+                    .as_ref()
+                    .map(|param| param as *const _)
+                    .unwrap_or(ptr::null());
+
+                let flow_control = flow_control
+                    .as_ref()
+                    .map(|param| param as *const _)
+                    .unwrap_or(ptr::null());
+
+                Worker_NetworkParameters {
+                    connection_type:
+                        Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_UDP
+                            as u8,
+
+                    modular_udp: Worker_Alpha_ModularUdpNetworkParameters {
+                        security_type: *security_type,
+
+                        downstream_kcp: kcp,
+                        upstream_kcp: kcp,
+
+                        downstream_erasure_codec: erasure_codec,
+                        upstream_erasure_codec: erasure_codec,
+
+                        downstream_heartbeat: heartbeat,
+                        upstream_heartbeat: heartbeat,
+
+                        flow_control,
+                    },
+
+                    ..partial_network_params
+                }
+            }
+        };
+
+        Worker_ConnectionParameters {
+            worker_type: self.params.worker_type.as_ptr(),
+            network,
+            send_queue_capacity: self.params.send_queue_capacity,
+            receive_queue_capacity: self.params.receive_queue_capacity,
+            log_message_queue_capacity: self.params.log_message_queue_capacity,
+            built_in_metrics_report_period_millis: self
+                .params
+                .built_in_metrics_report_period_millis,
+            protocol_logging: self.params.protocol_logging.to_worker_sdk(),
+            enable_protocol_logging_at_startup: self.params.enable_protocol_logging_at_startup
+                as u8,
+            enable_dynamic_components: 0,
+            thread_affinity: self.params.thread_affinity.to_worker_sdk(),
+
+            component_vtable_count: if self.params.use_internal_serialization {
+                DATABASE.len() as u32
+            } else {
+                0
+            },
+
+            component_vtables: if self.params.use_internal_serialization {
+                DATABASE.to_worker_sdk()
+            } else {
+                ptr::null()
+            },
+
+            default_component_vtable: if self.params.use_internal_serialization {
+                ptr::null()
+            } else {
+                &vtable::PASSTHROUGH_VTABLE
+            },
+        }
+    }
+}
+
+enum IntermediateProtocolType {
+    Tcp(Worker_TcpNetworkParameters),
+
+    Udp {
+        security_type: u8,
+        kcp: Option<Worker_Alpha_KcpParameters>,
+        erasure_codec: Option<Worker_ErasureCodecParameters>,
+        heartbeat: Option<Worker_HeartbeatParameters>,
+        flow_control: Option<Worker_Alpha_FlowControlParameters>,
+    },
 }
