@@ -8,25 +8,21 @@ pub type FieldId = u32;
 
 #[derive(Debug)]
 pub struct SchemaComponentUpdate {
-    pub component_id: ComponentId,
     pub internal: *mut Schema_ComponentUpdate,
 }
 
 #[derive(Debug)]
 pub struct SchemaComponentData {
-    pub component_id: ComponentId,
     pub internal: *mut Schema_ComponentData,
 }
 
 #[derive(Debug)]
 pub struct SchemaCommandRequest {
-    pub component_id: ComponentId,
     pub internal: *mut Schema_CommandRequest,
 }
 
 #[derive(Debug)]
 pub struct SchemaCommandResponse {
-    pub component_id: ComponentId,
     pub internal: *mut Schema_CommandResponse,
 }
 
@@ -36,15 +32,10 @@ pub struct SchemaObject {
 }
 
 impl SchemaComponentUpdate {
-    pub fn new(component_id: ComponentId) -> SchemaComponentUpdate {
+    pub fn new() -> SchemaComponentUpdate {
         SchemaComponentUpdate {
-            component_id,
-            internal: unsafe { Schema_CreateComponentUpdate(component_id) },
+            internal: unsafe { Schema_CreateComponentUpdate() },
         }
-    }
-
-    pub fn component_id(&self) -> ComponentId {
-        unsafe { Schema_GetComponentUpdateComponentId(self.internal) }
     }
 
     pub fn fields(&self) -> SchemaObject {
@@ -74,16 +65,17 @@ impl SchemaComponentUpdate {
     // TODO: Cleared fields.
 }
 
-impl SchemaComponentData {
-    pub fn new(component_id: ComponentId) -> SchemaComponentData {
-        SchemaComponentData {
-            component_id,
-            internal: unsafe { Schema_CreateComponentData(component_id) },
-        }
+impl Default for SchemaComponentUpdate {
+    fn default() -> Self {
+        Self::new()
     }
+}
 
-    pub fn component_id(&self) -> ComponentId {
-        unsafe { Schema_GetComponentDataComponentId(self.internal) }
+impl SchemaComponentData {
+    pub fn new() -> SchemaComponentData {
+        SchemaComponentData {
+            internal: unsafe { Schema_CreateComponentData() },
+        }
     }
 
     pub fn fields(&self) -> SchemaObject {
@@ -99,20 +91,17 @@ impl SchemaComponentData {
     }
 }
 
+impl Default for SchemaComponentData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SchemaCommandRequest {
-    pub fn new(component_id: ComponentId, command_index: FieldId) -> SchemaCommandRequest {
+    pub fn new() -> SchemaCommandRequest {
         SchemaCommandRequest {
-            component_id,
-            internal: unsafe { Schema_CreateCommandRequest(component_id, command_index) },
+            internal: unsafe { Schema_CreateCommandRequest() },
         }
-    }
-
-    pub fn component_id(&self) -> ComponentId {
-        unsafe { Schema_GetCommandRequestComponentId(self.internal) }
-    }
-
-    pub fn command_index(&self) -> FieldId {
-        unsafe { Schema_GetCommandRequestCommandIndex(self.internal) }
     }
 
     pub fn object(&self) -> SchemaObject {
@@ -128,20 +117,17 @@ impl SchemaCommandRequest {
     }
 }
 
+impl Default for SchemaCommandRequest {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SchemaCommandResponse {
-    pub fn new(component_id: u32, command_index: u32) -> SchemaCommandResponse {
+    pub fn new() -> SchemaCommandResponse {
         SchemaCommandResponse {
-            component_id,
-            internal: unsafe { Schema_CreateCommandResponse(component_id, command_index) },
+            internal: unsafe { Schema_CreateCommandResponse() },
         }
-    }
-
-    pub fn component_id(&self) -> ComponentId {
-        unsafe { Schema_GetCommandResponseComponentId(self.internal) }
-    }
-
-    pub fn command_index(&self) -> FieldId {
-        unsafe { Schema_GetCommandResponseCommandIndex(self.internal) }
     }
 
     pub fn object(&self) -> SchemaObject {
@@ -154,6 +140,12 @@ impl SchemaCommandResponse {
         SchemaObject {
             internal: unsafe { Schema_GetCommandResponseObject(self.internal) },
         }
+    }
+}
+
+impl Default for SchemaCommandResponse {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

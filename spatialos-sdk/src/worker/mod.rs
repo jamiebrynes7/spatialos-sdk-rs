@@ -1,6 +1,5 @@
 pub mod internal;
 
-pub mod alpha;
 pub mod commands;
 pub mod component;
 pub mod connection;
@@ -49,7 +48,7 @@ impl EntityId {
     Hash(bound = "")
 )]
 pub struct RequestId<T> {
-    id: u32,
+    id: i64,
     _type: PhantomData<*const T>,
 }
 
@@ -71,7 +70,7 @@ unsafe impl<T> Send for RequestId<T> {}
 unsafe impl<T> Sync for RequestId<T> {}
 
 impl<T> RequestId<T> {
-    pub fn new(id: u32) -> RequestId<T> {
+    pub fn new(id: i64) -> RequestId<T> {
         RequestId {
             id,
             _type: PhantomData,

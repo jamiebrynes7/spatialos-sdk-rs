@@ -74,14 +74,15 @@ impl Entity {
 
     pub(crate) unsafe fn add_serialized(
         &mut self,
+        component_id: ComponentId,
         component: SchemaComponentData,
     ) -> Result<(), String> {
-        let vtable = DATABASE.get_vtable(component.component_id).unwrap();
+        let vtable = DATABASE.get_vtable(component_id).unwrap();
         let deserialize_func = vtable.component_data_deserialize.unwrap_or_else(|| {
             Schema_DestroyComponentData(component.internal);
             panic!(
                 "No component_data_deserialize method defined for {}",
-                component.component_id
+                component_id
             )
         });
 
@@ -91,7 +92,7 @@ impl Entity {
         let handle_out_ptr = Box::into_raw(Box::new(placeholder_ptr));
 
         let deserialize_result = deserialize_func(
-            component.component_id,
+            component_id,
             ptr::null_mut(),
             component.internal,
             handle_out_ptr,
@@ -106,7 +107,7 @@ impl Entity {
 
         let component_data = Worker_ComponentData {
             reserved: ptr::null_mut(),
-            component_id: component.component_id,
+            component_id,
             schema_type: ptr::null_mut(),
             user_handle: *handle_out_ptr,
         };

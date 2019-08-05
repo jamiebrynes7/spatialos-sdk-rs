@@ -6,7 +6,8 @@ use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 // Cargo.toml
 pub use inventory;
 
-pub type ComponentId = u32;
+pub type ComponentId = Worker_ComponentId;
+pub type CommandIndex = Worker_CommandIndex;
 
 pub trait ComponentUpdate<C: Component> {
     fn merge(&mut self, update: Self);
@@ -38,9 +39,12 @@ where
 
     fn from_data(data: &schema::SchemaComponentData) -> Result<Self, String>;
     fn from_update(update: &schema::SchemaComponentUpdate) -> Result<Self::Update, String>;
-    fn from_request(request: &schema::SchemaCommandRequest)
-        -> Result<Self::CommandRequest, String>;
+    fn from_request(
+        command_index: CommandIndex,
+        request: &schema::SchemaCommandRequest,
+    ) -> Result<Self::CommandRequest, String>;
     fn from_response(
+        command_index: CommandIndex,
         response: &schema::SchemaCommandResponse,
     ) -> Result<Self::CommandResponse, String>;
 
@@ -106,12 +110,12 @@ impl UpdateParameters {
         self.loopback = true;
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_UpdateParameters {
-        Worker_Alpha_UpdateParameters {
+    pub(crate) fn to_worker_sdk(&self) -> Worker_UpdateParameters {
+        Worker_UpdateParameters {
             loopback: if self.loopback {
-                Worker_Alpha_ComponentUpdateLoopback_WORKER_COMPONENT_UPDATE_LOOPBACK_SHORT_CIRCUITED as _
+                Worker_ComponentUpdateLoopback_WORKER_COMPONENT_UPDATE_LOOPBACK_SHORT_CIRCUITED as _
             } else {
-                Worker_Alpha_ComponentUpdateLoopback_WORKER_COMPONENT_UPDATE_LOOPBACK_NONE as _
+                Worker_ComponentUpdateLoopback_WORKER_COMPONENT_UPDATE_LOOPBACK_NONE as _
             },
         }
     }
@@ -142,7 +146,6 @@ pub(crate) mod internal {
             ComponentData {
                 component_id: data.component_id,
                 schema_type: SchemaComponentData {
-                    component_id: data.component_id,
                     internal: data.schema_type,
                 },
                 user_handle: data.user_handle,
@@ -168,7 +171,6 @@ pub(crate) mod internal {
             ComponentUpdate {
                 component_id: update.component_id,
                 schema_type: SchemaComponentUpdate {
-                    component_id: update.component_id,
                     internal: update.schema_type,
                 },
                 user_handle: update.user_handle,
@@ -180,6 +182,7 @@ pub(crate) mod internal {
     #[derive(Debug)]
     pub struct CommandRequest<'a> {
         pub component_id: ComponentId,
+        pub command_index: FieldId,
         pub schema_type: SchemaCommandRequest,
         pub user_handle: *const Worker_CommandRequestHandle,
 
@@ -193,8 +196,8 @@ pub(crate) mod internal {
         fn from(request: &Worker_CommandRequest) -> Self {
             CommandRequest {
                 component_id: request.component_id,
+                command_index: request.command_index,
                 schema_type: SchemaCommandRequest {
-                    component_id: request.component_id,
                     internal: request.schema_type,
                 },
                 user_handle: request.user_handle,
@@ -206,6 +209,7 @@ pub(crate) mod internal {
     #[derive(Debug)]
     pub struct CommandResponse<'a> {
         pub component_id: ComponentId,
+        pub command_index: FieldId,
         pub schema_type: SchemaCommandResponse,
         pub user_handle: *const Worker_CommandResponseHandle,
 
@@ -219,8 +223,8 @@ pub(crate) mod internal {
         fn from(response: &Worker_CommandResponse) -> Self {
             CommandResponse {
                 component_id: response.component_id,
+                command_index: response.command_index,
                 schema_type: SchemaCommandResponse {
-                    component_id: response.component_id,
                     internal: response.schema_type,
                 },
                 user_handle: response.user_handle,
@@ -347,10 +351,7 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     data: *mut Schema_ComponentData,
     handle_out: *mut *mut Worker_ComponentDataHandle,
 ) -> u8 {
-    let schema_data = schema::SchemaComponentData {
-        component_id: C::ID,
-        internal: data,
-    };
+    let schema_data = schema::SchemaComponentData { internal: data };
     let deserialized_result = C::from_data(&schema_data);
     if let Ok(deserialized_data) = deserialized_result {
         *handle_out = handle_allocate(deserialized_data);
@@ -396,10 +397,7 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     update: *mut Schema_ComponentUpdate,
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
-    let schema_update = schema::SchemaComponentUpdate {
-        component_id: C::ID,
-        internal: update,
-    };
+    let schema_update = schema::SchemaComponentUpdate { internal: update };
     let deserialized_result = C::from_update(&schema_update);
     if let Ok(deserialized_update) = deserialized_result {
         *handle_out = handle_allocate(deserialized_update);
@@ -426,6 +424,7 @@ unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
 
 unsafe extern "C" fn vtable_command_request_free<C: Component>(
     _: u32,
+    _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
@@ -433,6 +432,7 @@ unsafe extern "C" fn vtable_command_request_free<C: Component>(
 }
 
 unsafe extern "C" fn vtable_command_request_copy<C: Component>(
+    _: u32,
     _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
@@ -442,15 +442,13 @@ unsafe extern "C" fn vtable_command_request_copy<C: Component>(
 
 unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
     _: u32,
+    command_index: u32,
     _: *mut raw::c_void,
     request: *mut Schema_CommandRequest,
     handle_out: *mut *mut Worker_CommandRequestHandle,
 ) -> u8 {
-    let schema_request = schema::SchemaCommandRequest {
-        component_id: C::ID,
-        internal: request,
-    };
-    let deserialized_result = C::from_request(&schema_request);
+    let schema_request = schema::SchemaCommandRequest { internal: request };
+    let deserialized_result = C::from_request(command_index, &schema_request);
     if let Ok(deserialized_request) = deserialized_result {
         *handle_out = handle_allocate(deserialized_request);
         1
@@ -460,6 +458,7 @@ unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
 }
 
 unsafe extern "C" fn vtable_command_request_serialize<C: Component>(
+    _: u32,
     _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
@@ -476,6 +475,7 @@ unsafe extern "C" fn vtable_command_request_serialize<C: Component>(
 
 unsafe extern "C" fn vtable_command_response_free<C: Component>(
     _: u32,
+    _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
 ) {
@@ -483,6 +483,7 @@ unsafe extern "C" fn vtable_command_response_free<C: Component>(
 }
 
 unsafe extern "C" fn vtable_command_response_copy<C: Component>(
+    _: u32,
     _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
@@ -492,15 +493,13 @@ unsafe extern "C" fn vtable_command_response_copy<C: Component>(
 
 unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(
     _: u32,
+    command_index: u32,
     _: *mut raw::c_void,
     response: *mut Schema_CommandResponse,
     handle_out: *mut *mut Worker_CommandRequestHandle,
 ) -> u8 {
-    let schema_response = schema::SchemaCommandResponse {
-        component_id: C::ID,
-        internal: response,
-    };
-    let deserialized_result = C::from_response(&schema_response);
+    let schema_response = schema::SchemaCommandResponse { internal: response };
+    let deserialized_result = C::from_response(command_index, &schema_response);
     if let Ok(deserialized_response) = deserialized_result {
         *handle_out = handle_allocate(deserialized_response);
         1
@@ -510,6 +509,7 @@ unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(
 }
 
 unsafe extern "C" fn vtable_command_response_serialize<C: Component>(
+    _: u32,
     _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,

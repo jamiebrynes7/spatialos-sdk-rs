@@ -1,6 +1,5 @@
 use crate::ptr::MutPtr;
 use crate::worker::{
-    alpha,
     commands::*,
     component::{self, Component, UpdateParameters},
     entity::Entity,
@@ -205,13 +204,17 @@ impl WorkerConnection {
         let hostname_cstr = CString::new(hostname).expect("Received 0 byte in supplied hostname.");
         let worker_id_cstr =
             CString::new(worker_id).expect("Received 0 byte in supplied Worker ID");
-        let conn_params = params.to_worker_sdk();
+
+        // Flatten the Rust representation of the connection parameters into a format more
+        // compatible with the C API.
+        let params = params.flatten();
+
         let future_ptr = unsafe {
             Worker_ConnectAsync(
                 hostname_cstr.as_ptr(),
                 port,
                 worker_id_cstr.as_ptr(),
-                &conn_params,
+                &params.as_raw(),
             )
         };
         assert!(!future_ptr.is_null());
@@ -220,43 +223,15 @@ impl WorkerConnection {
 
     pub fn connect_locator_async(
         locator: &Locator,
-        deployment_name: &str,
-        params: &ConnectionParameters,
-        callback: QueueStatusCallback,
-    ) -> WorkerConnectionFuture {
-        let deployment_name_cstr = CString::new(deployment_name).unwrap();
-        let connection_params = params.to_worker_sdk();
-
-        let callback = Box::new(callback);
-        let callback_ptr = Box::into_raw(callback) as *mut ::std::os::raw::c_void;
-
-        unsafe {
-            let ptr = Worker_Locator_ConnectAsync(
-                locator.locator,
-                deployment_name_cstr.as_ptr(),
-                &connection_params,
-                callback_ptr,
-                Some(queue_status_callback_handler),
-            );
-            WorkerConnectionFuture {
-                future_ptr: ptr,
-                was_consumed: false,
-                queue_status_callback: Some(callback_ptr),
-            }
-        }
-    }
-
-    pub fn connect_alpha_locator_async(
-        locator: &alpha::Locator,
         params: &ConnectionParameters,
     ) -> WorkerConnectionFuture {
-        let connection_params = params.to_worker_sdk();
+        // Flatten the Rust representation of the connection parameters into a format more
+        // compatible with the C API.
+        let params = params.flatten();
 
-        unsafe {
-            let ptr = Worker_Alpha_Locator_ConnectAsync(locator.internal, &connection_params);
-
-            WorkerConnectionFuture::new(ptr)
-        }
+        let future_ptr = unsafe { Worker_Locator_ConnectAsync(locator.locator, &params.as_raw()) };
+        assert!(!future_ptr.is_null());
+        WorkerConnectionFuture::new(future_ptr)
     }
 }
 
@@ -327,12 +302,12 @@ impl Connection for WorkerConnection {
             Some(e) => &e.id,
             None => ptr::null(),
         };
-        let component_data = entity.raw_component_data();
+        let mut component_data = entity.raw_component_data();
         let id = unsafe {
             Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),
                 component_data.components.len() as _,
-                component_data.components.as_ptr(),
+                component_data.components.as_mut_ptr(),
                 entity_id,
                 timeout,
             )
@@ -395,9 +370,10 @@ impl Connection for WorkerConnection {
             None => ptr::null(),
         };
 
-        let command_request = Worker_CommandRequest {
+        let mut command_request = Worker_CommandRequest {
             reserved: ptr::null_mut(),
             component_id: C::ID,
+            command_index,
             schema_type: ptr::null_mut(),
             user_handle: component::handle_allocate(request),
         };
@@ -406,8 +382,7 @@ impl Connection for WorkerConnection {
             Worker_Connection_SendCommandRequest(
                 self.connection_ptr.get(),
                 entity_id.id,
-                &command_request,
-                command_index,
+                &mut command_request,
                 timeout,
                 &params.to_worker_sdk(),
             )
@@ -426,9 +401,10 @@ impl Connection for WorkerConnection {
         response: C::CommandResponse,
     ) {
         unsafe {
-            let raw_response = Worker_CommandResponse {
+            let mut raw_response = Worker_CommandResponse {
                 reserved: ptr::null_mut(),
                 component_id: C::ID,
+                command_index: C::get_response_command_index(&response),
                 schema_type: ptr::null_mut(),
                 user_handle: component::handle_allocate(response),
             };
@@ -436,7 +412,7 @@ impl Connection for WorkerConnection {
             Worker_Connection_SendCommandResponse(
                 self.connection_ptr.get(),
                 request_id.id,
-                &raw_response,
+                &mut raw_response,
             );
 
             component::handle_free::<C::CommandResponse>(raw_response.user_handle);
@@ -466,7 +442,7 @@ impl Connection for WorkerConnection {
         update: C::Update,
         parameters: UpdateParameters,
     ) {
-        let component_update = Worker_ComponentUpdate {
+        let mut component_update = Worker_ComponentUpdate {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             schema_type: ptr::null_mut(),
@@ -475,10 +451,10 @@ impl Connection for WorkerConnection {
 
         let params = parameters.to_worker_sdk();
         unsafe {
-            Worker_Alpha_Connection_SendComponentUpdate(
+            Worker_Connection_SendComponentUpdate(
                 self.connection_ptr.get(),
                 entity_id.id,
-                &component_update,
+                &mut component_update,
                 &params,
             );
 
@@ -540,14 +516,6 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn get_worker_id(&self) -> &str {
-        &self.id
-    }
-
-    fn get_worker_attributes(&self) -> &[String] {
-        &self.attributes
-    }
-
     fn get_worker_flag(&mut self, name: &str) -> Option<String> {
         let flag_name = CString::new(name).unwrap();
 
@@ -567,7 +535,7 @@ impl Connection for WorkerConnection {
 
         let mut data: Option<String> = None;
         unsafe {
-            Worker_Connection_GetFlag(
+            Worker_Connection_GetWorkerFlag(
                 self.connection_ptr.get(),
                 flag_name.as_ptr(),
                 (&mut data as *mut Option<String>) as *mut ::std::os::raw::c_void,
@@ -585,6 +553,14 @@ impl Connection for WorkerConnection {
         assert!(!raw_op_list.is_null());
         OpList::new(raw_op_list)
     }
+
+    fn get_worker_id(&self) -> &str {
+        &self.id
+    }
+
+    fn get_worker_attributes(&self) -> &[String] {
+        &self.attributes
+    }
 }
 
 impl Drop for WorkerConnection {
@@ -601,7 +577,6 @@ unsafe impl Sync for WorkerConnection {}
 pub struct WorkerConnectionFuture {
     future_ptr: *mut Worker_ConnectionFuture,
     was_consumed: bool,
-    queue_status_callback: Option<*mut ::std::os::raw::c_void>,
 }
 
 impl WorkerConnectionFuture {
@@ -609,7 +584,6 @@ impl WorkerConnectionFuture {
         WorkerConnectionFuture {
             future_ptr: ptr,
             was_consumed: false,
-            queue_status_callback: None,
         }
     }
 }
@@ -619,10 +593,6 @@ impl Drop for WorkerConnectionFuture {
         assert!(!self.future_ptr.is_null());
         unsafe {
             Worker_ConnectionFuture_Destroy(self.future_ptr);
-
-            if let Some(ptr) = self.queue_status_callback {
-                let _callback = Box::from_raw(ptr as *mut QueueStatusCallback);
-            }
         };
     }
 }

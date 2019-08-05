@@ -23,7 +23,7 @@ mod tests {
     #[test]
     fn deserialize_bundle() {
         let mut file =
-            File::open("data/test.bundle.json").expect("Unable to open the test schema bundle.");
+            File::open("data/test.sb.json").expect("Unable to open the test schema bundle.");
         let mut contents = String::new();
         file.read_to_string(&mut contents)
             .expect("Unable to read the test schema bundle");

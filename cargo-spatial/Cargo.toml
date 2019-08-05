@@ -1,7 +1,11 @@
 [package]
 name = "cargo-spatial"
-version = "0.1.0"
-authors = ["David LeGare <dlegare.1001@gmail.com>", "Jamie Brynes <jamiebrynes7@gmail.com>"]
+version = "0.1.1"
+authors = [
+    "David LeGare <dlegare.1001@gmail.com>",
+    "David Avedissian <git@dga.dev>",
+    "Jamie Brynes <jamiebrynes7@gmail.com>"
+]
 edition = "2018"
 
 [dependencies]

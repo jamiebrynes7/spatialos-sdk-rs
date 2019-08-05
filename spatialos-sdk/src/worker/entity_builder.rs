@@ -84,15 +84,27 @@ impl EntityBuilder {
             return Err(e);
         }
 
-        unsafe { self.entity.add_serialized(self.serialize_position())? };
-        unsafe { self.entity.add_serialized(self.serialize_acl())? };
+        unsafe {
+            self.entity
+                .add_serialized(POSITION_COMPONENT_ID, self.serialize_position())?
+        };
+        unsafe {
+            self.entity
+                .add_serialized(ENTITY_ACL_COMPONENT_ID, self.serialize_acl())?
+        };
 
         if self.metadata.is_some() {
-            unsafe { self.entity.add_serialized(self.serialize_metadata())? }
+            unsafe {
+                self.entity
+                    .add_serialized(METADATA_COMPONENT_ID, self.serialize_metadata())?
+            }
         }
 
         if self.is_persistent {
-            unsafe { self.entity.add_serialized(self.serialize_persistence())? }
+            unsafe {
+                self.entity
+                    .add_serialized(PERSISTENCE_COMPONENT_ID, self.serialize_persistence())?
+            }
         }
 
         Ok(self.entity)
@@ -108,7 +120,7 @@ impl EntityBuilder {
     // If this invariant is broken, then the EntityBuilder is broken. Should we assert against this
     // before we call `entity.add_serialized`?
     fn serialize_position(&self) -> SchemaComponentData {
-        let mut position_schema = SchemaComponentData::new(POSITION_COMPONENT_ID);
+        let mut position_schema = SchemaComponentData::new();
         let position_fields = position_schema.fields_mut();
 
         let coords_obj = position_fields.field::<SchemaObject>(1).add();
@@ -120,7 +132,7 @@ impl EntityBuilder {
     }
 
     fn serialize_acl(&self) -> SchemaComponentData {
-        let mut acl_schema = SchemaComponentData::new(ENTITY_ACL_COMPONENT_ID);
+        let mut acl_schema = SchemaComponentData::new();
         let acl_fields = acl_schema.fields_mut();
 
         let read_access = acl_fields.field::<SchemaObject>(1).add();
@@ -146,7 +158,7 @@ impl EntityBuilder {
     }
 
     fn serialize_metadata(&self) -> SchemaComponentData {
-        let mut metadata_schema = SchemaComponentData::new(METADATA_COMPONENT_ID);
+        let mut metadata_schema = SchemaComponentData::new();
         let metadata_fields = metadata_schema.fields_mut();
         metadata_fields
             .field::<SchemaString>(1)
@@ -156,6 +168,6 @@ impl EntityBuilder {
     }
 
     fn serialize_persistence(&self) -> SchemaComponentData {
-        SchemaComponentData::new(PERSISTENCE_COMPONENT_ID)
+        SchemaComponentData::new()
     }
 }
