@@ -19,6 +19,7 @@ use std::{
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum SpatialWorkerSdkPackage {
+    CHeaders,
     CApiWin,
     CApiMac,
     CApiLinux,
@@ -27,14 +28,16 @@ enum SpatialWorkerSdkPackage {
 impl SpatialWorkerSdkPackage {
     fn package_name(self) -> &'static str {
         match self {
-            SpatialWorkerSdkPackage::CApiWin => "c-static-x86_64-msvc_mt-win32",
-            SpatialWorkerSdkPackage::CApiMac => "c-static-x86_64-clang_libcpp-macos",
-            SpatialWorkerSdkPackage::CApiLinux => "c-static-x86_64-gcc_libstdcpp_pic-linux",
+            SpatialWorkerSdkPackage::CHeaders => "c_headers",
+            SpatialWorkerSdkPackage::CApiWin => "c-static-x86_64-vc140_mt-win32",
+            SpatialWorkerSdkPackage::CApiMac => "c-static-x86_64-clang-macos",
+            SpatialWorkerSdkPackage::CApiLinux => "c-static-x86_64-gcc510_pic-linux",
         }
     }
 
     fn relative_target_directory(self) -> &'static str {
         match self {
+            SpatialWorkerSdkPackage::CHeaders => "headers",
             SpatialWorkerSdkPackage::CApiWin => "win",
             SpatialWorkerSdkPackage::CApiMac => "macos",
             SpatialWorkerSdkPackage::CApiLinux => "linux",
@@ -103,6 +106,7 @@ impl SpatialPackageSource {
 
 // TODO: Allow users to specify which ones of these want? Linux is always required.
 static COMMON_PACKAGES: &'static [SpatialPackageSource] = &[
+    SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CHeaders),
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiLinux),
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiWin),
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiMac),

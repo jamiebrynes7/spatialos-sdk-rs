@@ -1,3 +1,5 @@
+#![allow(non_upper_case_globals)]
+
 extern crate spatialos_sdk_sys;
 
 // TODO: Where should this live? We only need it for tests in order to reduce

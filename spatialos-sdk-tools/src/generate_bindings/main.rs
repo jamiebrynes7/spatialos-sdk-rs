@@ -18,7 +18,9 @@ fn main() {
     let headers =
         glob(&format!("{}/*.h", args.input_dir)).expect("Could not glob input directory.");
 
-    let mut bindings = bindgen::Builder::default().layout_tests(false);
+    let mut bindings = bindgen::Builder::default()
+        .layout_tests(false)
+        .derive_default(true);
 
     for path in headers {
         bindings = bindings.header(path.unwrap().as_path().to_str().unwrap().to_owned())

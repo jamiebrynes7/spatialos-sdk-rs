@@ -7,12 +7,35 @@ use crate::worker::{
 use spatialos_sdk_sys::worker::*;
 use std::{ffi::CString, path::Path};
 
+#[derive(Debug)]
+pub enum SnapshotError {
+    BadState(String),
+    InvalidData(String),
+    EntitySerializationFailure(String),
+    EOF,
+}
+
+impl From<Worker_SnapshotState> for SnapshotError {
+    fn from(state: Worker_SnapshotState) -> SnapshotError {
+        match Worker_StreamState::from(state.stream_state) {
+            Worker_StreamState_WORKER_STREAM_STATE_BAD => {
+                SnapshotError::BadState(cstr_to_string(state.error_message))
+            }
+            Worker_StreamState_WORKER_STREAM_STATE_INVALID_DATA => {
+                SnapshotError::InvalidData(cstr_to_string(state.error_message))
+            }
+            Worker_StreamState_WORKER_STREAM_STATE_EOF => SnapshotError::EOF,
+            _ => SnapshotError::BadState(cstr_to_string(state.error_message)),
+        }
+    }
+}
+
 pub struct SnapshotOutputStream {
     ptr: *mut Worker_SnapshotOutputStream,
 }
 
 impl SnapshotOutputStream {
-    pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, String> {
+    pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, SnapshotError> {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
         let params = Worker_SnapshotParameters {
@@ -20,38 +43,36 @@ impl SnapshotOutputStream {
             component_vtables: DATABASE.to_worker_sdk(),
             default_component_vtable: std::ptr::null(),
         };
+        let stream_ptr =
+            unsafe { Worker_SnapshotOutputStream_Create(filename_cstr.as_ptr(), &params) };
 
-        let ptr = unsafe { Worker_SnapshotOutputStream_Create(filename_cstr.as_ptr(), &params) };
-
-        let stream = SnapshotOutputStream { ptr };
-
-        let err_ptr = unsafe { Worker_SnapshotOutputStream_GetError(ptr) };
-        if !err_ptr.is_null() {
-            unsafe { Worker_SnapshotOutputStream_Destroy(ptr) };
-            return Err(cstr_to_string(err_ptr));
+        let state = unsafe { Worker_SnapshotOutputStream_GetState(stream_ptr) };
+        match Worker_StreamState::from(state.stream_state) {
+            Worker_StreamState_WORKER_STREAM_STATE_GOOD => {
+                Ok(SnapshotOutputStream { ptr: stream_ptr })
+            }
+            _ => {
+                unsafe { Worker_SnapshotOutputStream_Destroy(stream_ptr) };
+                Err(SnapshotError::from(state))
+            }
         }
-
-        Ok(stream)
     }
 
-    pub fn write_entity(&mut self, id: EntityId, entity: Entity) -> Result<(), String> {
-        let (components, _handles) = entity.into_raw();
-
+    pub fn write_entity(&mut self, id: EntityId, entity: &Entity) -> Result<(), SnapshotError> {
+        let components = entity.raw_component_data();
         let wrk_entity = Worker_Entity {
             entity_id: id.id,
             components: components.as_ptr(),
             component_count: components.len() as _,
         };
 
-        let success =
-            unsafe { Worker_SnapshotOutputStream_WriteEntity(self.ptr, &wrk_entity) != 0 };
-
-        if success {
-            Ok(())
-        } else {
-            let msg_cstr = unsafe { Worker_SnapshotOutputStream_GetError(self.ptr) };
-            let msg = cstr_to_string(msg_cstr);
-            Err(msg)
+        let state = unsafe {
+            Worker_SnapshotOutputStream_WriteEntity(self.ptr, &wrk_entity);
+            Worker_SnapshotOutputStream_GetState(self.ptr)
+        };
+        match Worker_StreamState::from(state.stream_state) {
+            Worker_StreamState_WORKER_STREAM_STATE_GOOD => Ok(()),
+            _ => Err(SnapshotError::from(state)),
         }
     }
 }
@@ -67,7 +88,7 @@ pub struct SnapshotInputStream {
 }
 
 impl SnapshotInputStream {
-    pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, String> {
+    pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, SnapshotError> {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
         let params = Worker_SnapshotParameters {
@@ -76,36 +97,40 @@ impl SnapshotInputStream {
             default_component_vtable: std::ptr::null(),
         };
 
-        let ptr = unsafe { Worker_SnapshotInputStream_Create(filename_cstr.as_ptr(), &params) };
+        let stream_ptr =
+            unsafe { Worker_SnapshotInputStream_Create(filename_cstr.as_ptr(), &params) };
 
-        let stream = SnapshotInputStream { ptr };
-
-        let err_ptr = unsafe { Worker_SnapshotInputStream_GetError(ptr) };
-        if !err_ptr.is_null() {
-            unsafe {
-                Worker_SnapshotInputStream_Destroy(ptr);
+        let state = unsafe { Worker_SnapshotInputStream_GetState(stream_ptr) };
+        match Worker_StreamState::from(state.stream_state) {
+            Worker_StreamState_WORKER_STREAM_STATE_GOOD => {
+                Ok(SnapshotInputStream { ptr: stream_ptr })
             }
-            return Err(cstr_to_string(err_ptr));
+            _ => {
+                unsafe { Worker_SnapshotInputStream_Destroy(stream_ptr) };
+                Err(SnapshotError::from(state))
+            }
         }
-
-        Ok(stream)
     }
 
     pub fn has_next(&mut self) -> bool {
         unsafe { Worker_SnapshotInputStream_HasNext(self.ptr) != 0 }
     }
 
-    pub fn read_entity(&mut self) -> Result<EntityQuery, String> {
-        let wrk_entity_ptr = unsafe { Worker_SnapshotInputStream_ReadEntity(self.ptr) };
-        let err_ptr = unsafe { Worker_SnapshotInputStream_GetError(self.ptr) };
+    pub fn read_entity(&mut self) -> Result<Entity, SnapshotError> {
+        let entity_ptr = unsafe { Worker_SnapshotInputStream_ReadEntity(self.ptr) };
+        let state = unsafe { Worker_SnapshotInputStream_GetState(self.ptr) };
 
-        if !err_ptr.is_null() {
-            return Err(cstr_to_string(err_ptr));
+        match Worker_StreamState::from(state.stream_state) {
+            Worker_StreamState_WORKER_STREAM_STATE_GOOD => unsafe {
+                let entity = Entity::from_worker_sdk(&*entity_ptr);
+                if let Err(message) = entity {
+                    Err(SnapshotError::EntitySerializationFailure(message))
+                } else {
+                    Ok(entity.unwrap())
+                }
+            },
+            _ => Err(SnapshotError::from(state)),
         }
-
-        let wrk_entity = unsafe { &*wrk_entity_ptr };
-
-        Ok(unsafe { EntityQuery::from_raw(&wrk_entity) })
     }
 }
 

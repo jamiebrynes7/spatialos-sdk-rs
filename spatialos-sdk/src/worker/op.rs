@@ -117,8 +117,8 @@ pub enum WorkerOp<'a> {
 impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
     fn from(op: &'a Worker_Op) -> Self {
         unsafe {
-            let erased_op = &op.__bindgen_anon_1;
-            let op_type = i32::from(op.op_type);
+            let erased_op = &op.op;
+            let op_type = Worker_StatusCode::from(op.op_type);
             match op_type {
                 Worker_OpType_WORKER_OP_TYPE_DISCONNECT => {
                     let op = erased_op.disconnect;
@@ -226,49 +226,48 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     WorkerOp::CommandRequest
                 }
                 Worker_OpType_WORKER_OP_TYPE_COMMAND_RESPONSE => {
-                    // let op = &erased_op.command_response;
-                    // let status_code = match i32::from(op.status_code) {
-                    //     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
-                    //         StatusCode::Success(CommandResponse {
-                    //             response: internal::CommandResponse::from(&op.response),
-                    //         })
-                    //     }
-                    //     Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
-                    //         StatusCode::Timeout(cstr_to_string(op.message))
-                    //     }
-                    //     Worker_StatusCode_WORKER_STATUS_CODE_NOT_FOUND => {
-                    //         StatusCode::NotFound(cstr_to_string(op.message))
-                    //     }
-                    //     Worker_StatusCode_WORKER_STATUS_CODE_AUTHORITY_LOST => {
-                    //         StatusCode::AuthorityLost(cstr_to_string(op.message))
-                    //     }
-                    //     Worker_StatusCode_WORKER_STATUS_CODE_PERMISSION_DENIED => {
-                    //         StatusCode::PermissionDenied(cstr_to_string(op.message))
-                    //     }
-                    //     Worker_StatusCode_WORKER_STATUS_CODE_APPLICATION_ERROR => {
-                    //         StatusCode::ApplicationError(cstr_to_string(op.message))
-                    //     }
-                    //     Worker_StatusCode_WORKER_STATUS_CODE_INTERNAL_ERROR => {
-                    //         StatusCode::InternalError(cstr_to_string(op.message))
-                    //     }
-                    //     _ => panic!(
-                    //         "Unknown command response status code received: {}",
-                    //         op.status_code
-                    //     ),
-                    // };
+                    let op = &erased_op.command_response;
+                    let status_code = match Worker_StatusCode::from(op.status_code) {
+                        Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
+                            StatusCode::Success(CommandResponse {
+                                response: internal::CommandResponse::from(&op.response),
+                            })
+                        }
+                        Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
+                            StatusCode::Timeout(cstr_to_string(op.message))
+                        }
+                        Worker_StatusCode_WORKER_STATUS_CODE_NOT_FOUND => {
+                            StatusCode::NotFound(cstr_to_string(op.message))
+                        }
+                        Worker_StatusCode_WORKER_STATUS_CODE_AUTHORITY_LOST => {
+                            StatusCode::AuthorityLost(cstr_to_string(op.message))
+                        }
+                        Worker_StatusCode_WORKER_STATUS_CODE_PERMISSION_DENIED => {
+                            StatusCode::PermissionDenied(cstr_to_string(op.message))
+                        }
+                        Worker_StatusCode_WORKER_STATUS_CODE_APPLICATION_ERROR => {
+                            StatusCode::ApplicationError(cstr_to_string(op.message))
+                        }
+                        Worker_StatusCode_WORKER_STATUS_CODE_INTERNAL_ERROR => {
+                            StatusCode::InternalError(cstr_to_string(op.message))
+                        }
+                        _ => panic!(
+                            "Unknown command response status code received: {}",
+                            op.status_code
+                        ),
+                    };
 
-                    // let command_response_op = CommandResponseOp {
-                    //     entity_id: EntityId::new(op.entity_id),
-                    //     request_id: RequestId::new(op.request_id),
-                    //     component_id: op.response.component_id,
-                    //     response: status_code,
-                    // };
-                    // WorkerOp::CommandResponse(command_response_op)
-                    WorkerOp::CommandResponse
+                    let command_response_op = CommandResponseOp {
+                        entity_id: EntityId::new(op.entity_id),
+                        request_id: RequestId::new(op.request_id),
+                        component_id: op.response.component_id,
+                        response: status_code,
+                    };
+                    WorkerOp::CommandResponse(command_response_op)
                 }
                 Worker_OpType_WORKER_OP_TYPE_RESERVE_ENTITY_IDS_RESPONSE => {
                     let op = erased_op.reserve_entity_ids_response;
-                    let status_code = match i32::from(op.status_code) {
+                    let status_code = match Worker_StatusCode::from(op.status_code) {
                         Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => StatusCode::Success(
                             ReservedEntityIdRange::new(op.first_entity_id, op.number_of_entity_ids),
                         ),
@@ -304,7 +303,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                 }
                 Worker_OpType_WORKER_OP_TYPE_CREATE_ENTITY_RESPONSE => {
                     let op = erased_op.create_entity_response;
-                    let status_code = match i32::from(op.status_code) {
+                    let status_code = match Worker_StatusCode::from(op.status_code) {
                         Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                             StatusCode::Success(EntityId::new(op.entity_id))
                         }
@@ -340,7 +339,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                 }
                 Worker_OpType_WORKER_OP_TYPE_DELETE_ENTITY_RESPONSE => {
                     let op = erased_op.delete_entity_response;
-                    let status_code = match i32::from(op.status_code) {
+                    let status_code = match Worker_StatusCode::from(op.status_code) {
                         Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => StatusCode::Success(()),
                         Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
                             StatusCode::Timeout(cstr_to_string(op.message))
@@ -375,7 +374,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                 }
                 Worker_OpType_WORKER_OP_TYPE_ENTITY_QUERY_RESPONSE => {
                     let op = erased_op.entity_query_response;
-                    let status_code = match i32::from(op.status_code) {
+                    let status_code = match Worker_StatusCode::from(op.status_code) {
                         Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
                             if op.results.is_null() {
                                 // Is count type.

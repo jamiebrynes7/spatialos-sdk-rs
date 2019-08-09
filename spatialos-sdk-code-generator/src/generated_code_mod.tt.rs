@@ -6,19 +6,19 @@ use <#= vec!["super".to_string(); self.depth() + 1].join("::") #>::generated as 
 
 /* Enums. */<# for enum_name in &self.enums {
 let enum_def = self.get_enum_definition(enum_name);
-let enum_rust_name = self.rust_name(&enum_def.identifier);
+let enum_rust_name = self.rust_name(&enum_def.qualified_name);
 #>
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum <#= enum_rust_name #> {
-<# for enum_value in &enum_def.value_definitions { #>
-    <#= enum_value.identifier.name #>,<# } #>
+<# for enum_value in &enum_def.values { #>
+    <#= enum_value.name #>,<# } #>
 }
 
 impl From<u32> for <#= enum_rust_name #> {
     fn from(value: u32) -> Self {
         match value {
-<# for enum_value in &enum_def.value_definitions { #>
-            <#= enum_value.value #> => <#= enum_rust_name #>::<#= enum_value.identifier.name #>, <# } #>
+<# for enum_value in &enum_def.values { #>
+            <#= enum_value.value #> => <#= enum_rust_name #>::<#= enum_value.name #>, <# } #>
             _ => panic!(format!("Could not convert {} to enum <#= enum_rust_name #>.", value))
         }
     }
@@ -27,37 +27,37 @@ impl From<u32> for <#= enum_rust_name #> {
 impl <#= enum_rust_name #> {
     pub(crate) fn as_u32(self) -> u32 {
         match self {
-            <# for enum_value in &enum_def.value_definitions { #>
-            <#= enum_rust_name #>::<#= enum_value.identifier.name #> => <#= enum_value.value #>, <# } #>
+            <# for enum_value in &enum_def.values { #>
+            <#= enum_rust_name #>::<#= enum_value.name #> => <#= enum_value.value #>, <# } #>
         }
     }
 }
 <# } #>
 /* Types. */<# for type_name in &self.types { let type_def = self.get_type_definition(type_name); #>
 #[derive(Debug, Clone)]
-pub struct <#= self.rust_name(&type_def.identifier) #> {<#
-    for field in &type_def.field_definitions {
+pub struct <#= self.rust_name(&type_def.qualified_name) #> {<#
+    for field in &type_def.fields {
     #>
-    pub <#= field.identifier.name #>: <#= self.generate_field_type(field) #>,<# } #>
+    pub <#= field.name #>: <#= self.generate_field_type(field) #>,<# } #>
 }
-impl TypeConversion for <#= self.rust_name(&type_def.identifier) #> {
+impl TypeConversion for <#= self.rust_name(&type_def.qualified_name) #> {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {<#
-            for field in &type_def.field_definitions {
+            for field in &type_def.fields {
                 let field_expr = format!("input.field::<{}>({})", get_field_schema_type(field), field.field_id);
             #>
-            <#= field.identifier.name #>: <#= self.deserialize_field(field, &field_expr) #>,<# } #>
+            <#= field.name #>: <#= self.deserialize_field(field, &field_expr) #>,<# } #>
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
-        for field in &type_def.field_definitions {
+        for field in &type_def.fields {
             let borrow = if self.field_needs_borrow(field) {
                 "&"
             } else {
                 ""
             };
         #>
-        <#= self.serialize_field(field, &format!("{}input.{}", borrow, field.identifier.name), "output") #>;<# } #>
+        <#= self.serialize_field(field, &format!("{}input.{}", borrow, field.name), "output") #>;<# } #>
         Ok(())
     }
 }
@@ -66,18 +66,18 @@ impl TypeConversion for <#= self.rust_name(&type_def.identifier) #> {
     let component = self.get_component_definition(component_name);
     let component_fields = self.get_component_fields(&component); #>
 #[derive(Debug, Clone)]
-pub struct <#= self.rust_name(&component.identifier) #> {<#
+pub struct <#= self.rust_name(&component.qualified_name) #> {<#
     for field in &component_fields {
     #>
-    pub <#= field.identifier.name #>: <#= self.generate_field_type(field) #>,<# } #>
+    pub <#= field.name #>: <#= self.generate_field_type(field) #>,<# } #>
 }
-impl TypeConversion for <#= self.rust_name(&component.identifier) #> {
+impl TypeConversion for <#= self.rust_name(&component.qualified_name) #> {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {<#
             for field in &component_fields {
                 let field_expr = format!("input.field::<{}>({})", get_field_schema_type(field), field.field_id);
             #>
-            <#= field.identifier.name #>: <#= self.deserialize_field(field, &field_expr) #>,<# } #>
+            <#= field.name #>: <#= self.deserialize_field(field, &field_expr) #>,<# } #>
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
@@ -88,37 +88,37 @@ impl TypeConversion for <#= self.rust_name(&component.identifier) #> {
                 ""
             };
         #>
-        <#= self.serialize_field(field, &format!("{}input.{}", borrow, field.identifier.name), "output") #>;<# } #>
+        <#= self.serialize_field(field, &format!("{}input.{}", borrow, field.name), "output") #>;<# } #>
         Ok(())
     }
 }
-impl ComponentData<<#= self.rust_name(&component.identifier) #>> for <#= self.rust_name(&component.identifier) #> {
-    fn merge(&mut self, update: <#= self.rust_name(&component.identifier) #>Update) {<#
+impl ComponentData<<#= self.rust_name(&component.qualified_name) #>> for <#= self.rust_name(&component.qualified_name) #> {
+    fn merge(&mut self, update: <#= self.rust_name(&component.qualified_name) #>Update) {<#
         for field in &component_fields {
         #>
-        if let Some(value) = update.<#= field.identifier.name #> { self.<#= field.identifier.name #> = value; }<# } #>
+        if let Some(value) = update.<#= field.name #> { self.<#= field.name #> = value; }<# } #>
     }
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct <#= self.rust_name(&component.identifier) #>Update {<#
+pub struct <#= self.rust_name(&component.qualified_name) #>Update {<#
     for field in &component_fields {
     #>
-    pub <#= field.identifier.name #>: Option<<#= self.generate_field_type(field) #>>,<# } #>
+    pub <#= field.name #>: Option<<#= self.generate_field_type(field) #>>,<# } #>
 }
-impl TypeConversion for <#= self.rust_name(&component.identifier) #>Update {
+impl TypeConversion for <#= self.rust_name(&component.qualified_name) #>Update {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {<#
             for field in &component_fields {
             #>
-            <#= field.identifier.name #>: None,<# } #>
+            <#= field.name #>: None,<# } #>
         };<#
         for field in &component_fields {
         #>
-        let _field_<#= field.identifier.name #> = input.field::<<#= get_field_schema_type(field) #>>(<#= field.field_id #>);
-        if _field_<#= field.identifier.name #>.count() > 0 {
-            let field = &_field_<#= field.identifier.name #>;
-            output.<#= field.identifier.name #> = Some(<#= self.deserialize_field(field, "field") #>);
+        let _field_<#= field.name #> = input.field::<<#= get_field_schema_type(field) #>>(<#= field.field_id #>);
+        if _field_<#= field.name #>.count() > 0 {
+            let field = &_field_<#= field.name #>;
+            output.<#= field.name #> = Some(<#= self.deserialize_field(field, "field") #>);
         }<# } #>
         Ok(output)
     }
@@ -130,129 +130,129 @@ impl TypeConversion for <#= self.rust_name(&component.identifier) #>Update {
                 ""
             };
         #>
-        if let Some(<#= ref_decorator #>value) = input.<#= field.identifier.name #> {
+        if let Some(<#= ref_decorator #>value) = input.<#= field.name #> {
             <#= self.serialize_field(field, "value", "output") #>;
         }<# } #>
         Ok(())
     }
 }
-impl ComponentUpdate<<#= self.rust_name(&component.identifier) #>> for <#= self.rust_name(&component.identifier) #>Update {
-    fn merge(&mut self, update: <#= self.rust_name(&component.identifier) #>Update) {<#
+impl ComponentUpdate<<#= self.rust_name(&component.qualified_name) #>> for <#= self.rust_name(&component.qualified_name) #>Update {
+    fn merge(&mut self, update: <#= self.rust_name(&component.qualified_name) #>Update) {<#
         for field in &self.get_component_fields(&component) {
         #>
-        if update.<#= field.identifier.name #>.is_some() { self.<#= field.identifier.name #> = update.<#= field.identifier.name #>; }<# } #>
+        if update.<#= field.name #>.is_some() { self.<#= field.name #> = update.<#= field.name #>; }<# } #>
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum <#= self.rust_name(&component.identifier) #>CommandRequest {<#
-    for command in &component.command_definitions {
+pub enum <#= self.rust_name(&component.qualified_name) #>CommandRequest {<#
+    for command in &component.commands {
     #>
-    <#= command.identifier.name.to_camel_case() #>(<#= self.generate_value_type_reference(&command.request_type) #>),<# } #>
+    <#= command.name.to_camel_case() #>(<#= self.rust_fqname(&command.request_type) #>),<# } #>
 }
 
 #[derive(Debug, Clone)]
-pub enum <#= self.rust_name(&component.identifier) #>CommandResponse {<#
-    for command in &component.command_definitions {
+pub enum <#= self.rust_name(&component.qualified_name) #>CommandResponse {<#
+    for command in &component.commands {
     #>
-    <#= command.identifier.name.to_camel_case() #>(<#= self.generate_value_type_reference(&command.response_type) #>),<# } #>
+    <#= command.name.to_camel_case() #>(<#= self.rust_fqname(&command.response_type) #>),<# } #>
 }
 
-impl Component for <#= self.rust_name(&component.identifier) #> {
-    type Update = <#= self.rust_fqname(&component.identifier) #>Update;
-    type CommandRequest = <#= self.rust_fqname(&component.identifier) #>CommandRequest;
-    type CommandResponse = <#= self.rust_fqname(&component.identifier) #>CommandResponse;
+impl Component for <#= self.rust_name(&component.qualified_name) #> {
+    type Update = <#= self.rust_fqname(&component.qualified_name) #>Update;
+    type CommandRequest = <#= self.rust_fqname(&component.qualified_name) #>CommandRequest;
+    type CommandResponse = <#= self.rust_fqname(&component.qualified_name) #>CommandResponse;
 
     const ID: ComponentId = <#= component.component_id #>;
 
-    fn from_data(data: &SchemaComponentData) -> Result<<#= self.rust_fqname(&component.identifier) #>, String> {
-        <<#= self.rust_fqname(&component.identifier) #> as TypeConversion>::from_type(&data.fields())
+    fn from_data(data: &SchemaComponentData) -> Result<<#= self.rust_fqname(&component.qualified_name) #>, String> {
+        <<#= self.rust_fqname(&component.qualified_name) #> as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<<#= self.rust_fqname(&component.identifier) #>Update, String> {
-        <<#= self.rust_fqname(&component.identifier) #>Update as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<<#= self.rust_fqname(&component.qualified_name) #>Update, String> {
+        <<#= self.rust_fqname(&component.qualified_name) #>Update as TypeConversion>::from_type(&update.fields())
     }
 
-    fn from_request(request: &SchemaCommandRequest) -> Result<<#= self.rust_fqname(&component.identifier) #>CommandRequest, String> {
-        match request.command_index() {<#
-            for command in &component.command_definitions {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandRequest, String> {
+        match command_index {<#
+            for command in &component.commands {
             #>
             <#= command.command_index #> => {
-                let result = <<#= self.generate_value_type_reference(&command.request_type) #> as TypeConversion>::from_type(&request.object());
-                result.and_then(|deserialized| Ok(<#= self.rust_name(&component.identifier) #>CommandRequest::<#= command.identifier.name.to_camel_case() #>(deserialized)))
+                let result = <<#= self.rust_fqname(&command.request_type) #> as TypeConversion>::from_type(&request.object());
+                result.and_then(|deserialized| Ok(<#= self.rust_name(&component.qualified_name) #>CommandRequest::<#= command.name.to_camel_case() #>(deserialized)))
             },<# } #>
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component <#= self.rust_name(&component.identifier) #>.", request.command_index()))
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component <#= self.rust_name(&component.qualified_name) #>.", command_index))
         }
     }
 
-    fn from_response(response: &SchemaCommandResponse) -> Result<<#= self.rust_fqname(&component.identifier) #>CommandResponse, String> {
-        match response.command_index() {<#
-            for command in &component.command_definitions {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandResponse, String> {
+        match command_index {<#
+            for command in &component.commands {
             #>
             <#= command.command_index #> => {
-                let result = <<#= self.generate_value_type_reference(&command.response_type) #> as TypeConversion>::from_type(&response.object());
-                result.and_then(|deserialized| Ok(<#= self.rust_name(&component.identifier) #>CommandResponse::<#= command.identifier.name.to_camel_case() #>(deserialized)))
+                let result = <<#= self.rust_fqname(&command.response_type) #> as TypeConversion>::from_type(&response.object());
+                result.and_then(|deserialized| Ok(<#= self.rust_name(&component.qualified_name) #>CommandResponse::<#= command.name.to_camel_case() #>(deserialized)))
             },<# } #>
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component <#= self.rust_name(&component.identifier) #>.", response.command_index()))
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component <#= self.rust_name(&component.qualified_name) #>.", command_index))
         }
     }
 
-    fn to_data(data: &<#= self.rust_fqname(&component.identifier) #>) -> Result<SchemaComponentData, String> {
-        let mut serialized_data = SchemaComponentData::new(Self::ID);
-        <<#= self.rust_fqname(&component.identifier) #> as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+    fn to_data(data: &<#= self.rust_fqname(&component.qualified_name) #>) -> Result<SchemaComponentData, String> {
+        let mut serialized_data = SchemaComponentData::new();
+        <<#= self.rust_fqname(&component.qualified_name) #> as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
-    fn to_update(update: &<#= self.rust_fqname(&component.identifier) #>Update) -> Result<SchemaComponentUpdate, String> {
-        let mut serialized_update = SchemaComponentUpdate::new(Self::ID);
-        <<#= self.rust_fqname(&component.identifier) #>Update as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+    fn to_update(update: &<#= self.rust_fqname(&component.qualified_name) #>Update) -> Result<SchemaComponentUpdate, String> {
+        let mut serialized_update = SchemaComponentUpdate::new();
+        <<#= self.rust_fqname(&component.qualified_name) #>Update as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
-    fn to_request(request: &<#= self.rust_fqname(&component.identifier) #>CommandRequest) -> Result<SchemaCommandRequest, String> {
-        let mut serialized_request = SchemaCommandRequest::new(Self::ID, Self::get_request_command_index(request));
+    fn to_request(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> Result<SchemaCommandRequest, String> {
+        let mut serialized_request = SchemaCommandRequest::new();
         match request {<#
-            for command in &component.command_definitions {
+            for command in &component.commands {
             #>
-            <#= self.rust_name(&component.identifier) #>CommandRequest::<#= command.identifier.name.to_camel_case() #>(ref data) => {
-                <<#= self.generate_value_type_reference(&command.request_type) #> as TypeConversion>::to_type(data, &mut serialized_request.object_mut())?;
+            <#= self.rust_name(&component.qualified_name) #>CommandRequest::<#= command.name.to_camel_case() #>(ref data) => {
+                <<#= self.rust_fqname(&command.request_type) #> as TypeConversion>::to_type(data, &mut serialized_request.object_mut())?;
             },<# } #>
             _ => unreachable!()
         }
         Ok(serialized_request)
     }
 
-    fn to_response(response: &<#= self.rust_fqname(&component.identifier) #>CommandResponse) -> Result<SchemaCommandResponse, String> {
-        let mut serialized_response = SchemaCommandResponse::new(Self::ID, Self::get_response_command_index(response));
+    fn to_response(response: &<#= self.rust_fqname(&component.qualified_name) #>CommandResponse) -> Result<SchemaCommandResponse, String> {
+        let mut serialized_response = SchemaCommandResponse::new();
         match response {<#
-            for command in &component.command_definitions {
+            for command in &component.commands {
             #>
-            <#= self.rust_name(&component.identifier) #>CommandResponse::<#= command.identifier.name.to_camel_case() #>(ref data) => {
-                <<#= self.generate_value_type_reference(&command.response_type) #> as TypeConversion>::to_type(data, &mut serialized_response.object_mut())?;
+            <#= self.rust_name(&component.qualified_name) #>CommandResponse::<#= command.name.to_camel_case() #>(ref data) => {
+                <<#= self.rust_fqname(&command.response_type) #> as TypeConversion>::to_type(data, &mut serialized_response.object_mut())?;
             },<# } #>
             _ => unreachable!()
         }
         Ok(serialized_response)
     }
 
-    fn get_request_command_index(request: &<#= self.rust_fqname(&component.identifier) #>CommandRequest) -> u32 {
+    fn get_request_command_index(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> u32 {
         match request {<#
-            for command in &component.command_definitions {
+            for command in &component.commands {
             #>
-            <#= self.rust_name(&component.identifier) #>CommandRequest::<#= command.identifier.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
+            <#= self.rust_name(&component.qualified_name) #>CommandRequest::<#= command.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
             _ => unreachable!(),
         }
     }
 
-    fn get_response_command_index(response: &<#= self.rust_fqname(&component.identifier) #>CommandResponse) -> u32 {
+    fn get_response_command_index(response: &<#= self.rust_fqname(&component.qualified_name) #>CommandResponse) -> u32 {
         match response {<#
-            for command in &component.command_definitions {
+            for command in &component.commands {
             #>
-            <#= self.rust_name(&component.identifier) #>CommandResponse::<#= command.identifier.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
+            <#= self.rust_name(&component.qualified_name) #>CommandResponse::<#= command.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
             _ => unreachable!(),
         }
     }
 }
 
-inventory::submit!(VTable::new::<<#= self.rust_name(&component.identifier) #>>());
+inventory::submit!(VTable::new::<<#= self.rust_name(&component.qualified_name) #>>());
 <# } #>

@@ -1,8 +1,8 @@
 [package]
 name = "spatialos-sdk-sys"
-version = "13.6.0"
+version = "14.0.0"
 authors = [
-    "David Avedissian <git@dga.me.uk>",
+    "David Avedissian <git@dga.dev>",
     "Jamie Brynes <jamiebrynes7@gmail.com>"
 ]
 edition = "2018"
