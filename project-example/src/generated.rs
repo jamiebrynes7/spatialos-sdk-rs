@@ -71,6 +71,38 @@ impl TypeConversion for CommandData {
 }
 
 #[derive(Debug, Clone)]
+pub struct TestType {
+    pub value: i32,
+}
+impl TypeConversion for TestType {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+            value: input.field::<SchemaInt32>(1).get_or_default(),
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        output.field::<SchemaInt32>(1).add(input.value);
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TestType_Inner {
+    pub number: f32,
+}
+impl TypeConversion for TestType_Inner {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+            number: input.field::<SchemaFloat>(2).get_or_default(),
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        output.field::<SchemaFloat>(2).add(input.number);
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Vector3d {
     pub x: f64,
     pub y: f64,
