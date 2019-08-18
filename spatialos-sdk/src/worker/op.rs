@@ -226,44 +226,45 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     WorkerOp::CommandRequest
                 }
                 Worker_OpType_WORKER_OP_TYPE_COMMAND_RESPONSE => {
-                    let op = &erased_op.command_response;
-                    let status_code = match Worker_StatusCode::from(op.status_code) {
-                        Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
-                            StatusCode::Success(CommandResponse {
-                                response: internal::CommandResponse::from(&op.response),
-                            })
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
-                            StatusCode::Timeout(cstr_to_string(op.message))
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_NOT_FOUND => {
-                            StatusCode::NotFound(cstr_to_string(op.message))
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_AUTHORITY_LOST => {
-                            StatusCode::AuthorityLost(cstr_to_string(op.message))
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_PERMISSION_DENIED => {
-                            StatusCode::PermissionDenied(cstr_to_string(op.message))
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_APPLICATION_ERROR => {
-                            StatusCode::ApplicationError(cstr_to_string(op.message))
-                        }
-                        Worker_StatusCode_WORKER_STATUS_CODE_INTERNAL_ERROR => {
-                            StatusCode::InternalError(cstr_to_string(op.message))
-                        }
-                        _ => panic!(
-                            "Unknown command response status code received: {}",
-                            op.status_code
-                        ),
-                    };
+                    // let op = &erased_op.command_response;
+                    // let status_code = match Worker_StatusCode::from(op.status_code) {
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
+                    //         StatusCode::Success(CommandResponse {
+                    //             response: internal::CommandResponse::from(&op.response),
+                    //         })
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
+                    //         StatusCode::Timeout(cstr_to_string(op.message))
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_NOT_FOUND => {
+                    //         StatusCode::NotFound(cstr_to_string(op.message))
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_AUTHORITY_LOST => {
+                    //         StatusCode::AuthorityLost(cstr_to_string(op.message))
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_PERMISSION_DENIED => {
+                    //         StatusCode::PermissionDenied(cstr_to_string(op.message))
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_APPLICATION_ERROR => {
+                    //         StatusCode::ApplicationError(cstr_to_string(op.message))
+                    //     }
+                    //     Worker_StatusCode_WORKER_STATUS_CODE_INTERNAL_ERROR => {
+                    //         StatusCode::InternalError(cstr_to_string(op.message))
+                    //     }
+                    //     _ => panic!(
+                    //         "Unknown command response status code received: {}",
+                    //         op.status_code
+                    //     ),
+                    // };
 
-                    let command_response_op = CommandResponseOp {
-                        entity_id: EntityId::new(op.entity_id),
-                        request_id: RequestId::new(op.request_id),
-                        component_id: op.response.component_id,
-                        response: status_code,
-                    };
-                    WorkerOp::CommandResponse(command_response_op)
+                    // let command_response_op = CommandResponseOp {
+                    //     entity_id: EntityId::new(op.entity_id),
+                    //     request_id: RequestId::new(op.request_id),
+                    //     component_id: op.response.component_id,
+                    //     response: status_code,
+                    // };
+                    // WorkerOp::CommandResponse(command_response_op)
+                    WorkerOp::CommandResponse
                 }
                 Worker_OpType_WORKER_OP_TYPE_RESERVE_ENTITY_IDS_RESPONSE => {
                     let op = erased_op.reserve_entity_ids_response;

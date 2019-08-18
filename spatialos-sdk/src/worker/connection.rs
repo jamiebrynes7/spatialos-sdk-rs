@@ -1,7 +1,6 @@
 use crate::{
     ptr::MutPtr,
     worker::{
-        alpha,
         commands::*,
         component::{Component, UpdateParameters},
         entity::Entity,
@@ -133,7 +132,7 @@ pub trait Connection {
     fn send_component_update_serialized(
         &mut self,
         entity_id: EntityId,
-        update: Owned<ComponentUpdate>,
+        update: &ComponentUpdate,
         parameters: UpdateParameters,
     );
 
@@ -314,12 +313,12 @@ impl Connection for WorkerConnection {
             Some(e) => &e.id,
             None => ptr::null(),
         };
-        let (components, _handles) = entity.into_raw();
+        let (mut components, _handles) = entity.into_raw();
         let id = unsafe {
             Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),
                 components.len() as _,
-                components.as_ptr(),
+                components.as_mut_ptr(),
                 entity_id,
                 timeout,
             )
@@ -474,7 +473,7 @@ impl Connection for WorkerConnection {
     fn send_component_update_serialized(
         &mut self,
         entity_id: EntityId,
-        update: Owned<ComponentUpdate>,
+        update: &ComponentUpdate,
         parameters: UpdateParameters,
     ) {
         let component_update = Worker_ComponentUpdate {
@@ -486,10 +485,10 @@ impl Connection for WorkerConnection {
 
         let params = parameters.to_worker_sdk();
         unsafe {
-            Worker_Alpha_Connection_SendComponentUpdate(
+            Worker_Connection_SendComponentUpdate(
                 self.connection_ptr.get(),
                 entity_id.id,
-                &component_update,
+                &mut component_update,
                 &params,
             );
         }
