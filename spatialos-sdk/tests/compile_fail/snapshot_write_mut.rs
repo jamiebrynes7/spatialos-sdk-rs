@@ -7,6 +7,6 @@ use spatialos_sdk::worker::{EntityId, entity::Entity, snapshot::SnapshotOutputSt
 
 fn main() {
     let stream = SnapshotOutputStream::new("output.snapshot").unwrap();
-    stream.write_entity(EntityId::from(7), Entity::new());
-    //~^ ERROR: cannot borrow immutable local variable `stream` as mutable
+    stream.write_entity(EntityId::from(7), &Entity::new());
+    //~^ ERROR: cannot borrow `stream` as mutable
 }
