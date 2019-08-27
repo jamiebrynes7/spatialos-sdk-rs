@@ -14,7 +14,7 @@ enum ComponentData {
     UserHandle(UserHandle),
 }
 
-/// A collection of entities
+/// A collection of components representing an entity.
 #[derive(Debug, Default)]
 pub struct Entity {
     components: HashMap<ComponentId, ComponentData>,
@@ -60,6 +60,32 @@ impl Entity {
         Ok(())
     }
 
+    pub(crate) fn as_raw(&self) -> Vec<Worker_ComponentData> {
+        let mut components = Vec::with_capacity(self.components.len());
+
+        for (&id, component_data) in &self.components {
+            match component_data {
+                ComponentData::SchemaData(schema_data) => components.push(Worker_ComponentData {
+                    reserved: ptr::null_mut(),
+                    component_id: id,
+                    schema_type: schema_data.as_ptr(),
+                    user_handle: ptr::null_mut(),
+                }),
+
+                ComponentData::UserHandle(handle) => {
+                    components.push(Worker_ComponentData {
+                        reserved: ptr::null_mut(),
+                        component_id: id,
+                        schema_type: ptr::null_mut(),
+                        user_handle: handle.raw(),
+                    });
+                }
+            }
+        }
+
+        components
+    }
+
     /// Converts the `Entity` into a list of raw `Worker_ComponentData` objects that can
     /// be passed to the C API.
     ///
@@ -74,6 +100,8 @@ impl Entity {
     /// handles, and so the user handles must remain in scope until the component data
     /// has been passed to the C API. At that point, the C API will have had a chance
     /// to clone the handles, and so it is safe to drop the returned handles.
+    // TODO: With the addition of `as_raw`, is this function needed at all? Would it
+    // ever be better to use `into_raw` than `as_raw`?
     pub(crate) fn into_raw(mut self) -> (Vec<Worker_ComponentData>, Vec<UserHandle>) {
         let mut components = Vec::with_capacity(self.components.len());
         let mut handles = Vec::with_capacity(self.components.len());
@@ -116,7 +144,7 @@ impl Entity {
 
 /// Entity data returned from SpatialOS.
 ///
-/// Presents a read-only view into entity data returned from the runtime.
+/// Presents a read-only view into entity data returned from the runtime or a snapshot.
 #[derive(Debug)]
 pub struct EntityQuery<'a> {
     components: HashMap<ComponentId, ComponentDataRef<'a>>,

@@ -1,5 +1,5 @@
 use crate::worker::{
-    component::{Component, ComponentId, Update},
+    component::{Update},
     schema::{owned::*, ArrayField, FieldId, Object, SchemaField, SchemaObjectType},
 };
 use spatialos_sdk_sys::worker::*;
@@ -12,7 +12,7 @@ impl ComponentUpdate {
     pub fn new<U: Update>(update: &U) -> Owned<Self> {
         // Create the underlying `Schema_ComponentUpdate` and wrap it in a smart pointer.
         let mut result: Owned<Self> =
-            unsafe { Owned::new(Schema_CreateComponentUpdate(U::Component::ID)) };
+            unsafe { Owned::new(Schema_CreateComponentUpdate()) };
 
         // Populate the update object from the update data.
         let component_update = &mut *result;
@@ -25,19 +25,14 @@ impl ComponentUpdate {
         &*(raw as *mut _)
     }
 
-    pub fn component_id(&self) -> ComponentId {
-        unsafe { Schema_GetComponentUpdateComponentId(self.as_ptr()) }
-    }
-
     /// Deserializes the component update into the specified update type.
     ///
     /// Returns `None` if `U` is not the correct update type.
     pub fn deserialize<U: Update>(&self) -> Option<U> {
-        if self.component_id() == U::Component::ID {
-            Some(U::from_update(self))
-        } else {
-            None
-        }
+        // TODO: Is there any way to check that the component ID of the serialized data
+        // matches the expected result type? If not, there's probably no point to
+        // returning an `Option` here anymore.
+        Some(U::from_update(self))
     }
 
     pub fn field<T: SchemaField>(&self, field: FieldId) -> Option<T::RustType> {
@@ -67,9 +62,7 @@ impl ComponentUpdate {
     }
 
     pub fn field_cleared(&self, field: FieldId) -> bool {
-        // TODO: Implement this using `Schema_IsComponentUpdateFieldCleared` once we update
-        // to SDK 13.8.
-        self.cleared().any(|cleared_field| field == cleared_field)
+        0 != unsafe { Schema_IsComponentUpdateFieldCleared(self.as_ptr(), field) }
     }
 
     pub fn event<T: SchemaObjectType>(&self, field: FieldId) -> Vec<T> {

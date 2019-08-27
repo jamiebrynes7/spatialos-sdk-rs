@@ -1,5 +1,5 @@
 use crate::worker::{
-    component::{Component, ComponentId},
+    component::Component,
     schema::{object::Object, owned::*, SchemaObjectType},
 };
 use spatialos_sdk_sys::worker::*;
@@ -17,7 +17,7 @@ pub struct ComponentData(PhantomData<*mut Schema_ComponentData>);
 impl ComponentData {
     pub fn new<C: Component>(component: &C) -> Owned<Self> {
         // Create the underlying `Schema_ComponentData` and wrap it in a smart pointer.
-        let mut result: Owned<Self> = unsafe { Owned::new(Schema_CreateComponentData(C::ID)) };
+        let mut result: Owned<Self> = unsafe { Owned::new(Schema_CreateComponentData()) };
 
         // Populate the schema data from the component.
         let component_data = &mut *result;
@@ -25,10 +25,6 @@ impl ComponentData {
         component.into_object(fields);
 
         result
-    }
-
-    pub fn component_id(&self) -> ComponentId {
-        unsafe { Schema_GetComponentDataComponentId(self.as_ptr()) }
     }
 
     pub fn fields(&self) -> &Object {

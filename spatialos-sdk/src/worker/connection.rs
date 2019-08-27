@@ -129,10 +129,10 @@ pub trait Connection {
         parameters: UpdateParameters,
     );
 
-    fn send_component_update_serialized(
+    fn send_component_update_serialized<C: Component>(
         &mut self,
         entity_id: EntityId,
-        update: &ComponentUpdate,
+        update: &C::Update,
         parameters: UpdateParameters,
     );
 
@@ -452,7 +452,7 @@ impl Connection for WorkerConnection {
         parameters: UpdateParameters,
     ) {
         let user_handle = UserHandle::new(update);
-        let component_update = Worker_ComponentUpdate {
+        let mut component_update = Worker_ComponentUpdate {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             schema_type: ptr::null_mut(),
@@ -470,15 +470,16 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn send_component_update_serialized(
+    fn send_component_update_serialized<C: Component>(
         &mut self,
         entity_id: EntityId,
-        update: &ComponentUpdate,
+        update: &C::Update,
         parameters: UpdateParameters,
     ) {
-        let component_update = Worker_ComponentUpdate {
+        let update = ComponentUpdate::new::<C::Update>(&update);
+        let mut component_update = Worker_ComponentUpdate {
             reserved: ptr::null_mut(),
-            component_id: update.component_id(),
+            component_id: C::ID,
             schema_type: update.as_ptr(),
             user_handle: ptr::null_mut(),
         };

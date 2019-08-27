@@ -59,7 +59,7 @@ impl SnapshotOutputStream {
     }
 
     pub fn write_entity(&mut self, id: EntityId, entity: &Entity) -> Result<(), SnapshotError> {
-        let components = entity.raw_component_data();
+        let components = entity.as_raw();
         let wrk_entity = Worker_Entity {
             entity_id: id.id,
             components: components.as_ptr(),
@@ -116,18 +116,13 @@ impl SnapshotInputStream {
         unsafe { Worker_SnapshotInputStream_HasNext(self.ptr) != 0 }
     }
 
-    pub fn read_entity(&mut self) -> Result<Entity, SnapshotError> {
+    pub fn read_entity(&mut self) -> Result<EntityQuery<'_>, SnapshotError> {
         let entity_ptr = unsafe { Worker_SnapshotInputStream_ReadEntity(self.ptr) };
         let state = unsafe { Worker_SnapshotInputStream_GetState(self.ptr) };
 
         match Worker_StreamState::from(state.stream_state) {
             Worker_StreamState_WORKER_STREAM_STATE_GOOD => unsafe {
-                let entity = Entity::from_worker_sdk(&*entity_ptr);
-                if let Err(message) = entity {
-                    Err(SnapshotError::EntitySerializationFailure(message))
-                } else {
-                    Ok(entity.unwrap())
-                }
+                Ok(EntityQuery::from_raw(&*entity_ptr))
             },
             _ => Err(SnapshotError::from(state)),
         }
