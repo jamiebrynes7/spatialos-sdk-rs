@@ -105,7 +105,7 @@ impl SpatialPackageSource {
 }
 
 // TODO: Allow users to specify which ones of these want? Linux is always required.
-static COMMON_PACKAGES: &'static [SpatialPackageSource] = &[
+static COMMON_PACKAGES: &[SpatialPackageSource] = &[
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CHeaders),
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiLinux),
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiWin),
@@ -114,19 +114,19 @@ static COMMON_PACKAGES: &'static [SpatialPackageSource] = &[
 ];
 
 #[cfg(target_os = "linux")]
-static PLATFORM_PACKAGES: &'static [SpatialPackageSource] = &[
+static PLATFORM_PACKAGES: &[SpatialPackageSource] = &[
     SpatialPackageSource::Tools(SpatialToolsPackage::SchemaCompilerLinux),
     SpatialPackageSource::Tools(SpatialToolsPackage::SnapshotConverterLinux),
 ];
 
 #[cfg(target_os = "windows")]
-static PLATFORM_PACKAGES: &'static [SpatialPackageSource] = &[
+static PLATFORM_PACKAGES: &[SpatialPackageSource] = &[
     SpatialPackageSource::Tools(SpatialToolsPackage::SchemaCompilerWin),
     SpatialPackageSource::Tools(SpatialToolsPackage::SnapshotConverterWin),
 ];
 
 #[cfg(target_os = "macos")]
-static PLATFORM_PACKAGES: &'static [SpatialPackageSource] = &[
+static PLATFORM_PACKAGES: &[SpatialPackageSource] = &[
     SpatialPackageSource::Tools(SpatialToolsPackage::SchemaCompilerMac),
     SpatialPackageSource::Tools(SpatialToolsPackage::SnapshotConverterMac),
 ];
@@ -193,7 +193,7 @@ fn download_package(
         let stderr = String::from_utf8(process.stderr)?;
         trace!("{}", stdout);
         trace!("{}", stderr);
-        return Err("Failed to download package.")?;
+        return Err("Failed to download package.".into());
     }
 
     Ok(())
@@ -230,7 +230,7 @@ fn get_installer(
 #[cfg(target_os = "linux")]
 mod linux {
     pub fn download_cli() -> Result<(), Box<dyn std::error::Error>> {
-        Err("Linux installer is unsupported. Follow the instructions here to install the Spatial CLI: https://docs.improbable.io/reference/latest/shared/setup/linux".to_owned())?
+        Err("Linux installer is unsupported. Follow the instructions here to install the Spatial CLI: https://docs.improbable.io/reference/latest/shared/setup/linux".to_owned().into())
     }
 }
 
@@ -256,7 +256,7 @@ mod windows {
         match result {
             Ok(status) => {
                 if !status.success() {
-                    Err("Installer returned a non-zero exit code.".to_owned())?
+                    return Err("Installer returned a non-zero exit code.".to_owned().into());
                 }
 
                 Ok(())
@@ -264,11 +264,11 @@ mod windows {
             Err(e) => {
                 if let Some(code) = e.raw_os_error() {
                     if code == 740 {
-                        Err("Installer requires elevated permissions to run. Please rerun in a terminal with elevated permissions.".to_owned())?
+                        return Err("Installer requires elevated permissions to run. Please rerun in a terminal with elevated permissions.".to_owned().into());
                     }
                 }
 
-                Err(e)?
+                Err(e.into())
             }
         }
     }
@@ -297,7 +297,7 @@ mod macos {
             .status()?;
 
         if !status.success() {
-            Err("Installer returned a non-zero exit code.".to_owned())?;
+            return Err("Installer returned a non-zero exit code.".to_owned().into());
         }
 
         Ok(())

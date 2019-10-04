@@ -69,7 +69,7 @@ pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|_| "Failed to compile schema files")?;
 
     if !status.success() {
-        return Err("Failed to run schema compilation")?;
+        return Err("Failed to run schema compilation".into());
     }
 
     // Load bundle.json, which describes the schema definitions for all components.

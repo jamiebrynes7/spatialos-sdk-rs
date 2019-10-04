@@ -17,6 +17,7 @@ use component::ComponentId;
 use derivative::Derivative;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::cmp::Ordering;
+use std::fmt::{Display, Error, Formatter};
 use std::marker::PhantomData;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
@@ -32,9 +33,11 @@ impl EntityId {
     pub fn is_valid(self) -> bool {
         self.id > 0
     }
+}
 
-    pub fn to_string(self) -> String {
-        format!("EntityId: {}", self.id)
+impl Display for EntityId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(f, "EntityId: {}", self.id)
     }
 }
 
