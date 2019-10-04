@@ -17,8 +17,8 @@ use component::ComponentId;
 use derivative::Derivative;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::cmp::Ordering;
+use std::fmt::{Display, Error, Formatter};
 use std::marker::PhantomData;
-use std::fmt::{Display, Formatter, Error};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct EntityId {
