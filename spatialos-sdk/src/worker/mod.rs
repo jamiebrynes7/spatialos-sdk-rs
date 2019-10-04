@@ -37,7 +37,7 @@ impl EntityId {
 
 impl Display for EntityId {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        f.write_fmt(format_args!("EntityId: {}", self.id))
+        write!(f, "EntityId: {}", self.id)
     }
 }
 
