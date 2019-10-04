@@ -15,5 +15,5 @@ inventory = "0.1"
 lazy_static = "1.3"
 
 [dev-dependencies]
-structopt = "0.2.14"
-tap = "0.3.0"
+structopt = "0.3"
+tap="0.4"

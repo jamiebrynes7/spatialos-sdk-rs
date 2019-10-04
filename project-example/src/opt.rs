@@ -6,10 +6,10 @@ use structopt::StructOpt;
     about = "A SpatialOS worker written in Rust."
 )]
 pub struct Opt {
-    #[structopt(name = "WORKER_TYPE", long = "worker-type", short = "w")]
+    #[structopt(name = "WORKER_TYPE", long, short = "w")]
     pub worker_type: String,
 
-    #[structopt(name = "WORKER_ID", long = "worker-id", short = "i")]
+    #[structopt(name = "WORKER_ID", long, short = "i")]
     pub worker_id: Option<String>,
 
     #[structopt(name = "POLLING_CONNECTION", long = "polling-connection", short = "p")]
@@ -33,19 +33,15 @@ pub enum Command {
 
     #[structopt(name = "locator")]
     Locator {
-        #[structopt(
-            name = "PLAYER_IDENTITY_TOKEN",
-            long = "player-identity-token",
-            short = "p"
-        )]
+        #[structopt(name = "PLAYER_IDENTITY_TOKEN", short = "p")]
         player_identity_token: String,
-        #[structopt(name = "LOGIN_TOKEN", long = "login-token", short = "t")]
+        #[structopt(name = "LOGIN_TOKEN", long, short = "t")]
         login_token: String,
     },
 
     #[structopt(name = "dev-auth")]
     DevelopmentAuthentication {
-        #[structopt(name = "DEV_AUTH_TOKEN", long = "dev-auth-token", short = "t")]
+        #[structopt(name = "DEV_AUTH_TOKEN", long, short = "t")]
         dev_auth_token: String,
     },
 }
