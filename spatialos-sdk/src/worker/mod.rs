@@ -18,6 +18,7 @@ use derivative::Derivative;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::cmp::Ordering;
 use std::marker::PhantomData;
+use std::fmt::{Display, Formatter, Error};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct EntityId {
@@ -32,9 +33,11 @@ impl EntityId {
     pub fn is_valid(self) -> bool {
         self.id > 0
     }
+}
 
-    pub fn to_string(self) -> String {
-        format!("EntityId: {}", self.id)
+impl Display for EntityId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        f.write_fmt(format_args!("EntityId: {}", self.id))
     }
 }
 
