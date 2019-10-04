@@ -50,7 +50,7 @@ pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Box<dyn std::
                 .map_err(|err| format!("Failed to build worker binaries: {}", err))?;
 
             if !status.success() {
-                return Err("An error occurred while building workers")?;
+                return Err("An error occurred while building workers".into());
             }
         }
     }
