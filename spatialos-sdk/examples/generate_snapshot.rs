@@ -21,6 +21,6 @@ fn main() {
 #[structopt(name = "generate_snapshot")]
 struct Opt {
     /// Relative path for the snapshot to be written to.
-    #[structopt(short = "p", long = "snapshot-path")]
+    #[structopt(short = "p", long)]
     snapshot_path: PathBuf,
 }
