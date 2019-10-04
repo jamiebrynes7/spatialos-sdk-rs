@@ -33,10 +33,7 @@ pub enum Command {
 
     #[structopt(name = "locator")]
     Locator {
-        #[structopt(
-            name = "PLAYER_IDENTITY_TOKEN",
-            short = "p"
-        )]
+        #[structopt(name = "PLAYER_IDENTITY_TOKEN", short = "p")]
         player_identity_token: String,
         #[structopt(name = "LOGIN_TOKEN", long, short = "t")]
         login_token: String,
