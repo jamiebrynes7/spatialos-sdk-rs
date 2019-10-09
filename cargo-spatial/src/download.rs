@@ -80,10 +80,32 @@ impl SpatialToolsPackage {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum SpatialSchemaPackage {
+    StandardLibrary,
+    ExhaustiveTestSchema,
+}
+
+impl SpatialSchemaPackage {
+    fn package_name(self) -> &'static str {
+        match self {
+            SpatialSchemaPackage::StandardLibrary => "standard_library",
+            SpatialSchemaPackage::ExhaustiveTestSchema => "test_schema_library",
+        }
+    }
+
+    fn relative_target_directory(self) -> &'static str {
+        match self {
+            SpatialSchemaPackage::StandardLibrary => "std-lib",
+            SpatialSchemaPackage::ExhaustiveTestSchema => "test-schema",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum SpatialPackageSource {
     WorkerSdk(SpatialWorkerSdkPackage),
     Tools(SpatialToolsPackage),
-    Schema,
+    Schema(SpatialSchemaPackage),
 }
 
 impl SpatialPackageSource {
@@ -91,7 +113,7 @@ impl SpatialPackageSource {
         match self {
             SpatialPackageSource::WorkerSdk(package) => vec!["worker_sdk", package.package_name()],
             SpatialPackageSource::Tools(package) => vec!["tools", package.package_name()],
-            SpatialPackageSource::Schema => vec!["schema", "standard_library"],
+            SpatialPackageSource::Schema(package) => vec!["schema", package.package_name()],
         }
     }
 
@@ -99,7 +121,7 @@ impl SpatialPackageSource {
         match self {
             SpatialPackageSource::WorkerSdk(package) => package.relative_target_directory(),
             SpatialPackageSource::Tools(package) => package.relative_target_directory(),
-            SpatialPackageSource::Schema => "std-lib",
+            SpatialPackageSource::Schema(package) => package.relative_target_directory(),
         }
     }
 }
@@ -110,7 +132,7 @@ static COMMON_PACKAGES: &[SpatialPackageSource] = &[
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiLinux),
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiWin),
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiMac),
-    SpatialPackageSource::Schema,
+    SpatialPackageSource::Schema(SpatialSchemaPackage::StandardLibrary),
 ];
 
 #[cfg(target_os = "linux")]
@@ -161,6 +183,14 @@ pub fn download_sdk(
 
     for package in PLATFORM_PACKAGES {
         download_package(*package, &spatial_sdk_version, &spatial_lib_dir)?;
+    }
+
+    if options.with_test_schema {
+        download_package(
+            SpatialPackageSource::Schema(SpatialSchemaPackage::ExhaustiveTestSchema),
+            &spatial_sdk_version,
+            &spatial_lib_dir,
+        )?;
     }
 
     Ok(())

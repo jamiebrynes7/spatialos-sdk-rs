@@ -102,4 +102,8 @@ pub struct DownloadSdk {
     /// Overrides the SDK version in Spatial.toml
     #[structopt(long, short)]
     pub sdk_version: Option<String>,
+
+    /// Downloads the exhaustive test schema.
+    #[structopt(long, short)]
+    pub with_test_schema: bool,
 }
