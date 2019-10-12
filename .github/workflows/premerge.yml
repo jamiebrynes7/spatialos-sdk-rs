@@ -62,6 +62,7 @@ jobs:
           SPATIAL_LIB_DIR: "dependencies"
 
       - name: Clippy
+        if: matrix.os == 'macOS-latest' # Only need to run this once and MacOS machines appear to be the fastest.
         uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
