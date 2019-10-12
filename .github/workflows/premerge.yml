@@ -7,25 +7,31 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - name: Checkout source
+        uses: actions/checkout@master
 
-      - uses: jamiebrynes7/get-spatial-cli-action@v1
+      - name: Install spatial
+        uses: jamiebrynes7/get-spatial-cli-action@v1
         with:
           version: 20190416.094616.a865bb5b54
           oauth_token: ${{ secrets.SPATIAL_OAUTH_TOKEN }}
 
-      - uses: actions-rs/cargo@v1
+      - name: Install cargo-spatial
+        uses: actions-rs/cargo@v1
         with:
           command: install
           args: --path ./cargo-spatial --force
       
-      - run: export SPATIAL_LIB_DIR=$(pwd)/dependencies
+      - name: Set SPATIAL_LIB_DIR environment variable
+        run: export SPATIAL_LIB_DIR=$(pwd)/dependencies
 
-      - uses: actions-rs/cargo@v1
+      - name: Install SpatialOS C API dependencies
+        uses: actions-rs/cargo@v1
         with:
           command: spatial
           args: download sdk --sdk-version 14.0.0
       
-      - uses: actions-rs/cargo@v1
+      - name: Build crates
+        uses: actions-rs/cargo@v1
         with:
           command: build
