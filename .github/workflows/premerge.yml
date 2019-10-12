@@ -1,0 +1,15 @@
+on: [push]
+
+name: Premerge checks
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: jamiebrynes7/get-spatial-cli-action@v1
+        with:
+          version: 20190416.094616.a865bb5b54
+          oauth_token: ${{ secrets.SPATIAL_OAUTH_TOKEN }}
+      - run: spatial version
