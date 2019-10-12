@@ -26,9 +26,19 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: spatial
-          args: download sdk --sdk-version 14.0.0
+          args: --verbose download sdk --sdk-version 14.0.0
         env:
           SPATIAL_LIB_DIR: "dependencies"
+
+      - name: Generate project-example code
+        runs: pushd project-example && cargo spatial --verbose codegen && popd
+        env:
+          SPATIAL_LIB_DIR: "../dependencies"
+
+      - name: Generate test-suite code
+        runs: pushd test-suite && mkdir schema && cargo spatial --verbose codegen && popd
+        env:
+          SPATIAL_LIB_DIR: "../dependencies"
       
       - name: Build crates
         uses: actions-rs/cargo@v1
