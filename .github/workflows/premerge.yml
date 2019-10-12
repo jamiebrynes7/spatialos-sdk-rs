@@ -6,8 +6,6 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    env: 
-      SPATIAL_LIB_DIR=${{ env.GITHUB_WORKSPACE }}/dependencies
     steps:
       - name: Checkout source
         uses: actions/checkout@master
@@ -28,7 +26,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: spatial
-          args: download sdk --sdk-version 14.0.0
+          args: download sdk
       
       - name: Build crates
         uses: actions-rs/cargo@v1
