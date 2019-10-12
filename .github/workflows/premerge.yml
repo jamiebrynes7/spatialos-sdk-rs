@@ -7,7 +7,8 @@ jobs:
     name: Build
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        # TODO: Add windows-latest when https://github.com/jamiebrynes7/get-spatial-cli-action/issues/1 is resolved.
+        os: [ubuntu-latest, macOS-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout source
