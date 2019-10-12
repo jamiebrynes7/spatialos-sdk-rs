@@ -10,6 +10,8 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@master
 
+      - run: echo $PATH
+
       - name: Install spatial
         uses: jamiebrynes7/get-spatial-cli-action@v1
         with:
