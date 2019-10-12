@@ -26,9 +26,13 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: spatial
-          args: download sdk
+          args: download sdk --sdk-version 14.0.0
+        env:
+          SPATIAL_LIB_DIR="dependencies"
       
       - name: Build crates
         uses: actions-rs/cargo@v1
         with:
           command: build
+        env:
+          SPATIAL_LIB_DIR="dependencies"        
