@@ -10,6 +10,9 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@master
 
+      - name: Install Rust components
+        run: rustup component add rustfmt clippy
+
       - name: Install spatial
         uses: jamiebrynes7/get-spatial-cli-action@v1
         with:
@@ -39,10 +42,33 @@ jobs:
         run: pushd test-suite && mkdir schema && cargo spatial --verbose codegen && popd
         env:
           SPATIAL_LIB_DIR: "../dependencies"
-      
+        
+      - name: Lint
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+        env:
+          SPATIAL_LIB_DIR: "dependencies"
+
+      - name: Clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-targets --all-features -- -D warnings -A dead-code
+        env:
+          SPATIAL_LIB_DIR: "dependencies"
+
       - name: Build crates
         uses: actions-rs/cargo@v1
         with:
           command: build
         env:
-          SPATIAL_LIB_DIR: "dependencies"        
+          SPATIAL_LIB_DIR: "dependencies"
+
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+        env:
+          SPATIAL_LIB_DIR: "dependencies"          
