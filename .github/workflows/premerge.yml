@@ -31,12 +31,12 @@ jobs:
           SPATIAL_LIB_DIR: "dependencies"
 
       - name: Generate project-example code
-        runs: pushd project-example && cargo spatial --verbose codegen && popd
+        run: pushd project-example && cargo spatial --verbose codegen && popd
         env:
           SPATIAL_LIB_DIR: "../dependencies"
 
       - name: Generate test-suite code
-        runs: pushd test-suite && mkdir schema && cargo spatial --verbose codegen && popd
+        run: pushd test-suite && mkdir schema && cargo spatial --verbose codegen && popd
         env:
           SPATIAL_LIB_DIR: "../dependencies"
       
