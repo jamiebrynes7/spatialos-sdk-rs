@@ -6,11 +6,11 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    env: 
+      SPATIAL_LIB_DIR=${{ GITHUB_WORKSPACE }}/dependencies
     steps:
       - name: Checkout source
         uses: actions/checkout@master
-
-      - run: echo $PATH
 
       - name: Install spatial
         uses: jamiebrynes7/get-spatial-cli-action@v1
@@ -23,9 +23,6 @@ jobs:
         with:
           command: install
           args: --path ./cargo-spatial --force
-      
-      - name: Set SPATIAL_LIB_DIR environment variable
-        run: export SPATIAL_LIB_DIR=$(pwd)/dependencies
 
       - name: Install SpatialOS C API dependencies
         uses: actions-rs/cargo@v1
