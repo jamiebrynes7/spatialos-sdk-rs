@@ -71,4 +71,12 @@ jobs:
         with:
           command: test
         env:
-          SPATIAL_LIB_DIR: "dependencies"          
+          SPATIAL_LIB_DIR: "dependencies"      
+
+      - name: Build examples
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --examples
+        env:
+          SPATIAL_LIB_DIR: "dependencies"
