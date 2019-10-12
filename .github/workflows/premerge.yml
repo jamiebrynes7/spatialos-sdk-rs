@@ -5,10 +5,19 @@ name: Premerge checks
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout source
         uses: actions/checkout@master
+
+      - name: Install Rust
+        if: matrix.os == "macOS-latest"
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
 
       - name: Install Rust components
         run: rustup component add rustfmt clippy
