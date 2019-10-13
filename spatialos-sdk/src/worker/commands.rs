@@ -28,9 +28,9 @@ use spatialos_sdk_sys::worker::Worker_CommandParameters;
 ///     .tap(CommandParameters::allow_short_circuit);
 /// ```
 ///
-/// [short-circuit]: https://docs.improbable.io/reference/13.5/shared/design/commands#properties
+/// [short-circuit]: https://docs.improbable.io/reference/14.1/shared/design/commands#component-commands
 /// [tap]: https://crates.io/crates/tap
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct CommandParameters {
     allow_short_circuit: bool,
 }

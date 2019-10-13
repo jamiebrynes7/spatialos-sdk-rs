@@ -91,7 +91,7 @@ where
 /// ```
 ///
 /// [tap]: https://crates.io/crates/tap
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct UpdateParameters {
     loopback: bool,
 }
