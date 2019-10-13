@@ -1,0 +1,92 @@
+on: [push]
+
+name: Premerge checks
+
+jobs:
+  build:
+    name: Build
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@master
+
+      - name: Install Rust
+        if: matrix.os == 'macOS-latest'
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Install Rust components
+        run: rustup component add rustfmt clippy
+
+      - name: Install spatial
+        uses: jamiebrynes7/get-spatial-cli-action@v1.1
+        with:
+          version: 20190416.094616.a865bb5b54
+          oauth_token: ${{ secrets.SPATIAL_OAUTH_TOKEN }}
+
+      - name: Install cargo-spatial
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --path ./cargo-spatial --force
+
+      - name: Install SpatialOS C API dependencies
+        uses: actions-rs/cargo@v1
+        with:
+          command: spatial
+          args: --verbose download sdk --sdk-version 14.0.0
+        env:
+          SPATIAL_LIB_DIR: "dependencies"
+
+      - name: Generate project-example code
+        run: pushd project-example && cargo spatial --verbose codegen && popd
+        env:
+          SPATIAL_LIB_DIR: "../dependencies"
+
+      - name: Generate test-suite code
+        run: pushd test-suite && mkdir schema && cargo spatial --verbose codegen && popd
+        env:
+          SPATIAL_LIB_DIR: "../dependencies"
+        
+      - name: Lint
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+        env:
+          SPATIAL_LIB_DIR: "dependencies"
+
+      - name: Clippy
+        if: matrix.os == 'macOS-latest' # Only need to run this once and MacOS machines appear to be the fastest.
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-targets --all-features -- -D warnings -A dead-code
+        env:
+          SPATIAL_LIB_DIR: "dependencies"
+
+      - name: Build crates
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+        env:
+          SPATIAL_LIB_DIR: "dependencies"
+
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+        env:
+          SPATIAL_LIB_DIR: "dependencies"      
+
+      - name: Build examples
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --examples
+        env:
+          SPATIAL_LIB_DIR: "dependencies"

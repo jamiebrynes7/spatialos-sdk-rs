@@ -53,7 +53,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            spatial_sdk_version: "13.6.0".into(),
+            spatial_sdk_version: "14.0.0".into(),
             workers: vec![".".into()],
             codegen_out: "src/generated.rs".into(),
             schema_paths: vec!["./schema".into()],
