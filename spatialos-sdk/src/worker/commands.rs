@@ -46,7 +46,7 @@ impl CommandParameters {
         self.allow_short_circuit = true;
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_CommandParameters {
+    pub(crate) fn to_worker_sdk(self) -> Worker_CommandParameters {
         Worker_CommandParameters {
             allow_short_circuit: self.allow_short_circuit as u8,
         }
