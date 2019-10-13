@@ -7,7 +7,6 @@ jobs:
     name: Build
     strategy:
       matrix:
-        # TODO: Add windows-latest when https://github.com/jamiebrynes7/get-spatial-cli-action/issues/1 is resolved.
         os: [ubuntu-latest, macOS-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
@@ -24,7 +23,7 @@ jobs:
         run: rustup component add rustfmt clippy
 
       - name: Install spatial
-        uses: jamiebrynes7/get-spatial-cli-action@releases/v1.1
+        uses: jamiebrynes7/get-spatial-cli-action@v1.1
         with:
           version: 20190416.094616.a865bb5b54
           oauth_token: ${{ secrets.SPATIAL_OAUTH_TOKEN }}
