@@ -1,3 +1,5 @@
+use std::ffi::{OsStr, OsString};
+
 pub mod codegen;
 pub mod config;
 pub mod download;
@@ -27,4 +29,11 @@ pub fn generate_component_id() -> i32 {
 /// `Spatial.toml` file).
 pub fn current_dir_is_root() -> bool {
     std::path::Path::new("./Spatial.toml").exists()
+}
+
+/// Formats an key-value pair into an argument string.
+pub fn format_arg<S: AsRef<OsStr>>(prefix: &str, value: S) -> OsString {
+    let mut arg = OsString::from(format!("--{}", prefix));
+    arg.push(value.as_ref());
+    arg
 }

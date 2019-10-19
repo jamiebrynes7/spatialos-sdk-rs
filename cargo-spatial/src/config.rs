@@ -56,7 +56,7 @@ impl Default for Config {
             spatial_sdk_version: "14.0.0".into(),
             workers: vec![".".into()],
             codegen_out: "src/generated.rs".into(),
-            schema_paths: vec!["./schema".into()],
+            schema_paths: vec![],
             build_dir: "./build".into(),
             schema_build_dir: None,
             spatial_lib_dir: None,

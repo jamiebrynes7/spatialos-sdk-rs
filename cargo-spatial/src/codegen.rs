@@ -1,12 +1,11 @@
 use crate::config::Config;
+use crate::format_arg;
 use log::*;
 use spatialos_sdk_code_generator::{generator, schema_bundle};
-use std::ffi::OsString;
 use std::fs::{self, File};
 use std::io::prelude::*;
 use std::path::*;
 use std::process::Command;
-use tap::*;
 
 /// Performs code generation for the project described by `config`.
 ///
@@ -20,17 +19,18 @@ pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
 
     // Ensure that the path to the Spatial SDK has been specified.
     let spatial_lib_dir = config.spatial_lib_dir()
-        .map(normalize)
+        .map(PathBuf::from)
         .ok_or("spatial_lib_dir value must be set in the config, or the SPATIAL_LIB_DIR environment variable must be set")?;
 
     // Determine the paths the the schema compiler and protoc relative the the lib
     // dir path.
-    let schema_compiler_path = normalize(spatial_lib_dir.join("schema-compiler/schema_compiler"));
-    let std_lib_path = normalize(spatial_lib_dir.join("std-lib"));
+    let schema_compiler_path = spatial_lib_dir.join("schema-compiler/schema_compiler");
+    let std_lib_path = spatial_lib_dir.join("std-lib");
 
     // Calculate the various output directories relative to `output_dir`.
-    let output_dir = normalize(config.schema_build_dir());
+    let output_dir = PathBuf::from(config.schema_build_dir());
     let bundle_json_path = output_dir.join("bundle.json");
+    let schema_descriptor_path = output_dir.join("schema.descriptor");
 
     // Create the output directory if it doesn't already exist.
     fs::create_dir_all(&output_dir)
@@ -38,11 +38,9 @@ pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
     trace!("Created schema output dir: {}", output_dir.display());
 
     // Prepare initial flags for the schema compiler.
-    let schema_path_arg = OsString::from("--schema_path=").tap(|arg| arg.push(&std_lib_path));
-    let bundle_json_arg =
-        OsString::from("--bundle_json_out=").tap(|arg| arg.push(&bundle_json_path));
-    let descriptor_out_arg = OsString::from("--descriptor_set_out=")
-        .tap(|arg| arg.push(normalize(output_dir.join("schema.descriptor"))));
+    let schema_path_arg = format_arg("schema_path", &std_lib_path);
+    let bundle_json_arg = format_arg("bundle_json_out", &bundle_json_path);
+    let descriptor_out_arg = format_arg("descriptor_set_out", &schema_descriptor_path);
 
     // Run the schema compiler for all schema files in the project.
     //
@@ -59,8 +57,7 @@ pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
 
     // Add all the root schema paths.
     for schema_path in &config.schema_paths {
-        let arg = OsString::from("--schema_path=").tap(|arg| arg.push(normalize(schema_path)));
-        command.arg(&arg);
+        command.arg(&format_arg("schema_path", schema_path));
     }
 
     trace!("{:#?}", command);
@@ -91,23 +88,4 @@ pub fn run_codegen(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|_| "Failed to write generated code to file")?;
 
     Ok(())
-}
-
-/// HACK: Normalizes the separators in `path`.
-///
-/// This is necessary in order to be robust on Windows, as well as work around
-/// some idiosyncrasies with schema_compiler and protoc. Currently,
-/// schema_compiler and protoc get tripped up if you have paths with mixed path
-/// separators (i.e. mixing '\' and '/'). This function normalizes paths to use
-/// the same separators everywhere, ensuring that we can be robust regardless of
-/// how the user specifies their paths. It also removes any current dir segments
-/// ("./"), as they can trip up schema_compiler and protoc as well.
-///
-/// Improbable has noted that they are aware of these issues and will fix them
-/// at some point in the future.
-fn normalize<P: AsRef<std::path::Path>>(path: P) -> PathBuf {
-    path.as_ref()
-        .components()
-        .filter(|&comp| comp != Component::CurDir)
-        .collect()
 }
