@@ -33,7 +33,7 @@ pub fn current_dir_is_root() -> bool {
 
 /// Formats an key-value pair into an argument string.
 pub fn format_arg<S: AsRef<OsStr>>(prefix: &str, value: S) -> OsString {
-    let mut arg = OsString::from(format!("--{}", prefix));
+    let mut arg = OsString::from(format!("--{}=", prefix));
     arg.push(value.as_ref());
     arg
 }
