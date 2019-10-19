@@ -91,7 +91,7 @@ where
 /// ```
 ///
 /// [tap]: https://crates.io/crates/tap
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct UpdateParameters {
     loopback: bool,
 }
@@ -110,7 +110,7 @@ impl UpdateParameters {
         self.loopback = true;
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_UpdateParameters {
+    pub(crate) fn to_worker_sdk(self) -> Worker_UpdateParameters {
         Worker_UpdateParameters {
             loopback: if self.loopback {
                 Worker_ComponentUpdateLoopback_WORKER_COMPONENT_UPDATE_LOOPBACK_SHORT_CIRCUITED as _
