@@ -5,13 +5,39 @@ use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 // Re-export inventory so generated code doesn't require the user to add inventory to their
 // Cargo.toml
 pub use inventory;
+use std::ops::{DerefMut, Deref};
 
 pub type ComponentId = Worker_ComponentId;
 pub type CommandIndex = Worker_CommandIndex;
 
+#[derive(Debug, Clone)]
 pub struct ComponentUpdateData<C: Component> {
     pub fields: C::Update,
     pub events: C::Events,
+}
+
+impl<C: Component> Default for ComponentUpdateData<C> {
+    fn default() -> Self {
+        ComponentUpdateData {
+            fields: Default::default(),
+            events: Default::default()
+        }
+    }
+}
+
+impl<C: Component> Deref for ComponentUpdateData<C> {
+    type Target = C::Update;
+
+    fn deref(&self) -> &Self::Target {
+        &self.fields
+    }
+}
+
+impl<C: Component> DerefMut for ComponentUpdateData<C> {
+
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.fields
+    }
 }
 
 pub trait ComponentUpdate<C: Component> {
@@ -36,8 +62,8 @@ pub trait Component
 where
     Self: std::marker::Sized,
 {
-    type Update;
-    type Events;
+    type Update: Default;
+    type Events: Default;
     type CommandRequest;
     type CommandResponse;
 

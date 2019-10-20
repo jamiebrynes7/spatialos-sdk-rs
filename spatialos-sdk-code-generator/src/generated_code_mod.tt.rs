@@ -106,6 +106,16 @@ pub struct <#= self.rust_name(&component.qualified_name) #>Update {<#
     #>
     pub <#= field.name #>: Option<<#= self.generate_field_type(field) #>>,<# } #>
 }
+
+impl <#= self.rust_name(&component.qualified_name) #>Update {<#
+    for field in &component_fields {
+    #>
+    pub fn add_<#= field.name #>(&mut self, value: <#= self.generate_field_type(field) #>) {
+        self.<#= field.name #> = Some(value);
+    }
+<# } #>
+}
+
 impl TypeConversion for <#= self.rust_name(&component.qualified_name) #>Update {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {<#
@@ -144,6 +154,7 @@ impl ComponentUpdate<<#= self.rust_name(&component.qualified_name) #>> for <#= s
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct <#= self.rust_name(&component.qualified_name) #>Events {<#
     for event in &component.events {
     #>
