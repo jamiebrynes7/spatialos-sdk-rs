@@ -144,6 +144,37 @@ impl ComponentUpdate<<#= self.rust_name(&component.qualified_name) #>> for <#= s
     }
 }
 
+pub struct <#= self.rust_name(&component.qualified_name) #>Events {<#
+    for event in &component.events {
+    #>
+    pub <#= event.name #>: Vec<<#= self.rust_fqname(&event.type_reference) #>>,<# } #>
+}
+
+impl TypeConversion for <#= self.rust_name(&component.qualified_name)#>Events {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(<#= self.rust_name(&component.qualified_name) #>Events { <# for event in &component.events { #>
+            <#= event.name#>: {
+                let field = input.field::<SchemaObject>(<#= event.event_index #>);
+                let mut data = Vec::new();
+                for i in 0..field.count() {
+                    data.push(<<#= self.rust_fqname(&event.type_reference) #> as TypeConversion>::from_type(&field.index(i))?);
+                }
+
+                data
+            }<# } #>
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { <# for event in &component.events { #>
+        for ev in &input.<#= event.name #> {
+            let mut field = output.field::<SchemaObject>(<#= event.event_index #>);
+            <<#= self.rust_fqname(&event.type_reference) #> as TypeConversion>::to_type(ev, &mut field.add())?;
+        }<# } #>
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum <#= self.rust_name(&component.qualified_name) #>CommandRequest {<#
     for command in &component.commands {
@@ -160,6 +191,7 @@ pub enum <#= self.rust_name(&component.qualified_name) #>CommandResponse {<#
 
 impl Component for <#= self.rust_name(&component.qualified_name) #> {
     type Update = <#= self.rust_fqname(&component.qualified_name) #>Update;
+    type Events = <#= self.rust_fqname(&component.qualified_name) #>Events;
     type CommandRequest = <#= self.rust_fqname(&component.qualified_name) #>CommandRequest;
     type CommandResponse = <#= self.rust_fqname(&component.qualified_name) #>CommandResponse;
 
@@ -169,8 +201,11 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
         <<#= self.rust_fqname(&component.qualified_name) #> as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<<#= self.rust_fqname(&component.qualified_name) #>Update, String> {
-        <<#= self.rust_fqname(&component.qualified_name) #>Update as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <<#= self.rust_fqname(&component.qualified_name) #>Update as TypeConversion>::from_type(&update.fields())?,
+            events: <<#= self.rust_fqname(&component.qualified_name) #>Events as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandRequest, String> {
@@ -203,9 +238,10 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &<#= self.rust_fqname(&component.qualified_name) #>Update) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <<#= self.rust_fqname(&component.qualified_name) #>Update as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <<#= self.rust_fqname(&component.qualified_name) #>Update as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <<#= self.rust_fqname(&component.qualified_name) #>Events as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
