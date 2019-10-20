@@ -54,3 +54,13 @@ component EnumTestComponent {
 
     TestEnum test = 1;
 }
+
+type Payload {
+    int32 data = 1;
+}
+
+component EventTest {
+    id = 2003;
+
+    event Payload payload;
+}
