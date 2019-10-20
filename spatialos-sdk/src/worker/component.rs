@@ -9,6 +9,11 @@ pub use inventory;
 pub type ComponentId = Worker_ComponentId;
 pub type CommandIndex = Worker_CommandIndex;
 
+pub struct ComponentUpdateData<C: Component> {
+    pub fields: C::Update,
+    pub events: C::Events,
+}
+
 pub trait ComponentUpdate<C: Component> {
     fn merge(&mut self, update: Self);
 }
@@ -32,13 +37,16 @@ where
     Self: std::marker::Sized,
 {
     type Update;
+    type Events;
     type CommandRequest;
     type CommandResponse;
 
     const ID: ComponentId;
 
     fn from_data(data: &schema::SchemaComponentData) -> Result<Self, String>;
-    fn from_update(update: &schema::SchemaComponentUpdate) -> Result<Self::Update, String>;
+    fn from_update(
+        update: &schema::SchemaComponentUpdate,
+    ) -> Result<ComponentUpdateData<Self>, String>;
     fn from_request(
         command_index: CommandIndex,
         request: &schema::SchemaCommandRequest,
@@ -49,7 +57,9 @@ where
     ) -> Result<Self::CommandResponse, String>;
 
     fn to_data(data: &Self) -> Result<schema::SchemaComponentData, String>;
-    fn to_update(update: &Self::Update) -> Result<schema::SchemaComponentUpdate, String>;
+    fn to_update(
+        update: &ComponentUpdateData<Self>,
+    ) -> Result<schema::SchemaComponentUpdate, String>;
     fn to_request(request: &Self::CommandRequest) -> Result<schema::SchemaCommandRequest, String>;
     fn to_response(
         response: &Self::CommandResponse,
