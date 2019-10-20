@@ -71,6 +71,22 @@ impl TypeConversion for CommandData {
 }
 
 #[derive(Debug, Clone)]
+pub struct Payload {
+    pub data: i32,
+}
+impl TypeConversion for Payload {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+            data: input.field::<SchemaInt32>(1).get_or_default(),
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        output.field::<SchemaInt32>(1).add(input.data);
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct TestType {
     pub value: i32,
 }
@@ -175,6 +191,21 @@ impl ComponentUpdate<EntityIdTest> for EntityIdTestUpdate {
     }
 }
 
+pub struct EntityIdTestEvents {
+}
+
+impl TypeConversion for EntityIdTestEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(EntityIdTestEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum EntityIdTestCommandRequest {
 }
@@ -185,6 +216,7 @@ pub enum EntityIdTestCommandResponse {
 
 impl Component for EntityIdTest {
     type Update = generated::example::EntityIdTestUpdate;
+    type Events = generated::example::EntityIdTestEvents;
     type CommandRequest = generated::example::EntityIdTestCommandRequest;
     type CommandResponse = generated::example::EntityIdTestCommandResponse;
 
@@ -194,8 +226,11 @@ impl Component for EntityIdTest {
         <generated::example::EntityIdTest as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EntityIdTestUpdate, String> {
-        <generated::example::EntityIdTestUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::example::EntityIdTestUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::example::EntityIdTestEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EntityIdTestCommandRequest, String> {
@@ -216,9 +251,10 @@ impl Component for EntityIdTest {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::example::EntityIdTestUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::EntityIdTestUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::example::EntityIdTestUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::example::EntityIdTestEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
@@ -303,6 +339,21 @@ impl ComponentUpdate<EnumTestComponent> for EnumTestComponentUpdate {
     }
 }
 
+pub struct EnumTestComponentEvents {
+}
+
+impl TypeConversion for EnumTestComponentEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(EnumTestComponentEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum EnumTestComponentCommandRequest {
 }
@@ -313,6 +364,7 @@ pub enum EnumTestComponentCommandResponse {
 
 impl Component for EnumTestComponent {
     type Update = generated::example::EnumTestComponentUpdate;
+    type Events = generated::example::EnumTestComponentEvents;
     type CommandRequest = generated::example::EnumTestComponentCommandRequest;
     type CommandResponse = generated::example::EnumTestComponentCommandResponse;
 
@@ -322,8 +374,11 @@ impl Component for EnumTestComponent {
         <generated::example::EnumTestComponent as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EnumTestComponentUpdate, String> {
-        <generated::example::EnumTestComponentUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::example::EnumTestComponentUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::example::EnumTestComponentEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EnumTestComponentCommandRequest, String> {
@@ -344,9 +399,10 @@ impl Component for EnumTestComponent {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::example::EnumTestComponentUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::EnumTestComponentUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::example::EnumTestComponentUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::example::EnumTestComponentEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
@@ -380,6 +436,153 @@ impl Component for EnumTestComponent {
 }
 
 inventory::submit!(VTable::new::<EnumTestComponent>());
+
+#[derive(Debug, Clone)]
+pub struct EventTest {
+}
+impl TypeConversion for EventTest {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(Self {
+        })
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        Ok(())
+    }
+}
+impl ComponentData<EventTest> for EventTest {
+    fn merge(&mut self, update: EventTestUpdate) {
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct EventTestUpdate {
+}
+impl TypeConversion for EventTestUpdate {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        let mut output = Self {
+        };
+        Ok(output)
+    }
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        Ok(())
+    }
+}
+impl ComponentUpdate<EventTest> for EventTestUpdate {
+    fn merge(&mut self, update: EventTestUpdate) {
+    }
+}
+
+pub struct EventTestEvents {
+    pub payload: Vec<generated::example::Payload>,
+}
+
+impl TypeConversion for EventTestEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(EventTestEvents { 
+            payload: {
+                let field = input.field::<SchemaObject>(1);
+                let mut data = Vec::new();
+                for i in 0..field.count() {
+                    data.push(<generated::example::Payload as TypeConversion>::from_type(&field.index(i))?);
+                }
+
+                data
+            }
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+        for ev in &input.payload {
+            let mut field = output.field::<SchemaObject>(1);
+            <generated::example::Payload as TypeConversion>::to_type(ev, &mut field.add())?;
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum EventTestCommandRequest {
+}
+
+#[derive(Debug, Clone)]
+pub enum EventTestCommandResponse {
+}
+
+impl Component for EventTest {
+    type Update = generated::example::EventTestUpdate;
+    type Events = generated::example::EventTestEvents;
+    type CommandRequest = generated::example::EventTestCommandRequest;
+    type CommandResponse = generated::example::EventTestCommandResponse;
+
+    const ID: ComponentId = 2003;
+
+    fn from_data(data: &SchemaComponentData) -> Result<generated::example::EventTest, String> {
+        <generated::example::EventTest as TypeConversion>::from_type(&data.fields())
+    }
+
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::example::EventTestUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::example::EventTestEvents as TypeConversion>::from_type(&update.events())?
+        })
+    }
+
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EventTestCommandRequest, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EventTest.", command_index))
+        }
+    }
+
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::EventTestCommandResponse, String> {
+        match command_index {
+            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EventTest.", command_index))
+        }
+    }
+
+    fn to_data(data: &generated::example::EventTest) -> Result<SchemaComponentData, String> {
+        let mut serialized_data = SchemaComponentData::new();
+        <generated::example::EventTest as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        Ok(serialized_data)
+    }
+
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+        let mut serialized_update = SchemaComponentUpdate::new();
+        <generated::example::EventTestUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::example::EventTestEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        Ok(serialized_update)
+    }
+
+    fn to_request(request: &generated::example::EventTestCommandRequest) -> Result<SchemaCommandRequest, String> {
+        let mut serialized_request = SchemaCommandRequest::new();
+        match request {
+            _ => unreachable!()
+        }
+        Ok(serialized_request)
+    }
+
+    fn to_response(response: &generated::example::EventTestCommandResponse) -> Result<SchemaCommandResponse, String> {
+        let mut serialized_response = SchemaCommandResponse::new();
+        match response {
+            _ => unreachable!()
+        }
+        Ok(serialized_response)
+    }
+
+    fn get_request_command_index(request: &generated::example::EventTestCommandRequest) -> u32 {
+        match request {
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_response_command_index(response: &generated::example::EventTestCommandResponse) -> u32 {
+        match response {
+            _ => unreachable!(),
+        }
+    }
+}
+
+inventory::submit!(VTable::new::<EventTest>());
 
 #[derive(Debug, Clone)]
 pub struct Example {
@@ -431,6 +634,21 @@ impl ComponentUpdate<Example> for ExampleUpdate {
     }
 }
 
+pub struct ExampleEvents {
+}
+
+impl TypeConversion for ExampleEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(ExampleEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum ExampleCommandRequest {
     TestCommand(generated::example::CommandData),
@@ -443,6 +661,7 @@ pub enum ExampleCommandResponse {
 
 impl Component for Example {
     type Update = generated::example::ExampleUpdate;
+    type Events = generated::example::ExampleEvents;
     type CommandRequest = generated::example::ExampleCommandRequest;
     type CommandResponse = generated::example::ExampleCommandResponse;
 
@@ -452,8 +671,11 @@ impl Component for Example {
         <generated::example::Example as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::ExampleUpdate, String> {
-        <generated::example::ExampleUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::example::ExampleUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::example::ExampleEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest, String> {
@@ -482,9 +704,10 @@ impl Component for Example {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::example::ExampleUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::ExampleUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::example::ExampleUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::example::ExampleEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
@@ -607,6 +830,21 @@ impl ComponentUpdate<Rotate> for RotateUpdate {
     }
 }
 
+pub struct RotateEvents {
+}
+
+impl TypeConversion for RotateEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(RotateEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum RotateCommandRequest {
 }
@@ -617,6 +855,7 @@ pub enum RotateCommandResponse {
 
 impl Component for Rotate {
     type Update = generated::example::RotateUpdate;
+    type Events = generated::example::RotateEvents;
     type CommandRequest = generated::example::RotateCommandRequest;
     type CommandResponse = generated::example::RotateCommandResponse;
 
@@ -626,8 +865,11 @@ impl Component for Rotate {
         <generated::example::Rotate as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::RotateUpdate, String> {
-        <generated::example::RotateUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::example::RotateUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::example::RotateEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::RotateCommandRequest, String> {
@@ -648,9 +890,10 @@ impl Component for Rotate {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::example::RotateUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::RotateUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::example::RotateUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::example::RotateEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
@@ -1028,6 +1271,21 @@ impl ComponentUpdate<EntityAcl> for EntityAclUpdate {
     }
 }
 
+pub struct EntityAclEvents {
+}
+
+impl TypeConversion for EntityAclEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(EntityAclEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum EntityAclCommandRequest {
 }
@@ -1038,6 +1296,7 @@ pub enum EntityAclCommandResponse {
 
 impl Component for EntityAcl {
     type Update = generated::improbable::EntityAclUpdate;
+    type Events = generated::improbable::EntityAclEvents;
     type CommandRequest = generated::improbable::EntityAclCommandRequest;
     type CommandResponse = generated::improbable::EntityAclCommandResponse;
 
@@ -1047,8 +1306,11 @@ impl Component for EntityAcl {
         <generated::improbable::EntityAcl as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::EntityAclUpdate, String> {
-        <generated::improbable::EntityAclUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::improbable::EntityAclUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::improbable::EntityAclEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::EntityAclCommandRequest, String> {
@@ -1069,9 +1331,10 @@ impl Component for EntityAcl {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::EntityAclUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::EntityAclUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::EntityAclUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::improbable::EntityAclEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
@@ -1156,6 +1419,21 @@ impl ComponentUpdate<Interest> for InterestUpdate {
     }
 }
 
+pub struct InterestEvents {
+}
+
+impl TypeConversion for InterestEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(InterestEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum InterestCommandRequest {
 }
@@ -1166,6 +1444,7 @@ pub enum InterestCommandResponse {
 
 impl Component for Interest {
     type Update = generated::improbable::InterestUpdate;
+    type Events = generated::improbable::InterestEvents;
     type CommandRequest = generated::improbable::InterestCommandRequest;
     type CommandResponse = generated::improbable::InterestCommandResponse;
 
@@ -1175,8 +1454,11 @@ impl Component for Interest {
         <generated::improbable::Interest as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::InterestUpdate, String> {
-        <generated::improbable::InterestUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::improbable::InterestUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::improbable::InterestEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::InterestCommandRequest, String> {
@@ -1197,9 +1479,10 @@ impl Component for Interest {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::InterestUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::InterestUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::InterestUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::improbable::InterestEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
@@ -1284,6 +1567,21 @@ impl ComponentUpdate<Metadata> for MetadataUpdate {
     }
 }
 
+pub struct MetadataEvents {
+}
+
+impl TypeConversion for MetadataEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(MetadataEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum MetadataCommandRequest {
 }
@@ -1294,6 +1592,7 @@ pub enum MetadataCommandResponse {
 
 impl Component for Metadata {
     type Update = generated::improbable::MetadataUpdate;
+    type Events = generated::improbable::MetadataEvents;
     type CommandRequest = generated::improbable::MetadataCommandRequest;
     type CommandResponse = generated::improbable::MetadataCommandResponse;
 
@@ -1303,8 +1602,11 @@ impl Component for Metadata {
         <generated::improbable::Metadata as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::MetadataUpdate, String> {
-        <generated::improbable::MetadataUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::improbable::MetadataUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::improbable::MetadataEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::MetadataCommandRequest, String> {
@@ -1325,9 +1627,10 @@ impl Component for Metadata {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::MetadataUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::MetadataUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::MetadataUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::improbable::MetadataEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
@@ -1397,6 +1700,21 @@ impl ComponentUpdate<Persistence> for PersistenceUpdate {
     }
 }
 
+pub struct PersistenceEvents {
+}
+
+impl TypeConversion for PersistenceEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(PersistenceEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum PersistenceCommandRequest {
 }
@@ -1407,6 +1725,7 @@ pub enum PersistenceCommandResponse {
 
 impl Component for Persistence {
     type Update = generated::improbable::PersistenceUpdate;
+    type Events = generated::improbable::PersistenceEvents;
     type CommandRequest = generated::improbable::PersistenceCommandRequest;
     type CommandResponse = generated::improbable::PersistenceCommandResponse;
 
@@ -1416,8 +1735,11 @@ impl Component for Persistence {
         <generated::improbable::Persistence as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PersistenceUpdate, String> {
-        <generated::improbable::PersistenceUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::improbable::PersistenceUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::improbable::PersistenceEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PersistenceCommandRequest, String> {
@@ -1438,9 +1760,10 @@ impl Component for Persistence {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::PersistenceUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::PersistenceUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::PersistenceUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::improbable::PersistenceEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
@@ -1525,6 +1848,21 @@ impl ComponentUpdate<Position> for PositionUpdate {
     }
 }
 
+pub struct PositionEvents {
+}
+
+impl TypeConversion for PositionEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(PositionEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum PositionCommandRequest {
 }
@@ -1535,6 +1873,7 @@ pub enum PositionCommandResponse {
 
 impl Component for Position {
     type Update = generated::improbable::PositionUpdate;
+    type Events = generated::improbable::PositionEvents;
     type CommandRequest = generated::improbable::PositionCommandRequest;
     type CommandResponse = generated::improbable::PositionCommandResponse;
 
@@ -1544,8 +1883,11 @@ impl Component for Position {
         <generated::improbable::Position as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PositionUpdate, String> {
-        <generated::improbable::PositionUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::improbable::PositionUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::improbable::PositionEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PositionCommandRequest, String> {
@@ -1566,9 +1908,10 @@ impl Component for Position {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::PositionUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::PositionUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::PositionUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::improbable::PositionEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
@@ -1769,6 +2112,21 @@ impl ComponentUpdate<PlayerClient> for PlayerClientUpdate {
     }
 }
 
+pub struct PlayerClientEvents {
+}
+
+impl TypeConversion for PlayerClientEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(PlayerClientEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum PlayerClientCommandRequest {
 }
@@ -1779,6 +2137,7 @@ pub enum PlayerClientCommandResponse {
 
 impl Component for PlayerClient {
     type Update = generated::improbable::restricted::PlayerClientUpdate;
+    type Events = generated::improbable::restricted::PlayerClientEvents;
     type CommandRequest = generated::improbable::restricted::PlayerClientCommandRequest;
     type CommandResponse = generated::improbable::restricted::PlayerClientCommandResponse;
 
@@ -1788,8 +2147,11 @@ impl Component for PlayerClient {
         <generated::improbable::restricted::PlayerClient as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::PlayerClientUpdate, String> {
-        <generated::improbable::restricted::PlayerClientUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::improbable::restricted::PlayerClientUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::improbable::restricted::PlayerClientEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::PlayerClientCommandRequest, String> {
@@ -1810,9 +2172,10 @@ impl Component for PlayerClient {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::restricted::PlayerClientUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::PlayerClientUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::PlayerClientUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::PlayerClientEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
@@ -1882,6 +2245,21 @@ impl ComponentUpdate<System> for SystemUpdate {
     }
 }
 
+pub struct SystemEvents {
+}
+
+impl TypeConversion for SystemEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(SystemEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum SystemCommandRequest {
 }
@@ -1892,6 +2270,7 @@ pub enum SystemCommandResponse {
 
 impl Component for System {
     type Update = generated::improbable::restricted::SystemUpdate;
+    type Events = generated::improbable::restricted::SystemEvents;
     type CommandRequest = generated::improbable::restricted::SystemCommandRequest;
     type CommandResponse = generated::improbable::restricted::SystemCommandResponse;
 
@@ -1901,8 +2280,11 @@ impl Component for System {
         <generated::improbable::restricted::System as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::SystemUpdate, String> {
-        <generated::improbable::restricted::SystemUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::improbable::restricted::SystemUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::improbable::restricted::SystemEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::SystemCommandRequest, String> {
@@ -1923,9 +2305,10 @@ impl Component for System {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::restricted::SystemUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::SystemUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::SystemUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::SystemEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
@@ -2040,6 +2423,21 @@ impl ComponentUpdate<Worker> for WorkerUpdate {
     }
 }
 
+pub struct WorkerEvents {
+}
+
+impl TypeConversion for WorkerEvents {
+    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+        Ok(WorkerEvents { 
+        })
+    }
+
+    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum WorkerCommandRequest {
     Disconnect(generated::improbable::restricted::DisconnectRequest),
@@ -2052,6 +2450,7 @@ pub enum WorkerCommandResponse {
 
 impl Component for Worker {
     type Update = generated::improbable::restricted::WorkerUpdate;
+    type Events = generated::improbable::restricted::WorkerEvents;
     type CommandRequest = generated::improbable::restricted::WorkerCommandRequest;
     type CommandResponse = generated::improbable::restricted::WorkerCommandResponse;
 
@@ -2061,8 +2460,11 @@ impl Component for Worker {
         <generated::improbable::restricted::Worker as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::WorkerUpdate, String> {
-        <generated::improbable::restricted::WorkerUpdate as TypeConversion>::from_type(&update.fields())
+    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
+        Ok(ComponentUpdateData {
+            fields: <generated::improbable::restricted::WorkerUpdate as TypeConversion>::from_type(&update.fields())?,
+            events: <generated::improbable::restricted::WorkerEvents as TypeConversion>::from_type(&update.events())?
+        })
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::WorkerCommandRequest, String> {
@@ -2091,9 +2493,10 @@ impl Component for Worker {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::restricted::WorkerUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::WorkerUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::WorkerUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::WorkerEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
         Ok(serialized_update)
     }
 
