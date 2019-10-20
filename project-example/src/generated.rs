@@ -166,6 +166,14 @@ impl ComponentData<EntityIdTest> for EntityIdTest {
 pub struct EntityIdTestUpdate {
     pub eid: Option<spatialos_sdk::worker::EntityId>,
 }
+
+impl EntityIdTestUpdate {
+    pub fn add_eid(&mut self, value: spatialos_sdk::worker::EntityId) {
+        self.eid = Some(value);
+    }
+
+}
+
 impl TypeConversion for EntityIdTestUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -191,6 +199,7 @@ impl ComponentUpdate<EntityIdTest> for EntityIdTestUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct EntityIdTestEvents {
 }
 
@@ -314,6 +323,14 @@ impl ComponentData<EnumTestComponent> for EnumTestComponent {
 pub struct EnumTestComponentUpdate {
     pub test: Option<generated::example::TestEnum>,
 }
+
+impl EnumTestComponentUpdate {
+    pub fn add_test(&mut self, value: generated::example::TestEnum) {
+        self.test = Some(value);
+    }
+
+}
+
 impl TypeConversion for EnumTestComponentUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -339,6 +356,7 @@ impl ComponentUpdate<EnumTestComponent> for EnumTestComponentUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct EnumTestComponentEvents {
 }
 
@@ -457,6 +475,10 @@ impl ComponentData<EventTest> for EventTest {
 #[derive(Debug, Clone, Default)]
 pub struct EventTestUpdate {
 }
+
+impl EventTestUpdate {
+}
+
 impl TypeConversion for EventTestUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -472,6 +494,7 @@ impl ComponentUpdate<EventTest> for EventTestUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct EventTestEvents {
     pub payload: Vec<generated::example::Payload>,
 }
@@ -609,6 +632,14 @@ impl ComponentData<Example> for Example {
 pub struct ExampleUpdate {
     pub x: Option<f32>,
 }
+
+impl ExampleUpdate {
+    pub fn add_x(&mut self, value: f32) {
+        self.x = Some(value);
+    }
+
+}
+
 impl TypeConversion for ExampleUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -634,6 +665,7 @@ impl ComponentUpdate<Example> for ExampleUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct ExampleEvents {
 }
 
@@ -785,6 +817,22 @@ pub struct RotateUpdate {
     pub center: Option<generated::example::Vector3d>,
     pub radius: Option<f64>,
 }
+
+impl RotateUpdate {
+    pub fn add_angle(&mut self, value: f64) {
+        self.angle = Some(value);
+    }
+
+    pub fn add_center(&mut self, value: generated::example::Vector3d) {
+        self.center = Some(value);
+    }
+
+    pub fn add_radius(&mut self, value: f64) {
+        self.radius = Some(value);
+    }
+
+}
+
 impl TypeConversion for RotateUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -830,6 +878,7 @@ impl ComponentUpdate<Rotate> for RotateUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct RotateEvents {
 }
 
@@ -1236,6 +1285,18 @@ pub struct EntityAclUpdate {
     pub read_acl: Option<generated::improbable::WorkerRequirementSet>,
     pub component_write_acl: Option<BTreeMap<u32, generated::improbable::WorkerRequirementSet>>,
 }
+
+impl EntityAclUpdate {
+    pub fn add_read_acl(&mut self, value: generated::improbable::WorkerRequirementSet) {
+        self.read_acl = Some(value);
+    }
+
+    pub fn add_component_write_acl(&mut self, value: BTreeMap<u32, generated::improbable::WorkerRequirementSet>) {
+        self.component_write_acl = Some(value);
+    }
+
+}
+
 impl TypeConversion for EntityAclUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -1271,6 +1332,7 @@ impl ComponentUpdate<EntityAcl> for EntityAclUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct EntityAclEvents {
 }
 
@@ -1394,6 +1456,14 @@ impl ComponentData<Interest> for Interest {
 pub struct InterestUpdate {
     pub component_interest: Option<BTreeMap<u32, generated::improbable::ComponentInterest>>,
 }
+
+impl InterestUpdate {
+    pub fn add_component_interest(&mut self, value: BTreeMap<u32, generated::improbable::ComponentInterest>) {
+        self.component_interest = Some(value);
+    }
+
+}
+
 impl TypeConversion for InterestUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -1419,6 +1489,7 @@ impl ComponentUpdate<Interest> for InterestUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct InterestEvents {
 }
 
@@ -1542,6 +1613,14 @@ impl ComponentData<Metadata> for Metadata {
 pub struct MetadataUpdate {
     pub entity_type: Option<String>,
 }
+
+impl MetadataUpdate {
+    pub fn add_entity_type(&mut self, value: String) {
+        self.entity_type = Some(value);
+    }
+
+}
+
 impl TypeConversion for MetadataUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -1567,6 +1646,7 @@ impl ComponentUpdate<Metadata> for MetadataUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct MetadataEvents {
 }
 
@@ -1685,6 +1765,10 @@ impl ComponentData<Persistence> for Persistence {
 #[derive(Debug, Clone, Default)]
 pub struct PersistenceUpdate {
 }
+
+impl PersistenceUpdate {
+}
+
 impl TypeConversion for PersistenceUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -1700,6 +1784,7 @@ impl ComponentUpdate<Persistence> for PersistenceUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct PersistenceEvents {
 }
 
@@ -1823,6 +1908,14 @@ impl ComponentData<Position> for Position {
 pub struct PositionUpdate {
     pub coords: Option<generated::improbable::Coordinates>,
 }
+
+impl PositionUpdate {
+    pub fn add_coords(&mut self, value: generated::improbable::Coordinates) {
+        self.coords = Some(value);
+    }
+
+}
+
 impl TypeConversion for PositionUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -1848,6 +1941,7 @@ impl ComponentUpdate<Position> for PositionUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct PositionEvents {
 }
 
@@ -2087,6 +2181,14 @@ impl ComponentData<PlayerClient> for PlayerClient {
 pub struct PlayerClientUpdate {
     pub player_identity: Option<generated::improbable::restricted::PlayerIdentity>,
 }
+
+impl PlayerClientUpdate {
+    pub fn add_player_identity(&mut self, value: generated::improbable::restricted::PlayerIdentity) {
+        self.player_identity = Some(value);
+    }
+
+}
+
 impl TypeConversion for PlayerClientUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -2112,6 +2214,7 @@ impl ComponentUpdate<PlayerClient> for PlayerClientUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct PlayerClientEvents {
 }
 
@@ -2230,6 +2333,10 @@ impl ComponentData<System> for System {
 #[derive(Debug, Clone, Default)]
 pub struct SystemUpdate {
 }
+
+impl SystemUpdate {
+}
+
 impl TypeConversion for SystemUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -2245,6 +2352,7 @@ impl ComponentUpdate<System> for SystemUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct SystemEvents {
 }
 
@@ -2378,6 +2486,22 @@ pub struct WorkerUpdate {
     pub worker_type: Option<String>,
     pub connection: Option<generated::improbable::restricted::Connection>,
 }
+
+impl WorkerUpdate {
+    pub fn add_worker_id(&mut self, value: String) {
+        self.worker_id = Some(value);
+    }
+
+    pub fn add_worker_type(&mut self, value: String) {
+        self.worker_type = Some(value);
+    }
+
+    pub fn add_connection(&mut self, value: generated::improbable::restricted::Connection) {
+        self.connection = Some(value);
+    }
+
+}
+
 impl TypeConversion for WorkerUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         let mut output = Self {
@@ -2423,6 +2547,7 @@ impl ComponentUpdate<Worker> for WorkerUpdate {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct WorkerEvents {
 }
 
