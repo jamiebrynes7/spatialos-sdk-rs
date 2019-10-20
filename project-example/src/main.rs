@@ -14,6 +14,7 @@ use spatialos_sdk::worker::{
 };
 use std::{collections::HashMap, f64};
 use structopt::StructOpt;
+use spatialos_sdk::worker::op::WorkerOp::ComponentUpdate;
 
 mod connection_handler;
 #[rustfmt::skip]
@@ -173,27 +174,19 @@ fn logic_loop(c: &mut WorkerConnection) {
 
                 // Send an update to SpatialOS to apply the same update to the official component
                 // state.
-                let rotation_update = ComponentUpdateData::<example::Rotate> {
-                    fields: example::RotateUpdate {
-                        angle: Some(rotate.angle),
-                        ..Default::default()
-                    },
-                    events: example::RotateEvents {},
-                };
+
+                let mut rotation_update = ComponentUpdateData::<example::Rotate>::default();
+                rotation_update.add_angle(rotate.angle);
                 c.send_component_update(entity_id, rotation_update, UpdateParameters::default());
 
                 // Update the entity's position based on the current state of the `Rotate`
                 // component.
-                let pos_update = ComponentUpdateData::<improbable::Position> {
-                    fields: improbable::PositionUpdate {
-                        coords: Some(improbable::Coordinates {
-                            x: rotate.angle.sin() * rotate.radius + rotate.center.x,
-                            y: rotate.center.x,
-                            z: rotate.angle.cos() * rotate.radius + rotate.center.z,
-                        }),
-                    },
-                    events: improbable::PositionEvents {},
-                };
+                let mut pos_update = ComponentUpdateData::<improbable::Position>::default();
+                pos_update.add_coords(improbable::Coordinates {
+                    x: rotate.angle.sin() * rotate.radius + rotate.center.x,
+                    y: rotate.center.x,
+                    z: rotate.angle.cos() * rotate.radius + rotate.center.z,
+                });
                 c.send_component_update(entity_id, pos_update, UpdateParameters::default());
             }
         }
