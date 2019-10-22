@@ -1,9 +1,8 @@
 use crate::config::{BuildProfile, Config};
+use crate::format_arg;
 use crate::opt::*;
-use std::ffi::OsString;
 use std::path::*;
 use std::process;
-use tap::*;
 
 /// Prepares and launches a local deployment.
 ///
@@ -59,8 +58,7 @@ pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Box<dyn std::
     let mut command = process::Command::new("spatial");
     command.args(&["alpha", "local", "launch"]);
     if let Some(launch_config) = &launch.launch_config {
-        let arg = OsString::from("--launch_config=").tap(|arg| arg.push(launch_config));
-        command.arg(arg);
+        command.arg(&format_arg("launch_config", launch_config));
     }
     command
         .status()

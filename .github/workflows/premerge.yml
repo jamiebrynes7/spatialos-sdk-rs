@@ -48,7 +48,7 @@ jobs:
           SPATIAL_LIB_DIR: "../dependencies"
 
       - name: Generate test-suite code
-        run: pushd test-suite && mkdir schema && cargo spatial --verbose codegen && popd
+        run: pushd test-suite && cargo spatial --verbose codegen && popd
         env:
           SPATIAL_LIB_DIR: "../dependencies"
         
