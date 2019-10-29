@@ -10,7 +10,7 @@ edition = "2018"
 [dependencies]
 spatialos-sdk = { path = "../spatialos-sdk"}
 futures = "0.1.25"
-uuid = { version = "0.7", features = ["v4"] }
+uuid = { version = "0.8", features = ["v4"] }
 structopt = "0.3"
 rand = "0.7"
 tap = "0.4"
