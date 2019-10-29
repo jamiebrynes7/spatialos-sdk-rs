@@ -44,11 +44,13 @@ jobs:
 
       - name: Generate project-example code
         run: pushd project-example && cargo spatial --verbose codegen && popd
+        shell: bash
         env:
           SPATIAL_LIB_DIR: "../dependencies"
 
       - name: Generate test-suite code
         run: pushd test-suite && cargo spatial --verbose codegen && popd
+        shell: bash
         env:
           SPATIAL_LIB_DIR: "../dependencies"
         
