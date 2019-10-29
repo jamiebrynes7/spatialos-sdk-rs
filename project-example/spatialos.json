@@ -8,5 +8,6 @@
   "clientWorkers": [
     "./rust_client.json"
   ],
-  "launchConfiguration": "world.json"
+  "launchConfiguration": "world.json",
+  "defaultSnapshotUploadFilepath": "./snapshots/default.snapshot"
 }
