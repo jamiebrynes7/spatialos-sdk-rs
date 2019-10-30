@@ -167,7 +167,11 @@ impl ComponentUpdate<<#= self.rust_name(&component.qualified_name) #>> for <#= s
     fn merge(&mut self, update: <#= self.rust_name(&component.qualified_name) #>Update) {<#
         for field in &self.get_component_fields(&component) {
         #>
-        if update.<#= field.name #>.is_some() { self.<#= field.name #> = update.<#= field.name #>; }<# } #>
+        if update.<#= field.name #>.is_some() { self.<#= field.name #> = update.<#= field.name #>; }<# } #><#
+        for event in &component.events { #>
+        let mut <#= event.name #> = update.<#= event.name #>;
+        self.<#= event.name #>.append(&mut <#= event.name #>);
+<# } #>
     }
 }
 

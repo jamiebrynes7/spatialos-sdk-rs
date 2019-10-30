@@ -512,6 +512,9 @@ impl EventTestUpdate {
 impl ComponentUpdate<EventTest> for EventTestUpdate {
     fn merge(&mut self, update: EventTestUpdate) {
         if update.field.is_some() { self.field = update.field; }
+        let mut payload = update.payload;
+        self.payload.append(&mut payload);
+
     }
 }
 
