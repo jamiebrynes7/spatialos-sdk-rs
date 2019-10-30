@@ -1,7 +1,6 @@
 use crate::{connection_handler::*, opt::*};
 use generated::{example, improbable};
 use rand::Rng;
-use spatialos_sdk::worker::component::ComponentUpdateData;
 use spatialos_sdk::worker::{
     commands::{EntityQueryRequest, ReserveEntityIdsRequest},
     component::{Component, ComponentData, UpdateParameters},
@@ -173,28 +172,32 @@ fn logic_loop(c: &mut WorkerConnection) {
 
                 // Send an update to SpatialOS to apply the same update to the official component
                 // state.
-                let rotation_update = ComponentUpdateData::<example::Rotate> {
-                    fields: example::RotateUpdate {
-                        angle: Some(rotate.angle),
-                        ..Default::default()
-                    },
-                    events: example::RotateEvents {},
+                let rotation_update = example::RotateUpdate {
+                    angle: Some(rotate.angle),
+                    ..Default::default()
                 };
-                c.send_component_update(entity_id, rotation_update, UpdateParameters::default());
+
+                c.send_component_update::<example::Rotate>(
+                    entity_id,
+                    rotation_update,
+                    UpdateParameters::default(),
+                );
 
                 // Update the entity's position based on the current state of the `Rotate`
                 // component.
-                let pos_update = ComponentUpdateData::<improbable::Position> {
-                    fields: improbable::PositionUpdate {
-                        coords: Some(improbable::Coordinates {
-                            x: rotate.angle.sin() * rotate.radius + rotate.center.x,
-                            y: rotate.center.x,
-                            z: rotate.angle.cos() * rotate.radius + rotate.center.z,
-                        }),
-                    },
-                    events: improbable::PositionEvents {},
+                let pos_update = improbable::PositionUpdate {
+                    coords: Some(improbable::Coordinates {
+                        x: rotate.angle.sin() * rotate.radius + rotate.center.x,
+                        y: rotate.center.x,
+                        z: rotate.angle.cos() * rotate.radius + rotate.center.z,
+                    }),
                 };
-                c.send_component_update(entity_id, pos_update, UpdateParameters::default());
+
+                c.send_component_update::<improbable::Position>(
+                    entity_id,
+                    pos_update,
+                    UpdateParameters::default(),
+                );
             }
         }
 

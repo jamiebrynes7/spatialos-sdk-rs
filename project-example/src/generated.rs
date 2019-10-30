@@ -160,49 +160,53 @@ impl ComponentData<EntityIdTest> for EntityIdTest {
     fn merge(&mut self, update: EntityIdTestUpdate) {
         if let Some(value) = update.eid { self.eid = value; }
     }
+
+    fn merge_ref(&mut self, update: &EntityIdTestUpdate) {
+        let copy = EntityIdTestUpdate {
+            eid: update.eid, 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct EntityIdTestUpdate {
     pub eid: Option<spatialos_sdk::worker::EntityId>,
 }
-impl TypeConversion for EntityIdTestUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl EntityIdTestUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-            eid: None,
-        };
-        let _field_eid = input.field::<SchemaEntityId>(1);
+        eid: None,
+        }; 
+        let _field_eid = fields.field::<SchemaEntityId>(1);
         if _field_eid.count() > 0 {
             let field = &_field_eid;
             output.eid = Some(field.get_or_default());
-        }
+        } 
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(value) = input.eid {
-            output.field::<SchemaEntityId>(1).add(value);
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+        if let Some(value) = self.eid {
+            fields.field::<SchemaEntityId>(1).add(value);
         }
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<EntityIdTest> for EntityIdTestUpdate {
     fn merge(&mut self, update: EntityIdTestUpdate) {
         if update.eid.is_some() { self.eid = update.eid; }
-    }
-}
-
-pub struct EntityIdTestEvents {
-}
-
-impl TypeConversion for EntityIdTestEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(EntityIdTestEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -216,7 +220,6 @@ pub enum EntityIdTestCommandResponse {
 
 impl Component for EntityIdTest {
     type Update = generated::example::EntityIdTestUpdate;
-    type Events = generated::example::EntityIdTestEvents;
     type CommandRequest = generated::example::EntityIdTestCommandRequest;
     type CommandResponse = generated::example::EntityIdTestCommandResponse;
 
@@ -226,11 +229,8 @@ impl Component for EntityIdTest {
         <generated::example::EntityIdTest as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::example::EntityIdTestUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::example::EntityIdTestEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EntityIdTestCommandRequest, String> {
@@ -251,10 +251,9 @@ impl Component for EntityIdTest {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::EntityIdTestUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::example::EntityIdTestEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -308,49 +307,53 @@ impl ComponentData<EnumTestComponent> for EnumTestComponent {
     fn merge(&mut self, update: EnumTestComponentUpdate) {
         if let Some(value) = update.test { self.test = value; }
     }
+
+    fn merge_ref(&mut self, update: &EnumTestComponentUpdate) {
+        let copy = EnumTestComponentUpdate {
+            test: update.test, 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct EnumTestComponentUpdate {
     pub test: Option<generated::example::TestEnum>,
 }
-impl TypeConversion for EnumTestComponentUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl EnumTestComponentUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-            test: None,
-        };
-        let _field_test = input.field::<SchemaEnum>(1);
+        test: None,
+        }; 
+        let _field_test = fields.field::<SchemaEnum>(1);
         if _field_test.count() > 0 {
             let field = &_field_test;
             output.test = Some(generated::example::TestEnum::from(field.get_or_default()));
-        }
+        } 
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(value) = input.test {
-            output.field::<SchemaEnum>(1).add(value.as_u32());
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+        if let Some(value) = self.test {
+            fields.field::<SchemaEnum>(1).add(value.as_u32());
         }
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<EnumTestComponent> for EnumTestComponentUpdate {
     fn merge(&mut self, update: EnumTestComponentUpdate) {
         if update.test.is_some() { self.test = update.test; }
-    }
-}
-
-pub struct EnumTestComponentEvents {
-}
-
-impl TypeConversion for EnumTestComponentEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(EnumTestComponentEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -364,7 +367,6 @@ pub enum EnumTestComponentCommandResponse {
 
 impl Component for EnumTestComponent {
     type Update = generated::example::EnumTestComponentUpdate;
-    type Events = generated::example::EnumTestComponentEvents;
     type CommandRequest = generated::example::EnumTestComponentCommandRequest;
     type CommandResponse = generated::example::EnumTestComponentCommandResponse;
 
@@ -374,11 +376,8 @@ impl Component for EnumTestComponent {
         <generated::example::EnumTestComponent as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::example::EnumTestComponentUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::example::EnumTestComponentEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EnumTestComponentCommandRequest, String> {
@@ -399,10 +398,9 @@ impl Component for EnumTestComponent {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::EnumTestComponentUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::example::EnumTestComponentEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -439,65 +437,81 @@ inventory::submit!(VTable::new::<EnumTestComponent>());
 
 #[derive(Debug, Clone)]
 pub struct EventTest {
+    pub field: i32,
 }
 impl TypeConversion for EventTest {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
+            field: input.field::<SchemaInt32>(1).get_or_default(),
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+        output.field::<SchemaInt32>(1).add(input.field);
         Ok(())
     }
 }
 impl ComponentData<EventTest> for EventTest {
     fn merge(&mut self, update: EventTestUpdate) {
+        if let Some(value) = update.field { self.field = value; }
+    }
+
+    fn merge_ref(&mut self, update: &EventTestUpdate) {
+        let copy = EventTestUpdate {
+            field: update.field, 
+            payload : Vec::new(),
+        };
+
+        self.merge(copy);
     }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct EventTestUpdate {
-}
-impl TypeConversion for EventTestUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        let mut output = Self {
-        };
-        Ok(output)
-    }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        Ok(())
-    }
-}
-impl ComponentUpdate<EventTest> for EventTestUpdate {
-    fn merge(&mut self, update: EventTestUpdate) {
-    }
-}
-
-pub struct EventTestEvents {
+    pub field: Option<i32>,
     pub payload: Vec<generated::example::Payload>,
 }
 
-impl TypeConversion for EventTestEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(EventTestEvents { 
-            payload: {
-                let field = input.field::<SchemaObject>(1);
-                let mut data = Vec::new();
-                for i in 0..field.count() {
-                    data.push(<generated::example::Payload as TypeConversion>::from_type(&field.index(i))?);
-                }
+impl EventTestUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
 
-                data
-            }
-        })
+        let mut output = Self {
+        field: None,
+        payload: Vec::new(),
+        }; 
+        let _field_field = fields.field::<SchemaInt32>(1);
+        if _field_field.count() > 0 {
+            let field = &_field_field;
+            output.field = Some(field.get_or_default());
+        } 
+        let _field_payload = events.field::<SchemaObject>(1);
+        for i in 0.._field_payload.count() {
+            output.payload.push(<generated::example::Payload as TypeConversion>::from_type(&_field_payload.index(i))?);
+        }
+
+        Ok(output)
     }
 
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-        for ev in &input.payload {
-            let mut field = output.field::<SchemaObject>(1);
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+        if let Some(value) = self.field {
+            fields.field::<SchemaInt32>(1).add(value);
+        }
+
+        let mut events = update.events_mut();
+        for ev in &self.payload {
+            let mut field = events.field::<SchemaObject>(1);
             <generated::example::Payload as TypeConversion>::to_type(ev, &mut field.add())?;
         }
 
         Ok(())
+    }
+}
+
+impl ComponentUpdate<EventTest> for EventTestUpdate {
+    fn merge(&mut self, update: EventTestUpdate) {
+        if update.field.is_some() { self.field = update.field; }
     }
 }
 
@@ -511,7 +525,6 @@ pub enum EventTestCommandResponse {
 
 impl Component for EventTest {
     type Update = generated::example::EventTestUpdate;
-    type Events = generated::example::EventTestEvents;
     type CommandRequest = generated::example::EventTestCommandRequest;
     type CommandResponse = generated::example::EventTestCommandResponse;
 
@@ -521,11 +534,8 @@ impl Component for EventTest {
         <generated::example::EventTest as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::example::EventTestUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::example::EventTestEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EventTestCommandRequest, String> {
@@ -546,10 +556,9 @@ impl Component for EventTest {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::EventTestUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::example::EventTestEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -603,49 +612,53 @@ impl ComponentData<Example> for Example {
     fn merge(&mut self, update: ExampleUpdate) {
         if let Some(value) = update.x { self.x = value; }
     }
+
+    fn merge_ref(&mut self, update: &ExampleUpdate) {
+        let copy = ExampleUpdate {
+            x: update.x, 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct ExampleUpdate {
     pub x: Option<f32>,
 }
-impl TypeConversion for ExampleUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl ExampleUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-            x: None,
-        };
-        let _field_x = input.field::<SchemaFloat>(1);
+        x: None,
+        }; 
+        let _field_x = fields.field::<SchemaFloat>(1);
         if _field_x.count() > 0 {
             let field = &_field_x;
             output.x = Some(field.get_or_default());
-        }
+        } 
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(value) = input.x {
-            output.field::<SchemaFloat>(1).add(value);
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+        if let Some(value) = self.x {
+            fields.field::<SchemaFloat>(1).add(value);
         }
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<Example> for ExampleUpdate {
     fn merge(&mut self, update: ExampleUpdate) {
         if update.x.is_some() { self.x = update.x; }
-    }
-}
-
-pub struct ExampleEvents {
-}
-
-impl TypeConversion for ExampleEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(ExampleEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -661,7 +674,6 @@ pub enum ExampleCommandResponse {
 
 impl Component for Example {
     type Update = generated::example::ExampleUpdate;
-    type Events = generated::example::ExampleEvents;
     type CommandRequest = generated::example::ExampleCommandRequest;
     type CommandResponse = generated::example::ExampleCommandResponse;
 
@@ -671,11 +683,8 @@ impl Component for Example {
         <generated::example::Example as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::example::ExampleUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::example::ExampleEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest, String> {
@@ -704,10 +713,9 @@ impl Component for Example {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::ExampleUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::example::ExampleEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -777,6 +785,16 @@ impl ComponentData<Rotate> for Rotate {
         if let Some(value) = update.center { self.center = value; }
         if let Some(value) = update.radius { self.radius = value; }
     }
+
+    fn merge_ref(&mut self, update: &RotateUpdate) {
+        let copy = RotateUpdate {
+            angle: update.angle,
+            center: update.center.clone(),
+            radius: update.radius, 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -785,63 +803,59 @@ pub struct RotateUpdate {
     pub center: Option<generated::example::Vector3d>,
     pub radius: Option<f64>,
 }
-impl TypeConversion for RotateUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl RotateUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-            angle: None,
-            center: None,
-            radius: None,
-        };
-        let _field_angle = input.field::<SchemaDouble>(1);
+        angle: None,
+        center: None,
+        radius: None,
+        }; 
+        let _field_angle = fields.field::<SchemaDouble>(1);
         if _field_angle.count() > 0 {
             let field = &_field_angle;
             output.angle = Some(field.get_or_default());
         }
-        let _field_center = input.field::<SchemaObject>(2);
+        let _field_center = fields.field::<SchemaObject>(2);
         if _field_center.count() > 0 {
             let field = &_field_center;
             output.center = Some(<generated::example::Vector3d as TypeConversion>::from_type(&field.get_or_default())?);
         }
-        let _field_radius = input.field::<SchemaDouble>(3);
+        let _field_radius = fields.field::<SchemaDouble>(3);
         if _field_radius.count() > 0 {
             let field = &_field_radius;
             output.radius = Some(field.get_or_default());
-        }
+        } 
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(value) = input.angle {
-            output.field::<SchemaDouble>(1).add(value);
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+        if let Some(value) = self.angle {
+            fields.field::<SchemaDouble>(1).add(value);
         }
-        if let Some(ref value) = input.center {
-            <generated::example::Vector3d as TypeConversion>::to_type(&value, &mut output.field::<SchemaObject>(2).add())?;
+        if let Some(ref value) = self.center {
+            <generated::example::Vector3d as TypeConversion>::to_type(&value, &mut fields.field::<SchemaObject>(2).add())?;
         }
-        if let Some(value) = input.radius {
-            output.field::<SchemaDouble>(3).add(value);
+        if let Some(value) = self.radius {
+            fields.field::<SchemaDouble>(3).add(value);
         }
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<Rotate> for RotateUpdate {
     fn merge(&mut self, update: RotateUpdate) {
         if update.angle.is_some() { self.angle = update.angle; }
         if update.center.is_some() { self.center = update.center; }
         if update.radius.is_some() { self.radius = update.radius; }
-    }
-}
-
-pub struct RotateEvents {
-}
-
-impl TypeConversion for RotateEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(RotateEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -855,7 +869,6 @@ pub enum RotateCommandResponse {
 
 impl Component for Rotate {
     type Update = generated::example::RotateUpdate;
-    type Events = generated::example::RotateEvents;
     type CommandRequest = generated::example::RotateCommandRequest;
     type CommandResponse = generated::example::RotateCommandResponse;
 
@@ -865,11 +878,8 @@ impl Component for Rotate {
         <generated::example::Rotate as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::example::RotateUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::example::RotateEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::RotateCommandRequest, String> {
@@ -890,10 +900,9 @@ impl Component for Rotate {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::RotateUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::example::RotateEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -1229,6 +1238,15 @@ impl ComponentData<EntityAcl> for EntityAcl {
         if let Some(value) = update.read_acl { self.read_acl = value; }
         if let Some(value) = update.component_write_acl { self.component_write_acl = value; }
     }
+
+    fn merge_ref(&mut self, update: &EntityAclUpdate) {
+        let copy = EntityAclUpdate {
+            read_acl: update.read_acl.clone(),
+            component_write_acl: update.component_write_acl.clone(), 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -1236,53 +1254,49 @@ pub struct EntityAclUpdate {
     pub read_acl: Option<generated::improbable::WorkerRequirementSet>,
     pub component_write_acl: Option<BTreeMap<u32, generated::improbable::WorkerRequirementSet>>,
 }
-impl TypeConversion for EntityAclUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl EntityAclUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-            read_acl: None,
-            component_write_acl: None,
-        };
-        let _field_read_acl = input.field::<SchemaObject>(1);
+        read_acl: None,
+        component_write_acl: None,
+        }; 
+        let _field_read_acl = fields.field::<SchemaObject>(1);
         if _field_read_acl.count() > 0 {
             let field = &_field_read_acl;
             output.read_acl = Some(<generated::improbable::WorkerRequirementSet as TypeConversion>::from_type(&field.get_or_default())?);
         }
-        let _field_component_write_acl = input.field::<SchemaObject>(2);
+        let _field_component_write_acl = fields.field::<SchemaObject>(2);
         if _field_component_write_acl.count() > 0 {
             let field = &_field_component_write_acl;
             output.component_write_acl = Some({ let size = field.count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = field.index(i); m.insert(kv.field::<SchemaUint32>(1).get_or_default(), <generated::improbable::WorkerRequirementSet as TypeConversion>::from_type(&kv.field::<SchemaObject>(2).get_or_default())?); }; m });
-        }
+        } 
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(ref value) = input.read_acl {
-            <generated::improbable::WorkerRequirementSet as TypeConversion>::to_type(&value, &mut output.field::<SchemaObject>(1).add())?;
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+        if let Some(ref value) = self.read_acl {
+            <generated::improbable::WorkerRequirementSet as TypeConversion>::to_type(&value, &mut fields.field::<SchemaObject>(1).add())?;
         }
-        if let Some(ref value) = input.component_write_acl {
-            for (k, v) in value { let object = output.field::<SchemaObject>(2).add(); object.field::<SchemaUint32>(1).add(*k); <generated::improbable::WorkerRequirementSet as TypeConversion>::to_type(&v, &mut object.field::<SchemaObject>(2).add())?; };
+        if let Some(ref value) = self.component_write_acl {
+            for (k, v) in value { let object = fields.field::<SchemaObject>(2).add(); object.field::<SchemaUint32>(1).add(*k); <generated::improbable::WorkerRequirementSet as TypeConversion>::to_type(&v, &mut object.field::<SchemaObject>(2).add())?; };
         }
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<EntityAcl> for EntityAclUpdate {
     fn merge(&mut self, update: EntityAclUpdate) {
         if update.read_acl.is_some() { self.read_acl = update.read_acl; }
         if update.component_write_acl.is_some() { self.component_write_acl = update.component_write_acl; }
-    }
-}
-
-pub struct EntityAclEvents {
-}
-
-impl TypeConversion for EntityAclEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(EntityAclEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -1296,7 +1310,6 @@ pub enum EntityAclCommandResponse {
 
 impl Component for EntityAcl {
     type Update = generated::improbable::EntityAclUpdate;
-    type Events = generated::improbable::EntityAclEvents;
     type CommandRequest = generated::improbable::EntityAclCommandRequest;
     type CommandResponse = generated::improbable::EntityAclCommandResponse;
 
@@ -1306,11 +1319,8 @@ impl Component for EntityAcl {
         <generated::improbable::EntityAcl as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::improbable::EntityAclUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::improbable::EntityAclEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::EntityAclCommandRequest, String> {
@@ -1331,10 +1341,9 @@ impl Component for EntityAcl {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::EntityAclUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::improbable::EntityAclEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -1388,49 +1397,53 @@ impl ComponentData<Interest> for Interest {
     fn merge(&mut self, update: InterestUpdate) {
         if let Some(value) = update.component_interest { self.component_interest = value; }
     }
+
+    fn merge_ref(&mut self, update: &InterestUpdate) {
+        let copy = InterestUpdate {
+            component_interest: update.component_interest.clone(), 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct InterestUpdate {
     pub component_interest: Option<BTreeMap<u32, generated::improbable::ComponentInterest>>,
 }
-impl TypeConversion for InterestUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl InterestUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-            component_interest: None,
-        };
-        let _field_component_interest = input.field::<SchemaObject>(1);
+        component_interest: None,
+        }; 
+        let _field_component_interest = fields.field::<SchemaObject>(1);
         if _field_component_interest.count() > 0 {
             let field = &_field_component_interest;
             output.component_interest = Some({ let size = field.count(); let mut m = BTreeMap::new(); for i in 0..size { let kv = field.index(i); m.insert(kv.field::<SchemaUint32>(1).get_or_default(), <generated::improbable::ComponentInterest as TypeConversion>::from_type(&kv.field::<SchemaObject>(2).get_or_default())?); }; m });
-        }
+        } 
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(ref value) = input.component_interest {
-            for (k, v) in value { let object = output.field::<SchemaObject>(1).add(); object.field::<SchemaUint32>(1).add(*k); <generated::improbable::ComponentInterest as TypeConversion>::to_type(&v, &mut object.field::<SchemaObject>(2).add())?; };
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+        if let Some(ref value) = self.component_interest {
+            for (k, v) in value { let object = fields.field::<SchemaObject>(1).add(); object.field::<SchemaUint32>(1).add(*k); <generated::improbable::ComponentInterest as TypeConversion>::to_type(&v, &mut object.field::<SchemaObject>(2).add())?; };
         }
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<Interest> for InterestUpdate {
     fn merge(&mut self, update: InterestUpdate) {
         if update.component_interest.is_some() { self.component_interest = update.component_interest; }
-    }
-}
-
-pub struct InterestEvents {
-}
-
-impl TypeConversion for InterestEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(InterestEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -1444,7 +1457,6 @@ pub enum InterestCommandResponse {
 
 impl Component for Interest {
     type Update = generated::improbable::InterestUpdate;
-    type Events = generated::improbable::InterestEvents;
     type CommandRequest = generated::improbable::InterestCommandRequest;
     type CommandResponse = generated::improbable::InterestCommandResponse;
 
@@ -1454,11 +1466,8 @@ impl Component for Interest {
         <generated::improbable::Interest as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::improbable::InterestUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::improbable::InterestEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::InterestCommandRequest, String> {
@@ -1479,10 +1488,9 @@ impl Component for Interest {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::InterestUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::improbable::InterestEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -1536,49 +1544,53 @@ impl ComponentData<Metadata> for Metadata {
     fn merge(&mut self, update: MetadataUpdate) {
         if let Some(value) = update.entity_type { self.entity_type = value; }
     }
+
+    fn merge_ref(&mut self, update: &MetadataUpdate) {
+        let copy = MetadataUpdate {
+            entity_type: update.entity_type.clone(), 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct MetadataUpdate {
     pub entity_type: Option<String>,
 }
-impl TypeConversion for MetadataUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl MetadataUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-            entity_type: None,
-        };
-        let _field_entity_type = input.field::<SchemaString>(1);
+        entity_type: None,
+        }; 
+        let _field_entity_type = fields.field::<SchemaString>(1);
         if _field_entity_type.count() > 0 {
             let field = &_field_entity_type;
             output.entity_type = Some(field.get_or_default());
-        }
+        } 
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(ref value) = input.entity_type {
-            output.field::<SchemaString>(1).add(&value);
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+        if let Some(ref value) = self.entity_type {
+            fields.field::<SchemaString>(1).add(&value);
         }
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<Metadata> for MetadataUpdate {
     fn merge(&mut self, update: MetadataUpdate) {
         if update.entity_type.is_some() { self.entity_type = update.entity_type; }
-    }
-}
-
-pub struct MetadataEvents {
-}
-
-impl TypeConversion for MetadataEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(MetadataEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -1592,7 +1604,6 @@ pub enum MetadataCommandResponse {
 
 impl Component for Metadata {
     type Update = generated::improbable::MetadataUpdate;
-    type Events = generated::improbable::MetadataEvents;
     type CommandRequest = generated::improbable::MetadataCommandRequest;
     type CommandResponse = generated::improbable::MetadataCommandResponse;
 
@@ -1602,11 +1613,8 @@ impl Component for Metadata {
         <generated::improbable::Metadata as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::improbable::MetadataUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::improbable::MetadataEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::MetadataCommandRequest, String> {
@@ -1627,10 +1635,9 @@ impl Component for Metadata {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::MetadataUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::improbable::MetadataEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -1680,38 +1687,41 @@ impl TypeConversion for Persistence {
 impl ComponentData<Persistence> for Persistence {
     fn merge(&mut self, update: PersistenceUpdate) {
     }
+
+    fn merge_ref(&mut self, update: &PersistenceUpdate) {
+        let copy = PersistenceUpdate { 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct PersistenceUpdate {
 }
-impl TypeConversion for PersistenceUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl PersistenceUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-        };
+        };  
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<Persistence> for PersistenceUpdate {
     fn merge(&mut self, update: PersistenceUpdate) {
-    }
-}
-
-pub struct PersistenceEvents {
-}
-
-impl TypeConversion for PersistenceEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(PersistenceEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -1725,7 +1735,6 @@ pub enum PersistenceCommandResponse {
 
 impl Component for Persistence {
     type Update = generated::improbable::PersistenceUpdate;
-    type Events = generated::improbable::PersistenceEvents;
     type CommandRequest = generated::improbable::PersistenceCommandRequest;
     type CommandResponse = generated::improbable::PersistenceCommandResponse;
 
@@ -1735,11 +1744,8 @@ impl Component for Persistence {
         <generated::improbable::Persistence as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::improbable::PersistenceUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::improbable::PersistenceEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PersistenceCommandRequest, String> {
@@ -1760,10 +1766,9 @@ impl Component for Persistence {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::PersistenceUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::improbable::PersistenceEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -1817,49 +1822,53 @@ impl ComponentData<Position> for Position {
     fn merge(&mut self, update: PositionUpdate) {
         if let Some(value) = update.coords { self.coords = value; }
     }
+
+    fn merge_ref(&mut self, update: &PositionUpdate) {
+        let copy = PositionUpdate {
+            coords: update.coords.clone(), 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct PositionUpdate {
     pub coords: Option<generated::improbable::Coordinates>,
 }
-impl TypeConversion for PositionUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl PositionUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-            coords: None,
-        };
-        let _field_coords = input.field::<SchemaObject>(1);
+        coords: None,
+        }; 
+        let _field_coords = fields.field::<SchemaObject>(1);
         if _field_coords.count() > 0 {
             let field = &_field_coords;
             output.coords = Some(<generated::improbable::Coordinates as TypeConversion>::from_type(&field.get_or_default())?);
-        }
+        } 
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(ref value) = input.coords {
-            <generated::improbable::Coordinates as TypeConversion>::to_type(&value, &mut output.field::<SchemaObject>(1).add())?;
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+        if let Some(ref value) = self.coords {
+            <generated::improbable::Coordinates as TypeConversion>::to_type(&value, &mut fields.field::<SchemaObject>(1).add())?;
         }
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<Position> for PositionUpdate {
     fn merge(&mut self, update: PositionUpdate) {
         if update.coords.is_some() { self.coords = update.coords; }
-    }
-}
-
-pub struct PositionEvents {
-}
-
-impl TypeConversion for PositionEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(PositionEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -1873,7 +1882,6 @@ pub enum PositionCommandResponse {
 
 impl Component for Position {
     type Update = generated::improbable::PositionUpdate;
-    type Events = generated::improbable::PositionEvents;
     type CommandRequest = generated::improbable::PositionCommandRequest;
     type CommandResponse = generated::improbable::PositionCommandResponse;
 
@@ -1883,11 +1891,8 @@ impl Component for Position {
         <generated::improbable::Position as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::improbable::PositionUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::improbable::PositionEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PositionCommandRequest, String> {
@@ -1908,10 +1913,9 @@ impl Component for Position {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::PositionUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::improbable::PositionEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -2081,49 +2085,53 @@ impl ComponentData<PlayerClient> for PlayerClient {
     fn merge(&mut self, update: PlayerClientUpdate) {
         if let Some(value) = update.player_identity { self.player_identity = value; }
     }
+
+    fn merge_ref(&mut self, update: &PlayerClientUpdate) {
+        let copy = PlayerClientUpdate {
+            player_identity: update.player_identity.clone(), 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct PlayerClientUpdate {
     pub player_identity: Option<generated::improbable::restricted::PlayerIdentity>,
 }
-impl TypeConversion for PlayerClientUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl PlayerClientUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-            player_identity: None,
-        };
-        let _field_player_identity = input.field::<SchemaObject>(1);
+        player_identity: None,
+        }; 
+        let _field_player_identity = fields.field::<SchemaObject>(1);
         if _field_player_identity.count() > 0 {
             let field = &_field_player_identity;
             output.player_identity = Some(<generated::improbable::restricted::PlayerIdentity as TypeConversion>::from_type(&field.get_or_default())?);
-        }
+        } 
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(ref value) = input.player_identity {
-            <generated::improbable::restricted::PlayerIdentity as TypeConversion>::to_type(&value, &mut output.field::<SchemaObject>(1).add())?;
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+        if let Some(ref value) = self.player_identity {
+            <generated::improbable::restricted::PlayerIdentity as TypeConversion>::to_type(&value, &mut fields.field::<SchemaObject>(1).add())?;
         }
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<PlayerClient> for PlayerClientUpdate {
     fn merge(&mut self, update: PlayerClientUpdate) {
         if update.player_identity.is_some() { self.player_identity = update.player_identity; }
-    }
-}
-
-pub struct PlayerClientEvents {
-}
-
-impl TypeConversion for PlayerClientEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(PlayerClientEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -2137,7 +2145,6 @@ pub enum PlayerClientCommandResponse {
 
 impl Component for PlayerClient {
     type Update = generated::improbable::restricted::PlayerClientUpdate;
-    type Events = generated::improbable::restricted::PlayerClientEvents;
     type CommandRequest = generated::improbable::restricted::PlayerClientCommandRequest;
     type CommandResponse = generated::improbable::restricted::PlayerClientCommandResponse;
 
@@ -2147,11 +2154,8 @@ impl Component for PlayerClient {
         <generated::improbable::restricted::PlayerClient as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::improbable::restricted::PlayerClientUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::improbable::restricted::PlayerClientEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::PlayerClientCommandRequest, String> {
@@ -2172,10 +2176,9 @@ impl Component for PlayerClient {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::PlayerClientUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::improbable::restricted::PlayerClientEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -2225,38 +2228,41 @@ impl TypeConversion for System {
 impl ComponentData<System> for System {
     fn merge(&mut self, update: SystemUpdate) {
     }
+
+    fn merge_ref(&mut self, update: &SystemUpdate) {
+        let copy = SystemUpdate { 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct SystemUpdate {
 }
-impl TypeConversion for SystemUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl SystemUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-        };
+        };  
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<System> for SystemUpdate {
     fn merge(&mut self, update: SystemUpdate) {
-    }
-}
-
-pub struct SystemEvents {
-}
-
-impl TypeConversion for SystemEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(SystemEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -2270,7 +2276,6 @@ pub enum SystemCommandResponse {
 
 impl Component for System {
     type Update = generated::improbable::restricted::SystemUpdate;
-    type Events = generated::improbable::restricted::SystemEvents;
     type CommandRequest = generated::improbable::restricted::SystemCommandRequest;
     type CommandResponse = generated::improbable::restricted::SystemCommandResponse;
 
@@ -2280,11 +2285,8 @@ impl Component for System {
         <generated::improbable::restricted::System as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::improbable::restricted::SystemUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::improbable::restricted::SystemEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::SystemCommandRequest, String> {
@@ -2305,10 +2307,9 @@ impl Component for System {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::SystemUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::improbable::restricted::SystemEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 
@@ -2370,6 +2371,16 @@ impl ComponentData<Worker> for Worker {
         if let Some(value) = update.worker_type { self.worker_type = value; }
         if let Some(value) = update.connection { self.connection = value; }
     }
+
+    fn merge_ref(&mut self, update: &WorkerUpdate) {
+        let copy = WorkerUpdate {
+            worker_id: update.worker_id.clone(),
+            worker_type: update.worker_type.clone(),
+            connection: update.connection.clone(), 
+        };
+
+        self.merge(copy);
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -2378,63 +2389,59 @@ pub struct WorkerUpdate {
     pub worker_type: Option<String>,
     pub connection: Option<generated::improbable::restricted::Connection>,
 }
-impl TypeConversion for WorkerUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
+
+impl WorkerUpdate {
+    pub fn from_schema(update: &SchemaComponentUpdate) -> Result<Self, String> {
+        let fields = update.fields();
+        let events = update.events();
+
         let mut output = Self {
-            worker_id: None,
-            worker_type: None,
-            connection: None,
-        };
-        let _field_worker_id = input.field::<SchemaString>(1);
+        worker_id: None,
+        worker_type: None,
+        connection: None,
+        }; 
+        let _field_worker_id = fields.field::<SchemaString>(1);
         if _field_worker_id.count() > 0 {
             let field = &_field_worker_id;
             output.worker_id = Some(field.get_or_default());
         }
-        let _field_worker_type = input.field::<SchemaString>(2);
+        let _field_worker_type = fields.field::<SchemaString>(2);
         if _field_worker_type.count() > 0 {
             let field = &_field_worker_type;
             output.worker_type = Some(field.get_or_default());
         }
-        let _field_connection = input.field::<SchemaObject>(3);
+        let _field_connection = fields.field::<SchemaObject>(3);
         if _field_connection.count() > 0 {
             let field = &_field_connection;
             output.connection = Some(<generated::improbable::restricted::Connection as TypeConversion>::from_type(&field.get_or_default())?);
-        }
+        } 
+
         Ok(output)
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        if let Some(ref value) = input.worker_id {
-            output.field::<SchemaString>(1).add(&value);
+
+    pub fn to_schema(&self, update: &mut SchemaComponentUpdate) -> Result<(), String> {
+        let mut fields = update.fields_mut();
+        if let Some(ref value) = self.worker_id {
+            fields.field::<SchemaString>(1).add(&value);
         }
-        if let Some(ref value) = input.worker_type {
-            output.field::<SchemaString>(2).add(&value);
+        if let Some(ref value) = self.worker_type {
+            fields.field::<SchemaString>(2).add(&value);
         }
-        if let Some(ref value) = input.connection {
-            <generated::improbable::restricted::Connection as TypeConversion>::to_type(&value, &mut output.field::<SchemaObject>(3).add())?;
+        if let Some(ref value) = self.connection {
+            <generated::improbable::restricted::Connection as TypeConversion>::to_type(&value, &mut fields.field::<SchemaObject>(3).add())?;
         }
+
+        let mut events = update.events_mut();
+
         Ok(())
     }
 }
+
 impl ComponentUpdate<Worker> for WorkerUpdate {
     fn merge(&mut self, update: WorkerUpdate) {
         if update.worker_id.is_some() { self.worker_id = update.worker_id; }
         if update.worker_type.is_some() { self.worker_type = update.worker_type; }
         if update.connection.is_some() { self.connection = update.connection; }
-    }
-}
-
-pub struct WorkerEvents {
-}
-
-impl TypeConversion for WorkerEvents {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(WorkerEvents { 
-        })
-    }
-
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> { 
-
-        Ok(())
     }
 }
 
@@ -2450,7 +2457,6 @@ pub enum WorkerCommandResponse {
 
 impl Component for Worker {
     type Update = generated::improbable::restricted::WorkerUpdate;
-    type Events = generated::improbable::restricted::WorkerEvents;
     type CommandRequest = generated::improbable::restricted::WorkerCommandRequest;
     type CommandResponse = generated::improbable::restricted::WorkerCommandResponse;
 
@@ -2460,11 +2466,8 @@ impl Component for Worker {
         <generated::improbable::restricted::Worker as TypeConversion>::from_type(&data.fields())
     }
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<ComponentUpdateData<Self>, String> {
-        Ok(ComponentUpdateData {
-            fields: <generated::improbable::restricted::WorkerUpdate as TypeConversion>::from_type(&update.fields())?,
-            events: <generated::improbable::restricted::WorkerEvents as TypeConversion>::from_type(&update.events())?
-        })
+    fn from_update(update: &SchemaComponentUpdate) -> Result<Self::Update, String> {
+        Self::Update::from_schema(update)
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::WorkerCommandRequest, String> {
@@ -2493,10 +2496,9 @@ impl Component for Worker {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &ComponentUpdateData<Self>) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &Self::Update) -> Result<SchemaComponentUpdate, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::WorkerUpdate as TypeConversion>::to_type(&update.fields, &mut serialized_update.fields_mut())?;
-        <generated::improbable::restricted::WorkerEvents as TypeConversion>::to_type(&update.events, &mut serialized_update.events_mut())?;
+        update.to_schema(&mut serialized_update)?;
         Ok(serialized_update)
     }
 

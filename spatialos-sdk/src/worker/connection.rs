@@ -1,5 +1,4 @@
 use crate::ptr::MutPtr;
-use crate::worker::component::ComponentUpdateData;
 use crate::worker::{
     commands::*,
     component::{self, Component, UpdateParameters},
@@ -122,7 +121,7 @@ pub trait Connection {
     fn send_component_update<C: Component>(
         &mut self,
         entity_id: EntityId,
-        update: ComponentUpdateData<C>,
+        update: C::Update,
         parameters: UpdateParameters,
     );
 
@@ -440,7 +439,7 @@ impl Connection for WorkerConnection {
     fn send_component_update<C: Component>(
         &mut self,
         entity_id: EntityId,
-        update: ComponentUpdateData<C>,
+        update: C::Update,
         parameters: UpdateParameters,
     ) {
         let mut component_update = Worker_ComponentUpdate {

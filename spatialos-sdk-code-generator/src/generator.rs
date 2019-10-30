@@ -195,6 +195,32 @@ impl Package {
         }
     }
 
+    // Some fields need to be cloned when merging updates and data. Others can be copied.
+    fn field_needs_clone(&self, field: &FieldDefinition) -> bool {
+        match field.field_type {
+            FieldDefinition_FieldType::Singular { ref type_reference } => {
+                self.type_needs_clone(type_reference)
+            }
+            FieldDefinition_FieldType::Option { ref inner_type } => {
+                self.type_needs_clone(inner_type)
+            }
+            FieldDefinition_FieldType::List { .. } | FieldDefinition_FieldType::Map { .. } => true,
+        }
+    }
+
+    fn type_needs_clone(&self, type_ref: &TypeReference) -> bool {
+        match type_ref {
+            TypeReference::Primitive(ref primitive) => match primitive {
+                PrimitiveType::String => true,
+                PrimitiveType::Bytes => true,
+                PrimitiveType::Entity => true,
+                _ => false,
+            },
+            TypeReference::Enum(_) => false,
+            TypeReference::Type(_) => true,
+        }
+    }
+
     // Some fields need to be borrowed when serializing (such as strings or objects). This helper function returns true
     // if this is required.
     fn field_needs_borrow(&self, field: &FieldDefinition) -> bool {
