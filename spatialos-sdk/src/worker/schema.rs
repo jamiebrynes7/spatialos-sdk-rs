@@ -1,12 +1,12 @@
-use crate::worker::component::ComponentId;
 use crate::worker::EntityId;
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 use std::slice;
 
+mod object;
 mod primitives;
 
-pub use self::primitives::*;
+pub use self::{object::*, primitives::*};
 
 pub type FieldId = u32;
 
@@ -28,11 +28,6 @@ pub struct SchemaCommandRequest {
 #[derive(Debug)]
 pub struct SchemaCommandResponse {
     pub internal: *mut Schema_CommandResponse,
-}
-
-#[derive(Debug)]
-pub struct SchemaObject {
-    internal: *mut Schema_Object,
 }
 
 impl SchemaComponentUpdate {
@@ -229,16 +224,6 @@ pub trait SchemaObjectField {
     fn count(&self) -> usize;
 
     fn add(&mut self) -> SchemaObject;
-}
-
-impl SchemaObject {
-    pub fn field<T>(&self, field_id: ComponentId) -> SchemaFieldContainer<T> {
-        SchemaFieldContainer {
-            field_id,
-            container: self,
-            _phantom: PhantomData,
-        }
-    }
 }
 
 impl<'a> SchemaPrimitiveField<EntityId> for SchemaFieldContainer<'a, SchemaEntityId> {
