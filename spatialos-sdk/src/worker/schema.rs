@@ -5,15 +5,11 @@ use std::slice;
 
 mod object;
 mod primitives;
+mod update;
 
-pub use self::{object::*, primitives::*};
+pub use self::{object::*, primitives::*, update::*};
 
 pub type FieldId = u32;
-
-#[derive(Debug)]
-pub struct SchemaComponentUpdate {
-    pub internal: *mut Schema_ComponentUpdate,
-}
 
 #[derive(Debug)]
 pub struct SchemaComponentData {
@@ -28,46 +24,6 @@ pub struct SchemaCommandRequest {
 #[derive(Debug)]
 pub struct SchemaCommandResponse {
     pub internal: *mut Schema_CommandResponse,
-}
-
-impl SchemaComponentUpdate {
-    pub fn new() -> SchemaComponentUpdate {
-        SchemaComponentUpdate {
-            internal: unsafe { Schema_CreateComponentUpdate() },
-        }
-    }
-
-    pub fn fields(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateFields(self.internal) },
-        }
-    }
-
-    pub fn fields_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateFields(self.internal) },
-        }
-    }
-
-    pub fn events(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) },
-        }
-    }
-
-    pub fn events_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) },
-        }
-    }
-
-    // TODO: Cleared fields.
-}
-
-impl Default for SchemaComponentUpdate {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl SchemaComponentData {
