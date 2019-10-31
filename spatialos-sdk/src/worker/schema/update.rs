@@ -1,8 +1,9 @@
+use crate::worker::schema::SchemaObject;
 use spatialos_sdk_sys::worker::*;
 
 #[derive(Debug)]
 pub struct SchemaComponentUpdate {
-    pub(super) internal: *mut Schema_ComponentUpdate,
+    pub(crate) internal: *mut Schema_ComponentUpdate,
 }
 
 impl SchemaComponentUpdate {
