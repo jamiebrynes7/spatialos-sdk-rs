@@ -1,5 +1,5 @@
 use crate::worker::component::{self, Component, ComponentId, DATABASE};
-use crate::worker::internal::schema::SchemaComponentData;
+use crate::worker::schema::SchemaComponentData;
 use spatialos_sdk_sys::worker::{Schema_DestroyComponentData, Worker_ComponentData, Worker_Entity};
 use std::collections::HashMap;
 use std::ptr;

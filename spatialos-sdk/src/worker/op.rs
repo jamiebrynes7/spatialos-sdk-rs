@@ -5,10 +5,11 @@ use crate::worker::{
     component::{self, *},
     entity::Entity,
     internal::{
-        schema::{
-            SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData, SchemaComponentUpdate,
-        },
+        
         utils::*,
+    },
+    schema::{
+            SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData, SchemaComponentUpdate,
     },
     metrics::Metrics,
     {Authority, EntityId, LogLevel, RequestId},

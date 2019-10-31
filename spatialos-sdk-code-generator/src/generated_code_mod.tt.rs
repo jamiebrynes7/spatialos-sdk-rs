@@ -1,4 +1,4 @@
-use spatialos_sdk::worker::internal::schema::*;
+use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
 use std::collections::BTreeMap;
 

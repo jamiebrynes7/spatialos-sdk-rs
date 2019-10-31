@@ -1,4 +1,4 @@
-use crate::worker::internal::schema;
+use crate::worker::schema;
 use spatialos_sdk_sys::worker::*;
 use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
 
@@ -123,7 +123,7 @@ impl UpdateParameters {
 
 // Internal untyped component data objects.
 pub(crate) mod internal {
-    use crate::worker::internal::schema::*;
+    use crate::worker::schema::*;
     use spatialos_sdk_sys::worker::*;
     use std::marker::PhantomData;
 
