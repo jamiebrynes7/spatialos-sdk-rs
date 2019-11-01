@@ -3,49 +3,21 @@ use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 use std::slice;
 
+mod command_request;
 mod component_data;
 mod component_update;
 mod object;
 mod primitives;
 
-pub use self::{component_data::*, component_update::*, object::*, primitives::*};
+pub use self::{
+    command_request::*, component_data::*, component_update::*, object::*, primitives::*,
+};
 
 pub type FieldId = u32;
 
 #[derive(Debug)]
-pub struct SchemaCommandRequest {
-    pub internal: *mut Schema_CommandRequest,
-}
-
-#[derive(Debug)]
 pub struct SchemaCommandResponse {
     pub internal: *mut Schema_CommandResponse,
-}
-
-impl SchemaCommandRequest {
-    pub fn new() -> SchemaCommandRequest {
-        SchemaCommandRequest {
-            internal: unsafe { Schema_CreateCommandRequest() },
-        }
-    }
-
-    pub fn object(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetCommandRequestObject(self.internal) },
-        }
-    }
-
-    pub fn object_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetCommandRequestObject(self.internal) },
-        }
-    }
-}
-
-impl Default for SchemaCommandRequest {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl SchemaCommandResponse {
