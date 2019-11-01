@@ -4,47 +4,18 @@ use std::marker::PhantomData;
 use std::slice;
 
 mod command_request;
+mod command_response;
 mod component_data;
 mod component_update;
 mod object;
 mod primitives;
 
 pub use self::{
-    command_request::*, component_data::*, component_update::*, object::*, primitives::*,
+    command_request::*, command_response::*, component_data::*, component_update::*, object::*,
+    primitives::*,
 };
 
 pub type FieldId = u32;
-
-#[derive(Debug)]
-pub struct SchemaCommandResponse {
-    pub internal: *mut Schema_CommandResponse,
-}
-
-impl SchemaCommandResponse {
-    pub fn new() -> SchemaCommandResponse {
-        SchemaCommandResponse {
-            internal: unsafe { Schema_CreateCommandResponse() },
-        }
-    }
-
-    pub fn object(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetCommandResponseObject(self.internal) },
-        }
-    }
-
-    pub fn object_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetCommandResponseObject(self.internal) },
-        }
-    }
-}
-
-impl Default for SchemaCommandResponse {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 // A schema field. T is a schema type tag.
 #[derive(Debug)]

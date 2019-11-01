@@ -3,7 +3,7 @@ use spatialos_sdk_sys::worker::*;
 
 #[derive(Debug)]
 pub struct SchemaObject {
-    pub(super) internal: *mut Schema_Object,
+    pub(crate) internal: *mut Schema_Object,
 }
 
 impl SchemaObject {
