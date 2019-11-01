@@ -3,12 +3,12 @@ use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 use std::slice;
 
-mod component;
+mod component_data;
+mod component_update;
 mod object;
 mod primitives;
-mod update;
 
-pub use self::{component::*, object::*, primitives::*, update::*};
+pub use self::{component_data::*, component_update::*, object::*, primitives::*};
 
 pub type FieldId = u32;
 
