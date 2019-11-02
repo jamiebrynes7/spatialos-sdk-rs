@@ -2,7 +2,7 @@ use crate::worker::{
     component::Component,
     component::ComponentId,
     entity::Entity,
-    internal::schema::{
+    schema::{
         SchemaComponentData, SchemaDouble, SchemaObject, SchemaObjectField, SchemaPrimitiveField,
         SchemaString, SchemaStringField, SchemaUint32,
     },

@@ -6,7 +6,7 @@
 #![allow(non_camel_case_types)]
 #![allow(unused_mut)]
 
-use spatialos_sdk::worker::internal::schema::*;
+use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
 use std::collections::BTreeMap;
 
@@ -18,7 +18,7 @@ use super::generated as generated;
 
 
 pub mod example {
-use spatialos_sdk::worker::internal::schema::*;
+use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
 use std::collections::BTreeMap;
 
@@ -689,7 +689,7 @@ inventory::submit!(VTable::new::<Rotate>());
 }
 
 pub mod improbable {
-use spatialos_sdk::worker::internal::schema::*;
+use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
 use std::collections::BTreeMap;
 
@@ -1606,7 +1606,7 @@ inventory::submit!(VTable::new::<Position>());
 
 
 pub mod restricted {
-use spatialos_sdk::worker::internal::schema::*;
+use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
 use std::collections::BTreeMap;
 
