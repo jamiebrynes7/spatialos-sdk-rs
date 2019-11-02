@@ -115,22 +115,14 @@ impl TypeConversion for <#= self.rust_name(&component.qualified_name) #>Update {
         };<#
         for field in &component_fields {
         #>
-        let _field_<#= field.name #> = input.field::<<#= get_field_schema_type(field) #>>(<#= field.field_id #>);
-        if _field_<#= field.name #>.count() > 0 {
-            let field = &_field_<#= field.name #>;
-            output.<#= field.name #> = Some(<#= self.deserialize_field(field, "field") #>);
-        }<# } #>
+        output.<#= field.name #> = input.get::<<#= get_field_schema_type(field) #>>(<#= field.field_id #>);
+        <# } #>
         Ok(output)
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
         for field in &component_fields {
-            let ref_decorator = if self.field_needs_borrow(field) {
-                "ref "
-            } else {
-                ""
-            };
         #>
-        if let Some(<#= ref_decorator #>value) = input.<#= field.name #> {
+        if let Some(value) = &input.<#= field.name #> {
             <#= self.serialize_field(field, "value", "output") #>;
         }<# } #>
         Ok(())
