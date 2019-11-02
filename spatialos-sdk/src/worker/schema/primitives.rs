@@ -278,7 +278,9 @@ impl SchemaPrimitiveField for SchemaString {
     }
 
     fn add_list(object: &mut SchemaObject, field: FieldId, value: &[Self::RustType]) {
-        panic!("`add_list` is not supported for `SchemaString`");
+        for value in value {
+            Self::add(object, field, value);
+        }
     }
 }
 
@@ -314,6 +316,8 @@ impl SchemaPrimitiveField for SchemaBytes {
     }
 
     fn add_list(object: &mut SchemaObject, field: FieldId, value: &[Self::RustType]) {
-        panic!("`add_list` is not supported for `SchemaBytes`");
+        for value in value {
+            Self::add(object, field, value);
+        }
     }
 }
