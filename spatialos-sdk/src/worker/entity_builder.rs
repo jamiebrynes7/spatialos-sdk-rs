@@ -3,8 +3,8 @@ use crate::worker::{
     component::ComponentId,
     entity::Entity,
     schema::{
-        SchemaComponentData, SchemaDouble, SchemaObject, SchemaObjectField, SchemaPrimitiveField,
-        SchemaString, SchemaStringField, SchemaUint32,
+        SchemaComponentData, SchemaDouble, SchemaObject, SchemaPrimitiveField, SchemaString,
+        SchemaUint32,
     },
 };
 use std::collections::{HashMap, HashSet};
