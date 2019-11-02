@@ -80,20 +80,15 @@ impl TypeConversion for <#= self.rust_name(&component.qualified_name) #> {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {<#
             for field in &component_fields {
-                let field_expr = format!("input.field::<{}>({})", get_field_schema_type(field), field.field_id);
+                let field_expr = format!("input.get::<{}>({})", get_field_schema_type(field), field.field_id);
             #>
             <#= field.name #>: <#= self.deserialize_field(field, &field_expr) #>,<# } #>
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
         for field in &component_fields {
-            let borrow = if self.field_needs_borrow(field) {
-                "&"
-            } else {
-                ""
-            };
         #>
-        <#= self.serialize_field(field, &format!("{}input.{}", borrow, field.name), "output") #>;<# } #>
+        <#= self.serialize_field(field, &format!("&input.{}", field.name), "output") #>;<# } #>
         Ok(())
     }
 }
