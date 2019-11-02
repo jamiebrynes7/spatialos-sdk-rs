@@ -15,11 +15,7 @@ impl SchemaObject {
         }
     }
 
-    pub fn get_index<T: SchemaPrimitiveField>(
-        &self,
-        field: FieldId,
-        index: usize,
-    ) -> T::RustType {
+    pub fn get_index<T: SchemaPrimitiveField>(&self, field: FieldId, index: usize) -> T::RustType {
         T::index(self, field, index)
     }
 
@@ -31,11 +27,7 @@ impl SchemaObject {
         T::add(self, field, value);
     }
 
-    pub fn add_list<T: SchemaPrimitiveField>(
-        &mut self,
-        field: FieldId,
-        value: &[T::RustType],
-    ) {
+    pub fn add_list<T: SchemaPrimitiveField>(&mut self, field: FieldId, value: &[T::RustType]) {
         T::add_list(self, field, value);
     }
 

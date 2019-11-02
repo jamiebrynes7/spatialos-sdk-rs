@@ -1,5 +1,5 @@
+use crate::schema_bundle::*;
 use heck::CamelCase;
-use schema_bundle::*;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
@@ -318,23 +318,15 @@ impl Package {
         schema_object: &str,
     ) -> String {
         match value_type {
-            TypeReference::Primitive(ref primitive) => {
-                let borrow = if self.type_needs_borrow(value_type) {
-                    "&"
-                } else {
-                    ""
-                };
-                format!(
-                    "{}.field::<{}>({}).add({}{})",
-                    schema_object,
-                    get_rust_primitive_type_tag(primitive),
-                    field_id,
-                    borrow,
-                    expression
-                )
-            }
+            TypeReference::Primitive(ref primitive) => format!(
+                "{}.add::<{}>({}, {})",
+                schema_object,
+                get_rust_primitive_type_tag(primitive),
+                field_id,
+                expression,
+            ),
             TypeReference::Enum(_) => format!(
-                "{}.field::<SchemaEnum>({}).add({}.as_u32())",
+                "{}.add::<SchemaEnum>({}, {}.as_u32())",
                 schema_object, field_id, expression
             ),
             TypeReference::Type(ref type_ref) => {
@@ -352,7 +344,7 @@ impl Package {
     fn deserialize_field(&self, field: &FieldDefinition, schema_field: &str) -> String {
         match field.field_type {
             FieldDefinition_FieldType::Singular { ref type_reference } => {
-                let schema_expr = format!("{}.get_or_default()", schema_field);
+                let schema_expr = format!("{}.unwrap_or_default()", schema_field);
                 self.deserialize_type_unwrapped(type_reference, &schema_expr)
             }
             FieldDefinition_FieldType::Option { ref inner_type } => {
@@ -377,14 +369,14 @@ impl Package {
                 let deserialize_key = self.deserialize_type_unwrapped(
                     key_type,
                     &format!(
-                        "kv.field::<{}>(1).get_or_default()",
+                        "kv.field::<{}>(1).unwrap_or_default()",
                         get_schema_type(key_type)
                     ),
                 );
                 let deserialize_value = self.deserialize_type_unwrapped(
                     value_type,
                     &format!(
-                        "kv.field::<{}>(2).get_or_default()",
+                        "kv.field::<{}>(2).unwrap_or_default()",
                         get_schema_type(value_type)
                     ),
                 );

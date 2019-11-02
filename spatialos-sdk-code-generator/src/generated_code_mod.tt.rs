@@ -32,35 +32,40 @@ impl <#= enum_rust_name #> {
         }
     }
 }
+
 <# } #>
-/* Types. */<# for type_name in &self.types { let type_def = self.get_type_definition(type_name); #>
+
+/* Types. */
+<# for type_name in &self.types { let type_def = self.get_type_definition(type_name); #>
+
 #[derive(Debug, Clone)]
 pub struct <#= self.rust_name(&type_def.qualified_name) #> {<#
     for field in &type_def.fields {
     #>
     pub <#= field.name #>: <#= self.generate_field_type(field) #>,<# } #>
 }
+
 impl TypeConversion for <#= self.rust_name(&type_def.qualified_name) #> {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {<#
+        Ok(Self {
+            <#
             for field in &type_def.fields {
-                let field_expr = format!("input.field::<{}>({})", get_field_schema_type(field), field.field_id);
+                let field_expr = format!("input.get::<{}>({})", get_field_schema_type(field), field.field_id);
             #>
-            <#= field.name #>: <#= self.deserialize_field(field, &field_expr) #>,<# } #>
+            <#= field.name #>: <#= self.deserialize_field(field, &field_expr) #>,
+            <# } #>
         })
     }
+
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
         for field in &type_def.fields {
-            let borrow = if self.field_needs_borrow(field) {
-                "&"
-            } else {
-                ""
-            };
         #>
-        <#= self.serialize_field(field, &format!("{}input.{}", borrow, field.name), "output") #>;<# } #>
+        <#= self.serialize_field(field, &format!("&input.{}", field.name), "output") #>;
+        <# } #>
         Ok(())
     }
 }
+
 <# } #>
 /* Components. */ <# for component_name in &self.components {
     let component = self.get_component_definition(component_name);
