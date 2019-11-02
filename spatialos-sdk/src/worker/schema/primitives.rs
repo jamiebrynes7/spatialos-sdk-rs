@@ -3,7 +3,7 @@ use crate::worker::{
     EntityId,
 };
 use spatialos_sdk_sys::worker::*;
-use std::{convert::TryInto, u32};
+use std::{convert::TryInto, slice, u32};
 
 macro_rules! impl_primitive_field {
     (
@@ -184,32 +184,28 @@ impl SchemaPrimitiveField for SchemaEntityId {
     type RustType = EntityId;
 
     fn get_or_default(object: &SchemaObject, field: FieldId) -> EntityId {
-        EntityId::new(unsafe { Schema_GetEntityId(self.container.internal, self.field_id) })
-    }
-    fn index(&self, index: usize) -> EntityId {
-        EntityId::new(unsafe {
-            Schema_IndexEntityId(self.container.internal, self.field_id, index as u32)
-        })
-    }
-    fn count(&self) -> usize {
-        unsafe { Schema_GetEntityIdCount(self.container.internal, self.field_id) as usize }
+        EntityId::new(unsafe { Schema_GetEntityId(object.internal, field) })
     }
 
-    fn add(&mut self, value: EntityId) {
+    fn index(object: &SchemaObject, field: FieldId, index: usize) -> EntityId {
+        EntityId::new(unsafe { Schema_IndexEntityId(object.internal, field, index as u32) })
+    }
+
+    fn count(object: &SchemaObject, field: FieldId) -> usize {
+        unsafe { Schema_GetEntityIdCount(object.internal, field) as usize }
+    }
+
+    fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
         unsafe {
-            Schema_AddEntityId(self.container.internal, self.field_id, value.id);
+            Schema_AddEntityId(object.internal, field, value.id);
         }
     }
-    fn add_list(&mut self, value: &[EntityId]) {
+
+    fn add_list(object: &mut SchemaObject, field: FieldId, value: &[Self::RustType]) {
         let converted_list: Vec<i64> = value.iter().map(|v| v.id).collect();
         unsafe {
             let ptr = converted_list.as_ptr();
-            Schema_AddEntityIdList(
-                self.container.internal,
-                self.field_id,
-                ptr,
-                value.len() as u32,
-            );
+            Schema_AddEntityIdList(object.internal, field, ptr, value.len() as u32);
         }
     }
 }
@@ -217,34 +213,29 @@ impl SchemaPrimitiveField for SchemaEntityId {
 impl SchemaPrimitiveField for SchemaBool {
     type RustType = bool;
 
-    fn get_or_default(&self) -> bool {
-        unsafe { Schema_GetBool(self.container.internal, self.field_id) != 0 }
+    fn get_or_default(object: &SchemaObject, field: FieldId) -> bool {
+        unsafe { Schema_GetBool(object.internal, field) != 0 }
     }
 
-    fn index(&self, index: usize) -> bool {
-        unsafe { Schema_IndexBool(self.container.internal, self.field_id, index as u32) != 0 }
+    fn index(object: &SchemaObject, field: FieldId, index: usize) -> bool {
+        unsafe { Schema_IndexBool(object.internal, field, index as u32) != 0 }
     }
 
-    fn count(&self) -> usize {
-        unsafe { Schema_GetBoolCount(self.container.internal, self.field_id) as usize }
+    fn count(object: &SchemaObject, field: FieldId) -> usize {
+        unsafe { Schema_GetBoolCount(object.internal, field) as usize }
     }
 
-    fn add(&mut self, value: bool) {
+    fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
         unsafe {
-            Schema_AddBool(self.container.internal, self.field_id, value as u8);
+            Schema_AddBool(object.internal, field, *value as u8);
         }
     }
 
-    fn add_list(&mut self, value: &[bool]) {
+    fn add_list(object: &mut SchemaObject, field: FieldId, value: &[bool]) {
         let converted_list: Vec<u8> = value.iter().map(|v| if *v { 1u8 } else { 0u8 }).collect();
         unsafe {
             let ptr = converted_list.as_ptr();
-            Schema_AddBoolList(
-                self.container.internal,
-                self.field_id,
-                ptr,
-                value.len() as u32,
-            );
+            Schema_AddBoolList(object.internal, field, ptr, value.len() as u32);
         }
     }
 }
@@ -252,104 +243,77 @@ impl SchemaPrimitiveField for SchemaBool {
 impl SchemaPrimitiveField for SchemaString {
     type RustType = String;
 
-    fn get_or_default(&self) -> String {
+    fn get_or_default(object: &SchemaObject, field: FieldId) -> String {
         let slice = unsafe {
-            let bytes_ptr = Schema_GetBytes(self.container.internal, self.field_id);
-            let bytes_len = Schema_GetBytesLength(self.container.internal, self.field_id);
+            let bytes_ptr = Schema_GetBytes(object.internal, field);
+            let bytes_len = Schema_GetBytesLength(object.internal, field);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
         };
         String::from_utf8_lossy(slice).to_string()
     }
 
-    fn index(&self, index: usize) -> String {
+    fn index(object: &SchemaObject, field: FieldId, index: usize) -> String {
         let slice = unsafe {
-            let bytes_ptr = Schema_IndexBytes(self.container.internal, self.field_id, index as u32);
-            let bytes_len =
-                Schema_IndexBytesLength(self.container.internal, self.field_id, index as u32);
+            let bytes_ptr = Schema_IndexBytes(object.internal, field, index as u32);
+            let bytes_len = Schema_IndexBytesLength(object.internal, field, index as u32);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
         };
         String::from_utf8_lossy(slice).to_string()
     }
 
-    fn count(&self) -> usize {
-        unsafe { Schema_GetBytesCount(self.container.internal, self.field_id) as usize }
+    fn count(object: &SchemaObject, field: FieldId) -> usize {
+        unsafe { Schema_GetBytesCount(object.internal, field) as usize }
     }
 
-    fn add(&mut self, value: &String) {
+    fn add(object: &mut SchemaObject, field: FieldId, value: &String) {
         let utf8_bytes = value.as_bytes();
         unsafe {
             Schema_AddBytes(
-                self.container.internal,
-                self.field_id,
+                object.internal,
+                field,
                 utf8_bytes.as_ptr(),
                 utf8_bytes.len() as u32,
             );
         }
     }
 
-    fn add_list(&mut self, value: &[String]) {
-        for str in value.iter() {
-            self.add(str);
-        }
+    fn add_list(object: &mut SchemaObject, field: FieldId, value: &[Self::RustType]) {
+        panic!("`add_list` is not supported for `SchemaString`");
     }
 }
 
 impl SchemaPrimitiveField for SchemaBytes {
-    fn get_or_default(&self) -> Vec<u8> {
+    type RustType = Vec<u8>;
+
+    fn get_or_default(object: &SchemaObject, field: FieldId) -> Vec<u8> {
         let slice = unsafe {
-            let bytes_ptr = Schema_GetBytes(self.container.internal, self.field_id);
-            let bytes_len = Schema_GetBytesLength(self.container.internal, self.field_id);
+            let bytes_ptr = Schema_GetBytes(object.internal, field);
+            let bytes_len = Schema_GetBytesLength(object.internal, field);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
         };
         slice.to_vec()
     }
 
-    fn index(&self, index: usize) -> Vec<u8> {
+    fn index(object: &SchemaObject, field: FieldId, index: usize) -> Vec<u8> {
         let slice = unsafe {
-            let bytes_ptr = Schema_IndexBytes(self.container.internal, self.field_id, index as u32);
-            let bytes_len =
-                Schema_IndexBytesLength(self.container.internal, self.field_id, index as u32);
+            let bytes_ptr = Schema_IndexBytes(object.internal, field, index as u32);
+            let bytes_len = Schema_IndexBytesLength(object.internal, field, index as u32);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
         };
         slice.to_vec()
     }
 
-    fn count(&self) -> usize {
-        unsafe { Schema_GetBytesCount(self.container.internal, self.field_id) as usize }
+    fn count(object: &SchemaObject, field: FieldId) -> usize {
+        unsafe { Schema_GetBytesCount(object.internal, field) as usize }
     }
 
-    fn add(&mut self, value: &[u8]) {
+    fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
         unsafe {
-            Schema_AddBytes(
-                self.container.internal,
-                self.field_id,
-                value.as_ptr(),
-                value.len() as u32,
-            );
+            Schema_AddBytes(object.internal, field, value.as_ptr(), value.len() as u32);
         }
-    }
-}
-
-impl SchemaPrimitiveField for SchemaObject {
-    fn get_or_default(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetObject(self.container.internal, self.field_id) },
-        }
-    }
-    fn index(&self, index: usize) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe {
-                Schema_IndexObject(self.container.internal, self.field_id, index as u32)
-            },
-        }
-    }
-    fn count(&self) -> usize {
-        unsafe { Schema_GetObjectCount(self.container.internal, self.field_id) as usize }
     }
 
-    fn add(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_AddObject(self.container.internal, self.field_id) },
-        }
+    fn add_list(object: &mut SchemaObject, field: FieldId, value: &[Self::RustType]) {
+        panic!("`add_list` is not supported for `SchemaBytes`");
     }
 }
