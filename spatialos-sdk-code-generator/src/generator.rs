@@ -195,20 +195,6 @@ impl Package {
         }
     }
 
-    // Some fields need to be borrowed when serializing (such as strings or objects). This helper function returns true
-    // if this is required.
-    fn field_needs_borrow(&self, field: &FieldDefinition) -> bool {
-        match field.field_type {
-            FieldDefinition_FieldType::Singular { ref type_reference } => {
-                self.type_needs_borrow(type_reference)
-            }
-            FieldDefinition_FieldType::Option { ref inner_type } => {
-                self.type_needs_borrow(inner_type)
-            }
-            FieldDefinition_FieldType::List { .. } | FieldDefinition_FieldType::Map { .. } => true,
-        }
-    }
-
     // Some types need to be borrowed when serializing (such as strings or objects). This helper function returns true
     // if this is required.
     fn type_needs_borrow(&self, type_ref: &TypeReference) -> bool {
@@ -326,7 +312,7 @@ impl Package {
                 expression,
             ),
             TypeReference::Enum(_) => format!(
-                "{}.add::<SchemaEnum>({}, {}.as_u32())",
+                "{}.add::<SchemaEnum>({}, &{}.as_u32())",
                 schema_object, field_id, expression
             ),
             TypeReference::Type(ref type_ref) => {

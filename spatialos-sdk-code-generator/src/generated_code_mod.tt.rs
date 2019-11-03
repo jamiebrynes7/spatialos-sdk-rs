@@ -115,7 +115,7 @@ impl TypeConversion for <#= self.rust_name(&component.qualified_name) #>Update {
         };<#
         for field in &component_fields {
         #>
-        output.<#= field.name #> = input.get::<<#= get_field_schema_type(field) #>>(<#= field.field_id #>);
+        output.<#= field.name #> = input.get::<<#= get_field_schema_type(field) #>>(<#= field.field_id #>).map(Into::into);
         <# } #>
         Ok(output)
     }
