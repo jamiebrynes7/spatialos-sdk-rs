@@ -37,6 +37,16 @@ impl SchemaObject {
         SchemaObject { internal }
     }
 
+    pub fn object_count(&self, field: FieldId) -> usize {
+        let count = unsafe { Schema_GetObjectCount(self.internal, field) };
+        count as usize
+    }
+
+    pub fn index_object(&self, field: FieldId, index: usize) -> SchemaObject {
+        let internal = unsafe { Schema_IndexObject(self.internal, field, index as u32) };
+        SchemaObject { internal }
+    }
+
     // TODO: Hook up the lifetimes of the schema objects. This is unsound as it exists now.
     pub fn add_object(&mut self, field: FieldId) -> SchemaObject {
         let internal = unsafe { Schema_AddObject(self.internal, field) };

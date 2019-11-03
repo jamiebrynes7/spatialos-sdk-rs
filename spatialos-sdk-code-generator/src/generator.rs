@@ -263,7 +263,7 @@ impl Package {
                 ref value_type,
             } => {
                 let kvpair_object = format!(
-                    "let object = {}.field::<SchemaObject>({}).add()",
+                    "let object = {}.add_object({})",
                     schema_object, field.field_id
                 );
                 let serialize_key = self.serialize_type(
@@ -319,7 +319,7 @@ impl Package {
                 let type_definition =
                     self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
                 format!(
-                    "<{} as TypeConversion>::to_type(&{}, &mut {}.field::<SchemaObject>({}).add())?",
+                    "<{} as TypeConversion>::to_type(&{}, &mut {}.add_object({}))?",
                     type_definition, expression, schema_object, field_id
                 )
             }
@@ -330,72 +330,122 @@ impl Package {
     fn deserialize_field(&self, field: &FieldDefinition, schema_field: &str) -> String {
         match field.field_type {
             FieldDefinition_FieldType::Singular { ref type_reference } => {
-                let schema_expr = format!("{}.unwrap_or_default()", schema_field);
-                self.deserialize_type_unwrapped(type_reference, &schema_expr)
+                self.deserialize_type_unwrapped(field.field_id, type_reference, schema_field)
             }
+
             FieldDefinition_FieldType::Option { ref inner_type } => {
-                let schema_expr = format!("{}.get()", schema_field);
-                format!(
-                    "if let Some(data) = {} {{ Some({}) }} else {{ None }}",
-                    schema_expr,
-                    self.deserialize_type_unwrapped(inner_type, "data")
-                )
+                self.deserialize_type(field.field_id, inner_type, schema_field)
             }
+
             FieldDefinition_FieldType::List { ref inner_type } => {
-                let capacity = format!("{}.count()", schema_field);
-                let deserialize_element = self
-                    .deserialize_type_unwrapped(inner_type, &format!("{}.index(i)", schema_field));
-                format!("{{ let size = {}; let mut l = Vec::with_capacity(size); for i in 0..size {{ l.push({}); }}; l }}", capacity, deserialize_element)
+                self.deserialize_list(field.field_id, inner_type, schema_field)
             }
+
             FieldDefinition_FieldType::Map {
                 ref key_type,
                 ref value_type,
             } => {
-                let capacity = format!("{}.count()", schema_field);
-                let deserialize_key = self.deserialize_type_unwrapped(
-                    key_type,
-                    &format!(
-                        "kv.field::<{}>(1).unwrap_or_default()",
-                        get_schema_type(key_type)
-                    ),
-                );
-                let deserialize_value = self.deserialize_type_unwrapped(
-                    value_type,
-                    &format!(
-                        "kv.field::<{}>(2).unwrap_or_default()",
-                        get_schema_type(value_type)
-                    ),
-                );
-                format!("{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index(i); m.insert({}, {}); }}; m }}", capacity, schema_field, deserialize_key, deserialize_value)
+                let capacity = format!("{}.object_count({})", schema_field, field.field_id);
+                let deserialize_key = self.deserialize_type_unwrapped(1, key_type, "kv");
+                let deserialize_value = self.deserialize_type_unwrapped(2, value_type, "kv");
+                format!(
+                    "{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object(i); m.insert({}, {}); }}; m }}",
+                    capacity,
+                    schema_field,
+                    deserialize_key,
+                    deserialize_value,
+                )
             }
         }
     }
 
     // Generates an expression which deserializes a value from a schema type in 'schema_expr'. In the non primitive
     // case, this expression is of type Result<GeneratedType, String>, otherwise it is just T (where T is the primitive type).
-    fn deserialize_type(&self, value_type: &TypeReference, schema_expr: &str) -> String {
+    fn deserialize_type(
+        &self,
+        field_id: u32,
+        value_type: &TypeReference,
+        schema_object: &str,
+    ) -> String {
         match value_type {
-            TypeReference::Primitive(_) => schema_expr.to_string(),
+            TypeReference::Primitive(primitive) => format!(
+                "{}.get::<{}>({})",
+                schema_object,
+                get_rust_primitive_type_tag(primitive),
+                field_id
+            ),
+
             TypeReference::Enum(ref enum_ref) => {
                 let enum_name =
                     self.rust_fqname(&self.get_enum_definition(enum_ref).qualified_name);
-                format!("{}::from({})", enum_name, schema_expr)
+                format!(
+                    "{}.get::<SchemaEnum>({}).map(Into::into)",
+                    schema_object, field_id
+                )
             }
+
             TypeReference::Type(ref type_ref) => {
                 let type_name =
                     self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
                 format!(
-                    "<{} as TypeConversion>::from_type(&{})",
-                    type_name, schema_expr
+                    "<{} as TypeConversion>::from_type(&{}.get_object({}))",
+                    type_name, schema_object, field_id
                 )
+            }
+        }
+    }
+
+    fn deserialize_list(
+        &self,
+        field_id: u32,
+        value_type: &TypeReference,
+        schema_object: &str,
+    ) -> String {
+        match value_type {
+            TypeReference::Primitive(primitive) => format!(
+                "{}.get_list::<{}>({})",
+                schema_object,
+                get_rust_primitive_type_tag(primitive),
+                field_id
+            ),
+
+            TypeReference::Enum(ref enum_ref) => {
+                let enum_name =
+                    self.rust_fqname(&self.get_enum_definition(enum_ref).qualified_name);
+                format!(
+                    "{}.get_list::<SchemaEnum>({}).into_iter().map(Into::into).collect()",
+                    schema_object, field_id
+                )
+            }
+
+            TypeReference::Type(ref type_ref) => {
+                let type_name =
+                    self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
+                let deserialize_element = format!(
+                    "<{} as TypeConversion>::from_type(&{}.get_object({}))",
+                    type_name, schema_object, field_id
+                );
+
+                let capacity = format!("{}.object_count({})", schema_object, field_id);
+                let deserialize_element = format!(
+                    "<{} as TypeConversion>::from_type(&{}.index_object({}, i))",
+                    type_name, schema_object, field_id
+                );
+
+                format!("{{ let size = {}; let mut l = Vec::with_capacity(size); for i in 0..size {{ l.push({}); }}; l }}", capacity, deserialize_element)
             }
         }
     }
 
     // Generates an expression which deserializes a value from a schema type in 'schema_expr'. Also unwraps the result
     // using ? operator if the deserialize expression results in a Result<_, String> type.
-    fn deserialize_type_unwrapped(&self, value_type: &TypeReference, schema_expr: &str) -> String {
-        let deserialize_expr = self.deserialize_type(value_type, schema_expr);
+    fn deserialize_type_unwrapped(
+        &self,
+        field_id: u32,
+        value_type: &TypeReference,
+        schema_object: &str,
+    ) -> String {
+        let deserialize_expr = self.deserialize_type(field_id, value_type, schema_object);
         if let TypeReference::Type(_) = value_type {
             format!("{}?", deserialize_expr)
         } else {
