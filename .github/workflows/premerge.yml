@@ -32,7 +32,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: install
-          args: --path ./cargo-spatial --force
+          args: --path ./cargo-spatial --force --debug
 
       - name: Install SpatialOS C API dependencies
         uses: actions-rs/cargo@v1
