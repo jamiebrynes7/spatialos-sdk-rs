@@ -50,9 +50,8 @@ impl TypeConversion for <#= self.rust_name(&type_def.qualified_name) #> {
         Ok(Self {
             <#
             for field in &type_def.fields {
-                let field_expr = format!("input.get::<{}>({})", get_field_schema_type(field), field.field_id);
             #>
-            <#= field.name #>: <#= self.deserialize_field(field, &field_expr) #>,
+            <#= field.name #>: <#= self.deserialize_field(field, "input") #>,
             <# } #>
         })
     }
@@ -79,10 +78,8 @@ pub struct <#= self.rust_name(&component.qualified_name) #> {<#
 impl TypeConversion for <#= self.rust_name(&component.qualified_name) #> {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {<#
-            for field in &component_fields {
-                let field_expr = format!("input.get::<{}>({})", get_field_schema_type(field), field.field_id);
-            #>
-            <#= field.name #>: <#= self.deserialize_field(field, &field_expr) #>,<# } #>
+            for field in &component_fields {#>
+            <#= field.name #>: <#= self.deserialize_field(field, "input") #>,<# } #>
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
@@ -108,16 +105,10 @@ pub struct <#= self.rust_name(&component.qualified_name) #>Update {<#
 }
 impl TypeConversion for <#= self.rust_name(&component.qualified_name) #>Update {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        let mut output = Self {<#
-            for field in &component_fields {
-            #>
-            <#= field.name #>: None,<# } #>
-        };<#
-        for field in &component_fields {
-        #>
-        output.<#= field.name #> = input.get::<<#= get_field_schema_type(field) #>>(<#= field.field_id #>).map(Into::into);
-        <# } #>
-        Ok(output)
+        Ok(Self {<#
+            for field in &component_fields {#>
+            <#= field.name #>: <#= self.deserialize_update_field(field, "input") #>,<# } #>
+        })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
         for field in &component_fields {

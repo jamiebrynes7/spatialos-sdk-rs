@@ -359,6 +359,38 @@ impl Package {
         }
     }
 
+    fn deserialize_update_field(&self, field: &FieldDefinition, schema_field: &str) -> String {
+        match field.field_type {
+            FieldDefinition_FieldType::Singular { ref type_reference } => {
+                self.deserialize_type_update(field.field_id, type_reference, schema_field)
+            }
+
+            FieldDefinition_FieldType::Option { ref inner_type } => {
+                self.deserialize_type_update(field.field_id, inner_type, schema_field)
+            }
+
+            FieldDefinition_FieldType::List { ref inner_type } => {
+                self.deserialize_list(field.field_id, inner_type, schema_field)
+            }
+
+            FieldDefinition_FieldType::Map {
+                ref key_type,
+                ref value_type,
+            } => {
+                let capacity = format!("{}.object_count({})", schema_field, field.field_id);
+                let deserialize_key = self.deserialize_type_unwrapped(1, key_type, "kv");
+                let deserialize_value = self.deserialize_type_unwrapped(2, value_type, "kv");
+                format!(
+                    "{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object(i); m.insert({}, {}); }}; m }}",
+                    capacity,
+                    schema_field,
+                    deserialize_key,
+                    deserialize_value,
+                )
+            }
+        }
+    }
+
     // Generates an expression which deserializes a value from a schema type in 'schema_expr'. In the non primitive
     // case, this expression is of type Result<GeneratedType, String>, otherwise it is just T (where T is the primitive type).
     fn deserialize_type(
@@ -375,14 +407,10 @@ impl Package {
                 field_id
             ),
 
-            TypeReference::Enum(ref enum_ref) => {
-                let enum_name =
-                    self.rust_fqname(&self.get_enum_definition(enum_ref).qualified_name);
-                format!(
-                    "{}.get::<SchemaEnum>({}).map(Into::into)",
-                    schema_object, field_id
-                )
-            }
+            TypeReference::Enum(_) => format!(
+                "{}.get::<SchemaEnum>({}).map(Into::into)",
+                schema_object, field_id
+            ),
 
             TypeReference::Type(ref type_ref) => {
                 let type_name =
@@ -390,6 +418,41 @@ impl Package {
                 format!(
                     "<{} as TypeConversion>::from_type(&{}.get_object({}))",
                     type_name, schema_object, field_id
+                )
+            }
+        }
+    }
+
+    fn deserialize_type_update(
+        &self,
+        field_id: u32,
+        value_type: &TypeReference,
+        schema_object: &str,
+    ) -> String {
+        match value_type {
+            TypeReference::Primitive(primitive) => format!(
+                "{}.get::<{}>({})",
+                schema_object,
+                get_rust_primitive_type_tag(primitive),
+                field_id
+            ),
+
+            TypeReference::Enum(_) => format!(
+                "{}.get::<SchemaEnum>({}).map(Into::into)",
+                schema_object, field_id
+            ),
+
+            TypeReference::Type(ref type_ref) => {
+                let type_name =
+                    self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
+                let deserialize_type = format!(
+                    "<{} as TypeConversion>::from_type(&{}.get_object({}))?",
+                    type_name, schema_object, field_id
+                );
+
+                format!(
+                    "if {}.object_count({}) > 0 {{ Some({}) }} else {{ None }}",
+                    schema_object, field_id, deserialize_type
                 )
             }
         }
@@ -409,22 +472,14 @@ impl Package {
                 field_id
             ),
 
-            TypeReference::Enum(ref enum_ref) => {
-                let enum_name =
-                    self.rust_fqname(&self.get_enum_definition(enum_ref).qualified_name);
-                format!(
-                    "{}.get_list::<SchemaEnum>({}).into_iter().map(Into::into).collect()",
-                    schema_object, field_id
-                )
-            }
+            TypeReference::Enum(_) => format!(
+                "{}.get_list::<SchemaEnum>({}).into_iter().map(Into::into).collect()",
+                schema_object, field_id
+            ),
 
             TypeReference::Type(ref type_ref) => {
                 let type_name =
                     self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
-                let deserialize_element = format!(
-                    "<{} as TypeConversion>::from_type(&{}.get_object({}))",
-                    type_name, schema_object, field_id
-                );
 
                 let capacity = format!("{}.object_count({})", schema_object, field_id);
                 let deserialize_element = format!(
@@ -445,11 +500,27 @@ impl Package {
         value_type: &TypeReference,
         schema_object: &str,
     ) -> String {
-        let deserialize_expr = self.deserialize_type(field_id, value_type, schema_object);
-        if let TypeReference::Type(_) = value_type {
-            format!("{}?", deserialize_expr)
-        } else {
-            deserialize_expr
+        match value_type {
+            TypeReference::Primitive(primitive) => format!(
+                "{}.get::<{}>({}).unwrap_or_default()",
+                schema_object,
+                get_rust_primitive_type_tag(primitive),
+                field_id
+            ),
+
+            TypeReference::Enum(_) => format!(
+                "From::from({}.get::<SchemaEnum>({}).unwrap_or_default())",
+                schema_object, field_id
+            ),
+
+            TypeReference::Type(ref type_ref) => {
+                let type_name =
+                    self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
+                format!(
+                    "<{} as TypeConversion>::from_type(&{}.get_object({}))?",
+                    type_name, schema_object, field_id
+                )
+            }
         }
     }
 }
