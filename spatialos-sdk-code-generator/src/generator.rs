@@ -409,33 +409,12 @@ impl Package {
         value_type: &TypeReference,
         schema_object: &str,
     ) -> String {
-        match value_type {
-            TypeReference::Primitive(primitive) => format!(
-                "{}.get::<{}>({})",
-                schema_object,
-                get_rust_primitive_type_tag(primitive),
-                field_id
-            ),
-
-            TypeReference::Enum(_) => format!(
-                "{}.get::<SchemaEnum>({}).map(Into::into)",
-                schema_object, field_id
-            ),
-
-            TypeReference::Type(ref type_ref) => {
-                let type_name =
-                    self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
-                let deserialize_type = format!(
-                    "<{} as TypeConversion>::from_type(&{}.get_object({}))?",
-                    type_name, schema_object, field_id
-                );
-
-                format!(
-                    "if {}.object_count({}) > 0 {{ Some({}) }} else {{ None }}",
-                    schema_object, field_id, deserialize_type
-                )
-            }
-        }
+        let count_expr = self.count_field(field_id, value_type, schema_object);
+        let deserialize_expr = self.deserialize_type(field_id, value_type, schema_object);
+        format!(
+            "if {} > 0 {{ Some({}) }} else {{ None }}",
+            count_expr, deserialize_expr
+        )
     }
 
     fn deserialize_list(
