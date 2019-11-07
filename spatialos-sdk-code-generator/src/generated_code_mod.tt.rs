@@ -32,11 +32,8 @@ impl <#= enum_rust_name #> {
         }
     }
 }
-
 <# } #>
-
-/* Types. */
-<# for type_name in &self.types { let type_def = self.get_type_definition(type_name); #>
+/* Types. */<# for type_name in &self.types { let type_def = self.get_type_definition(type_name); #>
 
 #[derive(Debug, Clone)]
 pub struct <#= self.rust_name(&type_def.qualified_name) #> {<#
@@ -44,23 +41,19 @@ pub struct <#= self.rust_name(&type_def.qualified_name) #> {<#
     #>
     pub <#= field.name #>: <#= self.generate_field_type(field) #>,<# } #>
 }
-
 impl TypeConversion for <#= self.rust_name(&type_def.qualified_name) #> {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
-            <#
+        Ok(Self {<#
             for field in &type_def.fields {
             #>
-            <#= field.name #>: <#= self.deserialize_field(field, "input") #>,
-            <# } #>
+            <#= field.name #>: <#= self.deserialize_field(field, "input") #>,<# } #>
         })
     }
 
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
         for field in &type_def.fields {
         #>
-        <#= self.serialize_field(field, &format!("&input.{}", field.name), "output") #>;
-        <# } #>
+        <#= self.serialize_field(field, &format!("&input.{}", field.name), "output") #>;<# } #>
         Ok(())
     }
 }

@@ -21,14 +21,6 @@ pub trait SchemaPrimitiveField {
     fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType);
     fn add_list(object: &mut SchemaObject, field: FieldId, value: &[Self::RustType]);
 
-    fn get(object: &SchemaObject, field: FieldId) -> Option<Self::RustType> {
-        if Self::count(object, field) > 0 {
-            Some(Self::get_or_default(object, field))
-        } else {
-            None
-        }
-    }
-
     fn get_list(object: &SchemaObject, field: FieldId) -> Vec<Self::RustType> {
         let count = Self::count(object, field);
         let mut result = Vec::with_capacity(count);

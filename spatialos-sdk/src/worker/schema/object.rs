@@ -42,6 +42,7 @@ impl SchemaObject {
         count as usize
     }
 
+    // TODO: Hook up the lifetimes of the schema objects. This is unsound as it exists now.
     pub fn index_object(&self, field: FieldId, index: usize) -> SchemaObject {
         let internal = unsafe { Schema_IndexObject(self.internal, field, index as u32) };
         SchemaObject { internal }
