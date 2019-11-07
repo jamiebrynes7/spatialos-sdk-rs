@@ -7,12 +7,8 @@ pub struct SchemaObject {
 }
 
 impl SchemaObject {
-    pub fn get<T: SchemaPrimitiveField>(&self, field: FieldId) -> Option<T::RustType> {
-        if self.count::<T>(field) == 0 {
-            None
-        } else {
-            T::get(self, field)
-        }
+    pub fn get<T: SchemaPrimitiveField>(&self, field: FieldId) -> T::RustType {
+        T::get_or_default(self, field)
     }
 
     pub fn get_index<T: SchemaPrimitiveField>(&self, field: FieldId, index: usize) -> T::RustType {

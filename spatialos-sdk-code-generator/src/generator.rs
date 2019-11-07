@@ -330,11 +330,17 @@ impl Package {
     fn deserialize_field(&self, field: &FieldDefinition, schema_field: &str) -> String {
         match field.field_type {
             FieldDefinition_FieldType::Singular { ref type_reference } => {
-                self.deserialize_type_unwrapped(field.field_id, type_reference, schema_field)
+                self.deserialize_type(field.field_id, type_reference, schema_field)
             }
 
             FieldDefinition_FieldType::Option { ref inner_type } => {
-                self.deserialize_type(field.field_id, inner_type, schema_field)
+                let count_expr = self.count_field(field.field_id, inner_type, schema_field);
+                let deserialize_expr =
+                    self.deserialize_type(field.field_id, inner_type, schema_field);
+                format!(
+                    "if {} > 0 {{ Some({}) }} else {{ None }}",
+                    count_expr, deserialize_expr
+                )
             }
 
             FieldDefinition_FieldType::List { ref inner_type } => {
@@ -346,8 +352,8 @@ impl Package {
                 ref value_type,
             } => {
                 let capacity = format!("{}.object_count({})", schema_field, field.field_id);
-                let deserialize_key = self.deserialize_type_unwrapped(1, key_type, "kv");
-                let deserialize_value = self.deserialize_type_unwrapped(2, value_type, "kv");
+                let deserialize_key = self.deserialize_type(1, key_type, "kv");
+                let deserialize_value = self.deserialize_type(2, value_type, "kv");
                 format!(
                     "{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object(i); m.insert({}, {}); }}; m }}",
                     capacity,
@@ -378,8 +384,8 @@ impl Package {
                 ref value_type,
             } => {
                 let capacity = format!("{}.object_count({})", schema_field, field.field_id);
-                let deserialize_key = self.deserialize_type_unwrapped(1, key_type, "kv");
-                let deserialize_value = self.deserialize_type_unwrapped(2, value_type, "kv");
+                let deserialize_key = self.deserialize_type(1, key_type, "kv");
+                let deserialize_value = self.deserialize_type(2, value_type, "kv");
                 format!(
                     "{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object(i); m.insert({}, {}); }}; m }}",
                     capacity,
@@ -416,7 +422,7 @@ impl Package {
                 let type_name =
                     self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
                 format!(
-                    "<{} as TypeConversion>::from_type(&{}.get_object({}))",
+                    "<{} as TypeConversion>::from_type(&{}.get_object({}))?",
                     type_name, schema_object, field_id
                 )
             }
@@ -492,9 +498,7 @@ impl Package {
         }
     }
 
-    // Generates an expression which deserializes a value from a schema type in 'schema_expr'. Also unwraps the result
-    // using ? operator if the deserialize expression results in a Result<_, String> type.
-    fn deserialize_type_unwrapped(
+    fn count_field(
         &self,
         field_id: u32,
         value_type: &TypeReference,
@@ -502,25 +506,17 @@ impl Package {
     ) -> String {
         match value_type {
             TypeReference::Primitive(primitive) => format!(
-                "{}.get::<{}>({}).unwrap_or_default()",
+                "{}.count::<{}>({})",
                 schema_object,
                 get_rust_primitive_type_tag(primitive),
                 field_id
             ),
 
-            TypeReference::Enum(_) => format!(
-                "From::from({}.get::<SchemaEnum>({}).unwrap_or_default())",
-                schema_object, field_id
-            ),
-
-            TypeReference::Type(ref type_ref) => {
-                let type_name =
-                    self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
-                format!(
-                    "<{} as TypeConversion>::from_type(&{}.get_object({}))?",
-                    type_name, schema_object, field_id
-                )
+            TypeReference::Enum(_) => {
+                format!("{}.count::<SchemaEnum>({})", schema_object, field_id)
             }
+
+            TypeReference::Type(..) => format!("{}.object_count({})", schema_object, field_id),
         }
     }
 }
