@@ -244,7 +244,7 @@ impl Package {
                 ref value_type,
             } => {
                 let kvpair_object = format!(
-                    "let object = {}.add_object({})",
+                    "let mut object = {}.add_object({})",
                     schema_object, field.field_id
                 );
                 let serialize_key = self.serialize_type(1, key_type, "k", "object");
@@ -388,7 +388,7 @@ impl Package {
             ),
 
             TypeReference::Enum(_) => format!(
-                "{}.get::<SchemaEnum>({}).map(Into::into)",
+                "From::from({}.get::<SchemaEnum>({}))",
                 schema_object, field_id
             ),
 
