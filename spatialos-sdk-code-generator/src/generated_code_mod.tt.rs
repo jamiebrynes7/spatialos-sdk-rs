@@ -34,7 +34,6 @@ impl <#= enum_rust_name #> {
 }
 <# } #>
 /* Types. */<# for type_name in &self.types { let type_def = self.get_type_definition(type_name); #>
-
 #[derive(Debug, Clone)]
 pub struct <#= self.rust_name(&type_def.qualified_name) #> {<#
     for field in &type_def.fields {
@@ -49,7 +48,6 @@ impl TypeConversion for <#= self.rust_name(&type_def.qualified_name) #> {
             <#= field.name #>: <#= self.deserialize_field(field, "input") #>,<# } #>
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {<#
         for field in &type_def.fields {
         #>
@@ -57,7 +55,6 @@ impl TypeConversion for <#= self.rust_name(&type_def.qualified_name) #> {
         Ok(())
     }
 }
-
 <# } #>
 /* Components. */ <# for component_name in &self.components {
     let component = self.get_component_definition(component_name);
