@@ -241,7 +241,7 @@ impl Package {
                 // If we have a list of primitives, we can just pass a slice directly to add_list.
                 match inner_type {
                     TypeReference::Primitive(ref primitive) => format!(
-                        "{}.field::<{}>({}).add_list(&{}[..])",
+                        "{}.add_list::<{}>({}, &{}[..])",
                         schema_object,
                         get_rust_primitive_type_tag(primitive),
                         field.field_id,
@@ -483,11 +483,11 @@ impl Package {
 
                 let capacity = format!("{}.object_count({})", schema_object, field_id);
                 let deserialize_element = format!(
-                    "<{} as TypeConversion>::from_type(&{}.index_object({}, i))",
+                    "<{} as TypeConversion>::from_type(&{}.index_object({}, i))?",
                     type_name, schema_object, field_id
                 );
 
-                format!("{{ let size = {}; let mut l = Vec::with_capacity(size); for i in 0..size {{ l.push({}); }}; l }}", capacity, deserialize_element)
+                format!("{{ let size = {}; let mut l = Vec::with_capacity(size); for i in 0..size {{ l.push({}); }} l }}", capacity, deserialize_element)
             }
         }
     }

@@ -27,6 +27,10 @@ impl SchemaObject {
         T::add(self, field, value);
     }
 
+    pub fn get_list<T: SchemaPrimitiveField>(&self, field: FieldId) -> Vec<T::RustType> {
+        T::get_list(self, field)
+    }
+
     pub fn add_list<T: SchemaPrimitiveField>(&mut self, field: FieldId, value: &[T::RustType]) {
         T::add_list(self, field, value);
     }
