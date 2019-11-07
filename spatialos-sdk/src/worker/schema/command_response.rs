@@ -13,16 +13,12 @@ impl SchemaCommandResponse {
         }
     }
 
-    pub fn object(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetCommandResponseObject(self.internal) },
-        }
+    pub fn object(&self) -> &SchemaObject {
+        unsafe { SchemaObject::from_raw(Schema_GetCommandResponseObject(self.internal)) }
     }
 
-    pub fn object_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetCommandResponseObject(self.internal) },
-        }
+    pub fn object_mut(&mut self) -> &mut SchemaObject {
+        unsafe { SchemaObject::from_raw_mut(Schema_GetCommandResponseObject(self.internal)) }
     }
 }
 
