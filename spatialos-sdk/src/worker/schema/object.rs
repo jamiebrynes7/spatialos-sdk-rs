@@ -64,5 +64,11 @@ impl SchemaObject {
     }
 }
 
+// SAFETY: It should be safe to send a `SchemaObject` between threads, so long as
+// it's only ever accessed from one thread at a time. It has unsynchronized internal
+// mutability (when getting an object field, it will automatically add a new object
+// if one doesn't already exist), so it cannot be `Sync`.
+unsafe impl Send for SchemaObject {}
+
 assert_impl_all!(SchemaObject: Send);
 assert_not_impl_any!(SchemaObject: Sync);
