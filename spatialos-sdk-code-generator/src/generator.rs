@@ -27,25 +27,6 @@ fn get_rust_primitive_type_tag(primitive_type: &PrimitiveType) -> &str {
     }
 }
 
-fn get_schema_type(value_type: &TypeReference) -> &str {
-    match value_type {
-        TypeReference::Primitive(primitive) => get_rust_primitive_type_tag(&primitive),
-        TypeReference::Enum(_) => "SchemaEnum",
-        TypeReference::Type(_) => "SchemaObject",
-    }
-}
-
-fn get_field_schema_type(field: &FieldDefinition) -> &str {
-    match field.field_type {
-        FieldDefinition_FieldType::Singular { ref type_reference } => {
-            get_schema_type(type_reference)
-        }
-        FieldDefinition_FieldType::Option { ref inner_type } => get_schema_type(&inner_type),
-        FieldDefinition_FieldType::List { ref inner_type } => get_schema_type(&inner_type),
-        FieldDefinition_FieldType::Map { .. } => "SchemaObject",
-    }
-}
-
 #[derive(Debug, Template)]
 #[TemplatePath = "./src/generated_code_mod.tt.rs"]
 struct Package {
@@ -266,16 +247,7 @@ impl Package {
                     "let object = {}.add_object({})",
                     schema_object, field.field_id
                 );
-                let serialize_key = self.serialize_type(
-                    1,
-                    key_type,
-                    if !self.type_needs_borrow(key_type) {
-                        "*k"
-                    } else {
-                        "k"
-                    },
-                    "object",
-                );
+                let serialize_key = self.serialize_type(1, key_type, "k", "object");
                 let serialize_value = self.serialize_type(
                     2,
                     value_type,
@@ -355,9 +327,10 @@ impl Package {
                 let deserialize_key = self.deserialize_type(1, key_type, "kv");
                 let deserialize_value = self.deserialize_type(2, value_type, "kv");
                 format!(
-                    "{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object(i); m.insert({}, {}); }}; m }}",
+                    "{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object({}, i); m.insert({}, {}); }}; m }}",
                     capacity,
                     schema_field,
+                    field.field_id,
                     deserialize_key,
                     deserialize_value,
                 )
@@ -387,9 +360,10 @@ impl Package {
                 let deserialize_key = self.deserialize_type(1, key_type, "kv");
                 let deserialize_value = self.deserialize_type(2, value_type, "kv");
                 format!(
-                    "{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object(i); m.insert({}, {}); }}; m }}",
+                    "{{ let size = {}; if size > 0 {{ let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object({}, i); m.insert({}, {}); }} Some(m) }} else {{ None }} }}",
                     capacity,
                     schema_field,
+                    field.field_id,
                     deserialize_key,
                     deserialize_value,
                 )
