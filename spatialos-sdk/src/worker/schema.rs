@@ -3,10 +3,16 @@ mod command_response;
 mod component_data;
 mod component_update;
 mod object;
+mod owned;
 mod primitives;
 
 pub use self::{
-    command_request::*, command_response::*, component_data::*, component_update::*, object::*,
+    command_request::*,
+    command_response::*,
+    component_data::*,
+    component_update::*,
+    object::*,
+    owned::{Ownable, Owned},
     primitives::*,
 };
 

@@ -1,5 +1,7 @@
-use crate::worker::component::{self, Component, ComponentId, DATABASE};
-use crate::worker::schema::SchemaComponentData;
+use crate::worker::{
+    component::{self, Component, ComponentId, DATABASE},
+    schema::*,
+};
 use spatialos_sdk_sys::worker::{Schema_DestroyComponentData, Worker_ComponentData, Worker_Entity};
 use std::collections::HashMap;
 use std::ptr;
@@ -75,11 +77,10 @@ impl Entity {
     pub(crate) unsafe fn add_serialized(
         &mut self,
         component_id: ComponentId,
-        component: SchemaComponentData,
+        component: Owned<SchemaComponentData>,
     ) -> Result<(), String> {
         let vtable = DATABASE.get_vtable(component_id).unwrap();
         let deserialize_func = vtable.component_data_deserialize.unwrap_or_else(|| {
-            Schema_DestroyComponentData(component.internal);
             panic!(
                 "No component_data_deserialize method defined for {}",
                 component_id
