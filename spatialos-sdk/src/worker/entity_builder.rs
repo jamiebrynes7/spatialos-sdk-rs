@@ -1,9 +1,4 @@
-use crate::worker::{
-    component::Component,
-    component::ComponentId,
-    entity::Entity,
-    schema::{SchemaComponentData, SchemaDouble, SchemaString, SchemaUint32},
-};
+use crate::worker::{component::Component, component::ComponentId, entity::Entity, schema::*};
 use std::collections::{HashMap, HashSet};
 
 const ENTITY_ACL_COMPONENT_ID: ComponentId = 50;
@@ -116,7 +111,7 @@ impl EntityBuilder {
     //
     // If this invariant is broken, then the EntityBuilder is broken. Should we assert against this
     // before we call `entity.add_serialized`?
-    fn serialize_position(&self) -> SchemaComponentData {
+    fn serialize_position(&self) -> Owned<SchemaComponentData> {
         let mut position_schema = SchemaComponentData::new();
         let position_fields = position_schema.fields_mut();
 
@@ -128,7 +123,7 @@ impl EntityBuilder {
         position_schema
     }
 
-    fn serialize_acl(&self) -> SchemaComponentData {
+    fn serialize_acl(&self) -> Owned<SchemaComponentData> {
         let mut acl_schema = SchemaComponentData::new();
         let acl_fields = acl_schema.fields_mut();
 
@@ -151,7 +146,7 @@ impl EntityBuilder {
         acl_schema
     }
 
-    fn serialize_metadata(&self) -> SchemaComponentData {
+    fn serialize_metadata(&self) -> Owned<SchemaComponentData> {
         let mut metadata_schema = SchemaComponentData::new();
         let metadata_fields = metadata_schema.fields_mut();
         metadata_fields.add::<SchemaString>(1, self.metadata.as_ref().unwrap());
@@ -159,7 +154,7 @@ impl EntityBuilder {
         metadata_schema
     }
 
-    fn serialize_persistence(&self) -> SchemaComponentData {
+    fn serialize_persistence(&self) -> Owned<SchemaComponentData> {
         SchemaComponentData::new()
     }
 }

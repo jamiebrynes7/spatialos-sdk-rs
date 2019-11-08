@@ -2,7 +2,7 @@ use crate::worker::{
     component::{self, Component, ComponentId, DATABASE},
     schema::*,
 };
-use spatialos_sdk_sys::worker::{Schema_DestroyComponentData, Worker_ComponentData, Worker_Entity};
+use spatialos_sdk_sys::worker::{Worker_ComponentData, Worker_Entity};
 use std::collections::HashMap;
 use std::ptr;
 use std::slice;
@@ -95,10 +95,9 @@ impl Entity {
         let deserialize_result = deserialize_func(
             component_id,
             ptr::null_mut(),
-            component.internal,
+            component.as_ptr(),
             handle_out_ptr,
         );
-        Schema_DestroyComponentData(component.internal);
 
         match deserialize_result {
             1 => {},
