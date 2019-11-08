@@ -170,7 +170,7 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
         }
     }
 
-    fn to_data(data: &<#= self.rust_fqname(&component.qualified_name) #>) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &<#= self.rust_fqname(&component.qualified_name) #>) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <<#= self.rust_fqname(&component.qualified_name) #> as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
