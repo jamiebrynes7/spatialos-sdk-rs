@@ -309,7 +309,7 @@ impl SchemaPrimitiveField for SchemaBytes {
         unsafe { Schema_GetBytesCount(object.internal, field) as usize }
     }
 
-    fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+    fn add(object: &mut SchemaObject, field: FieldId, value: &Vec<u8>) {
         unsafe {
             Schema_AddBytes(object.internal, field, value.as_ptr(), value.len() as u32);
         }
