@@ -201,7 +201,7 @@ impl SchemaPrimitiveField for SchemaEntityId {
         }
     }
 
-    fn add_list(object: &mut SchemaObject, field: FieldId, value: &[Self::RustType]) {
+    fn add_list(object: &mut SchemaObject, field: FieldId, value: &[EntityId]) {
         let converted_list: Vec<i64> = value.iter().map(|v| v.id).collect();
         unsafe {
             let ptr = converted_list.as_ptr();
