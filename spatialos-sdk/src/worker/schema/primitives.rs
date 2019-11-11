@@ -33,7 +33,7 @@ macro_rules! impl_primitive_field {
                 unsafe { $schema_count(object.internal, field) as usize }
             }
 
-            fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+            fn add(object: &mut SchemaObject, field: FieldId, value: &$rust_type) {
                 unsafe {
                     $schema_add(object.internal, field, *value);
                 }
