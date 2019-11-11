@@ -195,7 +195,7 @@ impl SchemaPrimitiveField for SchemaEntityId {
         unsafe { Schema_GetEntityIdCount(object.internal, field) as usize }
     }
 
-    fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+    fn add(object: &mut SchemaObject, field: FieldId, value: &EntityId) {
         unsafe {
             Schema_AddEntityId(object.internal, field, value.id);
         }
