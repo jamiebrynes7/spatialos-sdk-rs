@@ -15,8 +15,8 @@ pub mod schema_bundle;
 
 #[cfg(test)]
 mod tests {
-    use generator;
-    use schema_bundle;
+    use crate::generator;
+    use crate::schema_bundle;
     use std::fs::File;
     use std::io::Read;
 

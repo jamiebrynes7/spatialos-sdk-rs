@@ -2,6 +2,7 @@
 name = "spatialos-sdk-code-generator"
 version = "0.1.0"
 authors = ["David Avedissian <git@dga.dev>"]
+edition = "2018"
 
 [dependencies]
 serde = "1.0"

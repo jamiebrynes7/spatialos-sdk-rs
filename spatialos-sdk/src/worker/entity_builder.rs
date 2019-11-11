@@ -2,10 +2,7 @@ use crate::worker::{
     component::Component,
     component::ComponentId,
     entity::Entity,
-    schema::{
-        SchemaComponentData, SchemaDouble, SchemaObject, SchemaObjectField, SchemaPrimitiveField,
-        SchemaString, SchemaStringField, SchemaUint32,
-    },
+    schema::{SchemaComponentData, SchemaDouble, SchemaString, SchemaUint32},
 };
 use std::collections::{HashMap, HashSet};
 
@@ -121,37 +118,34 @@ impl EntityBuilder {
     // before we call `entity.add_serialized`?
     fn serialize_position(&self) -> SchemaComponentData {
         let mut position_schema = SchemaComponentData::new();
-        let position_fields = position_schema.fields_mut();
+        let mut position_fields = position_schema.fields_mut();
 
-        let coords_obj = position_fields.field::<SchemaObject>(1).add();
-        coords_obj.field::<SchemaDouble>(1).add(self.position.0);
-        coords_obj.field::<SchemaDouble>(2).add(self.position.1);
-        coords_obj.field::<SchemaDouble>(3).add(self.position.2);
+        let mut coords_obj = position_fields.add_object(1);
+        coords_obj.add::<SchemaDouble>(1, &self.position.0);
+        coords_obj.add::<SchemaDouble>(2, &self.position.1);
+        coords_obj.add::<SchemaDouble>(3, &self.position.2);
 
         position_schema
     }
 
     fn serialize_acl(&self) -> SchemaComponentData {
         let mut acl_schema = SchemaComponentData::new();
-        let acl_fields = acl_schema.fields_mut();
+        let mut acl_fields = acl_schema.fields_mut();
 
-        let read_access = acl_fields.field::<SchemaObject>(1).add();
+        let mut read_access = acl_fields.add_object(1);
         for layer in &self.read_permissions {
-            let attribute_set = read_access.field::<SchemaObject>(1).add();
-            attribute_set.field::<SchemaString>(1).add(layer);
+            let mut attribute_set = read_access.add_object(1);
+            attribute_set.add::<SchemaString>(1, layer);
         }
 
         for pair in &self.write_permissions {
-            let map_obj = acl_fields.field::<SchemaObject>(2).add();
-            map_obj.field::<SchemaUint32>(1).add(*pair.0);
+            let mut map_obj = acl_fields.add_object(2);
+            map_obj.add::<SchemaUint32>(1, pair.0);
 
             map_obj
-                .field::<SchemaObject>(2)
-                .add()
-                .field::<SchemaObject>(1)
-                .add()
-                .field::<SchemaString>(1)
-                .add(pair.1);
+                .add_object(2)
+                .add_object(1)
+                .add::<SchemaString>(1, pair.1);
         }
 
         acl_schema
@@ -159,10 +153,8 @@ impl EntityBuilder {
 
     fn serialize_metadata(&self) -> SchemaComponentData {
         let mut metadata_schema = SchemaComponentData::new();
-        let metadata_fields = metadata_schema.fields_mut();
-        metadata_fields
-            .field::<SchemaString>(1)
-            .add(self.metadata.as_ref().unwrap());
+        let mut metadata_fields = metadata_schema.fields_mut();
+        metadata_fields.add::<SchemaString>(1, self.metadata.as_ref().unwrap());
 
         metadata_schema
     }
