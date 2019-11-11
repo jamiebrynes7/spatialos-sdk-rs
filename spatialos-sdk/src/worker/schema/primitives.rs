@@ -277,7 +277,7 @@ impl SchemaPrimitiveField for SchemaString {
         }
     }
 
-    fn add_list(object: &mut SchemaObject, field: FieldId, value: &[Self::RustType]) {
+    fn add_list(object: &mut SchemaObject, field: FieldId, value: &[String]) {
         for value in value {
             Self::add(object, field, value);
         }
