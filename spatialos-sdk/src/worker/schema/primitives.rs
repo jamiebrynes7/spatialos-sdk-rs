@@ -21,7 +21,7 @@ macro_rules! impl_primitive_field {
         impl SchemaPrimitiveField for $schema_type {
             type RustType = $rust_type;
 
-            fn get_or_default(object: &SchemaObject, field: FieldId) -> Self::RustType {
+            fn get_or_default(object: &SchemaObject, field: FieldId) -> $rust_type {
                 unsafe { $schema_get(object.internal, field) }
             }
 
