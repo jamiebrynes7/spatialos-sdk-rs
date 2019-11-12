@@ -31,10 +31,6 @@ impl SchemaComponentData {
         &*(raw as *mut _)
     }
 
-    pub(crate) unsafe fn from_raw_mut<'a>(raw: *mut Schema_ComponentData) -> &'a mut Self {
-        &mut *(raw as *mut _)
-    }
-
     pub(crate) fn as_ptr(&self) -> *mut Schema_ComponentData {
         self as *const _ as *mut _
     }

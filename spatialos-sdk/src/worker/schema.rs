@@ -3,17 +3,13 @@ mod command_response;
 mod component_data;
 mod component_update;
 mod object;
-mod owned;
 mod primitives;
 
+pub mod owned;
+
 pub use self::{
-    command_request::*,
-    command_response::*,
-    component_data::*,
-    component_update::*,
-    object::*,
-    owned::{Ownable, Owned},
-    primitives::*,
+    command_request::*, command_response::*, component_data::*, component_update::*, object::*,
+    owned::Owned, primitives::*,
 };
 
 pub type FieldId = u32;
