@@ -1,6 +1,5 @@
 use crate::worker::schema::{FieldId, SchemaPrimitiveField};
 use spatialos_sdk_sys::worker::*;
-use static_assertions::*;
 use std::marker::PhantomData;
 
 #[derive(Debug)]
@@ -70,5 +69,11 @@ impl SchemaObject {
 // if one doesn't already exist), so it cannot be `Sync`.
 unsafe impl Send for SchemaObject {}
 
-assert_impl_all!(SchemaObject: Send);
-assert_not_impl_any!(SchemaObject: Sync);
+#[cfg(test)]
+mod test {
+    use super::SchemaObject;
+    use static_assertions::*;
+
+    assert_impl_all!(SchemaObject: Send);
+    assert_not_impl_any!(SchemaObject: Sync);
+}
