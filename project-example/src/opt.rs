@@ -12,9 +12,6 @@ pub struct Opt {
     #[structopt(name = "WORKER_ID", long, short = "i")]
     pub worker_id: Option<String>,
 
-    #[structopt(name = "POLLING_CONNECTION", long = "polling-connection", short = "p")]
-    pub connect_with_poll: bool,
-
     #[structopt(subcommand)]
     pub command: Command,
 }

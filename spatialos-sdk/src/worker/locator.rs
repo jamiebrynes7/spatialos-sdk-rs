@@ -1,7 +1,4 @@
 use std::ffi::CString;
-use std::sync::Arc;
-use std::future::Future;
-use std::task::{Context, Poll};
 
 use spatialos_sdk_sys::worker::*;
 

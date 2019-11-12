@@ -13,12 +13,10 @@ use crate::worker::{
 };
 use spatialos_sdk_sys::worker::*;
 use std::{
-    future::Future,
-    task::{Context, Poll},
+    error::Error,
+    fmt::{Display, Formatter},
     ffi::{CStr, CString, NulError},
-    pin::Pin,
     ptr,
-    sync::Arc
 };
 
 pub type ConnectionStatus = Result<(), ConnectionStatusError>;
@@ -36,6 +34,28 @@ pub enum ConnectionStatusError {
     CapacityExceeded(String),
     RateExceeded(String),
     ServerShutdown(String),
+}
+
+impl Display for ConnectionStatusError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ConnectionStatusError::InternalError(detail) => f.write_fmt(format_args!("Internal error: {}", detail)),
+            ConnectionStatusError::InvalidArgument(detail) => f.write_fmt(format_args!("Invalid argument: {}", detail)),
+            ConnectionStatusError::NetworkError(detail) => f.write_fmt(format_args!("Network error: {}", detail)),
+            ConnectionStatusError::Timeout(detail) => f.write_fmt(format_args!("Timeout: {}", detail)),
+            ConnectionStatusError::Cancelled(detail) => f.write_fmt(format_args!("Cancelled: {}", detail)),
+            ConnectionStatusError::Rejected(detail) => f.write_fmt(format_args!("Rejected: {}", detail)),
+            ConnectionStatusError::PlayerIdentityTokenExpired(detail) => f.write_fmt(format_args!("Player identity token expired: {}", detail)),
+            ConnectionStatusError::LoginTokenExpired(detail) => f.write_fmt(format_args!("Login token expired: {}", detail)),
+            ConnectionStatusError::CapacityExceeded(detail) => f.write_fmt(format_args!("Capacity exceeded: {}", detail)),
+            ConnectionStatusError::RateExceeded(detail) => f.write_fmt(format_args!("Rate exceeded: {}", detail)),
+            ConnectionStatusError::ServerShutdown(detail) => f.write_fmt(format_args!("Server shutdown: {}", detail))
+        }
+    }
+}
+
+impl Error for ConnectionStatusError {
+
 }
 
 /// Connection trait to allow for mocking the connection.
