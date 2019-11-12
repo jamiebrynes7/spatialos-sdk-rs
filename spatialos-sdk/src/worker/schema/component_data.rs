@@ -1,6 +1,5 @@
 use crate::worker::schema::{owned::*, SchemaObject};
 use spatialos_sdk_sys::worker::*;
-use static_assertions::*;
 use std::marker::PhantomData;
 
 /// Serialized schema data for a component, owned by the Rust SDK.
@@ -61,5 +60,11 @@ impl OwnableImpl for SchemaComponentData {
 // if one doesn't already exist), so it cannot be `Sync`.
 unsafe impl Send for SchemaComponentData {}
 
-assert_impl_all!(SchemaComponentData: Send);
-assert_not_impl_any!(SchemaComponentData: Sync);
+#[cfg(test)]
+mod test {
+    use super::SchemaComponentData;
+    use static_assertions::*;
+
+    assert_impl_all!(SchemaComponentData: Send);
+    assert_not_impl_any!(SchemaComponentData: Sync);
+}
