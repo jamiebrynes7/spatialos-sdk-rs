@@ -1,11 +1,13 @@
 use std::ffi::CString;
-
-use futures::{Async, Future};
+use std::sync::Arc;
+use std::future::Future;
+use std::task::{Context, Poll};
 
 use spatialos_sdk_sys::worker::*;
 
 use crate::worker::internal::utils::cstr_to_string;
 use crate::worker::parameters::ProtocolLoggingParameters;
+use crate::worker::internal::{WorkerSdkFuture, WorkerFuture};
 
 pub struct Locator {
     pub(crate) locator: *mut Worker_Locator,
@@ -25,33 +27,19 @@ impl Locator {
     pub fn create_development_player_identity_token(
         hostname: &str,
         port: u16,
-        request: &mut PlayerIdentityTokenRequest,
-    ) -> PlayerIdentityTokenFuture {
-        unsafe {
-            let cstr = CString::new(hostname).unwrap();
-            let mut params = request.to_worker_sdk();
-            PlayerIdentityTokenFuture::new(Worker_Alpha_CreateDevelopmentPlayerIdentityTokenAsync(
-                cstr.as_ptr(),
-                port,
-                &mut params,
-            ))
-        }
+        request: PlayerIdentityTokenRequest,
+    ) -> WorkerFuture<PlayerIdentityTokenFuture> {
+        let cstr = CString::new(hostname).unwrap();
+        WorkerFuture::NotStarted(PlayerIdentityTokenFuture::new(cstr, port, request))
     }
 
     pub fn create_development_login_tokens(
         hostname: &str,
         port: u16,
-        request: &mut LoginTokensRequest,
-    ) -> LoginTokensFuture {
-        unsafe {
-            let cstr = CString::new(hostname).unwrap();
-            let mut params = request.to_worker_sdk();
-            LoginTokensFuture::new(Worker_Alpha_CreateDevelopmentLoginTokensAsync(
-                cstr.as_ptr(),
-                port,
-                &mut params,
-            ))
-        }
+        request: LoginTokensRequest,
+    ) -> WorkerFuture<LoginTokensFuture> {
+        let cstr = CString::new(hostname).unwrap();
+        WorkerFuture::NotStarted(LoginTokensFuture::new(cstr, port, request))
     }
 }
 
@@ -127,114 +115,6 @@ impl PlayerIdentityCredentials {
         Worker_PlayerIdentityCredentials {
             player_identity_token: self.player_identity_token.as_ptr(),
             login_token: self.login_token.as_ptr(),
-        }
-    }
-}
-
-pub struct Deployment {
-    pub deployment_name: String,
-    pub assembly_name: String,
-    pub description: String,
-    pub users_connected: u32,
-    pub users_capacity: u32,
-}
-
-impl Deployment {
-    fn from_worker_sdk(deployment: &Worker_Deployment) -> Self {
-        Deployment {
-            deployment_name: cstr_to_string(deployment.deployment_name),
-            assembly_name: cstr_to_string(deployment.assembly_name),
-            description: cstr_to_string(deployment.description),
-            users_connected: deployment.users_connected,
-            users_capacity: deployment.users_capacity,
-        }
-    }
-}
-
-pub struct DeploymentListFuture {
-    internal: *mut Worker_DeploymentListFuture,
-    consumed: bool,
-}
-
-impl DeploymentListFuture {
-    extern "C" fn callback_handler(
-        user_data: *mut ::std::os::raw::c_void,
-        deployment_list: *const Worker_DeploymentList,
-    ) {
-        assert!(!deployment_list.is_null());
-        unsafe {
-            let list = *deployment_list;
-            let data = &mut *(user_data as *mut Option<Result<Vec<Deployment>, String>>);
-            if !list.error.is_null() {
-                let err = cstr_to_string(list.error);
-                *data = Some(Err(err));
-                return;
-            }
-
-            let deployments =
-                ::std::slice::from_raw_parts(list.deployments, list.deployment_count as usize)
-                    .iter()
-                    .map(|deployment| Deployment::from_worker_sdk(deployment))
-                    .collect::<Vec<Deployment>>();
-
-            *data = Some(Ok(deployments));
-        }
-    }
-}
-
-impl Future for DeploymentListFuture {
-    type Item = Vec<Deployment>;
-    type Error = String;
-
-    fn poll(&mut self) -> Result<Async<<Self as Future>::Item>, <Self as Future>::Error> {
-        if self.consumed {
-            return Err("DeploymentListFuture has already been consumed".to_owned());
-        }
-
-        assert!(!self.internal.is_null());
-        let mut data: Option<Result<Vec<Deployment>, String>> = None;
-        unsafe {
-            Worker_DeploymentListFuture_Get(
-                self.internal,
-                &0,
-                &mut data as *mut _ as *mut ::std::os::raw::c_void,
-                Some(DeploymentListFuture::callback_handler),
-            );
-        }
-
-        data.map_or(Ok(Async::NotReady), |result| {
-            self.consumed = true;
-            result.map(Async::Ready)
-        })
-    }
-
-    fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
-    where
-        Self: Sized,
-    {
-        if self.consumed {
-            return Err("DeploymentListFuture has already been consumed".to_owned());
-        }
-
-        assert!(!self.internal.is_null());
-        let mut data: Option<Result<Vec<Deployment>, String>> = None;
-        unsafe {
-            Worker_DeploymentListFuture_Get(
-                self.internal,
-                ::std::ptr::null(),
-                &mut data as *mut _ as *mut ::std::os::raw::c_void,
-                Some(DeploymentListFuture::callback_handler),
-            );
-        }
-
-        data.expect("Blocking call to Worker_DeploymentListFuture_Get did not trigger callback")
-    }
-}
-
-impl Drop for DeploymentListFuture {
-    fn drop(&mut self) {
-        if !self.internal.is_null() {
-            unsafe { Worker_DeploymentListFuture_Destroy(self.internal) }
         }
     }
 }
@@ -318,16 +198,17 @@ impl PlayerIdentityTokenResponse {
 }
 
 pub struct PlayerIdentityTokenFuture {
-    internal: *mut Worker_Alpha_PlayerIdentityTokenResponseFuture,
-    consumed: bool,
+    request: PlayerIdentityTokenRequest,
+    hostname: CString,
+    port: u16
 }
 
 impl PlayerIdentityTokenFuture {
-    fn new(ptr: *mut Worker_Alpha_PlayerIdentityTokenResponseFuture) -> Self {
-        assert!(!ptr.is_null());
+    fn new(hostname: CString, port: u16, request: PlayerIdentityTokenRequest) -> Self {
         PlayerIdentityTokenFuture {
-            internal: ptr,
-            consumed: false,
+            request,
+            hostname,
+            port
         }
     }
 
@@ -352,18 +233,29 @@ impl PlayerIdentityTokenFuture {
             *data = Some(Ok(response));
         }
     }
+}
 
-    fn get_future(
-        &self,
-        timeout: Option<u32>,
-    ) -> Option<Result<PlayerIdentityTokenResponse, String>> {
-        assert!(!self.internal.is_null());
+impl WorkerSdkFuture for PlayerIdentityTokenFuture {
+    type RawPointer = Worker_Alpha_PlayerIdentityTokenResponseFuture;
+    type Output = Result<PlayerIdentityTokenResponse, String>;
 
+    fn start(&self) -> *mut Self::RawPointer {
+        unsafe {
+            let mut params = self.request.to_worker_sdk();
+            Worker_Alpha_CreateDevelopmentPlayerIdentityTokenAsync(
+                self.hostname.as_ptr(),
+                self.port,
+                &mut params,
+            )
+        }
+    }
+
+    fn poll(ptr: *mut Self::RawPointer) -> Option<Self::Output> {
         let mut data: Option<Result<PlayerIdentityTokenResponse, String>> = None;
         unsafe {
             Worker_Alpha_PlayerIdentityTokenResponseFuture_Get(
-                self.internal,
-                timeout.map_or(::std::ptr::null(), |value| &value),
+                ptr,
+                &0,
                 &mut data as *mut _ as *mut ::std::os::raw::c_void,
                 Some(PlayerIdentityTokenFuture::callback_handler),
             );
@@ -371,39 +263,9 @@ impl PlayerIdentityTokenFuture {
 
         data
     }
-}
 
-impl Future for PlayerIdentityTokenFuture {
-    type Item = PlayerIdentityTokenResponse;
-    type Error = String;
-
-    fn poll(&mut self) -> Result<Async<<Self as Future>::Item>, <Self as Future>::Error> {
-        if self.consumed {
-            return Err("PlayerIdentityTokenFuture has already been consumed".to_owned());
-        }
-
-        self.get_future(Some(0))
-            .map_or(Ok(Async::NotReady), |result| {
-                self.consumed = true;
-                result.map(Async::Ready)
-            })
-    }
-
-    fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
-    where
-        Self: Sized,
-    {
-        if self.consumed {
-            return Err("PlayerIdentityTokenFuture has already been consumed".to_owned());
-        }
-
-        self.get_future(None).expect("Blocking call to Worker_Alpha_PlayerIdentityTokenResponseFuture_Get did not trigger callback")
-    }
-}
-
-impl Drop for PlayerIdentityTokenFuture {
-    fn drop(&mut self) {
-        unsafe { Worker_Alpha_PlayerIdentityTokenResponseFuture_Destroy(self.internal) }
+    fn destroy(ptr: *mut Self::RawPointer) {
+        unsafe { Worker_Alpha_PlayerIdentityTokenResponseFuture_Destroy(ptr) }
     }
 }
 
@@ -498,16 +360,17 @@ impl LoginTokenDetails {
 }
 
 pub struct LoginTokensFuture {
-    internal: *mut Worker_Alpha_LoginTokensResponseFuture,
-    consumed: bool,
+    request: LoginTokensRequest,
+    hostname: CString,
+    port: u16
 }
 
 impl LoginTokensFuture {
-    fn new(ptr: *mut Worker_Alpha_LoginTokensResponseFuture) -> Self {
-        assert!(!ptr.is_null());
+    fn new(hostname: CString, port: u16, request: LoginTokensRequest) -> Self {
         LoginTokensFuture {
-            internal: ptr,
-            consumed: false,
+            request,
+            hostname,
+            port
         }
     }
 
@@ -531,54 +394,38 @@ impl LoginTokensFuture {
             *data = Some(Ok(response));
         }
     }
+}
 
-    fn get_future(&self, timeout: Option<u32>) -> Option<Result<LoginTokensResponse, String>> {
-        assert!(!self.internal.is_null());
+impl WorkerSdkFuture for LoginTokensFuture {
+    type RawPointer = Worker_Alpha_LoginTokensResponseFuture;
+    type Output = Result<LoginTokensResponse, String>;
+
+    fn start(&self) -> *mut Self::RawPointer {
+        let mut params = self.request.to_worker_sdk();
+        unsafe {
+            Worker_Alpha_CreateDevelopmentLoginTokensAsync(
+                self.hostname.as_ptr(),
+                self.port,
+                &mut params,
+            )
+        }
+    }
+
+    fn poll(ptr: *mut Self::RawPointer) -> Option<Self::Output> {
         let mut data: Option<Result<LoginTokensResponse, String>> = None;
         unsafe {
             Worker_Alpha_LoginTokensResponseFuture_Get(
-                self.internal,
-                timeout.map_or(::std::ptr::null(), |value| &value),
+                ptr,
+                &0,
                 &mut data as *mut _ as *mut ::std::os::raw::c_void,
                 Some(LoginTokensFuture::callback_handler),
             );
-
-            data
-        }
-    }
-}
-
-impl Future for LoginTokensFuture {
-    type Item = LoginTokensResponse;
-    type Error = String;
-
-    fn poll(&mut self) -> Result<Async<<Self as Future>::Item>, <Self as Future>::Error> {
-        if self.consumed {
-            return Err("LoginTokensFuture has already been consumed".to_owned());
         }
 
-        self.get_future(Some(0))
-            .map_or(Ok(Async::NotReady), |result| {
-                self.consumed = true;
-                result.map(Async::Ready)
-            })
+        data
     }
 
-    fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
-    where
-        Self: Sized,
-    {
-        if self.consumed {
-            return Err("LoginTokensFuture has already been consumed".to_owned());
-        }
-
-        self.get_future(None)
-            .expect("Blocking call to Worker_Alpha_LoginTokensFuture_Get did not trigger callback")
-    }
-}
-
-impl Drop for LoginTokensFuture {
-    fn drop(&mut self) {
-        unsafe { Worker_Alpha_LoginTokensResponseFuture_Destroy(self.internal) }
+    fn destroy(ptr: *mut Self::RawPointer) {
+        unsafe { Worker_Alpha_LoginTokensResponseFuture_Destroy(ptr) }
     }
 }
