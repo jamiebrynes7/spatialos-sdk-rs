@@ -13,16 +13,12 @@ impl SchemaComponentData {
         }
     }
 
-    pub fn fields(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentDataFields(self.internal) },
-        }
+    pub fn fields(&self) -> &SchemaObject {
+        unsafe { SchemaObject::from_raw(Schema_GetComponentDataFields(self.internal)) }
     }
 
-    pub fn fields_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentDataFields(self.internal) },
-        }
+    pub fn fields_mut(&mut self) -> &mut SchemaObject {
+        unsafe { SchemaObject::from_raw_mut(Schema_GetComponentDataFields(self.internal)) }
     }
 }
 

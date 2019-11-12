@@ -22,20 +22,20 @@ macro_rules! impl_primitive_field {
             type RustType = $rust_type;
 
             fn get_or_default(object: &SchemaObject, field: FieldId) -> $rust_type {
-                unsafe { $schema_get(object.internal, field) }
+                unsafe { $schema_get(object.as_ptr(), field) }
             }
 
             fn index(object: &SchemaObject, field: FieldId, index: usize) -> $rust_type {
-                unsafe { $schema_index(object.internal, field, index as u32) }
+                unsafe { $schema_index(object.as_ptr(), field, index as u32) }
             }
 
             fn count(object: &SchemaObject, field: FieldId) -> usize {
-                unsafe { $schema_count(object.internal, field) as usize }
+                unsafe { $schema_count(object.as_ptr(), field) as usize }
             }
 
             fn add(object: &mut SchemaObject, field: FieldId, value: &$rust_type) {
                 unsafe {
-                    $schema_add(object.internal, field, *value);
+                    $schema_add(object.as_ptr(), field, *value);
                 }
             }
 
@@ -46,7 +46,7 @@ macro_rules! impl_primitive_field {
                     .try_into()
                     .expect("Cannot work with a super long array");
                 unsafe {
-                    $schema_add_list(object.internal, field, ptr, len);
+                    $schema_add_list(object.as_ptr(), field, ptr, len);
                 }
             }
         }
@@ -184,20 +184,20 @@ impl SchemaPrimitiveField for SchemaEntityId {
     type RustType = EntityId;
 
     fn get_or_default(object: &SchemaObject, field: FieldId) -> EntityId {
-        EntityId::new(unsafe { Schema_GetEntityId(object.internal, field) })
+        EntityId::new(unsafe { Schema_GetEntityId(object.as_ptr(), field) })
     }
 
     fn index(object: &SchemaObject, field: FieldId, index: usize) -> EntityId {
-        EntityId::new(unsafe { Schema_IndexEntityId(object.internal, field, index as u32) })
+        EntityId::new(unsafe { Schema_IndexEntityId(object.as_ptr(), field, index as u32) })
     }
 
     fn count(object: &SchemaObject, field: FieldId) -> usize {
-        unsafe { Schema_GetEntityIdCount(object.internal, field) as usize }
+        unsafe { Schema_GetEntityIdCount(object.as_ptr(), field) as usize }
     }
 
     fn add(object: &mut SchemaObject, field: FieldId, value: &EntityId) {
         unsafe {
-            Schema_AddEntityId(object.internal, field, value.id);
+            Schema_AddEntityId(object.as_ptr(), field, value.id);
         }
     }
 
@@ -205,7 +205,7 @@ impl SchemaPrimitiveField for SchemaEntityId {
         let converted_list: Vec<i64> = value.iter().map(|v| v.id).collect();
         unsafe {
             let ptr = converted_list.as_ptr();
-            Schema_AddEntityIdList(object.internal, field, ptr, value.len() as u32);
+            Schema_AddEntityIdList(object.as_ptr(), field, ptr, value.len() as u32);
         }
     }
 }
@@ -214,20 +214,20 @@ impl SchemaPrimitiveField for SchemaBool {
     type RustType = bool;
 
     fn get_or_default(object: &SchemaObject, field: FieldId) -> bool {
-        unsafe { Schema_GetBool(object.internal, field) != 0 }
+        unsafe { Schema_GetBool(object.as_ptr(), field) != 0 }
     }
 
     fn index(object: &SchemaObject, field: FieldId, index: usize) -> bool {
-        unsafe { Schema_IndexBool(object.internal, field, index as u32) != 0 }
+        unsafe { Schema_IndexBool(object.as_ptr(), field, index as u32) != 0 }
     }
 
     fn count(object: &SchemaObject, field: FieldId) -> usize {
-        unsafe { Schema_GetBoolCount(object.internal, field) as usize }
+        unsafe { Schema_GetBoolCount(object.as_ptr(), field) as usize }
     }
 
     fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
         unsafe {
-            Schema_AddBool(object.internal, field, *value as u8);
+            Schema_AddBool(object.as_ptr(), field, *value as u8);
         }
     }
 
@@ -235,7 +235,7 @@ impl SchemaPrimitiveField for SchemaBool {
         let converted_list: Vec<u8> = value.iter().map(|v| if *v { 1u8 } else { 0u8 }).collect();
         unsafe {
             let ptr = converted_list.as_ptr();
-            Schema_AddBoolList(object.internal, field, ptr, value.len() as u32);
+            Schema_AddBoolList(object.as_ptr(), field, ptr, value.len() as u32);
         }
     }
 }
@@ -245,8 +245,8 @@ impl SchemaPrimitiveField for SchemaString {
 
     fn get_or_default(object: &SchemaObject, field: FieldId) -> String {
         let slice = unsafe {
-            let bytes_ptr = Schema_GetBytes(object.internal, field);
-            let bytes_len = Schema_GetBytesLength(object.internal, field);
+            let bytes_ptr = Schema_GetBytes(object.as_ptr(), field);
+            let bytes_len = Schema_GetBytesLength(object.as_ptr(), field);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
         };
         String::from_utf8_lossy(slice).to_string()
@@ -254,22 +254,22 @@ impl SchemaPrimitiveField for SchemaString {
 
     fn index(object: &SchemaObject, field: FieldId, index: usize) -> String {
         let slice = unsafe {
-            let bytes_ptr = Schema_IndexBytes(object.internal, field, index as u32);
-            let bytes_len = Schema_IndexBytesLength(object.internal, field, index as u32);
+            let bytes_ptr = Schema_IndexBytes(object.as_ptr(), field, index as u32);
+            let bytes_len = Schema_IndexBytesLength(object.as_ptr(), field, index as u32);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
         };
         String::from_utf8_lossy(slice).to_string()
     }
 
     fn count(object: &SchemaObject, field: FieldId) -> usize {
-        unsafe { Schema_GetBytesCount(object.internal, field) as usize }
+        unsafe { Schema_GetBytesCount(object.as_ptr(), field) as usize }
     }
 
     fn add(object: &mut SchemaObject, field: FieldId, value: &String) {
         let utf8_bytes = value.as_bytes();
         unsafe {
             Schema_AddBytes(
-                object.internal,
+                object.as_ptr(),
                 field,
                 utf8_bytes.as_ptr(),
                 utf8_bytes.len() as u32,
@@ -289,8 +289,8 @@ impl SchemaPrimitiveField for SchemaBytes {
 
     fn get_or_default(object: &SchemaObject, field: FieldId) -> Vec<u8> {
         let slice = unsafe {
-            let bytes_ptr = Schema_GetBytes(object.internal, field);
-            let bytes_len = Schema_GetBytesLength(object.internal, field);
+            let bytes_ptr = Schema_GetBytes(object.as_ptr(), field);
+            let bytes_len = Schema_GetBytesLength(object.as_ptr(), field);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
         };
         slice.to_vec()
@@ -298,20 +298,20 @@ impl SchemaPrimitiveField for SchemaBytes {
 
     fn index(object: &SchemaObject, field: FieldId, index: usize) -> Vec<u8> {
         let slice = unsafe {
-            let bytes_ptr = Schema_IndexBytes(object.internal, field, index as u32);
-            let bytes_len = Schema_IndexBytesLength(object.internal, field, index as u32);
+            let bytes_ptr = Schema_IndexBytes(object.as_ptr(), field, index as u32);
+            let bytes_len = Schema_IndexBytesLength(object.as_ptr(), field, index as u32);
             slice::from_raw_parts(bytes_ptr, bytes_len as usize)
         };
         slice.to_vec()
     }
 
     fn count(object: &SchemaObject, field: FieldId) -> usize {
-        unsafe { Schema_GetBytesCount(object.internal, field) as usize }
+        unsafe { Schema_GetBytesCount(object.as_ptr(), field) as usize }
     }
 
     fn add(object: &mut SchemaObject, field: FieldId, value: &Vec<u8>) {
         unsafe {
-            Schema_AddBytes(object.internal, field, value.as_ptr(), value.len() as u32);
+            Schema_AddBytes(object.as_ptr(), field, value.as_ptr(), value.len() as u32);
         }
     }
 

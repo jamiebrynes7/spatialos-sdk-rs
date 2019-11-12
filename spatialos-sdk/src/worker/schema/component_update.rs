@@ -13,28 +13,20 @@ impl SchemaComponentUpdate {
         }
     }
 
-    pub fn fields(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateFields(self.internal) },
-        }
+    pub fn fields(&self) -> &SchemaObject {
+        unsafe { SchemaObject::from_raw(Schema_GetComponentUpdateFields(self.internal)) }
     }
 
-    pub fn fields_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateFields(self.internal) },
-        }
+    pub fn fields_mut(&mut self) -> &mut SchemaObject {
+        unsafe { SchemaObject::from_raw_mut(Schema_GetComponentUpdateFields(self.internal)) }
     }
 
-    pub fn events(&self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) },
-        }
+    pub fn events(&self) -> &SchemaObject {
+        unsafe { SchemaObject::from_raw(Schema_GetComponentUpdateEvents(self.internal)) }
     }
 
-    pub fn events_mut(&mut self) -> SchemaObject {
-        SchemaObject {
-            internal: unsafe { Schema_GetComponentUpdateEvents(self.internal) },
-        }
+    pub fn events_mut(&mut self) -> &mut SchemaObject {
+        unsafe { SchemaObject::from_raw_mut(Schema_GetComponentUpdateEvents(self.internal)) }
     }
 
     // TODO: Cleared fields.

@@ -1,10 +1,9 @@
 use crate::worker::schema::{FieldId, SchemaPrimitiveField};
 use spatialos_sdk_sys::worker::*;
+use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct SchemaObject {
-    pub(crate) internal: *mut Schema_Object,
-}
+pub struct SchemaObject(PhantomData<*mut Schema_Object>);
 
 impl SchemaObject {
     pub fn get<T: SchemaPrimitiveField>(&self, field: FieldId) -> T::RustType {
@@ -31,26 +30,50 @@ impl SchemaObject {
         T::add_list(self, field, value);
     }
 
-    // TODO: Hook up the lifetimes of the schema objects. This is unsound as it exists now.
-    pub fn get_object(&self, field: FieldId) -> SchemaObject {
-        let internal = unsafe { Schema_GetObject(self.internal, field) };
-        SchemaObject { internal }
+    pub fn get_object(&self, field: FieldId) -> &SchemaObject {
+        unsafe { Self::from_raw(Schema_GetObject(self.as_ptr(), field)) }
     }
 
     pub fn object_count(&self, field: FieldId) -> usize {
-        let count = unsafe { Schema_GetObjectCount(self.internal, field) };
+        let count = unsafe { Schema_GetObjectCount(self.as_ptr(), field) };
         count as usize
     }
 
-    // TODO: Hook up the lifetimes of the schema objects. This is unsound as it exists now.
-    pub fn index_object(&self, field: FieldId, index: usize) -> SchemaObject {
-        let internal = unsafe { Schema_IndexObject(self.internal, field, index as u32) };
-        SchemaObject { internal }
+    pub fn index_object(&self, field: FieldId, index: usize) -> &SchemaObject {
+        unsafe { Self::from_raw(Schema_IndexObject(self.as_ptr(), field, index as u32)) }
     }
 
-    // TODO: Hook up the lifetimes of the schema objects. This is unsound as it exists now.
-    pub fn add_object(&mut self, field: FieldId) -> SchemaObject {
-        let internal = unsafe { Schema_AddObject(self.internal, field) };
-        SchemaObject { internal }
+    pub fn add_object(&mut self, field: FieldId) -> &mut SchemaObject {
+        unsafe { Self::from_raw_mut(Schema_AddObject(self.as_ptr(), field)) }
     }
+
+    // Methods for raw pointer conversion.
+    // -----------------------------------
+
+    pub(crate) unsafe fn from_raw<'a>(raw: *mut Schema_Object) -> &'a Self {
+        &*(raw as *mut _)
+    }
+
+    pub(crate) unsafe fn from_raw_mut<'a>(raw: *mut Schema_Object) -> &'a mut Self {
+        &mut *(raw as *mut _)
+    }
+
+    pub(crate) fn as_ptr(&self) -> *mut Schema_Object {
+        self as *const _ as *mut _
+    }
+}
+
+// SAFETY: It should be safe to send a `SchemaObject` between threads, so long as
+// it's only ever accessed from one thread at a time. It has unsynchronized internal
+// mutability (when getting an object field, it will automatically add a new object
+// if one doesn't already exist), so it cannot be `Sync`.
+unsafe impl Send for SchemaObject {}
+
+#[cfg(test)]
+mod test {
+    use super::SchemaObject;
+    use static_assertions::*;
+
+    assert_impl_all!(SchemaObject: Send);
+    assert_not_impl_any!(SchemaObject: Sync);
 }

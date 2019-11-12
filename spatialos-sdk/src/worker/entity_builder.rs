@@ -118,9 +118,9 @@ impl EntityBuilder {
     // before we call `entity.add_serialized`?
     fn serialize_position(&self) -> SchemaComponentData {
         let mut position_schema = SchemaComponentData::new();
-        let mut position_fields = position_schema.fields_mut();
+        let position_fields = position_schema.fields_mut();
 
-        let mut coords_obj = position_fields.add_object(1);
+        let coords_obj = position_fields.add_object(1);
         coords_obj.add::<SchemaDouble>(1, &self.position.0);
         coords_obj.add::<SchemaDouble>(2, &self.position.1);
         coords_obj.add::<SchemaDouble>(3, &self.position.2);
@@ -130,16 +130,16 @@ impl EntityBuilder {
 
     fn serialize_acl(&self) -> SchemaComponentData {
         let mut acl_schema = SchemaComponentData::new();
-        let mut acl_fields = acl_schema.fields_mut();
+        let acl_fields = acl_schema.fields_mut();
 
-        let mut read_access = acl_fields.add_object(1);
+        let read_access = acl_fields.add_object(1);
         for layer in &self.read_permissions {
-            let mut attribute_set = read_access.add_object(1);
+            let attribute_set = read_access.add_object(1);
             attribute_set.add::<SchemaString>(1, layer);
         }
 
         for pair in &self.write_permissions {
-            let mut map_obj = acl_fields.add_object(2);
+            let map_obj = acl_fields.add_object(2);
             map_obj.add::<SchemaUint32>(1, pair.0);
 
             map_obj
@@ -153,7 +153,7 @@ impl EntityBuilder {
 
     fn serialize_metadata(&self) -> SchemaComponentData {
         let mut metadata_schema = SchemaComponentData::new();
-        let mut metadata_fields = metadata_schema.fields_mut();
+        let metadata_fields = metadata_schema.fields_mut();
         metadata_fields.add::<SchemaString>(1, self.metadata.as_ref().unwrap());
 
         metadata_schema
