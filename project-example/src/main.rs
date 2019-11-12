@@ -109,7 +109,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                         let entity_state = world
                             .get_mut(&add_component.entity_id)
                             .expect("Entity wasn't present in local world");
-                        entity_state.rotate = Some(rotate.clone());
+                        entity_state.rotate = Some(rotate.into_owned());
                     }
                     id => println!("Received unknown component: {}", id),
                 },

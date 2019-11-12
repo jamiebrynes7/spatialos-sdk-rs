@@ -1,6 +1,8 @@
 use crate::worker::schema::{self, *};
 use spatialos_sdk_sys::worker::*;
-use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
+use std::{
+    borrow::Cow, collections::hash_map::HashMap, mem, os::raw, ptr, ptr::NonNull, sync::Arc,
+};
 
 // Re-export inventory so generated code doesn't require the user to add inventory to their
 // Cargo.toml
@@ -121,6 +123,42 @@ impl UpdateParameters {
     }
 }
 
+#[derive(Debug)]
+pub(crate) struct ComponentDataRef<'a> {
+    component_id: ComponentId,
+    schema_type: &'a SchemaComponentData,
+    user_handle: Option<NonNull<Worker_ComponentDataHandle>>,
+}
+
+impl<'a> ComponentDataRef<'a> {
+    pub(crate) unsafe fn from_raw(data: &'a Worker_ComponentData) -> Self {
+        Self {
+            component_id: data.component_id,
+            schema_type: SchemaComponentData::from_raw(data.schema_type),
+            user_handle: NonNull::new(data.user_handle),
+        }
+    }
+
+    // NOTE: We manually declare that the component impl `TypeConversion` and `Clone`
+    // here, but in practice this will always be true for all component types. Future
+    // iterations should clean this up such that the `Component` trait can imply these
+    // other bounds automatically (i.e. by making them super traits of `Component`).
+    pub fn get<C: Component + TypeConversion + Clone>(&self) -> Option<Cow<'_, C>> {
+        if C::ID != self.component_id {
+            return None;
+        }
+
+        if let Some(user_handle) = &self.user_handle {
+            let component = unsafe { &*user_handle.cast().as_ptr() };
+            Some(Cow::Borrowed(component))
+        } else {
+            <C as TypeConversion>::from_type(self.schema_type.fields())
+                .ok()
+                .map(Cow::Owned)
+        }
+    }
+}
+
 // Internal untyped component data objects.
 pub(crate) mod internal {
     use crate::worker::schema::*;
@@ -128,23 +166,6 @@ pub(crate) mod internal {
     use std::marker::PhantomData;
 
     use crate::worker::component::ComponentId;
-
-    #[derive(Debug)]
-    pub struct ComponentData<'a> {
-        pub component_id: ComponentId,
-        pub schema_type: &'a SchemaComponentData,
-        pub user_handle: *const Worker_ComponentDataHandle,
-    }
-
-    impl<'a> From<&'a Worker_ComponentData> for ComponentData<'a> {
-        fn from(data: &Worker_ComponentData) -> Self {
-            ComponentData {
-                component_id: data.component_id,
-                schema_type: unsafe { SchemaComponentData::from_raw(data.schema_type) },
-                user_handle: data.user_handle,
-            }
-        }
-    }
 
     #[derive(Debug)]
     pub struct ComponentUpdate<'a> {
