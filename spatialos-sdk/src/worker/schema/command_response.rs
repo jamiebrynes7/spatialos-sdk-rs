@@ -17,17 +17,6 @@ impl SchemaCommandResponse {
     pub fn object_mut(&mut self) -> &mut SchemaObject {
         unsafe { SchemaObject::from_raw_mut(Schema_GetCommandResponseObject(self.as_ptr())) }
     }
-
-    // Methods for raw pointer conversion.
-    // -----------------------------------
-
-    pub(crate) unsafe fn from_raw<'a>(raw: *mut Schema_CommandResponse) -> &'a Self {
-        &*(raw as *mut _)
-    }
-
-    pub(crate) fn as_ptr(&self) -> *mut Schema_CommandResponse {
-        self as *const _ as *mut _
-    }
 }
 
 unsafe impl PointerType for SchemaCommandResponse {
