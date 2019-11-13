@@ -47,3 +47,18 @@ impl OwnableImpl for SchemaComponentUpdate {
         Schema_DestroyComponentUpdate(me);
     }
 }
+
+// SAFETY: It should be safe to send a `SchemaComponentUpdate` between threads, so long as
+// it's only ever accessed from one thread at a time. It has unsynchronized internal
+// mutability (when getting an object field, it will automatically add a new object
+// if one doesn't already exist), so it cannot be `Sync`.
+unsafe impl Send for SchemaComponentUpdate {}
+
+#[cfg(test)]
+mod tests {
+    use super::SchemaComponentUpdate;
+    use static_assertions::*;
+
+    assert_impl_all!(SchemaComponentUpdate: Send);
+    assert_not_impl_any!(SchemaComponentUpdate: Sync);
+}

@@ -6,7 +6,7 @@ use crate::worker::{
     entity::Entity,
     internal::utils::*,
     metrics::Metrics,
-    schema::{SchemaCommandRequest, SchemaCommandResponse, SchemaComponentUpdate},
+    schema::{SchemaCommandRequest, SchemaCommandResponse},
     {Authority, EntityId, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
