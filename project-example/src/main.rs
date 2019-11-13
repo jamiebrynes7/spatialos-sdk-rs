@@ -138,7 +138,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                         let component_update = update.get::<example::Rotate>().unwrap();
                         let state = world.get_mut(&update.entity_id).unwrap();
                         let rotate = state.rotate.as_mut().unwrap();
-                        rotate.merge(component_update.clone());
+                        rotate.merge(component_update.into_owned());
                     }
                     id => println!("Received unknown component: {}", id),
                 },

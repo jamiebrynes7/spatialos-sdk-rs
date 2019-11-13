@@ -51,7 +51,7 @@ where
     ) -> Result<Self::CommandResponse, String>;
 
     fn to_data(data: &Self) -> Result<Owned<SchemaComponentData>, String>;
-    fn to_update(update: &Self::Update) -> Result<schema::SchemaComponentUpdate, String>;
+    fn to_update(update: &Self::Update) -> Result<Owned<SchemaComponentUpdate>, String>;
     fn to_request(request: &Self::CommandRequest) -> Result<schema::SchemaCommandRequest, String>;
     fn to_response(
         response: &Self::CommandResponse,
@@ -152,7 +152,47 @@ impl<'a> ComponentDataRef<'a> {
             let component = unsafe { &*user_handle.cast().as_ptr() };
             Some(Cow::Borrowed(component))
         } else {
-            <C as TypeConversion>::from_type(self.schema_type.fields())
+            TypeConversion::from_type(self.schema_type.fields())
+                .ok()
+                .map(Cow::Owned)
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct ComponentUpdateRef<'a> {
+    pub component_id: ComponentId,
+    pub schema_type: &'a SchemaComponentUpdate,
+    pub user_handle: Option<NonNull<Worker_ComponentUpdateHandle>>,
+}
+
+impl<'a> ComponentUpdateRef<'a> {
+    pub(crate) unsafe fn from_raw(update: &Worker_ComponentUpdate) -> Self {
+        Self {
+            component_id: update.component_id,
+            schema_type: SchemaComponentUpdate::from_raw(update.schema_type),
+            user_handle: NonNull::new(update.user_handle),
+        }
+    }
+
+    // NOTE: We manually declare that the update impl `TypeConversion` and `Clone`
+    // here, but in practice this will always be true for all component types. Future
+    // iterations should clean this up such that the `Component` trait can imply these
+    // other bounds automatically (i.e. by making them super traits of `Component`).
+    pub fn get<C>(&self) -> Option<Cow<'_, C::Update>>
+    where
+        C: Component,
+        C::Update: TypeConversion + Clone,
+    {
+        if C::ID != self.component_id {
+            return None;
+        }
+
+        if let Some(user_handle) = &self.user_handle {
+            let component = unsafe { &*user_handle.cast().as_ptr() };
+            Some(Cow::Borrowed(component))
+        } else {
+            TypeConversion::from_type(self.schema_type.fields())
                 .ok()
                 .map(Cow::Owned)
         }
@@ -166,31 +206,6 @@ pub(crate) mod internal {
     use std::marker::PhantomData;
 
     use crate::worker::component::ComponentId;
-
-    #[derive(Debug)]
-    pub struct ComponentUpdate<'a> {
-        pub component_id: ComponentId,
-        pub schema_type: SchemaComponentUpdate,
-        pub user_handle: *const Worker_ComponentUpdateHandle,
-
-        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-        // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something*.
-        pub _marker: PhantomData<&'a ()>,
-    }
-
-    impl<'a> From<&'a Worker_ComponentUpdate> for ComponentUpdate<'a> {
-        fn from(update: &Worker_ComponentUpdate) -> Self {
-            ComponentUpdate {
-                component_id: update.component_id,
-                schema_type: SchemaComponentUpdate {
-                    internal: update.schema_type,
-                },
-                user_handle: update.user_handle,
-                _marker: PhantomData,
-            }
-        }
-    }
 
     #[derive(Debug)]
     pub struct CommandRequest<'a> {
@@ -410,8 +425,8 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     update: *mut Schema_ComponentUpdate,
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
-    let schema_update = schema::SchemaComponentUpdate { internal: update };
-    let deserialized_result = C::from_update(&schema_update);
+    let schema_update = SchemaComponentUpdate::from_raw(update);
+    let deserialized_result = C::from_update(schema_update);
     if let Ok(deserialized_update) = deserialized_result {
         *handle_out = handle_allocate(deserialized_update);
         1
@@ -429,7 +444,7 @@ unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
     let data = &*(handle as *const _);
     let schema_result = C::to_update(data);
     if let Ok(schema_update) = schema_result {
-        *update = schema_update.internal;
+        *update = schema_update.into_raw();
     } else {
         *update = ptr::null_mut();
     }

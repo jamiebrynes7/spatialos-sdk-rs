@@ -202,7 +202,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     let component_update_op = ComponentUpdateOp {
                         entity_id: EntityId::new(op.entity_id),
                         component_id: op.update.component_id,
-                        component_update: internal::ComponentUpdate::from(&op.update),
+                        component_update: ComponentUpdateRef::from_raw(&op.update),
                     };
                     WorkerOp::ComponentUpdate(component_update_op)
                 }
@@ -563,23 +563,16 @@ pub struct AuthorityChangeOp {
 pub struct ComponentUpdateOp<'a> {
     pub entity_id: EntityId,
     pub component_id: ComponentId,
-    pub component_update: component::internal::ComponentUpdate<'a>,
+    component_update: ComponentUpdateRef<'a>,
 }
 
 impl<'a> ComponentUpdateOp<'a> {
-    pub fn get<C: Component>(&self) -> Option<&C::Update> {
-        // TODO: Deserialize schema_type if user_handle is null.
-        if C::ID == self.component_update.component_id
-            && !self.component_update.user_handle.is_null()
-        {
-            Some(unsafe { &*(self.component_update.user_handle as *const _) })
-        } else {
-            None
-        }
-    }
-
-    fn schema(&self) -> &SchemaComponentUpdate {
-        &self.component_update.schema_type
+    pub fn get<C>(&self) -> Option<Cow<'_, C::Update>>
+    where
+        C: Component,
+        C::Update: TypeConversion + Clone,
+    {
+        self.component_update.get::<C>()
     }
 }
 
