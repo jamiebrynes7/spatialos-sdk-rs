@@ -46,9 +46,5 @@ unsafe impl Send for SchemaComponentUpdate {}
 
 #[cfg(test)]
 mod tests {
-    use super::SchemaComponentUpdate;
-    use static_assertions::*;
-
-    assert_impl_all!(SchemaComponentUpdate: Send);
-    assert_not_impl_any!(SchemaComponentUpdate: Sync);
+    pointer_type_tests!(super::SchemaComponentUpdate);
 }

@@ -59,10 +59,6 @@ unsafe impl PointerType for SchemaObject {
 unsafe impl Send for SchemaObject {}
 
 #[cfg(test)]
-mod test {
-    use super::SchemaObject;
-    use static_assertions::*;
-
-    assert_impl_all!(SchemaObject: Send);
-    assert_not_impl_any!(SchemaObject: Sync);
+mod tests {
+    pointer_type_tests!(super::SchemaObject);
 }

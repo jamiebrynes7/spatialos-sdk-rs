@@ -1,3 +1,9 @@
+// NOTE: This module defines macros that are used in other submodules, so it must be
+// declared first in order for those macros to be visible to all sibling modules.
+#[cfg(test)]
+#[macro_use]
+mod macros;
+
 mod command_request;
 mod command_response;
 mod component_data;
@@ -36,6 +42,54 @@ pub trait SchemaPrimitiveField {
 }
 
 mod private {
+    /// A type that acts as an alias to some schema data hidden behind a pointer.
+    ///
+    /// `Schema_Object` and the related schema data "wrapper types" are all represented
+    /// as opaque types hidden behind pointers in the C API; You always work with a
+    /// pointer to the struct, never an instance of the struct itself. To represent
+    /// these in Rust, we define dummy types that can similarly always be put behind a
+    /// reference without ever allowing the user to directly "hold" an instance of the
+    /// type. This allows us to simply cast the raw pointer to a reference to our dummy
+    /// type and preserve the desired semantics of working with a reference, including
+    /// the ownership rules and lifetimes that come with it.
+    ///
+    /// This trait is implemented for all such types, and provides the common methods
+    /// used for type punning with the raw pointer.
+    ///
+    /// # Safety
+    ///
+    /// In order for the implementation of this trait to be safe, the following
+    /// invariants must be upheld:
+    ///
+    /// * It must be a [zero sized type][zst].
+    /// * It must have a private field, such that the type can never be directly
+    ///   instantiated by a user.
+    /// * A reference to `Self` must never be de-referenced. It may only ever be
+    ///   converted to a pointer with `as_ptr()`, which may then be passed to the
+    ///   appropriate functions in the C API.
+    ///
+    /// The `pointer_type_tests!` macro should be used to generate tests for any type
+    /// implementing this trait.
+    ///
+    /// [zst]:  https://doc.rust-lang.org/nomicon/exotic-sizes.html#zero-sized-types-zsts
+    ///
+    /// # Ownable Types
+    ///
+    /// This trait broadly covers all types that can be converted from a pointer to a
+    /// reference, but some of the types (well, all of them except `SchemaObject`) can
+    /// also be owned in addition to being borrowed. For these, see the `owned` module
+    /// and its corresponding `Ownable` trait which extends `PointerType` with
+    /// additional functionality for creating and destroying owned instances of the
+    /// type.
+    ///
+    /// # Extern Types
+    ///
+    /// There is an [accepted RFC][rfc] for more accurately representing types like
+    /// this. If it is ever implemented and stabilized, we should switch to representing
+    /// these types as extern types, as it would better enforce necessary safety
+    /// invariants.
+    ///
+    /// [rfc]: https://github.com/rust-lang/rfcs/blob/master/text/1861-extern-types.md
     pub unsafe trait PointerType: Sized {
         type Raw;
 

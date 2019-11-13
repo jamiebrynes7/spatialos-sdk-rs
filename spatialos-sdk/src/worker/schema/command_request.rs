@@ -36,9 +36,5 @@ unsafe impl Send for SchemaCommandRequest {}
 
 #[cfg(test)]
 mod tests {
-    use super::SchemaCommandRequest;
-    use static_assertions::*;
-
-    assert_impl_all!(SchemaCommandRequest: Send);
-    assert_not_impl_any!(SchemaCommandRequest: Sync);
+    pointer_type_tests!(super::SchemaCommandRequest);
 }
