@@ -1,4 +1,15 @@
-#[cfg(test)]
+/// Generates static assertion tests around safety invariants for pointer types.
+///
+/// Generates the following tests:
+///
+/// * Verify that the type is zero sized.
+/// * Verify that the alignment of the raw pointer matches the alignment of
+///   references to the Rust type.
+/// * Verify that the type implements `Send`.
+/// * Verify that the type does not implement `Sync`.
+///
+/// See the documentation for `PointerType` for more details about the safety
+/// invariants that these tests enforce.
 macro_rules! pointer_type_tests {
     ($type:ty) => {
         static_assertions::const_assert!(std::mem::size_of::<$type>() == 0);
