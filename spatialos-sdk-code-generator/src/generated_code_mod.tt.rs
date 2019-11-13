@@ -182,7 +182,7 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {<#
             for command in &component.commands {
@@ -195,7 +195,7 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &<#= self.rust_fqname(&component.qualified_name) #>CommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &<#= self.rust_fqname(&component.qualified_name) #>CommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {<#
             for command in &component.commands {

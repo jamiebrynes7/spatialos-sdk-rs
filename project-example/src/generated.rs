@@ -216,7 +216,7 @@ impl Component for EntityIdTest {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::example::EntityIdTestCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::example::EntityIdTestCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
@@ -224,7 +224,7 @@ impl Component for EntityIdTest {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::example::EntityIdTestCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::example::EntityIdTestCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
@@ -338,7 +338,7 @@ impl Component for EnumTestComponent {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::example::EnumTestComponentCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::example::EnumTestComponentCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
@@ -346,7 +346,7 @@ impl Component for EnumTestComponent {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::example::EnumTestComponentCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::example::EnumTestComponentCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
@@ -470,7 +470,7 @@ impl Component for Example {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::example::ExampleCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::example::ExampleCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             ExampleCommandRequest::TestCommand(ref data) => {
@@ -481,7 +481,7 @@ impl Component for Example {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::example::ExampleCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::example::ExampleCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             ExampleCommandResponse::TestCommand(ref data) => {
@@ -620,7 +620,7 @@ impl Component for Rotate {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::example::RotateCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::example::RotateCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
@@ -628,7 +628,7 @@ impl Component for Rotate {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::example::RotateCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::example::RotateCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
@@ -1030,7 +1030,7 @@ impl Component for EntityAcl {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::improbable::EntityAclCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::improbable::EntityAclCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
@@ -1038,7 +1038,7 @@ impl Component for EntityAcl {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::improbable::EntityAclCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::improbable::EntityAclCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
@@ -1152,7 +1152,7 @@ impl Component for Interest {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::improbable::InterestCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::improbable::InterestCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
@@ -1160,7 +1160,7 @@ impl Component for Interest {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::improbable::InterestCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::improbable::InterestCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
@@ -1274,7 +1274,7 @@ impl Component for Metadata {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::improbable::MetadataCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::improbable::MetadataCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
@@ -1282,7 +1282,7 @@ impl Component for Metadata {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::improbable::MetadataCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::improbable::MetadataCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
@@ -1386,7 +1386,7 @@ impl Component for Persistence {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::improbable::PersistenceCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::improbable::PersistenceCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
@@ -1394,7 +1394,7 @@ impl Component for Persistence {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::improbable::PersistenceCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::improbable::PersistenceCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
@@ -1508,7 +1508,7 @@ impl Component for Position {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::improbable::PositionCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::improbable::PositionCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
@@ -1516,7 +1516,7 @@ impl Component for Position {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::improbable::PositionCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::improbable::PositionCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
@@ -1746,7 +1746,7 @@ impl Component for PlayerClient {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::improbable::restricted::PlayerClientCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::improbable::restricted::PlayerClientCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
@@ -1754,7 +1754,7 @@ impl Component for PlayerClient {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::improbable::restricted::PlayerClientCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::improbable::restricted::PlayerClientCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
@@ -1858,7 +1858,7 @@ impl Component for System {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::improbable::restricted::SystemCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::improbable::restricted::SystemCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
@@ -1866,7 +1866,7 @@ impl Component for System {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::improbable::restricted::SystemCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::improbable::restricted::SystemCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
@@ -2010,7 +2010,7 @@ impl Component for Worker {
         Ok(serialized_update)
     }
 
-    fn to_request(request: &generated::improbable::restricted::WorkerCommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &generated::improbable::restricted::WorkerCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             WorkerCommandRequest::Disconnect(ref data) => {
@@ -2021,7 +2021,7 @@ impl Component for Worker {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &generated::improbable::restricted::WorkerCommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &generated::improbable::restricted::WorkerCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             WorkerCommandResponse::Disconnect(ref data) => {
