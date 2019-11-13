@@ -6,7 +6,6 @@ use crate::worker::{
     entity::Entity,
     internal::utils::*,
     metrics::Metrics,
-    schema::{SchemaCommandRequest, SchemaCommandResponse},
     {Authority, EntityId, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
@@ -220,7 +219,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                         caller_worker_id: cstr_to_string(op.caller_worker_id),
                         caller_attribute_set: attribute_set,
                         component_id: op.request.component_id,
-                        request: internal::CommandRequest::from(&op.request),
+                        request: CommandRequestRef::from_raw(&op.request),
                     };
                     WorkerOp::CommandRequest(command_request_op)
                 }
@@ -228,9 +227,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     let op = &erased_op.command_response;
                     let status_code = match Worker_StatusCode::from(op.status_code) {
                         Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS => {
-                            StatusCode::Success(CommandResponse {
-                                response: internal::CommandResponse::from(&op.response),
-                            })
+                            StatusCode::Success(CommandResponseRef::from_raw(&op.response))
                         }
                         Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {
                             StatusCode::Timeout(cstr_to_string(op.message))
@@ -584,21 +581,16 @@ pub struct CommandRequestOp<'a> {
     pub caller_worker_id: String,
     pub caller_attribute_set: Vec<String>,
     pub component_id: ComponentId,
-    request: component::internal::CommandRequest<'a>,
+    request: CommandRequestRef<'a>,
 }
 
 impl<'a> CommandRequestOp<'a> {
-    pub fn get<C: Component>(&self) -> Option<&C::CommandRequest> {
-        // TODO: Deserialize schema_type if user_handle is null.
-        if C::ID == self.component_id && !self.request.user_handle.is_null() {
-            Some(unsafe { &*(self.request.user_handle as *const _) })
-        } else {
-            None
-        }
-    }
-
-    fn schema(&self) -> &SchemaCommandRequest {
-        &self.request.schema_type
+    pub fn get<C>(&self) -> Option<Cow<'_, C::CommandRequest>>
+    where
+        C: Component,
+        C::CommandRequest: TypeConversion + Clone,
+    {
+        self.request.get::<C>()
     }
 }
 
@@ -607,27 +599,7 @@ pub struct CommandResponseOp<'a> {
     pub request_id: RequestId<OutgoingCommandRequest>,
     pub entity_id: EntityId,
     pub component_id: ComponentId,
-    pub response: StatusCode<CommandResponse<'a>>,
-}
-
-#[derive(Debug)]
-pub struct CommandResponse<'a> {
-    response: component::internal::CommandResponse<'a>,
-}
-
-impl<'a> CommandResponse<'a> {
-    pub fn get<C: Component>(&self) -> Option<&C::CommandResponse> {
-        // TODO: Deserialize schema_type if user_handle is null.
-        if C::ID == self.response.component_id && !self.response.user_handle.is_null() {
-            Some(unsafe { &*(self.response.user_handle as *const _) })
-        } else {
-            None
-        }
-    }
-
-    fn schema(&self) -> &SchemaCommandResponse {
-        &self.response.schema_type
-    }
+    pub response: StatusCode<CommandResponseRef<'a>>,
 }
 
 #[cfg(test)]
