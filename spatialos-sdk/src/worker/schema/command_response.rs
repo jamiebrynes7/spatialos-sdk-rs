@@ -1,4 +1,4 @@
-use crate::worker::schema::{owned::OwnableImpl, Owned, SchemaObject};
+use crate::worker::schema::{owned::OwnableImpl, Owned, PointerType, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -7,7 +7,7 @@ pub struct SchemaCommandResponse(PhantomData<*mut Schema_CommandResponse>);
 
 impl SchemaCommandResponse {
     pub fn new() -> Owned<SchemaCommandResponse> {
-        unsafe { Owned::new(Schema_CreateCommandResponse()) }
+        Owned::new()
     }
 
     pub fn object(&self) -> &SchemaObject {
@@ -30,12 +30,13 @@ impl SchemaCommandResponse {
     }
 }
 
-impl OwnableImpl for SchemaCommandResponse {
+unsafe impl PointerType for SchemaCommandResponse {
     type Raw = Schema_CommandResponse;
+}
 
-    unsafe fn destroy(me: *mut Self::Raw) {
-        Schema_DestroyCommandResponse(me);
-    }
+unsafe impl OwnableImpl for SchemaCommandResponse {
+    const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw = Schema_CreateCommandResponse;
+    const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw) = Schema_DestroyCommandResponse;
 }
 
 // SAFETY: It should be safe to send a `SchemaCommandResonse` between threads, so long as

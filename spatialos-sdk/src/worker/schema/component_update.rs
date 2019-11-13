@@ -1,4 +1,4 @@
-use crate::worker::schema::{owned::OwnableImpl, Owned, SchemaObject};
+use crate::worker::schema::{owned::OwnableImpl, Owned, PointerType, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -7,7 +7,7 @@ pub struct SchemaComponentUpdate(PhantomData<*mut Schema_ComponentUpdate>);
 
 impl SchemaComponentUpdate {
     pub fn new() -> Owned<SchemaComponentUpdate> {
-        unsafe { Owned::new(Schema_CreateComponentUpdate()) }
+        Owned::new()
     }
 
     pub fn fields(&self) -> &SchemaObject {
@@ -27,25 +27,15 @@ impl SchemaComponentUpdate {
     }
 
     // TODO: Cleared fields.
-
-    // Methods for raw pointer conversion.
-    // -----------------------------------
-
-    pub(crate) unsafe fn from_raw<'a>(raw: *mut Schema_ComponentUpdate) -> &'a Self {
-        &*(raw as *mut _)
-    }
-
-    pub(crate) fn as_ptr(&self) -> *mut Schema_ComponentUpdate {
-        self as *const _ as *mut _
-    }
 }
 
-impl OwnableImpl for SchemaComponentUpdate {
+unsafe impl PointerType for SchemaComponentUpdate {
     type Raw = Schema_ComponentUpdate;
+}
 
-    unsafe fn destroy(me: *mut Self::Raw) {
-        Schema_DestroyComponentUpdate(me);
-    }
+unsafe impl OwnableImpl for SchemaComponentUpdate {
+    const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw = Schema_CreateComponentUpdate;
+    const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw) = Schema_DestroyComponentUpdate;
 }
 
 // SAFETY: It should be safe to send a `SchemaComponentUpdate` between threads, so long as

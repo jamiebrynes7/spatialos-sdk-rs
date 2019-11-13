@@ -1,4 +1,4 @@
-use crate::worker::schema::{owned::*, SchemaObject};
+use crate::worker::schema::{owned::OwnableImpl, Owned, PointerType, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -13,7 +13,7 @@ pub struct SchemaComponentData(PhantomData<*mut Schema_ComponentData>);
 
 impl SchemaComponentData {
     pub fn new() -> Owned<SchemaComponentData> {
-        unsafe { Owned::new(Schema_CreateComponentData()) }
+        Owned::new()
     }
 
     pub fn fields(&self) -> &SchemaObject {
@@ -23,17 +23,6 @@ impl SchemaComponentData {
     pub fn fields_mut(&mut self) -> &mut SchemaObject {
         unsafe { SchemaObject::from_raw_mut(Schema_GetComponentDataFields(self.as_ptr())) }
     }
-
-    // Methods for raw pointer conversion.
-    // -----------------------------------
-
-    pub(crate) unsafe fn from_raw<'a>(raw: *mut Schema_ComponentData) -> &'a Self {
-        &*(raw as *mut _)
-    }
-
-    pub(crate) fn as_ptr(&self) -> *mut Schema_ComponentData {
-        self as *const _ as *mut _
-    }
 }
 
 impl Default for Owned<SchemaComponentData> {
@@ -42,12 +31,13 @@ impl Default for Owned<SchemaComponentData> {
     }
 }
 
-impl OwnableImpl for SchemaComponentData {
+unsafe impl PointerType for SchemaComponentData {
     type Raw = Schema_ComponentData;
+}
 
-    unsafe fn destroy(inst: *mut Self::Raw) {
-        Schema_DestroyComponentData(inst);
-    }
+unsafe impl OwnableImpl for SchemaComponentData {
+    const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw = Schema_CreateComponentData;
+    const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw) = Schema_DestroyComponentData;
 }
 
 // SAFETY: It should be safe to send a `SchemaComponentData` between threads, so long as

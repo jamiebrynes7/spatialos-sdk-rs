@@ -12,6 +12,8 @@ pub use self::{
     owned::Owned, primitives::*,
 };
 
+pub(crate) use self::private::PointerType;
+
 pub type FieldId = u32;
 
 pub trait SchemaPrimitiveField {
@@ -30,5 +32,23 @@ pub trait SchemaPrimitiveField {
             result.push(Self::index(object, field, index));
         }
         result
+    }
+}
+
+mod private {
+    pub unsafe trait PointerType: Sized {
+        type Raw;
+
+        unsafe fn from_raw<'a>(raw: *mut Self::Raw) -> &'a Self {
+            &*(raw as *mut _)
+        }
+
+        unsafe fn from_raw_mut<'a>(raw: *mut Self::Raw) -> &'a mut Self {
+            &mut *(raw as *mut _)
+        }
+
+        fn as_ptr(&self) -> *mut Self::Raw {
+            self as *const _ as *mut _
+        }
     }
 }

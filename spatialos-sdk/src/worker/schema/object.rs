@@ -1,4 +1,4 @@
-use crate::worker::schema::{FieldId, SchemaPrimitiveField};
+use crate::worker::schema::{FieldId, PointerType, SchemaPrimitiveField};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -46,21 +46,10 @@ impl SchemaObject {
     pub fn add_object(&mut self, field: FieldId) -> &mut SchemaObject {
         unsafe { Self::from_raw_mut(Schema_AddObject(self.as_ptr(), field)) }
     }
+}
 
-    // Methods for raw pointer conversion.
-    // -----------------------------------
-
-    pub(crate) unsafe fn from_raw<'a>(raw: *mut Schema_Object) -> &'a Self {
-        &*(raw as *mut _)
-    }
-
-    pub(crate) unsafe fn from_raw_mut<'a>(raw: *mut Schema_Object) -> &'a mut Self {
-        &mut *(raw as *mut _)
-    }
-
-    pub(crate) fn as_ptr(&self) -> *mut Schema_Object {
-        self as *const _ as *mut _
-    }
+unsafe impl PointerType for SchemaObject {
+    type Raw = Schema_Object;
 }
 
 // SAFETY: It should be safe to send a `SchemaObject` between threads, so long as

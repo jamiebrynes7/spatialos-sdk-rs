@@ -22,12 +22,14 @@ use std::{
 
 pub(crate) use self::private::OwnableImpl;
 
-pub(crate) mod private {
+mod private {
+    use crate::worker::schema::PointerType;
+
     /// Private imlementation of the `Ownable` trait. Used to hide implementation
     /// details and seal the trait from downstream implementations.
-    pub trait OwnableImpl {
-        type Raw;
-        unsafe fn destroy(me: *mut Self::Raw);
+    pub unsafe trait OwnableImpl: PointerType {
+        const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw;
+        const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw);
     }
 }
 
@@ -44,7 +46,8 @@ impl<T> Ownable for T where T: OwnableImpl {}
 pub struct Owned<T: Ownable>(NonNull<T::Raw>);
 
 impl<T: Ownable> Owned<T> {
-    pub(crate) unsafe fn new(raw: *mut T::Raw) -> Self {
+    pub fn new() -> Self {
+        let raw = unsafe { T::CREATE_FN() };
         Self(NonNull::new(raw).expect("Cannot create `Owned` from null pointer"))
     }
 
@@ -64,7 +67,7 @@ impl<T: Ownable> Owned<T> {
 impl<T: Ownable> Drop for Owned<T> {
     fn drop(&mut self) {
         unsafe {
-            T::destroy(self.0.as_ptr());
+            T::DESTROY_FN(self.0.as_ptr());
         }
     }
 }
