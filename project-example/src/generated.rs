@@ -210,7 +210,7 @@ impl Component for EntityIdTest {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::example::EntityIdTestUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::example::EntityIdTestUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::example::EntityIdTestUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
@@ -332,7 +332,7 @@ impl Component for EnumTestComponent {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::example::EnumTestComponentUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::example::EnumTestComponentUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::example::EnumTestComponentUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
@@ -464,7 +464,7 @@ impl Component for Example {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::example::ExampleUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::example::ExampleUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::example::ExampleUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
@@ -614,7 +614,7 @@ impl Component for Rotate {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::example::RotateUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::example::RotateUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::example::RotateUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
@@ -1024,7 +1024,7 @@ impl Component for EntityAcl {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::EntityAclUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::improbable::EntityAclUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::EntityAclUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
@@ -1146,7 +1146,7 @@ impl Component for Interest {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::InterestUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::improbable::InterestUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::InterestUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
@@ -1268,7 +1268,7 @@ impl Component for Metadata {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::MetadataUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::improbable::MetadataUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::MetadataUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
@@ -1380,7 +1380,7 @@ impl Component for Persistence {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::PersistenceUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::improbable::PersistenceUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::PersistenceUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
@@ -1502,7 +1502,7 @@ impl Component for Position {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::PositionUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::improbable::PositionUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::PositionUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
@@ -1740,7 +1740,7 @@ impl Component for PlayerClient {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::restricted::PlayerClientUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::improbable::restricted::PlayerClientUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::restricted::PlayerClientUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
@@ -1852,7 +1852,7 @@ impl Component for System {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::restricted::SystemUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::improbable::restricted::SystemUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::restricted::SystemUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
@@ -2004,7 +2004,7 @@ impl Component for Worker {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &generated::improbable::restricted::WorkerUpdate) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &generated::improbable::restricted::WorkerUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <generated::improbable::restricted::WorkerUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
