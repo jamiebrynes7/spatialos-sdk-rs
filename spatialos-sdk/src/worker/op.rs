@@ -6,13 +6,11 @@ use crate::worker::{
     entity::Entity,
     internal::utils::*,
     metrics::Metrics,
-    schema::{
-        SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData, SchemaComponentUpdate,
-    },
+    schema::{SchemaCommandRequest, SchemaCommandResponse, SchemaComponentUpdate},
     {Authority, EntityId, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
-use std::{collections::HashMap, slice};
+use std::{borrow::Cow, collections::HashMap, slice};
 
 pub struct OpList {
     raw: *mut Worker_OpList,
@@ -178,7 +176,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     let add_component_op = AddComponentOp {
                         entity_id: EntityId::new(op.entity_id),
                         component_id: op.data.component_id,
-                        component_data: internal::ComponentData::from(&op.data),
+                        component_data: ComponentDataRef::from_raw(&op.data),
                     };
                     WorkerOp::AddComponent(add_component_op)
                 }
@@ -539,21 +537,12 @@ pub struct EntityQueryResponseOp {
 pub struct AddComponentOp<'a> {
     pub entity_id: EntityId,
     pub component_id: ComponentId,
-    component_data: component::internal::ComponentData<'a>,
+    component_data: component::ComponentDataRef<'a>,
 }
 
 impl<'a> AddComponentOp<'a> {
-    pub fn get<C: Component>(&self) -> Option<&C> {
-        if C::ID == self.component_data.component_id {
-            // TODO: Deserialize schema_type if user_handle is null.
-            Some(unsafe { &*(self.component_data.user_handle as *const _) })
-        } else {
-            None
-        }
-    }
-
-    fn schema(&self) -> &SchemaComponentData {
-        &self.component_data.schema_type
+    pub fn get<C: Component + TypeConversion + Clone>(&self) -> Option<Cow<'_, C>> {
+        self.component_data.get::<C>()
     }
 }
 

@@ -5,9 +5,11 @@ mod component_update;
 mod object;
 mod primitives;
 
+pub mod owned;
+
 pub use self::{
     command_request::*, command_response::*, component_data::*, component_update::*, object::*,
-    primitives::*,
+    owned::Owned, primitives::*,
 };
 
 pub type FieldId = u32;

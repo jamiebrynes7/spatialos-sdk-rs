@@ -1,6 +1,8 @@
-use crate::worker::schema;
+use crate::worker::schema::{self, *};
 use spatialos_sdk_sys::worker::*;
-use std::{collections::hash_map::HashMap, mem, os::raw, ptr, sync::Arc};
+use std::{
+    borrow::Cow, collections::hash_map::HashMap, mem, os::raw, ptr, ptr::NonNull, sync::Arc,
+};
 
 // Re-export inventory so generated code doesn't require the user to add inventory to their
 // Cargo.toml
@@ -48,7 +50,7 @@ where
         response: &schema::SchemaCommandResponse,
     ) -> Result<Self::CommandResponse, String>;
 
-    fn to_data(data: &Self) -> Result<schema::SchemaComponentData, String>;
+    fn to_data(data: &Self) -> Result<Owned<SchemaComponentData>, String>;
     fn to_update(update: &Self::Update) -> Result<schema::SchemaComponentUpdate, String>;
     fn to_request(request: &Self::CommandRequest) -> Result<schema::SchemaCommandRequest, String>;
     fn to_response(
@@ -121,6 +123,42 @@ impl UpdateParameters {
     }
 }
 
+#[derive(Debug)]
+pub(crate) struct ComponentDataRef<'a> {
+    component_id: ComponentId,
+    schema_type: &'a SchemaComponentData,
+    user_handle: Option<NonNull<Worker_ComponentDataHandle>>,
+}
+
+impl<'a> ComponentDataRef<'a> {
+    pub(crate) unsafe fn from_raw(data: &'a Worker_ComponentData) -> Self {
+        Self {
+            component_id: data.component_id,
+            schema_type: SchemaComponentData::from_raw(data.schema_type),
+            user_handle: NonNull::new(data.user_handle),
+        }
+    }
+
+    // NOTE: We manually declare that the component impl `TypeConversion` and `Clone`
+    // here, but in practice this will always be true for all component types. Future
+    // iterations should clean this up such that the `Component` trait can imply these
+    // other bounds automatically (i.e. by making them super traits of `Component`).
+    pub fn get<C: Component + TypeConversion + Clone>(&self) -> Option<Cow<'_, C>> {
+        if C::ID != self.component_id {
+            return None;
+        }
+
+        if let Some(user_handle) = &self.user_handle {
+            let component = unsafe { &*user_handle.cast().as_ptr() };
+            Some(Cow::Borrowed(component))
+        } else {
+            <C as TypeConversion>::from_type(self.schema_type.fields())
+                .ok()
+                .map(Cow::Owned)
+        }
+    }
+}
+
 // Internal untyped component data objects.
 pub(crate) mod internal {
     use crate::worker::schema::*;
@@ -128,31 +166,6 @@ pub(crate) mod internal {
     use std::marker::PhantomData;
 
     use crate::worker::component::ComponentId;
-
-    #[derive(Debug)]
-    pub struct ComponentData<'a> {
-        pub component_id: ComponentId,
-        pub schema_type: SchemaComponentData,
-        pub user_handle: *const Worker_ComponentDataHandle,
-
-        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-        // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something*.
-        pub _marker: PhantomData<&'a ()>,
-    }
-
-    impl<'a> From<&'a Worker_ComponentData> for ComponentData<'a> {
-        fn from(data: &Worker_ComponentData) -> Self {
-            ComponentData {
-                component_id: data.component_id,
-                schema_type: SchemaComponentData {
-                    internal: data.schema_type,
-                },
-                user_handle: data.user_handle,
-                _marker: PhantomData,
-            }
-        }
-    }
 
     #[derive(Debug)]
     pub struct ComponentUpdate<'a> {
@@ -351,8 +364,8 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     data: *mut Schema_ComponentData,
     handle_out: *mut *mut Worker_ComponentDataHandle,
 ) -> u8 {
-    let schema_data = schema::SchemaComponentData { internal: data };
-    let deserialized_result = C::from_data(&schema_data);
+    let schema_data = schema::SchemaComponentData::from_raw(data);
+    let deserialized_result = C::from_data(schema_data);
     if let Ok(deserialized_data) = deserialized_result {
         *handle_out = handle_allocate(deserialized_data);
         1
@@ -369,7 +382,7 @@ unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
 ) {
     let client_data = &*(handle as *const C);
     if let Ok(schema_data) = C::to_data(client_data) {
-        *data = schema_data.internal;
+        *data = schema_data.into_raw();
     } else {
         *data = ptr::null_mut();
     }

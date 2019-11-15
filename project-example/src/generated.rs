@@ -13,9 +13,7 @@ use std::collections::BTreeMap;
 use super::generated as generated;
 
 /* Enums. */
-
 /* Types. */
-
 /* Components. */ 
 
 
@@ -55,79 +53,54 @@ impl TestEnum {
     }
 }
 
-
-
 /* Types. */
-
-
 #[derive(Debug, Clone)]
 pub struct CommandData {
     pub value: i32,
 }
-
 impl TypeConversion for CommandData {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             value: input.get::<SchemaInt32>(1),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.add::<SchemaInt32>(1, &input.value);
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct TestType {
     pub value: i32,
 }
-
 impl TypeConversion for TestType {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             value: input.get::<SchemaInt32>(1),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.add::<SchemaInt32>(1, &input.value);
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct TestType_Inner {
     pub number: f32,
 }
-
 impl TypeConversion for TestType_Inner {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             number: input.get::<SchemaFloat>(2),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.add::<SchemaFloat>(2, &input.number);
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct Vector3d {
@@ -135,31 +108,21 @@ pub struct Vector3d {
     pub y: f64,
     pub z: f64,
 }
-
 impl TypeConversion for Vector3d {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             x: input.get::<SchemaDouble>(1),
-            
             y: input.get::<SchemaDouble>(2),
-            
             z: input.get::<SchemaDouble>(3),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.add::<SchemaDouble>(1, &input.x);
-        
         output.add::<SchemaDouble>(2, &input.y);
-        
         output.add::<SchemaDouble>(3, &input.z);
-        
         Ok(())
     }
 }
-
 
 /* Components. */ 
 #[derive(Debug, Clone)]
@@ -241,7 +204,7 @@ impl Component for EntityIdTest {
         }
     }
 
-    fn to_data(data: &generated::example::EntityIdTest) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::example::EntityIdTest) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::example::EntityIdTest as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
@@ -363,7 +326,7 @@ impl Component for EnumTestComponent {
         }
     }
 
-    fn to_data(data: &generated::example::EnumTestComponent) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::example::EnumTestComponent) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::example::EnumTestComponent as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
@@ -495,7 +458,7 @@ impl Component for Example {
         }
     }
 
-    fn to_data(data: &generated::example::Example) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::example::Example) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::example::Example as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
@@ -645,7 +608,7 @@ impl Component for Rotate {
         }
     }
 
-    fn to_data(data: &generated::example::Rotate) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::example::Rotate) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::example::Rotate as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
@@ -699,88 +662,60 @@ use std::collections::BTreeMap;
 use super::super::generated as generated;
 
 /* Enums. */
-
 /* Types. */
-
-
 #[derive(Debug, Clone)]
 pub struct ComponentInterest {
     pub queries: Vec<generated::improbable::ComponentInterest_Query>,
 }
-
 impl TypeConversion for ComponentInterest {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             queries: { let size = input.object_count(1); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(<generated::improbable::ComponentInterest_Query as TypeConversion>::from_type(&input.index_object(1, i))?); } l },
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         for element in (&input.queries).iter() { <generated::improbable::ComponentInterest_Query as TypeConversion>::to_type(&element, &mut output.add_object(1))?; };
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_BoxConstraint {
     pub center: generated::improbable::Coordinates,
     pub edge_length: generated::improbable::EdgeLength,
 }
-
 impl TypeConversion for ComponentInterest_BoxConstraint {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             center: <generated::improbable::Coordinates as TypeConversion>::from_type(&input.get_object(1))?,
-            
             edge_length: <generated::improbable::EdgeLength as TypeConversion>::from_type(&input.get_object(2))?,
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         <generated::improbable::Coordinates as TypeConversion>::to_type(&&input.center, &mut output.add_object(1))?;
-        
         <generated::improbable::EdgeLength as TypeConversion>::to_type(&&input.edge_length, &mut output.add_object(2))?;
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_CylinderConstraint {
     pub center: generated::improbable::Coordinates,
     pub radius: f64,
 }
-
 impl TypeConversion for ComponentInterest_CylinderConstraint {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             center: <generated::improbable::Coordinates as TypeConversion>::from_type(&input.get_object(1))?,
-            
             radius: input.get::<SchemaDouble>(2),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         <generated::improbable::Coordinates as TypeConversion>::to_type(&&input.center, &mut output.add_object(1))?;
-        
         output.add::<SchemaDouble>(2, &input.radius);
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_Query {
@@ -789,36 +724,23 @@ pub struct ComponentInterest_Query {
     pub result_component_id: Vec<u32>,
     pub frequency: Option<f32>,
 }
-
 impl TypeConversion for ComponentInterest_Query {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             constraint: <generated::improbable::ComponentInterest_QueryConstraint as TypeConversion>::from_type(&input.get_object(1))?,
-            
             full_snapshot_result: if input.count::<SchemaBool>(2) > 0 { Some(input.get::<SchemaBool>(2)) } else { None },
-            
             result_component_id: input.get_list::<SchemaUint32>(3),
-            
             frequency: if input.count::<SchemaFloat>(4) > 0 { Some(input.get::<SchemaFloat>(4)) } else { None },
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         <generated::improbable::ComponentInterest_QueryConstraint as TypeConversion>::to_type(&&input.constraint, &mut output.add_object(1))?;
-        
         if let Some(data) = &input.full_snapshot_result { output.add::<SchemaBool>(2, data); };
-        
         output.add_list::<SchemaUint32>(3, &&input.result_component_id[..]);
-        
         if let Some(data) = &input.frequency { output.add::<SchemaFloat>(4, data); };
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_QueryConstraint {
@@ -833,157 +755,102 @@ pub struct ComponentInterest_QueryConstraint {
     pub and_constraint: Vec<generated::improbable::ComponentInterest_QueryConstraint>,
     pub or_constraint: Vec<generated::improbable::ComponentInterest_QueryConstraint>,
 }
-
 impl TypeConversion for ComponentInterest_QueryConstraint {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             sphere_constraint: if input.object_count(1) > 0 { Some(<generated::improbable::ComponentInterest_SphereConstraint as TypeConversion>::from_type(&input.get_object(1))?) } else { None },
-            
             cylinder_constraint: if input.object_count(2) > 0 { Some(<generated::improbable::ComponentInterest_CylinderConstraint as TypeConversion>::from_type(&input.get_object(2))?) } else { None },
-            
             box_constraint: if input.object_count(3) > 0 { Some(<generated::improbable::ComponentInterest_BoxConstraint as TypeConversion>::from_type(&input.get_object(3))?) } else { None },
-            
             relative_sphere_constraint: if input.object_count(4) > 0 { Some(<generated::improbable::ComponentInterest_RelativeSphereConstraint as TypeConversion>::from_type(&input.get_object(4))?) } else { None },
-            
             relative_cylinder_constraint: if input.object_count(5) > 0 { Some(<generated::improbable::ComponentInterest_RelativeCylinderConstraint as TypeConversion>::from_type(&input.get_object(5))?) } else { None },
-            
             relative_box_constraint: if input.object_count(6) > 0 { Some(<generated::improbable::ComponentInterest_RelativeBoxConstraint as TypeConversion>::from_type(&input.get_object(6))?) } else { None },
-            
             entity_id_constraint: if input.count::<SchemaInt64>(7) > 0 { Some(input.get::<SchemaInt64>(7)) } else { None },
-            
             component_constraint: if input.count::<SchemaUint32>(8) > 0 { Some(input.get::<SchemaUint32>(8)) } else { None },
-            
             and_constraint: { let size = input.object_count(9); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(<generated::improbable::ComponentInterest_QueryConstraint as TypeConversion>::from_type(&input.index_object(9, i))?); } l },
-            
             or_constraint: { let size = input.object_count(10); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(<generated::improbable::ComponentInterest_QueryConstraint as TypeConversion>::from_type(&input.index_object(10, i))?); } l },
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         if let Some(ref data) = &input.sphere_constraint { <generated::improbable::ComponentInterest_SphereConstraint as TypeConversion>::to_type(&data, &mut output.add_object(1))?; };
-        
         if let Some(ref data) = &input.cylinder_constraint { <generated::improbable::ComponentInterest_CylinderConstraint as TypeConversion>::to_type(&data, &mut output.add_object(2))?; };
-        
         if let Some(ref data) = &input.box_constraint { <generated::improbable::ComponentInterest_BoxConstraint as TypeConversion>::to_type(&data, &mut output.add_object(3))?; };
-        
         if let Some(ref data) = &input.relative_sphere_constraint { <generated::improbable::ComponentInterest_RelativeSphereConstraint as TypeConversion>::to_type(&data, &mut output.add_object(4))?; };
-        
         if let Some(ref data) = &input.relative_cylinder_constraint { <generated::improbable::ComponentInterest_RelativeCylinderConstraint as TypeConversion>::to_type(&data, &mut output.add_object(5))?; };
-        
         if let Some(ref data) = &input.relative_box_constraint { <generated::improbable::ComponentInterest_RelativeBoxConstraint as TypeConversion>::to_type(&data, &mut output.add_object(6))?; };
-        
         if let Some(data) = &input.entity_id_constraint { output.add::<SchemaInt64>(7, data); };
-        
         if let Some(data) = &input.component_constraint { output.add::<SchemaUint32>(8, data); };
-        
         for element in (&input.and_constraint).iter() { <generated::improbable::ComponentInterest_QueryConstraint as TypeConversion>::to_type(&element, &mut output.add_object(9))?; };
-        
         for element in (&input.or_constraint).iter() { <generated::improbable::ComponentInterest_QueryConstraint as TypeConversion>::to_type(&element, &mut output.add_object(10))?; };
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_RelativeBoxConstraint {
     pub edge_length: generated::improbable::EdgeLength,
 }
-
 impl TypeConversion for ComponentInterest_RelativeBoxConstraint {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             edge_length: <generated::improbable::EdgeLength as TypeConversion>::from_type(&input.get_object(1))?,
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         <generated::improbable::EdgeLength as TypeConversion>::to_type(&&input.edge_length, &mut output.add_object(1))?;
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_RelativeCylinderConstraint {
     pub radius: f64,
 }
-
 impl TypeConversion for ComponentInterest_RelativeCylinderConstraint {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             radius: input.get::<SchemaDouble>(1),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.add::<SchemaDouble>(1, &input.radius);
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_RelativeSphereConstraint {
     pub radius: f64,
 }
-
 impl TypeConversion for ComponentInterest_RelativeSphereConstraint {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             radius: input.get::<SchemaDouble>(1),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.add::<SchemaDouble>(1, &input.radius);
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_SphereConstraint {
     pub center: generated::improbable::Coordinates,
     pub radius: f64,
 }
-
 impl TypeConversion for ComponentInterest_SphereConstraint {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             center: <generated::improbable::Coordinates as TypeConversion>::from_type(&input.get_object(1))?,
-            
             radius: input.get::<SchemaDouble>(2),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         <generated::improbable::Coordinates as TypeConversion>::to_type(&&input.center, &mut output.add_object(1))?;
-        
         output.add::<SchemaDouble>(2, &input.radius);
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct Coordinates {
@@ -991,32 +858,21 @@ pub struct Coordinates {
     pub y: f64,
     pub z: f64,
 }
-
 impl TypeConversion for Coordinates {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             x: input.get::<SchemaDouble>(1),
-            
             y: input.get::<SchemaDouble>(2),
-            
             z: input.get::<SchemaDouble>(3),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.add::<SchemaDouble>(1, &input.x);
-        
         output.add::<SchemaDouble>(2, &input.y);
-        
         output.add::<SchemaDouble>(3, &input.z);
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct EdgeLength {
@@ -1024,77 +880,53 @@ pub struct EdgeLength {
     pub y: f64,
     pub z: f64,
 }
-
 impl TypeConversion for EdgeLength {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             x: input.get::<SchemaDouble>(1),
-            
             y: input.get::<SchemaDouble>(2),
-            
             z: input.get::<SchemaDouble>(3),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.add::<SchemaDouble>(1, &input.x);
-        
         output.add::<SchemaDouble>(2, &input.y);
-        
         output.add::<SchemaDouble>(3, &input.z);
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct WorkerAttributeSet {
     pub attribute: Vec<String>,
 }
-
 impl TypeConversion for WorkerAttributeSet {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             attribute: input.get_list::<SchemaString>(1),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.add_list::<SchemaString>(1, &&input.attribute[..]);
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct WorkerRequirementSet {
     pub attribute_set: Vec<generated::improbable::WorkerAttributeSet>,
 }
-
 impl TypeConversion for WorkerRequirementSet {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             attribute_set: { let size = input.object_count(1); let mut l = Vec::with_capacity(size); for i in 0..size { l.push(<generated::improbable::WorkerAttributeSet as TypeConversion>::from_type(&input.index_object(1, i))?); } l },
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         for element in (&input.attribute_set).iter() { <generated::improbable::WorkerAttributeSet as TypeConversion>::to_type(&element, &mut output.add_object(1))?; };
-        
         Ok(())
     }
 }
-
 
 /* Components. */ 
 #[derive(Debug, Clone)]
@@ -1186,7 +1018,7 @@ impl Component for EntityAcl {
         }
     }
 
-    fn to_data(data: &generated::improbable::EntityAcl) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::improbable::EntityAcl) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::EntityAcl as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
@@ -1308,7 +1140,7 @@ impl Component for Interest {
         }
     }
 
-    fn to_data(data: &generated::improbable::Interest) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::improbable::Interest) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::Interest as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
@@ -1430,7 +1262,7 @@ impl Component for Metadata {
         }
     }
 
-    fn to_data(data: &generated::improbable::Metadata) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::improbable::Metadata) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::Metadata as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
@@ -1542,7 +1374,7 @@ impl Component for Persistence {
         }
     }
 
-    fn to_data(data: &generated::improbable::Persistence) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::improbable::Persistence) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::Persistence as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
@@ -1664,7 +1496,7 @@ impl Component for Position {
         }
     }
 
-    fn to_data(data: &generated::improbable::Position) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::improbable::Position) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::Position as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
@@ -1751,79 +1583,54 @@ impl Connection_ConnectionStatus {
     }
 }
 
-
-
 /* Types. */
-
-
 #[derive(Debug, Clone)]
 pub struct Connection {
     pub status: generated::improbable::restricted::Connection_ConnectionStatus,
     pub data_latency_ms: u32,
     pub connected_since_utc: u64,
 }
-
 impl TypeConversion for Connection {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             status: From::from(input.get::<SchemaEnum>(1)),
-            
             data_latency_ms: input.get::<SchemaUint32>(2),
-            
             connected_since_utc: input.get::<SchemaUint64>(3),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.add::<SchemaEnum>(1, &&input.status.as_u32());
-        
         output.add::<SchemaUint32>(2, &input.data_latency_ms);
-        
         output.add::<SchemaUint64>(3, &input.connected_since_utc);
-        
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct DisconnectRequest {
 }
-
 impl TypeConversion for DisconnectRequest {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct DisconnectResponse {
 }
-
 impl TypeConversion for DisconnectResponse {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         Ok(())
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct PlayerIdentity {
@@ -1831,31 +1638,21 @@ pub struct PlayerIdentity {
     pub provider: String,
     pub metadata: Vec<u8>,
 }
-
 impl TypeConversion for PlayerIdentity {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            
             player_identifier: input.get::<SchemaString>(1),
-            
             provider: input.get::<SchemaString>(2),
-            
             metadata: input.get::<SchemaBytes>(3),
-            
         })
     }
-
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         output.add::<SchemaString>(1, &input.player_identifier);
-        
         output.add::<SchemaString>(2, &input.provider);
-        
         output.add::<SchemaBytes>(3, &input.metadata);
-        
         Ok(())
     }
 }
-
 
 /* Components. */ 
 #[derive(Debug, Clone)]
@@ -1937,7 +1734,7 @@ impl Component for PlayerClient {
         }
     }
 
-    fn to_data(data: &generated::improbable::restricted::PlayerClient) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::improbable::restricted::PlayerClient) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::restricted::PlayerClient as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
@@ -2049,7 +1846,7 @@ impl Component for System {
         }
     }
 
-    fn to_data(data: &generated::improbable::restricted::System) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::improbable::restricted::System) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::restricted::System as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
@@ -2201,7 +1998,7 @@ impl Component for Worker {
         }
     }
 
-    fn to_data(data: &generated::improbable::restricted::Worker) -> Result<SchemaComponentData, String> {
+    fn to_data(data: &generated::improbable::restricted::Worker) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
         <generated::improbable::restricted::Worker as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
