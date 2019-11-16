@@ -51,11 +51,11 @@ where
     ) -> Result<Self::CommandResponse, String>;
 
     fn to_data(data: &Self) -> Result<Owned<SchemaComponentData>, String>;
-    fn to_update(update: &Self::Update) -> Result<schema::SchemaComponentUpdate, String>;
-    fn to_request(request: &Self::CommandRequest) -> Result<schema::SchemaCommandRequest, String>;
+    fn to_update(update: &Self::Update) -> Result<Owned<SchemaComponentUpdate>, String>;
+    fn to_request(request: &Self::CommandRequest) -> Result<Owned<SchemaCommandRequest>, String>;
     fn to_response(
         response: &Self::CommandResponse,
-    ) -> Result<schema::SchemaCommandResponse, String>;
+    ) -> Result<Owned<SchemaCommandResponse>, String>;
 
     fn get_request_command_index(request: &Self::CommandRequest) -> u32;
     fn get_response_command_index(response: &Self::CommandResponse) -> u32;
@@ -152,97 +152,133 @@ impl<'a> ComponentDataRef<'a> {
             let component = unsafe { &*user_handle.cast().as_ptr() };
             Some(Cow::Borrowed(component))
         } else {
-            <C as TypeConversion>::from_type(self.schema_type.fields())
+            TypeConversion::from_type(self.schema_type.fields())
                 .ok()
                 .map(Cow::Owned)
         }
     }
 }
 
-// Internal untyped component data objects.
-pub(crate) mod internal {
-    use crate::worker::schema::*;
-    use spatialos_sdk_sys::worker::*;
-    use std::marker::PhantomData;
+#[derive(Debug)]
+pub(crate) struct ComponentUpdateRef<'a> {
+    component_id: ComponentId,
+    schema_type: &'a SchemaComponentUpdate,
+    user_handle: Option<NonNull<Worker_ComponentUpdateHandle>>,
+}
 
-    use crate::worker::component::ComponentId;
-
-    #[derive(Debug)]
-    pub struct ComponentUpdate<'a> {
-        pub component_id: ComponentId,
-        pub schema_type: SchemaComponentUpdate,
-        pub user_handle: *const Worker_ComponentUpdateHandle,
-
-        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-        // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something*.
-        pub _marker: PhantomData<&'a ()>,
-    }
-
-    impl<'a> From<&'a Worker_ComponentUpdate> for ComponentUpdate<'a> {
-        fn from(update: &Worker_ComponentUpdate) -> Self {
-            ComponentUpdate {
-                component_id: update.component_id,
-                schema_type: SchemaComponentUpdate {
-                    internal: update.schema_type,
-                },
-                user_handle: update.user_handle,
-                _marker: PhantomData,
-            }
+impl<'a> ComponentUpdateRef<'a> {
+    pub(crate) unsafe fn from_raw(update: &Worker_ComponentUpdate) -> Self {
+        Self {
+            component_id: update.component_id,
+            schema_type: SchemaComponentUpdate::from_raw(update.schema_type),
+            user_handle: NonNull::new(update.user_handle),
         }
     }
 
-    #[derive(Debug)]
-    pub struct CommandRequest<'a> {
-        pub component_id: ComponentId,
-        pub command_index: FieldId,
-        pub schema_type: SchemaCommandRequest,
-        pub user_handle: *const Worker_CommandRequestHandle,
+    // NOTE: We manually declare that the update impl `TypeConversion` and `Clone`
+    // here, but in practice this will always be true for all component types. Future
+    // iterations should clean this up such that the `Component` trait can imply these
+    // other bounds automatically (i.e. by making them super traits of `Component`).
+    pub(crate) fn get<C>(&self) -> Option<Cow<'_, C::Update>>
+    where
+        C: Component,
+        C::Update: TypeConversion + Clone,
+    {
+        if C::ID != self.component_id {
+            return None;
+        }
 
-        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-        // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something*.
-        pub _marker: PhantomData<&'a ()>,
+        if let Some(user_handle) = &self.user_handle {
+            let component = unsafe { &*user_handle.cast().as_ptr() };
+            Some(Cow::Borrowed(component))
+        } else {
+            TypeConversion::from_type(self.schema_type.fields())
+                .ok()
+                .map(Cow::Owned)
+        }
     }
+}
 
-    impl<'a> From<&'a Worker_CommandRequest> for CommandRequest<'a> {
-        fn from(request: &Worker_CommandRequest) -> Self {
-            CommandRequest {
-                component_id: request.component_id,
-                command_index: request.command_index,
-                schema_type: SchemaCommandRequest {
-                    internal: request.schema_type,
-                },
-                user_handle: request.user_handle,
-                _marker: PhantomData,
-            }
+#[derive(Debug)]
+pub(crate) struct CommandRequestRef<'a> {
+    component_id: ComponentId,
+    command_index: FieldId,
+    schema_type: &'a SchemaCommandRequest,
+    user_handle: Option<NonNull<Worker_CommandRequestHandle>>,
+}
+
+impl<'a> CommandRequestRef<'a> {
+    pub(crate) unsafe fn from_raw(request: &Worker_CommandRequest) -> Self {
+        Self {
+            component_id: request.component_id,
+            command_index: request.command_index,
+            schema_type: SchemaCommandRequest::from_raw(request.schema_type),
+            user_handle: NonNull::new(request.user_handle),
         }
     }
 
-    #[derive(Debug)]
-    pub struct CommandResponse<'a> {
-        pub component_id: ComponentId,
-        pub command_index: FieldId,
-        pub schema_type: SchemaCommandResponse,
-        pub user_handle: *const Worker_CommandResponseHandle,
+    // NOTE: We manually declare that the update impl `TypeConversion` and `Clone`
+    // here, but in practice this will always be true for all component types. Future
+    // iterations should clean this up such that the `Component` trait can imply these
+    // other bounds automatically (i.e. by making them super traits of `Component`).
+    pub(crate) fn get<C>(&self) -> Option<Cow<'_, C::CommandRequest>>
+    where
+        C: Component,
+        C::CommandRequest: TypeConversion + Clone,
+    {
+        if C::ID != self.component_id {
+            return None;
+        }
 
-        // NOTE: `user_handle` is borrowing data owned by the parent object, but it's a
-        // type-erased pointer that may be null, so we just mark that we're borrowing
-        // *something*.
-        pub _marker: PhantomData<&'a ()>,
+        if let Some(user_handle) = &self.user_handle {
+            let component = unsafe { &*user_handle.cast().as_ptr() };
+            Some(Cow::Borrowed(component))
+        } else {
+            TypeConversion::from_type(self.schema_type.object())
+                .ok()
+                .map(Cow::Owned)
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct CommandResponseRef<'a> {
+    component_id: ComponentId,
+    command_index: FieldId,
+    schema_type: &'a SchemaCommandResponse,
+    user_handle: Option<NonNull<Worker_CommandResponseHandle>>,
+}
+
+impl<'a> CommandResponseRef<'a> {
+    pub(crate) unsafe fn from_raw(response: &Worker_CommandResponse) -> Self {
+        Self {
+            component_id: response.component_id,
+            command_index: response.command_index,
+            schema_type: SchemaCommandResponse::from_raw(response.schema_type),
+            user_handle: NonNull::new(response.user_handle),
+        }
     }
 
-    impl<'a> From<&'a Worker_CommandResponse> for CommandResponse<'a> {
-        fn from(response: &Worker_CommandResponse) -> Self {
-            CommandResponse {
-                component_id: response.component_id,
-                command_index: response.command_index,
-                schema_type: SchemaCommandResponse {
-                    internal: response.schema_type,
-                },
-                user_handle: response.user_handle,
-                _marker: PhantomData,
-            }
+    // NOTE: We manually declare that the update impl `TypeConversion` and `Clone`
+    // here, but in practice this will always be true for all component types. Future
+    // iterations should clean this up such that the `Component` trait can imply these
+    // other bounds automatically (i.e. by making them super traits of `Component`).
+    pub fn get<C>(&self) -> Option<Cow<'_, C::CommandResponse>>
+    where
+        C: Component,
+        C::CommandResponse: TypeConversion + Clone,
+    {
+        if C::ID != self.component_id {
+            return None;
+        }
+
+        if let Some(user_handle) = &self.user_handle {
+            let component = unsafe { &*user_handle.cast().as_ptr() };
+            Some(Cow::Borrowed(component))
+        } else {
+            TypeConversion::from_type(self.schema_type.object())
+                .ok()
+                .map(Cow::Owned)
         }
     }
 }
@@ -410,8 +446,8 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     update: *mut Schema_ComponentUpdate,
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
-    let schema_update = schema::SchemaComponentUpdate { internal: update };
-    let deserialized_result = C::from_update(&schema_update);
+    let schema_update = SchemaComponentUpdate::from_raw(update);
+    let deserialized_result = C::from_update(schema_update);
     if let Ok(deserialized_update) = deserialized_result {
         *handle_out = handle_allocate(deserialized_update);
         1
@@ -429,7 +465,7 @@ unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
     let data = &*(handle as *const _);
     let schema_result = C::to_update(data);
     if let Ok(schema_update) = schema_result {
-        *update = schema_update.internal;
+        *update = schema_update.into_raw();
     } else {
         *update = ptr::null_mut();
     }
@@ -460,7 +496,7 @@ unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
     request: *mut Schema_CommandRequest,
     handle_out: *mut *mut Worker_CommandRequestHandle,
 ) -> u8 {
-    let schema_request = schema::SchemaCommandRequest { internal: request };
+    let schema_request = SchemaCommandRequest::from_raw(request);
     let deserialized_result = C::from_request(command_index, &schema_request);
     if let Ok(deserialized_request) = deserialized_result {
         *handle_out = handle_allocate(deserialized_request);
@@ -480,7 +516,7 @@ unsafe extern "C" fn vtable_command_request_serialize<C: Component>(
     let data = &*(handle as *const _);
     let schema_result = C::to_request(data);
     if let Ok(schema_request) = schema_result {
-        *request = schema_request.internal;
+        *request = schema_request.into_raw();
     } else {
         *request = ptr::null_mut();
     }
@@ -511,7 +547,7 @@ unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(
     response: *mut Schema_CommandResponse,
     handle_out: *mut *mut Worker_CommandRequestHandle,
 ) -> u8 {
-    let schema_response = schema::SchemaCommandResponse { internal: response };
+    let schema_response = SchemaCommandResponse::from_raw(response);
     let deserialized_result = C::from_response(command_index, &schema_response);
     if let Ok(deserialized_response) = deserialized_result {
         *handle_out = handle_allocate(deserialized_response);
@@ -531,7 +567,7 @@ unsafe extern "C" fn vtable_command_response_serialize<C: Component>(
     let data = &*(handle as *const _);
     let schema_result = C::to_response(data);
     if let Ok(schema_response) = schema_result {
-        *response = schema_response.internal;
+        *response = schema_response.into_raw();
     } else {
         *response = ptr::null_mut();
     }

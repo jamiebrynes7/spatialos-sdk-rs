@@ -176,13 +176,13 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
         Ok(serialized_data)
     }
 
-    fn to_update(update: &<#= self.rust_fqname(&component.qualified_name) #>Update) -> Result<SchemaComponentUpdate, String> {
+    fn to_update(update: &<#= self.rust_fqname(&component.qualified_name) #>Update) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
         <<#= self.rust_fqname(&component.qualified_name) #>Update as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
-    fn to_request(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> Result<SchemaCommandRequest, String> {
+    fn to_request(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {<#
             for command in &component.commands {
@@ -195,7 +195,7 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
         Ok(serialized_request)
     }
 
-    fn to_response(response: &<#= self.rust_fqname(&component.qualified_name) #>CommandResponse) -> Result<SchemaCommandResponse, String> {
+    fn to_response(response: &<#= self.rust_fqname(&component.qualified_name) #>CommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {<#
             for command in &component.commands {
