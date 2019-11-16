@@ -1,11 +1,28 @@
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use std::sync::{Arc, Mutex};
+use std::thread;
 
-pub enum WorkerFuture<T: WorkerSdkFuture + Unpin> {
+pub enum WorkerFuture<T: WorkerSdkFuture + Unpin + Send> {
     NotStarted(T),
-    InProgress(*mut T::RawPointer),
-    Done,
+    InProgress(Arc<Mutex<WorkerFutureHandle<T>>>)
+}
+
+pub struct WorkerFutureHandle<T: WorkerSdkFuture + Unpin + Send> {
+    pub(crate) ptr: *mut T::RawPointer,
+    pub(crate) shared_result: Option<T::Output>
+}
+
+unsafe impl<T: WorkerSdkFuture + Unpin + Send> Send for WorkerFutureHandle<T> {}
+
+impl<T: WorkerSdkFuture + Unpin + Send> WorkerFutureHandle<T> {
+    pub (crate) fn new(ptr: *mut T::RawPointer) -> Arc<Mutex<Self>> {
+        Arc::new(Mutex::new(WorkerFutureHandle {
+            ptr,
+            shared_result: None
+        }))
+    }
 }
 
 pub trait WorkerSdkFuture {
@@ -13,44 +30,50 @@ pub trait WorkerSdkFuture {
     type Output;
 
     fn start(&self) -> *mut Self::RawPointer;
-    unsafe fn poll(ptr: *mut Self::RawPointer) -> Option<Self::Output>;
+    unsafe fn get(ptr: *mut Self::RawPointer) -> Self::Output;
     unsafe fn destroy(ptr: *mut Self::RawPointer);
 }
 
-impl<T: WorkerSdkFuture + Unpin> Future for WorkerFuture<T> {
+impl<T: WorkerSdkFuture + Unpin + Send + 'static> Future for WorkerFuture<T> {
     type Output = T::Output;
 
-    fn poll(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let mut result = Poll::Pending;
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut next = None;
 
         match self.as_mut().get_mut() {
             WorkerFuture::NotStarted(future) => {
-                let ptr = future.start();
-                next = Some(WorkerFuture::InProgress(ptr));
+                let handle = WorkerFutureHandle::new(future.start());
+
+                let thread_handle = handle.clone();
+                let thread_waker = cx.waker().clone();
+
+                thread::spawn(move || unsafe {
+                    let ptr = thread_handle.lock().unwrap().ptr;
+                    let value = T::get(ptr);
+                    thread_handle.lock().unwrap().shared_result.replace(value);
+                    thread_waker.wake();
+                });
+
+                next = Some(WorkerFuture::InProgress(handle));
             }
-            WorkerFuture::InProgress(ptr) => unsafe {
-                if let Some(value) = T::poll(*ptr) {
-                    result = Poll::Ready(value);
-                    next = Some(WorkerFuture::Done);
-                }
-            },
-            WorkerFuture::Done => panic!("Future already completed".to_string()),
+            WorkerFuture::InProgress(context) => unsafe {
+                return Poll::Ready(context.lock().unwrap().shared_result.take().unwrap());
+            }
         }
 
         if let Some(ref mut next) = next {
             std::mem::swap(self.as_mut().get_mut(), next);
         }
 
-        result
+        return Poll::Pending;
     }
 }
 
-impl<T: WorkerSdkFuture + Unpin> Drop for WorkerFuture<T> {
+impl<T: WorkerSdkFuture + Unpin + Send> Drop for WorkerFuture<T> {
     fn drop(&mut self) {
-        if let WorkerFuture::InProgress(ptr) = self {
+        if let WorkerFuture::InProgress(handle) = self {
             unsafe {
-                T::destroy(*ptr);
+                T::destroy(handle.lock().unwrap().ptr);
             }
         }
     }

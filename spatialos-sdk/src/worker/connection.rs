@@ -18,6 +18,7 @@ use std::{
     fmt::{Display, Formatter},
     ptr,
 };
+use std::sync::{Arc, Mutex};
 
 pub type ConnectionStatus = Result<(), ConnectionStatusError>;
 
@@ -230,7 +231,7 @@ impl WorkerConnection {
         locator: Locator,
         params: ConnectionParameters,
     ) -> WorkerFuture<WorkerConnectionFuture> {
-        WorkerFuture::NotStarted(WorkerConnectionFuture::Locator(locator, params))
+        WorkerFuture::NotStarted(WorkerConnectionFuture::Locator(Arc::new(Mutex::new(locator)), params))
     }
 }
 
@@ -612,8 +613,11 @@ unsafe impl Sync for WorkerConnection {}
 
 pub enum WorkerConnectionFuture {
     Receptionist(CString, CString, u16, ConnectionParameters),
-    Locator(Locator, ConnectionParameters),
+    Locator(Arc<Mutex<Locator>>, ConnectionParameters),
 }
+
+// SAFE: The Locator is wrapped in a Arc<Mutex<>> to ensure no concurrent access between threads.
+unsafe impl Send for WorkerConnectionFuture {}
 
 impl WorkerSdkFuture for WorkerConnectionFuture {
     type RawPointer = Worker_ConnectionFuture;
@@ -621,7 +625,7 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
 
     fn start(&self) -> *mut Self::RawPointer {
         match &self {
-            WorkerConnectionFuture::Receptionist(worker_id, hostname, port, params) => {
+            WorkerConnectionFuture::Receptionist(hostname, worker_id, port, params) => {
                 let params = params.flatten();
                 unsafe {
                     Worker_ConnectAsync(
@@ -634,23 +638,20 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
             }
             WorkerConnectionFuture::Locator(locator, params) => {
                 let params = params.flatten();
-                unsafe { Worker_Locator_ConnectAsync(locator.locator, &params.as_raw()) }
+                unsafe { Worker_Locator_ConnectAsync(locator.lock().unwrap().locator, &params.as_raw()) }
             }
         }
     }
 
-    unsafe fn poll(
+    unsafe fn get(
         ptr: *mut Worker_ConnectionFuture,
-    ) -> Option<Result<WorkerConnection, ConnectionStatusError>> {
-        let connection_ptr = Worker_ConnectionFuture_Get(ptr, &0);
-
-        if connection_ptr.is_null() {
-            return None;
-        }
+    ) -> Result<WorkerConnection, ConnectionStatusError> {
+        let connection_ptr = Worker_ConnectionFuture_Get(ptr, ptr::null());
+        assert!(!connection_ptr.is_null());
 
         let mut connection = WorkerConnection::new(connection_ptr);
         let status = connection.get_connection_status();
-        Some(status.map(|()| connection))
+        status.map(|()| connection)
     }
 
     unsafe fn destroy(ptr: *mut Worker_ConnectionFuture) {

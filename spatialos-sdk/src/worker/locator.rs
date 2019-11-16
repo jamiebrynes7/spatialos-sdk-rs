@@ -1,4 +1,5 @@
 use std::ffi::CString;
+use std::ptr;
 
 use spatialos_sdk_sys::worker::*;
 
@@ -7,6 +8,7 @@ use crate::worker::{
     utils::cstr_to_string,
     worker_future::{WorkerFuture, WorkerSdkFuture},
 };
+use std::sync::{Mutex, Arc};
 
 pub struct Locator {
     pub(crate) locator: *mut Worker_Locator,
@@ -219,17 +221,17 @@ impl PlayerIdentityTokenFuture {
         unsafe {
             let response = *response;
             let data =
-                &mut *(user_data as *mut Option<Result<PlayerIdentityTokenResponse, String>>);
+                &mut *(user_data as *mut Result<PlayerIdentityTokenResponse, String>);
             if Worker_ConnectionStatusCode::from(response.status.code)
                 != Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SUCCESS
             {
                 let err = cstr_to_string(response.status.detail);
-                *data = Some(Err(err));
+                *data = Err(err);
                 return;
             }
 
             let response = PlayerIdentityTokenResponse::from_worker_sdk(&response);
-            *data = Some(Ok(response));
+            *data = Ok(response);
         }
     }
 }
@@ -249,11 +251,11 @@ impl WorkerSdkFuture for PlayerIdentityTokenFuture {
         }
     }
 
-    unsafe fn poll(ptr: *mut Self::RawPointer) -> Option<Self::Output> {
-        let mut data: Option<Result<PlayerIdentityTokenResponse, String>> = None;
+    unsafe fn get(ptr: *mut Self::RawPointer) -> Self::Output {
+        let mut data: Result<PlayerIdentityTokenResponse, String> = Err("Callback never called.".into());
         Worker_Alpha_PlayerIdentityTokenResponseFuture_Get(
             ptr,
-            &0,
+            ptr::null(),
             &mut data as *mut _ as *mut ::std::os::raw::c_void,
             Some(PlayerIdentityTokenFuture::callback_handler),
         );
@@ -378,17 +380,17 @@ impl LoginTokensFuture {
         assert!(!response.is_null());
         unsafe {
             let response = *response;
-            let data = &mut *(user_data as *mut Option<Result<LoginTokensResponse, String>>);
+            let data = &mut *(user_data as *mut Result<LoginTokensResponse, String>);
             if Worker_ConnectionStatusCode::from(response.status.code)
                 != Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SUCCESS
             {
                 let err = cstr_to_string(response.status.detail);
-                *data = Some(Err(err));
+                *data = Err(err);
                 return;
             }
 
             let response = LoginTokensResponse::from_worker_sdk(&response);
-            *data = Some(Ok(response));
+            *data = Ok(response);
         }
     }
 }
@@ -408,11 +410,11 @@ impl WorkerSdkFuture for LoginTokensFuture {
         }
     }
 
-    unsafe fn poll(ptr: *mut Self::RawPointer) -> Option<Self::Output> {
-        let mut data: Option<Result<LoginTokensResponse, String>> = None;
+    unsafe fn get(ptr: *mut Self::RawPointer) -> Self::Output {
+        let mut data: Result<LoginTokensResponse, String> = Err("Callback never called.".into());
         Worker_Alpha_LoginTokensResponseFuture_Get(
             ptr,
-            &0,
+            ptr::null(),
             &mut data as *mut _ as *mut ::std::os::raw::c_void,
             Some(LoginTokensFuture::callback_handler),
         );
