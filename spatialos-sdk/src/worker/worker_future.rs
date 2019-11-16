@@ -3,38 +3,62 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll};
 use std::thread;
+use std::thread::JoinHandle;
 
-pub enum WorkerFuture<T: WorkerSdkFuture + Unpin + Send> {
+pub enum WorkerFuture<T: WorkerSdkFuture> {
     NotStarted(T),
     InProgress(WorkerFutureHandle<T>),
 }
 
-pub struct WorkerFutureHandle<T: WorkerSdkFuture + Unpin + Send> {
+pub struct WorkerFutureHandle<T: WorkerSdkFuture> {
     pub(crate) ptr: *mut T::RawPointer,
     pub(crate) shared_result: Arc<Mutex<Option<T::Output>>>,
+    pub(crate) thread: Option<JoinHandle<()>>
 }
 
-impl<T: WorkerSdkFuture + Unpin + Send> Clone for WorkerFutureHandle<T> {
+impl<T: WorkerSdkFuture> Clone for WorkerFutureHandle<T> {
     fn clone(&self) -> Self {
         WorkerFutureHandle {
             ptr: self.ptr,
             shared_result: self.shared_result.clone(),
+            thread: None
         }
     }
 }
 
-unsafe impl<T: WorkerSdkFuture + Unpin + Send> Send for WorkerFutureHandle<T> {}
+// SAFE: It should be safe to send WorkerFutureHandle<T> between threads given the following
+// conditions around *mut T::RawPointer.
+//
+// First, some context. For the Worker SDK futures, there are only two operations you can
+// perform with this pointer:
+//
+//  * Poll (blocking or with timeout)
+//  * Destroy
+//
+// Given the following rules, we can guarantee that its thread-safe:
+//
+//  1. Poll cannot be called after Destroy.
+//
+// We ensure this cannot be true as we store a reference to the handle of the thread where Poll
+// could be running. If this reference is present in the handle during drop(), we join that thread.
+// This guarantees us that poll has already begun (and then finished) by the time Destroy is called.
+// Since we only ever call Poll once, we cannot possibly call Poll after Destroy.
+//
+// This has the side effect the the Drop impl can block, but this was the already the case anyway with the
+// Worker SDK future Destroy methods (which I believe wait for the future to complete).
+unsafe impl<T: WorkerSdkFuture> Send for WorkerFutureHandle<T> {}
 
-impl<T: WorkerSdkFuture + Unpin + Send> WorkerFutureHandle<T> {
+impl<T: WorkerSdkFuture> WorkerFutureHandle<T> {
     pub(crate) fn new(ptr: *mut T::RawPointer) -> Self {
         WorkerFutureHandle {
             ptr,
             shared_result: Arc::new(Mutex::new(None)),
+            thread: None,
         }
     }
 }
 
-pub trait WorkerSdkFuture {
+pub trait WorkerSdkFuture : Unpin + Send {
     type RawPointer;
     type Output;
 
@@ -43,7 +67,7 @@ pub trait WorkerSdkFuture {
     unsafe fn destroy(ptr: *mut Self::RawPointer);
 }
 
-impl<T: WorkerSdkFuture + Unpin + Send + 'static> Future for WorkerFuture<T> {
+impl<T: WorkerSdkFuture + 'static> Future for WorkerFuture<T> {
     type Output = T::Output;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -51,16 +75,16 @@ impl<T: WorkerSdkFuture + Unpin + Send + 'static> Future for WorkerFuture<T> {
 
         match self.as_mut().get_mut() {
             WorkerFuture::NotStarted(future) => {
-                let handle = WorkerFutureHandle::new(future.start());
+                let mut handle = WorkerFutureHandle::new(future.start());
 
                 let thread_handle = handle.clone();
                 let thread_waker = cx.waker().clone();
 
-                thread::spawn(move || unsafe {
+                handle.thread = Some(thread::spawn(move || unsafe {
                     let value = T::get(thread_handle.ptr);
                     thread_handle.shared_result.lock().unwrap().replace(value);
                     thread_waker.wake();
-                });
+                }));
 
                 next_state = Some(WorkerFuture::InProgress(handle));
             }
@@ -77,9 +101,13 @@ impl<T: WorkerSdkFuture + Unpin + Send + 'static> Future for WorkerFuture<T> {
     }
 }
 
-impl<T: WorkerSdkFuture + Unpin + Send> Drop for WorkerFuture<T> {
+impl<T: WorkerSdkFuture> Drop for WorkerFuture<T> {
     fn drop(&mut self) {
         if let WorkerFuture::InProgress(handle) = self {
+            if let Some(join_handle) = handle.thread.take() {
+                join_handle.join().expect("Failed to join thread");
+            }
+
             unsafe {
                 T::destroy(handle.ptr);
             }
