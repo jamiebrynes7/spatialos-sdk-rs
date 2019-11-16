@@ -12,7 +12,6 @@ use crate::worker::{
     {EntityId, InterestOverride, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
-use std::sync::{Arc, Mutex};
 use std::{
     error::Error,
     ffi::{CStr, CString, NulError},
@@ -232,7 +231,7 @@ impl WorkerConnection {
         params: ConnectionParameters,
     ) -> WorkerFuture<WorkerConnectionFuture> {
         WorkerFuture::NotStarted(WorkerConnectionFuture::Locator(
-            Arc::new(Mutex::new(locator)),
+            locator,
             params,
         ))
     }
@@ -616,10 +615,11 @@ unsafe impl Sync for WorkerConnection {}
 
 pub enum WorkerConnectionFuture {
     Receptionist(CString, CString, u16, ConnectionParameters),
-    Locator(Arc<Mutex<Locator>>, ConnectionParameters),
+    Locator(Locator, ConnectionParameters),
 }
 
-// SAFE: The Locator is wrapped in a Arc<Mutex<>> to ensure no concurrent access between threads.
+// SAFE: The Locator is owned by the WorkerConnectionFuture and cannot be copied or cloned so
+// the underlying pointer cannot be copied.
 unsafe impl Send for WorkerConnectionFuture {}
 
 impl WorkerSdkFuture for WorkerConnectionFuture {
@@ -642,7 +642,7 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
             WorkerConnectionFuture::Locator(locator, params) => {
                 let params = params.flatten();
                 unsafe {
-                    Worker_Locator_ConnectAsync(locator.lock().unwrap().locator, &params.as_raw())
+                    Worker_Locator_ConnectAsync(locator.locator, &params.as_raw())
                 }
             }
         }
