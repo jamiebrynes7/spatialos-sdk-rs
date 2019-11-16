@@ -31,7 +31,7 @@ impl SchemaObject {
     }
 
     pub fn get_object(&self, field: FieldId) -> &SchemaObject {
-        unsafe { Self::from_raw(Schema_GetObject(self.as_ptr(), field)) }
+        unsafe { Self::from_raw(Schema_GetObject(self.as_ptr() as *mut _, field)) }
     }
 
     pub fn object_count(&self, field: FieldId) -> usize {
@@ -40,7 +40,13 @@ impl SchemaObject {
     }
 
     pub fn index_object(&self, field: FieldId, index: usize) -> &SchemaObject {
-        unsafe { Self::from_raw(Schema_IndexObject(self.as_ptr(), field, index as u32)) }
+        unsafe {
+            Self::from_raw(Schema_IndexObject(
+                self.as_ptr() as *mut _,
+                field,
+                index as u32,
+            ))
+        }
     }
 
     pub fn add_object(&mut self, field: FieldId) -> &mut SchemaObject {

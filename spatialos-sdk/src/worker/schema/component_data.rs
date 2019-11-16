@@ -17,11 +17,11 @@ impl SchemaComponentData {
     }
 
     pub fn fields(&self) -> &SchemaObject {
-        unsafe { SchemaObject::from_raw(Schema_GetComponentDataFields(self.as_ptr())) }
+        unsafe { SchemaObject::from_raw(Schema_GetComponentDataFields(self.as_ptr() as *mut _)) }
     }
 
     pub fn fields_mut(&mut self) -> &mut SchemaObject {
-        unsafe { SchemaObject::from_raw_mut(Schema_GetComponentDataFields(self.as_ptr())) }
+        unsafe { SchemaObject::from_raw_mut(Schema_GetComponentDataFields(self.as_ptr_mut())) }
     }
 }
 

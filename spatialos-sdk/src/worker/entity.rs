@@ -77,7 +77,7 @@ impl Entity {
     pub(crate) unsafe fn add_serialized(
         &mut self,
         component_id: ComponentId,
-        component: Owned<SchemaComponentData>,
+        mut component: Owned<SchemaComponentData>,
     ) -> Result<(), String> {
         let vtable = DATABASE.get_vtable(component_id).unwrap();
         let deserialize_func = vtable.component_data_deserialize.unwrap_or_else(|| {
@@ -95,7 +95,7 @@ impl Entity {
         let deserialize_result = deserialize_func(
             component_id,
             ptr::null_mut(),
-            component.as_ptr(),
+            component.as_ptr_mut(),
             handle_out_ptr,
         );
 

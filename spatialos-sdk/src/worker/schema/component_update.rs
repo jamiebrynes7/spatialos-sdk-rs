@@ -11,19 +11,19 @@ impl SchemaComponentUpdate {
     }
 
     pub fn fields(&self) -> &SchemaObject {
-        unsafe { SchemaObject::from_raw(Schema_GetComponentUpdateFields(self.as_ptr())) }
+        unsafe { SchemaObject::from_raw(Schema_GetComponentUpdateFields(self.as_ptr() as *mut _)) }
     }
 
     pub fn fields_mut(&mut self) -> &mut SchemaObject {
-        unsafe { SchemaObject::from_raw_mut(Schema_GetComponentUpdateFields(self.as_ptr())) }
+        unsafe { SchemaObject::from_raw_mut(Schema_GetComponentUpdateFields(self.as_ptr_mut())) }
     }
 
     pub fn events(&self) -> &SchemaObject {
-        unsafe { SchemaObject::from_raw(Schema_GetComponentUpdateEvents(self.as_ptr())) }
+        unsafe { SchemaObject::from_raw(Schema_GetComponentUpdateEvents(self.as_ptr() as *mut _)) }
     }
 
     pub fn events_mut(&mut self) -> &mut SchemaObject {
-        unsafe { SchemaObject::from_raw_mut(Schema_GetComponentUpdateEvents(self.as_ptr())) }
+        unsafe { SchemaObject::from_raw_mut(Schema_GetComponentUpdateEvents(self.as_ptr_mut())) }
     }
 
     // TODO: Cleared fields.

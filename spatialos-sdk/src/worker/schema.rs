@@ -93,8 +93,8 @@ mod private {
     pub unsafe trait PointerType: Sized {
         type Raw;
 
-        unsafe fn from_raw<'a>(raw: *mut Self::Raw) -> &'a Self {
-            &*(raw as *mut _)
+        unsafe fn from_raw<'a>(raw: *const Self::Raw) -> &'a Self {
+            &*(raw as *const _)
         }
 
         unsafe fn from_raw_mut<'a>(raw: *mut Self::Raw) -> &'a mut Self {

@@ -11,11 +11,11 @@ impl SchemaCommandRequest {
     }
 
     pub fn object(&self) -> &SchemaObject {
-        unsafe { SchemaObject::from_raw(Schema_GetCommandRequestObject(self.as_ptr())) }
+        unsafe { SchemaObject::from_raw(Schema_GetCommandRequestObject(self.as_ptr() as *mut _)) }
     }
 
     pub fn object_mut(&mut self) -> &mut SchemaObject {
-        unsafe { SchemaObject::from_raw_mut(Schema_GetCommandRequestObject(self.as_ptr())) }
+        unsafe { SchemaObject::from_raw_mut(Schema_GetCommandRequestObject(self.as_ptr_mut())) }
     }
 }
 
