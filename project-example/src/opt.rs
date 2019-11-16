@@ -4,7 +4,7 @@ use structopt::StructOpt;
 #[structopt(
     name = "project-example",
     about = "A SpatialOS worker written in Rust.",
-    rename_all="kebab-case"
+    rename_all = "kebab-case"
 )]
 pub struct Opt {
     #[structopt(long, short = "i")]
