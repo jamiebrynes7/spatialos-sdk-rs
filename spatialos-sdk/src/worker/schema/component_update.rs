@@ -1,4 +1,4 @@
-use crate::worker::schema::{owned::OwnableImpl, Owned, PointerType, SchemaObject};
+use crate::worker::schema::{Owned, OwnedPointer, PointerType, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -33,7 +33,7 @@ unsafe impl PointerType for SchemaComponentUpdate {
     type Raw = Schema_ComponentUpdate;
 }
 
-unsafe impl OwnableImpl for SchemaComponentUpdate {
+unsafe impl OwnedPointer for SchemaComponentUpdate {
     const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw = Schema_CreateComponentUpdate;
     const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw) = Schema_DestroyComponentUpdate;
 }

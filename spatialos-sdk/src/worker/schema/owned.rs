@@ -20,22 +20,11 @@ use std::{
     ptr::NonNull,
 };
 
-pub(crate) use self::private::OwnableImpl;
+use crate::worker::schema::private::OwnedPointer;
 
-mod private {
-    use crate::worker::schema::PointerType;
+pub trait Ownable: OwnedPointer {}
 
-    /// Private imlementation of the `Ownable` trait. Used to hide implementation
-    /// details and seal the trait from downstream implementations.
-    pub unsafe trait OwnableImpl: PointerType {
-        const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw;
-        const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw);
-    }
-}
-
-pub trait Ownable: OwnableImpl {}
-
-impl<T> Ownable for T where T: OwnableImpl {}
+impl<T> Ownable for T where T: OwnedPointer {}
 
 /// Like [`Box`], but for SpatialOS schema types.
 ///
@@ -69,6 +58,12 @@ impl<T: Ownable> Drop for Owned<T> {
         unsafe {
             T::DESTROY_FN(self.0.as_ptr());
         }
+    }
+}
+
+impl<T: Ownable> Default for Owned<T> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

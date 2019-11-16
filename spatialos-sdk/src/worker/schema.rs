@@ -18,7 +18,7 @@ pub use self::{
     owned::Owned, primitives::*,
 };
 
-pub(crate) use self::private::PointerType;
+pub(crate) use self::private::*;
 
 pub type FieldId = u32;
 
@@ -108,5 +108,11 @@ mod private {
         fn as_ptr_mut(&mut self) -> *mut Self::Raw {
             self as *mut _ as *mut _
         }
+    }
+
+    /// A data pointer type that can be owned directly by user code.
+    pub unsafe trait OwnedPointer: PointerType {
+        const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw;
+        const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw);
     }
 }
