@@ -1,4 +1,4 @@
-use crate::worker::schema::{FieldId, PointerType, SchemaPrimitiveField};
+use crate::worker::schema::{FieldId, DataPointer, SchemaPrimitiveField};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -54,7 +54,7 @@ impl SchemaObject {
     }
 }
 
-unsafe impl PointerType for SchemaObject {
+unsafe impl DataPointer for SchemaObject {
     type Raw = Schema_Object;
 }
 

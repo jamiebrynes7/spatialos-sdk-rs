@@ -1,4 +1,4 @@
-use crate::worker::schema::{Owned, OwnedPointer, PointerType, SchemaObject};
+use crate::worker::schema::{Owned, OwnedPointer, DataPointer, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -25,7 +25,7 @@ impl SchemaComponentData {
     }
 }
 
-unsafe impl PointerType for SchemaComponentData {
+unsafe impl DataPointer for SchemaComponentData {
     type Raw = Schema_ComponentData;
 }
 

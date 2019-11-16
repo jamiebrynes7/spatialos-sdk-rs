@@ -1,4 +1,4 @@
-use crate::worker::schema::{Owned, OwnedPointer, PointerType, SchemaObject};
+use crate::worker::schema::{Owned, OwnedPointer, DataPointer, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -19,7 +19,7 @@ impl SchemaCommandRequest {
     }
 }
 
-unsafe impl PointerType for SchemaCommandRequest {
+unsafe impl DataPointer for SchemaCommandRequest {
     type Raw = Schema_CommandRequest;
 }
 

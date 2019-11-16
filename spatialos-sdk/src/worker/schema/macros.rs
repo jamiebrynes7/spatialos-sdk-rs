@@ -8,14 +8,14 @@
 /// * Verify that the type implements `Send`.
 /// * Verify that the type does not implement `Sync`.
 ///
-/// See the documentation for `PointerType` for more details about the safety
+/// See the documentation for `DataPointer` for more details about the safety
 /// invariants that these tests enforce.
 macro_rules! pointer_type_tests {
     ($type:ty) => {
         static_assertions::const_assert!(std::mem::size_of::<$type>() == 0);
 
         static_assertions::assert_eq_align!(
-            *mut <$type as $crate::worker::schema::private::PointerType>::Raw,
+            *mut <$type as $crate::worker::schema::private::DataPointer>::Raw,
             &$type,
             &mut $type,
         );

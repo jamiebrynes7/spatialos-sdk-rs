@@ -1,4 +1,4 @@
-use crate::worker::schema::{Owned, OwnedPointer, PointerType, SchemaObject};
+use crate::worker::schema::{Owned, OwnedPointer, DataPointer, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -29,7 +29,7 @@ impl SchemaComponentUpdate {
     // TODO: Cleared fields.
 }
 
-unsafe impl PointerType for SchemaComponentUpdate {
+unsafe impl DataPointer for SchemaComponentUpdate {
     type Raw = Schema_ComponentUpdate;
 }
 

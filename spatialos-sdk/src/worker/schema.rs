@@ -78,7 +78,7 @@ mod private {
     /// This trait broadly covers all types that can be converted from a pointer to a
     /// reference, but some of the types (well, all of them except `SchemaObject`) can
     /// also be owned in addition to being borrowed. For these, see the `owned` module
-    /// and its corresponding `Ownable` trait which extends `PointerType` with
+    /// and its corresponding `Ownable` trait which extends `DataPointer` with
     /// additional functionality for creating and destroying owned instances of the
     /// type.
     ///
@@ -90,7 +90,7 @@ mod private {
     /// invariants.
     ///
     /// [rfc]: https://github.com/rust-lang/rfcs/blob/master/text/1861-extern-types.md
-    pub unsafe trait PointerType: Sized {
+    pub unsafe trait DataPointer: Sized {
         type Raw;
 
         unsafe fn from_raw<'a>(raw: *const Self::Raw) -> &'a Self {
@@ -111,7 +111,7 @@ mod private {
     }
 
     /// A data pointer type that can be owned directly by user code.
-    pub unsafe trait OwnedPointer: PointerType {
+    pub unsafe trait OwnedPointer: DataPointer {
         const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw;
         const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw);
     }
