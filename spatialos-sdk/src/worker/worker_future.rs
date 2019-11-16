@@ -38,11 +38,12 @@ impl<T: WorkerSdkFuture> Clone for WorkerFutureHandle<T> {
 // Given the following rules, we can guarantee that its thread-safe:
 //
 //  1. Poll cannot be called after Destroy.
-//
-// We ensure this cannot be true as we store a reference to the handle of the thread where Poll
-// could be running. If this reference is present in the handle during drop(), we join that thread.
-// This guarantees us that poll has already begun (and then finished) by the time Destroy is called.
-// Since we only ever call Poll once, we cannot possibly call Poll after Destroy.
+//      We ensure this cannot be true as we store a reference to the handle of the thread where Poll
+//      could be running. If this reference is present in the handle during drop(), we join that thread.
+//      This guarantees us that poll has already begun (and then finished) by the time Destroy is called.
+//      Since we only ever call Poll once, we cannot possibly call Poll after Destroy.
+//  2. Destroy is called at most once.
+//      We call Destroy in the drop() of the WorkerFuture<T> only. Something cannot be dropped more than once.
 //
 // This has the side effect the the Drop impl can block, but this was the already the case anyway with the
 // Worker SDK future Destroy methods (which I believe wait for the future to complete).
