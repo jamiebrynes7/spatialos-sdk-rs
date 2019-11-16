@@ -8,7 +8,6 @@ use crate::worker::{
     utils::cstr_to_string,
     worker_future::{WorkerFuture, WorkerSdkFuture},
 };
-use std::sync::{Mutex, Arc};
 
 pub struct Locator {
     pub(crate) locator: *mut Worker_Locator,
@@ -220,8 +219,7 @@ impl PlayerIdentityTokenFuture {
         assert!(!response.is_null());
         unsafe {
             let response = *response;
-            let data =
-                &mut *(user_data as *mut Result<PlayerIdentityTokenResponse, String>);
+            let data = &mut *(user_data as *mut Result<PlayerIdentityTokenResponse, String>);
             if Worker_ConnectionStatusCode::from(response.status.code)
                 != Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SUCCESS
             {
@@ -252,7 +250,8 @@ impl WorkerSdkFuture for PlayerIdentityTokenFuture {
     }
 
     unsafe fn get(ptr: *mut Self::RawPointer) -> Self::Output {
-        let mut data: Result<PlayerIdentityTokenResponse, String> = Err("Callback never called.".into());
+        let mut data: Result<PlayerIdentityTokenResponse, String> =
+            Err("Callback never called.".into());
         Worker_Alpha_PlayerIdentityTokenResponseFuture_Get(
             ptr,
             ptr::null(),

@@ -12,13 +12,13 @@ use crate::worker::{
     {EntityId, InterestOverride, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
+use std::sync::{Arc, Mutex};
 use std::{
     error::Error,
     ffi::{CStr, CString, NulError},
     fmt::{Display, Formatter},
     ptr,
 };
-use std::sync::{Arc, Mutex};
 
 pub type ConnectionStatus = Result<(), ConnectionStatusError>;
 
@@ -231,7 +231,10 @@ impl WorkerConnection {
         locator: Locator,
         params: ConnectionParameters,
     ) -> WorkerFuture<WorkerConnectionFuture> {
-        WorkerFuture::NotStarted(WorkerConnectionFuture::Locator(Arc::new(Mutex::new(locator)), params))
+        WorkerFuture::NotStarted(WorkerConnectionFuture::Locator(
+            Arc::new(Mutex::new(locator)),
+            params,
+        ))
     }
 }
 
@@ -638,7 +641,9 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
             }
             WorkerConnectionFuture::Locator(locator, params) => {
                 let params = params.flatten();
-                unsafe { Worker_Locator_ConnectAsync(locator.lock().unwrap().locator, &params.as_raw()) }
+                unsafe {
+                    Worker_Locator_ConnectAsync(locator.lock().unwrap().locator, &params.as_raw())
+                }
             }
         }
     }
