@@ -41,6 +41,8 @@ pub trait SchemaPrimitiveField {
     }
 }
 
+// NOTE: We define these traits within a private module so that we can also use them
+// to seal public traits (e.g. `owned::Ownable`).
 mod private {
     /// A type that acts as an alias to some schema data hidden behind a pointer.
     ///
@@ -111,6 +113,10 @@ mod private {
     }
 
     /// A data pointer type that can be owned directly by user code.
+    ///
+    /// All of the data pointer types except `SchemaObject` can be directly owned by the
+    /// user via the `Owned<T>` smart pointer type. This trait defines the constructor
+    /// and destructor functions for the underlying C data needed for this purpose.
     pub unsafe trait OwnedPointer: DataPointer {
         const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw;
         const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw);
