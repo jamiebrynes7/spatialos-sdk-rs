@@ -6,22 +6,31 @@ use std::thread;
 
 pub enum WorkerFuture<T: WorkerSdkFuture + Unpin + Send> {
     NotStarted(T),
-    InProgress(Arc<Mutex<WorkerFutureHandle<T>>>),
+    InProgress(WorkerFutureHandle<T>),
 }
 
 pub struct WorkerFutureHandle<T: WorkerSdkFuture + Unpin + Send> {
     pub(crate) ptr: *mut T::RawPointer,
-    pub(crate) shared_result: Option<T::Output>,
+    pub(crate) shared_result: Arc<Mutex<Option<T::Output>>>,
+}
+
+impl<T: WorkerSdkFuture + Unpin + Send> Clone for WorkerFutureHandle<T> {
+    fn clone(&self) -> Self {
+        WorkerFutureHandle {
+            ptr: self.ptr,
+            shared_result: self.shared_result.clone(),
+        }
+    }
 }
 
 unsafe impl<T: WorkerSdkFuture + Unpin + Send> Send for WorkerFutureHandle<T> {}
 
 impl<T: WorkerSdkFuture + Unpin + Send> WorkerFutureHandle<T> {
-    pub(crate) fn new(ptr: *mut T::RawPointer) -> Arc<Mutex<Self>> {
-        Arc::new(Mutex::new(WorkerFutureHandle {
+    pub(crate) fn new(ptr: *mut T::RawPointer) -> Self {
+        WorkerFutureHandle {
             ptr,
-            shared_result: None,
-        }))
+            shared_result: Arc::new(Mutex::new(None)),
+        }
     }
 }
 
@@ -48,17 +57,16 @@ impl<T: WorkerSdkFuture + Unpin + Send + 'static> Future for WorkerFuture<T> {
                 let thread_waker = cx.waker().clone();
 
                 thread::spawn(move || unsafe {
-                    let ptr = thread_handle.lock().unwrap().ptr;
-                    let value = T::get(ptr);
-                    thread_handle.lock().unwrap().shared_result.replace(value);
+                    let value = T::get(thread_handle.ptr);
+                    thread_handle.shared_result.lock().unwrap().replace(value);
                     thread_waker.wake();
                 });
 
                 next_state = Some(WorkerFuture::InProgress(handle));
             }
             WorkerFuture::InProgress(context) => {
-                return Poll::Ready(context.lock().unwrap().shared_result.take().unwrap());
-            },
+                return Poll::Ready(context.shared_result.lock().unwrap().take().unwrap());
+            }
         }
 
         if let Some(ref mut next) = next_state {
@@ -73,7 +81,7 @@ impl<T: WorkerSdkFuture + Unpin + Send> Drop for WorkerFuture<T> {
     fn drop(&mut self) {
         if let WorkerFuture::InProgress(handle) = self {
             unsafe {
-                T::destroy(handle.lock().unwrap().ptr);
+                T::destroy(handle.ptr);
             }
         }
     }

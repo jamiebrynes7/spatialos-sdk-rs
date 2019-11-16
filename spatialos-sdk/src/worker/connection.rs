@@ -230,10 +230,7 @@ impl WorkerConnection {
         locator: Locator,
         params: ConnectionParameters,
     ) -> WorkerFuture<WorkerConnectionFuture> {
-        WorkerFuture::NotStarted(WorkerConnectionFuture::Locator(
-            locator,
-            params,
-        ))
+        WorkerFuture::NotStarted(WorkerConnectionFuture::Locator(locator, params))
     }
 }
 
@@ -641,9 +638,7 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
             }
             WorkerConnectionFuture::Locator(locator, params) => {
                 let params = params.flatten();
-                unsafe {
-                    Worker_Locator_ConnectAsync(locator.locator, &params.as_raw())
-                }
+                unsafe { Worker_Locator_ConnectAsync(locator.locator, &params.as_raw()) }
             }
         }
     }
