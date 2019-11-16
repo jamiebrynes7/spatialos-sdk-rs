@@ -4,9 +4,9 @@ use crate::worker::{
     commands::*,
     component::{self, *},
     entity::Entity,
-    internal::utils::*,
     metrics::Metrics,
     schema::{self, ObjectField},
+    utils::{cstr_to_string, cstr_array_to_vec_string},
     {Authority, EntityId, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
@@ -28,7 +28,7 @@ impl OpList {
     ///
     /// ```no_run
     /// # use spatialos_sdk::worker::connection::*;
-    /// # let connection: WorkerConnection = unimplemented!();
+    /// # let mut connection: WorkerConnection = unimplemented!();
     /// for op in connection.get_op_list(0).iter() {
     ///     // Process `op`.
     /// }

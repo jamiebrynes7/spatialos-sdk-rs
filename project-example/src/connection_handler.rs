@@ -1,6 +1,6 @@
 use crate::{Command, Opt};
 use spatialos_sdk::worker::{
-    connection::{WorkerConnection},
+    connection::WorkerConnection,
     constants::{LOCATOR_HOSTNAME, LOCATOR_PORT, RECEPTIONIST_PORT},
     locator::{
         Locator, LocatorParameters, LoginTokensRequest, PlayerIdentityCredentials,
@@ -8,8 +8,8 @@ use spatialos_sdk::worker::{
     },
     parameters::ConnectionParameters,
 };
-use uuid::Uuid;
 use std::error::Error;
+use uuid::Uuid;
 
 pub async fn get_connection(opt: Opt) -> Result<WorkerConnection, Box<dyn Error>> {
     let Opt {
@@ -65,25 +65,21 @@ pub async fn get_connection(opt: Opt) -> Result<WorkerConnection, Box<dyn Error>
                 LOCATOR_HOSTNAME,
                 LOCATOR_PORT,
                 request,
-            ).await?;
+            )
+            .await?;
 
-            let request =
-                LoginTokensRequest::new(pit.player_identity_token.as_str(), worker_type.as_str());
-            let response = Locator::create_development_login_tokens(
-                LOCATOR_HOSTNAME,
-                LOCATOR_PORT,
-                request,
-            ).await?;
+            let request = LoginTokensRequest::new(&pit.player_identity_token, &worker_type);
+            let response =
+                Locator::create_development_login_tokens(LOCATOR_HOSTNAME, LOCATOR_PORT, request)
+                    .await?;
 
             if response.login_tokens.is_empty() {
                 return Err("No login tokens retrieved".into());
             }
 
             let token = &response.login_tokens[0];
-            let credentials = PlayerIdentityCredentials::new(
-                pit.player_identity_token.as_str(),
-                token.login_token.as_str(),
-            );
+            let credentials =
+                PlayerIdentityCredentials::new(&pit.player_identity_token, &token.login_token);
             let locator = Locator::new(
                 LOCATOR_HOSTNAME,
                 LOCATOR_PORT,

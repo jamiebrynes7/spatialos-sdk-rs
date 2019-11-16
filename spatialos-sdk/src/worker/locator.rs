@@ -2,9 +2,11 @@ use std::ffi::CString;
 
 use spatialos_sdk_sys::worker::*;
 
-use crate::worker::internal::utils::cstr_to_string;
-use crate::worker::parameters::ProtocolLoggingParameters;
-use crate::worker::internal::{WorkerSdkFuture, WorkerFuture};
+use crate::worker::{
+    parameters::ProtocolLoggingParameters,
+    utils::cstr_to_string,
+    worker_future::{WorkerFuture, WorkerSdkFuture},
+};
 
 pub struct Locator {
     pub(crate) locator: *mut Worker_Locator,
@@ -197,7 +199,7 @@ impl PlayerIdentityTokenResponse {
 pub struct PlayerIdentityTokenFuture {
     request: PlayerIdentityTokenRequest,
     hostname: CString,
-    port: u16
+    port: u16,
 }
 
 impl PlayerIdentityTokenFuture {
@@ -205,7 +207,7 @@ impl PlayerIdentityTokenFuture {
         PlayerIdentityTokenFuture {
             request,
             hostname,
-            port
+            port,
         }
     }
 
@@ -359,7 +361,7 @@ impl LoginTokenDetails {
 pub struct LoginTokensFuture {
     request: LoginTokensRequest,
     hostname: CString,
-    port: u16
+    port: u16,
 }
 
 impl LoginTokensFuture {
@@ -367,7 +369,7 @@ impl LoginTokensFuture {
         LoginTokensFuture {
             request,
             hostname,
-            port
+            port,
         }
     }
 

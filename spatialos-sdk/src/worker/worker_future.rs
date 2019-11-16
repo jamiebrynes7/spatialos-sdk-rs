@@ -1,13 +1,11 @@
-pub(crate) mod utils;
-
-use std::task::{Context, Poll};
 use std::future::Future;
 use std::pin::Pin;
+use std::task::{Context, Poll};
 
-pub enum WorkerFuture<T : WorkerSdkFuture + Unpin> {
+pub enum WorkerFuture<T: WorkerSdkFuture + Unpin> {
     NotStarted(T),
     InProgress(*mut T::RawPointer),
-    Done
+    Done,
 }
 
 pub trait WorkerSdkFuture {
@@ -28,16 +26,16 @@ impl<T: WorkerSdkFuture + Unpin> Future for WorkerFuture<T> {
 
         match self.as_mut().get_mut() {
             WorkerFuture::NotStarted(future) => {
-                let ptr= future.start();
+                let ptr = future.start();
                 next = Some(WorkerFuture::InProgress(ptr));
-            },
+            }
             WorkerFuture::InProgress(ptr) => {
                 if let Some(value) = T::poll(*ptr) {
                     result = Poll::Ready(value);
                     next = Some(WorkerFuture::Done);
                 }
-            },
-            WorkerFuture::Done => panic!("Future already completed".to_string())
+            }
+            WorkerFuture::Done => panic!("Future already completed".to_string()),
         }
 
         if let Some(ref mut next) = next {
