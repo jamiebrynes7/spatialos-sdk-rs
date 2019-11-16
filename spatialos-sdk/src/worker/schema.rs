@@ -101,8 +101,12 @@ mod private {
             &mut *(raw as *mut _)
         }
 
-        fn as_ptr(&self) -> *mut Self::Raw {
-            self as *const _ as *mut _
+        fn as_ptr(&self) -> *const Self::Raw {
+            self as *const _ as *const _
+        }
+
+        fn as_ptr_mut(&mut self) -> *mut Self::Raw {
+            self as *mut _ as *mut _
         }
     }
 }

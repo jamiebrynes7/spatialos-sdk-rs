@@ -44,7 +44,7 @@ impl SchemaObject {
     }
 
     pub fn add_object(&mut self, field: FieldId) -> &mut SchemaObject {
-        unsafe { Self::from_raw_mut(Schema_AddObject(self.as_ptr(), field)) }
+        unsafe { Self::from_raw_mut(Schema_AddObject(self.as_ptr_mut(), field)) }
     }
 }
 
