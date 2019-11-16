@@ -249,22 +249,20 @@ impl WorkerSdkFuture for PlayerIdentityTokenFuture {
         }
     }
 
-    fn poll(ptr: *mut Self::RawPointer) -> Option<Self::Output> {
+    unsafe fn poll(ptr: *mut Self::RawPointer) -> Option<Self::Output> {
         let mut data: Option<Result<PlayerIdentityTokenResponse, String>> = None;
-        unsafe {
-            Worker_Alpha_PlayerIdentityTokenResponseFuture_Get(
-                ptr,
-                &0,
-                &mut data as *mut _ as *mut ::std::os::raw::c_void,
-                Some(PlayerIdentityTokenFuture::callback_handler),
-            );
-        }
+        Worker_Alpha_PlayerIdentityTokenResponseFuture_Get(
+            ptr,
+            &0,
+            &mut data as *mut _ as *mut ::std::os::raw::c_void,
+            Some(PlayerIdentityTokenFuture::callback_handler),
+        );
 
         data
     }
 
-    fn destroy(ptr: *mut Self::RawPointer) {
-        unsafe { Worker_Alpha_PlayerIdentityTokenResponseFuture_Destroy(ptr) }
+    unsafe fn destroy(ptr: *mut Self::RawPointer) {
+        Worker_Alpha_PlayerIdentityTokenResponseFuture_Destroy(ptr)
     }
 }
 
@@ -410,21 +408,19 @@ impl WorkerSdkFuture for LoginTokensFuture {
         }
     }
 
-    fn poll(ptr: *mut Self::RawPointer) -> Option<Self::Output> {
+    unsafe fn poll(ptr: *mut Self::RawPointer) -> Option<Self::Output> {
         let mut data: Option<Result<LoginTokensResponse, String>> = None;
-        unsafe {
-            Worker_Alpha_LoginTokensResponseFuture_Get(
-                ptr,
-                &0,
-                &mut data as *mut _ as *mut ::std::os::raw::c_void,
-                Some(LoginTokensFuture::callback_handler),
-            );
-        }
+        Worker_Alpha_LoginTokensResponseFuture_Get(
+            ptr,
+            &0,
+            &mut data as *mut _ as *mut ::std::os::raw::c_void,
+            Some(LoginTokensFuture::callback_handler),
+        );
 
         data
     }
 
-    fn destroy(ptr: *mut Self::RawPointer) {
-        unsafe { Worker_Alpha_LoginTokensResponseFuture_Destroy(ptr) }
+    unsafe fn destroy(ptr: *mut Self::RawPointer) {
+        Worker_Alpha_LoginTokensResponseFuture_Destroy(ptr)
     }
 }

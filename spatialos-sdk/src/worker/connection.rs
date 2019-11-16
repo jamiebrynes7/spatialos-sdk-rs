@@ -639,10 +639,10 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
         }
     }
 
-    fn poll(
+    unsafe fn poll(
         ptr: *mut Worker_ConnectionFuture,
     ) -> Option<Result<WorkerConnection, ConnectionStatusError>> {
-        let connection_ptr = unsafe { Worker_ConnectionFuture_Get(ptr, &0) };
+        let connection_ptr = Worker_ConnectionFuture_Get(ptr, &0);
 
         if connection_ptr.is_null() {
             return None;
@@ -653,7 +653,7 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
         Some(status.map(|()| connection))
     }
 
-    fn destroy(ptr: *mut Worker_ConnectionFuture) {
-        unsafe { Worker_ConnectionFuture_Destroy(ptr) };
+    unsafe fn destroy(ptr: *mut Worker_ConnectionFuture) {
+        Worker_ConnectionFuture_Destroy(ptr);
     }
 }

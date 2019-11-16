@@ -16,7 +16,6 @@ pub fn cstr_array_to_vec_string(
 ) -> Vec<String> {
     unsafe {
         (0..count as isize)
-            .into_iter()
             .map(|i| {
                 let ptr = char_ptr.offset(i) as *mut *const std::os::raw::c_char;
                 assert!(!ptr.is_null());

@@ -13,8 +13,8 @@ pub trait WorkerSdkFuture {
     type Output;
 
     fn start(&self) -> *mut Self::RawPointer;
-    fn poll(ptr: *mut Self::RawPointer) -> Option<Self::Output>;
-    fn destroy(ptr: *mut Self::RawPointer);
+    unsafe fn poll(ptr: *mut Self::RawPointer) -> Option<Self::Output>;
+    unsafe fn destroy(ptr: *mut Self::RawPointer);
 }
 
 impl<T: WorkerSdkFuture + Unpin> Future for WorkerFuture<T> {
@@ -29,12 +29,12 @@ impl<T: WorkerSdkFuture + Unpin> Future for WorkerFuture<T> {
                 let ptr = future.start();
                 next = Some(WorkerFuture::InProgress(ptr));
             }
-            WorkerFuture::InProgress(ptr) => {
+            WorkerFuture::InProgress(ptr) => unsafe {
                 if let Some(value) = T::poll(*ptr) {
                     result = Poll::Ready(value);
                     next = Some(WorkerFuture::Done);
                 }
-            }
+            },
             WorkerFuture::Done => panic!("Future already completed".to_string()),
         }
 
@@ -49,7 +49,9 @@ impl<T: WorkerSdkFuture + Unpin> Future for WorkerFuture<T> {
 impl<T: WorkerSdkFuture + Unpin> Drop for WorkerFuture<T> {
     fn drop(&mut self) {
         if let WorkerFuture::InProgress(ptr) = self {
-            T::destroy(*ptr);
+            unsafe {
+                T::destroy(*ptr);
+            }
         }
     }
 }
