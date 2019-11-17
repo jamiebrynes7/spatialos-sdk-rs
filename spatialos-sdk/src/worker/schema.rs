@@ -21,6 +21,7 @@ pub use self::{
     collections::*, command_request::*, command_response::*, component_data::*,
     component_update::*, object::*, owned::Owned, primitives::*,
 };
+pub use crate::impl_field_for_enum_field;
 
 pub(crate) use self::ptr::*;
 
@@ -89,17 +90,15 @@ pub trait EnumField:
 #[macro_export]
 macro_rules! impl_field_for_enum_field {
     ($type:ty) => {
-        impl<T> $crate::worker::schema::Field for T
-        where
-            T: $crate::worker::schema::EnumField,
-        {
+        impl $crate::worker::schema::Field for $type {
             type RustType = Self;
 
             fn get_or_default(
                 object: &$crate::worker::schema::SchemaObject,
                 field: $crate::worker::schema::FieldId,
             ) -> Self::RustType {
-                Self::from(object.get::<$crate::worker::schema::SchemaEnum>(field))
+                Self::try_from(object.get::<$crate::worker::schema::SchemaEnum>(field))
+                    .unwrap_or_default()
             }
 
             fn index(
@@ -107,7 +106,8 @@ macro_rules! impl_field_for_enum_field {
                 field: $crate::worker::schema::FieldId,
                 index: usize,
             ) -> Self::RustType {
-                Self::from(object.index::<$crate::worker::schema::SchemaEnum>(field, index))
+                Self::try_from(object.get_index::<$crate::worker::schema::SchemaEnum>(field, index))
+                    .unwrap_or_default()
             }
 
             fn count(
@@ -122,7 +122,7 @@ macro_rules! impl_field_for_enum_field {
                 field: $crate::worker::schema::FieldId,
                 value: &Self::RustType,
             ) {
-                object.add::<$crate::worker::schema::SchemaEnum>(field, &self.into());
+                object.add::<$crate::worker::schema::SchemaEnum>(field, &(*value).into());
             }
         }
     };

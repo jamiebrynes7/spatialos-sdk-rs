@@ -191,11 +191,11 @@ impl Component for EntityIdTest {
     const ID: ComponentId = 2001;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::example::EntityIdTest, String> {
-        <generated::example::EntityIdTest as ObjectField>::from_object(&data.fields())
+        Ok(<generated::example::EntityIdTest as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EntityIdTestUpdate, String> {
-        <generated::example::EntityIdTestUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::example::EntityIdTestUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EntityIdTestCommandRequest, String> {
@@ -212,13 +212,13 @@ impl Component for EntityIdTest {
 
     fn to_data(data: &generated::example::EntityIdTest) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::example::EntityIdTest as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::example::EntityIdTest as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::EntityIdTestUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::EntityIdTestUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::example::EntityIdTestUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -311,11 +311,11 @@ impl Component for EnumTestComponent {
     const ID: ComponentId = 2002;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::example::EnumTestComponent, String> {
-        <generated::example::EnumTestComponent as ObjectField>::from_object(&data.fields())
+        Ok(<generated::example::EnumTestComponent as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EnumTestComponentUpdate, String> {
-        <generated::example::EnumTestComponentUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::example::EnumTestComponentUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EnumTestComponentCommandRequest, String> {
@@ -332,13 +332,13 @@ impl Component for EnumTestComponent {
 
     fn to_data(data: &generated::example::EnumTestComponent) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::example::EnumTestComponent as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::example::EnumTestComponent as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::EnumTestComponentUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::EnumTestComponentUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::example::EnumTestComponentUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -433,18 +433,18 @@ impl Component for Example {
     const ID: ComponentId = 1000;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::example::Example, String> {
-        <generated::example::Example as ObjectField>::from_object(&data.fields())
+        Ok(<generated::example::Example as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::ExampleUpdate, String> {
-        <generated::example::ExampleUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::example::ExampleUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest, String> {
         match command_index {
             1 => {
-                let result = <generated::example::CommandData as ObjectField>::from_object(&request.object());
-                result.and_then(|deserialized| Ok(ExampleCommandRequest::TestCommand(deserialized)))
+                let deserialized = <generated::example::CommandData as ObjectField>::from_object(&request.object());
+                Ok(ExampleCommandRequest::TestCommand(deserialized))
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Example.", command_index))
         }
@@ -453,8 +453,8 @@ impl Component for Example {
     fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::ExampleCommandResponse, String> {
         match command_index {
             1 => {
-                let result = <generated::example::CommandData as ObjectField>::from_object(&response.object());
-                result.and_then(|deserialized| Ok(ExampleCommandResponse::TestCommand(deserialized)))
+                let deserialized = <generated::example::CommandData as ObjectField>::from_object(&response.object());
+                Ok(ExampleCommandResponse::TestCommand(deserialized))
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Example.", command_index))
         }
@@ -462,13 +462,13 @@ impl Component for Example {
 
     fn to_data(data: &generated::example::Example) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::example::Example as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::example::Example as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::ExampleUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::ExampleUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::example::ExampleUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -476,7 +476,7 @@ impl Component for Example {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             ExampleCommandRequest::TestCommand(ref data) => {
-                <generated::example::CommandData as ObjectField>::into_object(data, &mut serialized_request.object_mut())?;
+                <generated::example::CommandData as ObjectField>::into_object(data, &mut serialized_request.object_mut());
             },
             _ => unreachable!()
         }
@@ -487,7 +487,7 @@ impl Component for Example {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             ExampleCommandResponse::TestCommand(ref data) => {
-                <generated::example::CommandData as ObjectField>::into_object(data, &mut serialized_response.object_mut())?;
+                <generated::example::CommandData as ObjectField>::into_object(data, &mut serialized_response.object_mut());
             },
             _ => unreachable!()
         }
@@ -589,11 +589,11 @@ impl Component for Rotate {
     const ID: ComponentId = 1001;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::example::Rotate, String> {
-        <generated::example::Rotate as ObjectField>::from_object(&data.fields())
+        Ok(<generated::example::Rotate as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::RotateUpdate, String> {
-        <generated::example::RotateUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::example::RotateUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::RotateCommandRequest, String> {
@@ -610,13 +610,13 @@ impl Component for Rotate {
 
     fn to_data(data: &generated::example::Rotate) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::example::Rotate as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::example::Rotate as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::RotateUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::RotateUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::example::RotateUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -984,11 +984,11 @@ impl Component for EntityAcl {
     const ID: ComponentId = 50;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::EntityAcl, String> {
-        <generated::improbable::EntityAcl as ObjectField>::from_object(&data.fields())
+        Ok(<generated::improbable::EntityAcl as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::EntityAclUpdate, String> {
-        <generated::improbable::EntityAclUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::improbable::EntityAclUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::EntityAclCommandRequest, String> {
@@ -1005,13 +1005,13 @@ impl Component for EntityAcl {
 
     fn to_data(data: &generated::improbable::EntityAcl) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::EntityAcl as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::EntityAcl as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::EntityAclUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::EntityAclUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::EntityAclUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -1104,11 +1104,11 @@ impl Component for Interest {
     const ID: ComponentId = 58;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Interest, String> {
-        <generated::improbable::Interest as ObjectField>::from_object(&data.fields())
+        Ok(<generated::improbable::Interest as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::InterestUpdate, String> {
-        <generated::improbable::InterestUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::improbable::InterestUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::InterestCommandRequest, String> {
@@ -1125,13 +1125,13 @@ impl Component for Interest {
 
     fn to_data(data: &generated::improbable::Interest) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Interest as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::Interest as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::InterestUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::InterestUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::InterestUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -1224,11 +1224,11 @@ impl Component for Metadata {
     const ID: ComponentId = 53;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Metadata, String> {
-        <generated::improbable::Metadata as ObjectField>::from_object(&data.fields())
+        Ok(<generated::improbable::Metadata as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::MetadataUpdate, String> {
-        <generated::improbable::MetadataUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::improbable::MetadataUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::MetadataCommandRequest, String> {
@@ -1245,13 +1245,13 @@ impl Component for Metadata {
 
     fn to_data(data: &generated::improbable::Metadata) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Metadata as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::Metadata as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::MetadataUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::MetadataUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::MetadataUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -1334,11 +1334,11 @@ impl Component for Persistence {
     const ID: ComponentId = 55;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Persistence, String> {
-        <generated::improbable::Persistence as ObjectField>::from_object(&data.fields())
+        Ok(<generated::improbable::Persistence as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PersistenceUpdate, String> {
-        <generated::improbable::PersistenceUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::improbable::PersistenceUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PersistenceCommandRequest, String> {
@@ -1355,13 +1355,13 @@ impl Component for Persistence {
 
     fn to_data(data: &generated::improbable::Persistence) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Persistence as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::Persistence as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::PersistenceUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::PersistenceUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::PersistenceUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -1454,11 +1454,11 @@ impl Component for Position {
     const ID: ComponentId = 54;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Position, String> {
-        <generated::improbable::Position as ObjectField>::from_object(&data.fields())
+        Ok(<generated::improbable::Position as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PositionUpdate, String> {
-        <generated::improbable::PositionUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::improbable::PositionUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PositionCommandRequest, String> {
@@ -1475,13 +1475,13 @@ impl Component for Position {
 
     fn to_data(data: &generated::improbable::Position) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Position as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::Position as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::PositionUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::PositionUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::PositionUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -1698,11 +1698,11 @@ impl Component for PlayerClient {
     const ID: ComponentId = 61;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::PlayerClient, String> {
-        <generated::improbable::restricted::PlayerClient as ObjectField>::from_object(&data.fields())
+        Ok(<generated::improbable::restricted::PlayerClient as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::PlayerClientUpdate, String> {
-        <generated::improbable::restricted::PlayerClientUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::improbable::restricted::PlayerClientUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::PlayerClientCommandRequest, String> {
@@ -1719,13 +1719,13 @@ impl Component for PlayerClient {
 
     fn to_data(data: &generated::improbable::restricted::PlayerClient) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::restricted::PlayerClient as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::restricted::PlayerClient as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::restricted::PlayerClientUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::PlayerClientUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::PlayerClientUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -1808,11 +1808,11 @@ impl Component for System {
     const ID: ComponentId = 59;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::System, String> {
-        <generated::improbable::restricted::System as ObjectField>::from_object(&data.fields())
+        Ok(<generated::improbable::restricted::System as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::SystemUpdate, String> {
-        <generated::improbable::restricted::SystemUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::improbable::restricted::SystemUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::SystemCommandRequest, String> {
@@ -1829,13 +1829,13 @@ impl Component for System {
 
     fn to_data(data: &generated::improbable::restricted::System) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::restricted::System as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::restricted::System as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::restricted::SystemUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::SystemUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::SystemUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -1950,18 +1950,18 @@ impl Component for Worker {
     const ID: ComponentId = 60;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::Worker, String> {
-        <generated::improbable::restricted::Worker as ObjectField>::from_object(&data.fields())
+        Ok(<generated::improbable::restricted::Worker as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::WorkerUpdate, String> {
-        <generated::improbable::restricted::WorkerUpdate as ObjectField>::from_object(&update.fields())
+        Ok(<generated::improbable::restricted::WorkerUpdate as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::WorkerCommandRequest, String> {
         match command_index {
             1 => {
-                let result = <generated::improbable::restricted::DisconnectRequest as ObjectField>::from_object(&request.object());
-                result.and_then(|deserialized| Ok(WorkerCommandRequest::Disconnect(deserialized)))
+                let deserialized = <generated::improbable::restricted::DisconnectRequest as ObjectField>::from_object(&request.object());
+                Ok(WorkerCommandRequest::Disconnect(deserialized))
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Worker.", command_index))
         }
@@ -1970,8 +1970,8 @@ impl Component for Worker {
     fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::WorkerCommandResponse, String> {
         match command_index {
             1 => {
-                let result = <generated::improbable::restricted::DisconnectResponse as ObjectField>::from_object(&response.object());
-                result.and_then(|deserialized| Ok(WorkerCommandResponse::Disconnect(deserialized)))
+                let deserialized = <generated::improbable::restricted::DisconnectResponse as ObjectField>::from_object(&response.object());
+                Ok(WorkerCommandResponse::Disconnect(deserialized))
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Worker.", command_index))
         }
@@ -1979,13 +1979,13 @@ impl Component for Worker {
 
     fn to_data(data: &generated::improbable::restricted::Worker) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::restricted::Worker as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::restricted::Worker as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::restricted::WorkerUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::WorkerUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::WorkerUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -1993,7 +1993,7 @@ impl Component for Worker {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             WorkerCommandRequest::Disconnect(ref data) => {
-                <generated::improbable::restricted::DisconnectRequest as ObjectField>::into_object(data, &mut serialized_request.object_mut())?;
+                <generated::improbable::restricted::DisconnectRequest as ObjectField>::into_object(data, &mut serialized_request.object_mut());
             },
             _ => unreachable!()
         }
@@ -2004,7 +2004,7 @@ impl Component for Worker {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             WorkerCommandResponse::Disconnect(ref data) => {
-                <generated::improbable::restricted::DisconnectResponse as ObjectField>::into_object(data, &mut serialized_response.object_mut())?;
+                <generated::improbable::restricted::DisconnectResponse as ObjectField>::into_object(data, &mut serialized_response.object_mut());
             },
             _ => unreachable!()
         }

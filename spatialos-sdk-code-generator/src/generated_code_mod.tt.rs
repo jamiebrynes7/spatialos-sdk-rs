@@ -148,11 +148,11 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
     const ID: ComponentId = <#= component.component_id #>;
 
     fn from_data(data: &SchemaComponentData) -> Result<<#= self.rust_fqname(&component.qualified_name) #>, String> {
-        <<#= self.rust_fqname(&component.qualified_name) #> as ObjectField>::from_object(&data.fields())
+        Ok(<<#= self.rust_fqname(&component.qualified_name) #> as ObjectField>::from_object(&data.fields()))
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<<#= self.rust_fqname(&component.qualified_name) #>Update, String> {
-        <<#= self.rust_fqname(&component.qualified_name) #>Update as ObjectField>::from_object(&update.fields())
+        Ok(<<#= self.rust_fqname(&component.qualified_name) #>Update as ObjectField>::from_object(&update.fields()))
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandRequest, String> {
@@ -160,8 +160,8 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
             for command in &component.commands {
             #>
             <#= command.command_index #> => {
-                let result = <<#= self.rust_fqname(&command.request_type) #> as ObjectField>::from_object(&request.object());
-                result.and_then(|deserialized| Ok(<#= self.rust_name(&component.qualified_name) #>CommandRequest::<#= command.name.to_camel_case() #>(deserialized)))
+                let deserialized = <<#= self.rust_fqname(&command.request_type) #> as ObjectField>::from_object(&request.object());
+                Ok(<#= self.rust_name(&component.qualified_name) #>CommandRequest::<#= command.name.to_camel_case() #>(deserialized))
             },<# } #>
             _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component <#= self.rust_name(&component.qualified_name) #>.", command_index))
         }
@@ -172,8 +172,8 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
             for command in &component.commands {
             #>
             <#= command.command_index #> => {
-                let result = <<#= self.rust_fqname(&command.response_type) #> as ObjectField>::from_object(&response.object());
-                result.and_then(|deserialized| Ok(<#= self.rust_name(&component.qualified_name) #>CommandResponse::<#= command.name.to_camel_case() #>(deserialized)))
+                let deserialized = <<#= self.rust_fqname(&command.response_type) #> as ObjectField>::from_object(&response.object());
+                Ok(<#= self.rust_name(&component.qualified_name) #>CommandResponse::<#= command.name.to_camel_case() #>(deserialized))
             },<# } #>
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component <#= self.rust_name(&component.qualified_name) #>.", command_index))
         }
@@ -181,13 +181,13 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
 
     fn to_data(data: &<#= self.rust_fqname(&component.qualified_name) #>) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <<#= self.rust_fqname(&component.qualified_name) #> as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
+        <<#= self.rust_fqname(&component.qualified_name) #> as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
         Ok(serialized_data)
     }
 
     fn to_update(update: &<#= self.rust_fqname(&component.qualified_name) #>Update) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <<#= self.rust_fqname(&component.qualified_name) #>Update as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
+        <<#= self.rust_fqname(&component.qualified_name) #>Update as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
         Ok(serialized_update)
     }
 
@@ -197,7 +197,7 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
             for command in &component.commands {
             #>
             <#= self.rust_name(&component.qualified_name) #>CommandRequest::<#= command.name.to_camel_case() #>(ref data) => {
-                <<#= self.rust_fqname(&command.request_type) #> as ObjectField>::into_object(data, &mut serialized_request.object_mut())?;
+                <<#= self.rust_fqname(&command.request_type) #> as ObjectField>::into_object(data, &mut serialized_request.object_mut());
             },<# } #>
             _ => unreachable!()
         }
@@ -210,7 +210,7 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
             for command in &component.commands {
             #>
             <#= self.rust_name(&component.qualified_name) #>CommandResponse::<#= command.name.to_camel_case() #>(ref data) => {
-                <<#= self.rust_fqname(&command.response_type) #> as ObjectField>::into_object(data, &mut serialized_response.object_mut())?;
+                <<#= self.rust_fqname(&command.response_type) #> as ObjectField>::into_object(data, &mut serialized_response.object_mut());
             },<# } #>
             _ => unreachable!()
         }
