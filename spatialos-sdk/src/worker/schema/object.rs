@@ -1,4 +1,4 @@
-use crate::worker::schema::{FieldId, DataPointer, SchemaPrimitiveField};
+use crate::worker::schema::{DataPointer, FieldId, SchemaPrimitiveField};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 

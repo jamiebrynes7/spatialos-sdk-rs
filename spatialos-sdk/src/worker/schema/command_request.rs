@@ -1,4 +1,4 @@
-use crate::worker::schema::{Owned, OwnedPointer, DataPointer, SchemaObject};
+use crate::worker::schema::{DataPointer, Owned, OwnedPointer, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 

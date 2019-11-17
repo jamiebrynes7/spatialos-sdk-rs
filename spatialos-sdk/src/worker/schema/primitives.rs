@@ -1,5 +1,5 @@
 use crate::worker::{
-    schema::{FieldId, DataPointer, SchemaObject, SchemaPrimitiveField},
+    schema::{DataPointer, FieldId, SchemaObject, SchemaPrimitiveField},
     EntityId,
 };
 use spatialos_sdk_sys::worker::*;
