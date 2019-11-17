@@ -938,12 +938,12 @@ impl TypeConversion for EntityAcl {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
             read_acl: <generated::improbable::WorkerRequirementSet as TypeConversion>::from_type(&input.get_object(1))?,
-            component_write_acl: { let size = input.object_count(2); let mut m = BTreeMap::new(); for i in 0..size { let kv = input.index_object(2, i); m.insert(kv.get::<SchemaUint32>(1), <generated::improbable::WorkerRequirementSet as TypeConversion>::from_type(&kv.get_object(2))?); }; m },
+            component_write_acl: input.get::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2),
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         <generated::improbable::WorkerRequirementSet as TypeConversion>::to_type(&&input.read_acl, &mut output.add_object(1))?;
-        for (k, v) in &input.component_write_acl { let mut object = output.add_object(2); object.add::<SchemaUint32>(1, k); <generated::improbable::WorkerRequirementSet as TypeConversion>::to_type(&v, &mut object.add_object(2))?; };
+        output.add::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, &input.component_write_acl);
         Ok(())
     }
 }
@@ -963,7 +963,7 @@ impl TypeConversion for EntityAclUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
             read_acl: if input.object_count(1) > 0 { Some(<generated::improbable::WorkerRequirementSet as TypeConversion>::from_type(&input.get_object(1))?) } else { None },
-            component_write_acl: { let size = input.object_count(2); if size > 0 { let mut m = BTreeMap::new(); for i in 0..size { let kv = input.index_object(2, i); m.insert(kv.get::<SchemaUint32>(1), <generated::improbable::WorkerRequirementSet as TypeConversion>::from_type(&kv.get_object(2))?); } Some(m) } else { None } },
+            component_write_acl: input.get::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2),
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
@@ -971,7 +971,7 @@ impl TypeConversion for EntityAclUpdate {
             <generated::improbable::WorkerRequirementSet as TypeConversion>::to_type(&value, &mut output.add_object(1))?;
         }
         if let Some(value) = &input.component_write_acl {
-            for (k, v) in value { let mut object = output.add_object(2); object.add::<SchemaUint32>(1, k); <generated::improbable::WorkerRequirementSet as TypeConversion>::to_type(&v, &mut object.add_object(2))?; };
+            output.add::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, value);
         }
         Ok(())
     }
@@ -1068,11 +1068,11 @@ pub struct Interest {
 impl TypeConversion for Interest {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            component_interest: { let size = input.object_count(1); let mut m = BTreeMap::new(); for i in 0..size { let kv = input.index_object(1, i); m.insert(kv.get::<SchemaUint32>(1), <generated::improbable::ComponentInterest as TypeConversion>::from_type(&kv.get_object(2))?); }; m },
+            component_interest: input.get::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1),
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        for (k, v) in &input.component_interest { let mut object = output.add_object(1); object.add::<SchemaUint32>(1, k); <generated::improbable::ComponentInterest as TypeConversion>::to_type(&v, &mut object.add_object(2))?; };
+        output.add::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, &input.component_interest);
         Ok(())
     }
 }
@@ -1089,12 +1089,12 @@ pub struct InterestUpdate {
 impl TypeConversion for InterestUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            component_interest: { let size = input.object_count(1); if size > 0 { let mut m = BTreeMap::new(); for i in 0..size { let kv = input.index_object(1, i); m.insert(kv.get::<SchemaUint32>(1), <generated::improbable::ComponentInterest as TypeConversion>::from_type(&kv.get_object(2))?); } Some(m) } else { None } },
+            component_interest: input.get::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1),
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
         if let Some(value) = &input.component_interest {
-            for (k, v) in value { let mut object = output.add_object(1); object.add::<SchemaUint32>(1, k); <generated::improbable::ComponentInterest as TypeConversion>::to_type(&v, &mut object.add_object(2))?; };
+            output.add::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, value);
         }
         Ok(())
     }

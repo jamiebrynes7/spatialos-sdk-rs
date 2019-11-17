@@ -1,10 +1,11 @@
 use crate::schema_bundle::*;
 use heck::CamelCase;
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
-fn get_rust_primitive_type_tag(primitive_type: &PrimitiveType) -> &str {
+fn get_rust_primitive_type_tag(primitive_type: &PrimitiveType) -> &'static str {
     match primitive_type {
         PrimitiveType::Invalid => panic!("Encountered invalid primitive."),
         PrimitiveType::Int32 => "SchemaInt32",
@@ -76,6 +77,40 @@ impl Package {
             identifier_package.rust_name(qualified_name),
         ]
         .join("::")
+    }
+
+    fn schema_type_name(&self, type_ref: &TypeReference) -> Cow<'static, str> {
+        match type_ref {
+            TypeReference::Primitive(prim) => get_rust_primitive_type_tag(prim).into(),
+            TypeReference::Enum(name) => self.rust_fqname(name).into(),
+            TypeReference::Type(name) => self.rust_fqname(name).into(),
+        }
+    }
+
+    fn field_type_name(&self, field_ty: &FieldDefinition_FieldType) -> Cow<'static, str> {
+        match field_ty {
+            FieldDefinition_FieldType::Singular { type_reference } => {
+                self.schema_type_name(type_reference)
+            }
+
+            FieldDefinition_FieldType::Option { inner_type } => {
+                format!("schema::Option<{}>", self.schema_type_name(inner_type)).into()
+            }
+
+            FieldDefinition_FieldType::List { inner_type } => {
+                format!("schema::List<{}>", self.schema_type_name(inner_type)).into()
+            }
+
+            FieldDefinition_FieldType::Map {
+                key_type,
+                value_type,
+            } => format!(
+                "schema::Map<{}, {}>",
+                self.schema_type_name(key_type),
+                self.schema_type_name(value_type),
+            )
+            .into(),
+        }
     }
 
     fn get_enum_definition(&self, qualified_name: &str) -> EnumDefinition {
@@ -205,6 +240,7 @@ impl Package {
             FieldDefinition_FieldType::Singular { ref type_reference } => {
                 self.serialize_type(field.field_id, type_reference, expression, schema_object)
             }
+
             FieldDefinition_FieldType::Option { ref inner_type } => {
                 let ref_decorator = if self.type_needs_borrow(inner_type) {
                     "ref "
@@ -218,6 +254,7 @@ impl Package {
                     self.serialize_type(field.field_id, inner_type, "data", schema_object)
                 )
             }
+
             FieldDefinition_FieldType::List { ref inner_type } => {
                 // If we have a list of primitives, we can just pass a slice directly to add_list.
                 match inner_type {
@@ -239,30 +276,18 @@ impl Package {
                     }
                 }
             }
+
             FieldDefinition_FieldType::Map {
                 ref key_type,
                 ref value_type,
-            } => {
-                let kvpair_object = format!(
-                    "let mut object = {}.add_object({})",
-                    schema_object, field.field_id
-                );
-                let serialize_key = self.serialize_type(1, key_type, "k", "object");
-                let serialize_value = self.serialize_type(
-                    2,
-                    value_type,
-                    if !self.type_needs_borrow(value_type) {
-                        "*v"
-                    } else {
-                        "v"
-                    },
-                    "object",
-                );
-                format!(
-                    "for (k, v) in {} {{ {}; {}; {}; }}",
-                    expression, kvpair_object, serialize_key, serialize_value
-                )
-            }
+            } => format!(
+                "{}.add::<Map<{}, {}>>({}, {})",
+                schema_object,
+                self.schema_type_name(key_type),
+                self.schema_type_name(value_type),
+                field.field_id,
+                expression,
+            ),
         }
     }
 
@@ -322,19 +347,13 @@ impl Package {
             FieldDefinition_FieldType::Map {
                 ref key_type,
                 ref value_type,
-            } => {
-                let capacity = format!("{}.object_count({})", schema_field, field.field_id);
-                let deserialize_key = self.deserialize_type(1, key_type, "kv");
-                let deserialize_value = self.deserialize_type(2, value_type, "kv");
-                format!(
-                    "{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object({}, i); m.insert({}, {}); }}; m }}",
-                    capacity,
-                    schema_field,
-                    field.field_id,
-                    deserialize_key,
-                    deserialize_value,
-                )
-            }
+            } => format!(
+                "{}.get::<Map<{}, {}>>({})",
+                schema_field,
+                self.schema_type_name(key_type),
+                self.schema_type_name(value_type),
+                field.field_id
+            ),
         }
     }
 
@@ -355,19 +374,13 @@ impl Package {
             FieldDefinition_FieldType::Map {
                 ref key_type,
                 ref value_type,
-            } => {
-                let capacity = format!("{}.object_count({})", schema_field, field.field_id);
-                let deserialize_key = self.deserialize_type(1, key_type, "kv");
-                let deserialize_value = self.deserialize_type(2, value_type, "kv");
-                format!(
-                    "{{ let size = {}; if size > 0 {{ let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object({}, i); m.insert({}, {}); }} Some(m) }} else {{ None }} }}",
-                    capacity,
-                    schema_field,
-                    field.field_id,
-                    deserialize_key,
-                    deserialize_value,
-                )
-            }
+            } => format!(
+                "{}.get::<Map<{}, {}>>({})",
+                schema_field,
+                self.schema_type_name(key_type),
+                self.schema_type_name(value_type),
+                field.field_id
+            ),
         }
     }
 
