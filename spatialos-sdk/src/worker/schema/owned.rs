@@ -14,13 +14,12 @@
 //! [`Owned`]: struct.Owned.html
 //! [`Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 
+use crate::worker::schema::OwnedPointer;
 use std::{
     mem,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
-
-use crate::worker::schema::private::OwnedPointer;
 
 pub trait Ownable: OwnedPointer {}
 
