@@ -4,6 +4,7 @@
 #[macro_use]
 mod macros;
 
+mod collections;
 mod command_request;
 mod command_response;
 mod component_data;
@@ -15,8 +16,8 @@ mod ptr;
 pub mod owned;
 
 pub use self::{
-    command_request::*, command_response::*, component_data::*, component_update::*, object::*,
-    owned::Owned, primitives::*,
+    collections::*, command_request::*, command_response::*, component_data::*,
+    component_update::*, object::*, owned::Owned, primitives::*,
 };
 
 pub(crate) use self::ptr::*;
