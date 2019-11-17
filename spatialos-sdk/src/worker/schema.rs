@@ -1,9 +1,16 @@
+// NOTE: This module defines macros that are used in other submodules, so it must be
+// declared first in order for those macros to be visible to all sibling modules.
+#[cfg(test)]
+#[macro_use]
+mod macros;
+
 mod command_request;
 mod command_response;
 mod component_data;
 mod component_update;
 mod object;
 mod primitives;
+mod ptr;
 
 pub mod owned;
 
@@ -11,6 +18,8 @@ pub use self::{
     command_request::*, command_response::*, component_data::*, component_update::*, object::*,
     owned::Owned, primitives::*,
 };
+
+pub(crate) use self::ptr::*;
 
 pub type FieldId = u32;
 

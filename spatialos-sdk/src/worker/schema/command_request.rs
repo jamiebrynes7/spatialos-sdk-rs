@@ -1,4 +1,4 @@
-use crate::worker::schema::{owned::OwnableImpl, Owned, SchemaObject};
+use crate::worker::schema::{DataPointer, Owned, OwnedPointer, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -7,35 +7,25 @@ pub struct SchemaCommandRequest(PhantomData<*mut Schema_CommandRequest>);
 
 impl SchemaCommandRequest {
     pub fn new() -> Owned<SchemaCommandRequest> {
-        unsafe { Owned::new(Schema_CreateCommandRequest()) }
+        Owned::new()
     }
 
     pub fn object(&self) -> &SchemaObject {
-        unsafe { SchemaObject::from_raw(Schema_GetCommandRequestObject(self.as_ptr())) }
+        unsafe { SchemaObject::from_raw(Schema_GetCommandRequestObject(self.as_ptr() as *mut _)) }
     }
 
     pub fn object_mut(&mut self) -> &mut SchemaObject {
-        unsafe { SchemaObject::from_raw_mut(Schema_GetCommandRequestObject(self.as_ptr())) }
-    }
-
-    // Methods for raw pointer conversion.
-    // -----------------------------------
-
-    pub(crate) unsafe fn from_raw<'a>(raw: *mut Schema_CommandRequest) -> &'a Self {
-        &*(raw as *mut _)
-    }
-
-    pub(crate) fn as_ptr(&self) -> *mut Schema_CommandRequest {
-        self as *const _ as *mut _
+        unsafe { SchemaObject::from_raw_mut(Schema_GetCommandRequestObject(self.as_ptr_mut())) }
     }
 }
 
-impl OwnableImpl for SchemaCommandRequest {
+unsafe impl DataPointer for SchemaCommandRequest {
     type Raw = Schema_CommandRequest;
+}
 
-    unsafe fn destroy(me: *mut Self::Raw) {
-        Schema_DestroyCommandRequest(me);
-    }
+unsafe impl OwnedPointer for SchemaCommandRequest {
+    const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw = Schema_CreateCommandRequest;
+    const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw) = Schema_DestroyCommandRequest;
 }
 
 // SAFETY: It should be safe to send a `SchemaCommandRequest` between threads, so long as
@@ -46,9 +36,5 @@ unsafe impl Send for SchemaCommandRequest {}
 
 #[cfg(test)]
 mod tests {
-    use super::SchemaCommandRequest;
-    use static_assertions::*;
-
-    assert_impl_all!(SchemaCommandRequest: Send);
-    assert_not_impl_any!(SchemaCommandRequest: Sync);
+    pointer_type_tests!(super::SchemaCommandRequest);
 }

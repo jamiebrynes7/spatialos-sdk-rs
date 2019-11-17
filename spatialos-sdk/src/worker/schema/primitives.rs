@@ -1,5 +1,5 @@
 use crate::worker::{
-    schema::{FieldId, SchemaObject, SchemaPrimitiveField},
+    schema::{DataPointer, FieldId, SchemaObject, SchemaPrimitiveField},
     EntityId,
 };
 use spatialos_sdk_sys::worker::*;
@@ -35,7 +35,7 @@ macro_rules! impl_primitive_field {
 
             fn add(object: &mut SchemaObject, field: FieldId, value: &$rust_type) {
                 unsafe {
-                    $schema_add(object.as_ptr(), field, *value);
+                    $schema_add(object.as_ptr_mut(), field, *value);
                 }
             }
 
@@ -46,7 +46,7 @@ macro_rules! impl_primitive_field {
                     .try_into()
                     .expect("Cannot work with a super long array");
                 unsafe {
-                    $schema_add_list(object.as_ptr(), field, ptr, len);
+                    $schema_add_list(object.as_ptr_mut(), field, ptr, len);
                 }
             }
         }
@@ -197,7 +197,7 @@ impl SchemaPrimitiveField for SchemaEntityId {
 
     fn add(object: &mut SchemaObject, field: FieldId, value: &EntityId) {
         unsafe {
-            Schema_AddEntityId(object.as_ptr(), field, value.id);
+            Schema_AddEntityId(object.as_ptr_mut(), field, value.id);
         }
     }
 
@@ -205,7 +205,7 @@ impl SchemaPrimitiveField for SchemaEntityId {
         let converted_list: Vec<i64> = value.iter().map(|v| v.id).collect();
         unsafe {
             let ptr = converted_list.as_ptr();
-            Schema_AddEntityIdList(object.as_ptr(), field, ptr, value.len() as u32);
+            Schema_AddEntityIdList(object.as_ptr_mut(), field, ptr, value.len() as u32);
         }
     }
 }
@@ -227,7 +227,7 @@ impl SchemaPrimitiveField for SchemaBool {
 
     fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
         unsafe {
-            Schema_AddBool(object.as_ptr(), field, *value as u8);
+            Schema_AddBool(object.as_ptr_mut(), field, *value as u8);
         }
     }
 
@@ -235,7 +235,7 @@ impl SchemaPrimitiveField for SchemaBool {
         let converted_list: Vec<u8> = value.iter().map(|v| if *v { 1u8 } else { 0u8 }).collect();
         unsafe {
             let ptr = converted_list.as_ptr();
-            Schema_AddBoolList(object.as_ptr(), field, ptr, value.len() as u32);
+            Schema_AddBoolList(object.as_ptr_mut(), field, ptr, value.len() as u32);
         }
     }
 }
@@ -269,7 +269,7 @@ impl SchemaPrimitiveField for SchemaString {
         let utf8_bytes = value.as_bytes();
         unsafe {
             Schema_AddBytes(
-                object.as_ptr(),
+                object.as_ptr_mut(),
                 field,
                 utf8_bytes.as_ptr(),
                 utf8_bytes.len() as u32,
@@ -311,7 +311,12 @@ impl SchemaPrimitiveField for SchemaBytes {
 
     fn add(object: &mut SchemaObject, field: FieldId, value: &Vec<u8>) {
         unsafe {
-            Schema_AddBytes(object.as_ptr(), field, value.as_ptr(), value.len() as u32);
+            Schema_AddBytes(
+                object.as_ptr_mut(),
+                field,
+                value.as_ptr(),
+                value.len() as u32,
+            );
         }
     }
 

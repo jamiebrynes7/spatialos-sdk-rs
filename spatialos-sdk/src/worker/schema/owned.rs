@@ -14,26 +14,16 @@
 //! [`Owned`]: struct.Owned.html
 //! [`Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 
+use crate::worker::schema::OwnedPointer;
 use std::{
     mem,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
 
-pub(crate) use self::private::OwnableImpl;
+pub trait Ownable: OwnedPointer {}
 
-pub(crate) mod private {
-    /// Private imlementation of the `Ownable` trait. Used to hide implementation
-    /// details and seal the trait from downstream implementations.
-    pub trait OwnableImpl {
-        type Raw;
-        unsafe fn destroy(me: *mut Self::Raw);
-    }
-}
-
-pub trait Ownable: OwnableImpl {}
-
-impl<T> Ownable for T where T: OwnableImpl {}
+impl<T> Ownable for T where T: OwnedPointer {}
 
 /// Like [`Box`], but for SpatialOS schema types.
 ///
@@ -44,7 +34,8 @@ impl<T> Ownable for T where T: OwnableImpl {}
 pub struct Owned<T: Ownable>(NonNull<T::Raw>);
 
 impl<T: Ownable> Owned<T> {
-    pub(crate) unsafe fn new(raw: *mut T::Raw) -> Self {
+    pub fn new() -> Self {
+        let raw = unsafe { T::CREATE_FN() };
         Self(NonNull::new(raw).expect("Cannot create `Owned` from null pointer"))
     }
 
@@ -64,8 +55,14 @@ impl<T: Ownable> Owned<T> {
 impl<T: Ownable> Drop for Owned<T> {
     fn drop(&mut self) {
         unsafe {
-            T::destroy(self.0.as_ptr());
+            T::DESTROY_FN(self.0.as_ptr());
         }
+    }
+}
+
+impl<T: Ownable> Default for Owned<T> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

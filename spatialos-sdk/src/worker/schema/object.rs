@@ -1,4 +1,4 @@
-use crate::worker::schema::{FieldId, SchemaPrimitiveField};
+use crate::worker::schema::{DataPointer, FieldId, SchemaPrimitiveField};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -31,7 +31,7 @@ impl SchemaObject {
     }
 
     pub fn get_object(&self, field: FieldId) -> &SchemaObject {
-        unsafe { Self::from_raw(Schema_GetObject(self.as_ptr(), field)) }
+        unsafe { Self::from_raw(Schema_GetObject(self.as_ptr() as *mut _, field)) }
     }
 
     pub fn object_count(&self, field: FieldId) -> usize {
@@ -40,27 +40,22 @@ impl SchemaObject {
     }
 
     pub fn index_object(&self, field: FieldId, index: usize) -> &SchemaObject {
-        unsafe { Self::from_raw(Schema_IndexObject(self.as_ptr(), field, index as u32)) }
+        unsafe {
+            Self::from_raw(Schema_IndexObject(
+                self.as_ptr() as *mut _,
+                field,
+                index as u32,
+            ))
+        }
     }
 
     pub fn add_object(&mut self, field: FieldId) -> &mut SchemaObject {
-        unsafe { Self::from_raw_mut(Schema_AddObject(self.as_ptr(), field)) }
+        unsafe { Self::from_raw_mut(Schema_AddObject(self.as_ptr_mut(), field)) }
     }
+}
 
-    // Methods for raw pointer conversion.
-    // -----------------------------------
-
-    pub(crate) unsafe fn from_raw<'a>(raw: *mut Schema_Object) -> &'a Self {
-        &*(raw as *mut _)
-    }
-
-    pub(crate) unsafe fn from_raw_mut<'a>(raw: *mut Schema_Object) -> &'a mut Self {
-        &mut *(raw as *mut _)
-    }
-
-    pub(crate) fn as_ptr(&self) -> *mut Schema_Object {
-        self as *const _ as *mut _
-    }
+unsafe impl DataPointer for SchemaObject {
+    type Raw = Schema_Object;
 }
 
 // SAFETY: It should be safe to send a `SchemaObject` between threads, so long as
@@ -70,10 +65,6 @@ impl SchemaObject {
 unsafe impl Send for SchemaObject {}
 
 #[cfg(test)]
-mod test {
-    use super::SchemaObject;
-    use static_assertions::*;
-
-    assert_impl_all!(SchemaObject: Send);
-    assert_not_impl_any!(SchemaObject: Sync);
+mod tests {
+    pointer_type_tests!(super::SchemaObject);
 }

@@ -1,4 +1,4 @@
-use crate::worker::schema::{owned::*, SchemaObject};
+use crate::worker::schema::{DataPointer, Owned, OwnedPointer, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -13,41 +13,25 @@ pub struct SchemaComponentData(PhantomData<*mut Schema_ComponentData>);
 
 impl SchemaComponentData {
     pub fn new() -> Owned<SchemaComponentData> {
-        unsafe { Owned::new(Schema_CreateComponentData()) }
+        Owned::new()
     }
 
     pub fn fields(&self) -> &SchemaObject {
-        unsafe { SchemaObject::from_raw(Schema_GetComponentDataFields(self.as_ptr())) }
+        unsafe { SchemaObject::from_raw(Schema_GetComponentDataFields(self.as_ptr() as *mut _)) }
     }
 
     pub fn fields_mut(&mut self) -> &mut SchemaObject {
-        unsafe { SchemaObject::from_raw_mut(Schema_GetComponentDataFields(self.as_ptr())) }
-    }
-
-    // Methods for raw pointer conversion.
-    // -----------------------------------
-
-    pub(crate) unsafe fn from_raw<'a>(raw: *mut Schema_ComponentData) -> &'a Self {
-        &*(raw as *mut _)
-    }
-
-    pub(crate) fn as_ptr(&self) -> *mut Schema_ComponentData {
-        self as *const _ as *mut _
+        unsafe { SchemaObject::from_raw_mut(Schema_GetComponentDataFields(self.as_ptr_mut())) }
     }
 }
 
-impl Default for Owned<SchemaComponentData> {
-    fn default() -> Self {
-        SchemaComponentData::new()
-    }
-}
-
-impl OwnableImpl for SchemaComponentData {
+unsafe impl DataPointer for SchemaComponentData {
     type Raw = Schema_ComponentData;
+}
 
-    unsafe fn destroy(inst: *mut Self::Raw) {
-        Schema_DestroyComponentData(inst);
-    }
+unsafe impl OwnedPointer for SchemaComponentData {
+    const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw = Schema_CreateComponentData;
+    const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw) = Schema_DestroyComponentData;
 }
 
 // SAFETY: It should be safe to send a `SchemaComponentData` between threads, so long as
@@ -58,9 +42,5 @@ unsafe impl Send for SchemaComponentData {}
 
 #[cfg(test)]
 mod test {
-    use super::SchemaComponentData;
-    use static_assertions::*;
-
-    assert_impl_all!(SchemaComponentData: Send);
-    assert_not_impl_any!(SchemaComponentData: Sync);
+    pointer_type_tests!(super::SchemaComponentData);
 }
