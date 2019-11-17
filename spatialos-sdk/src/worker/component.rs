@@ -130,18 +130,17 @@ impl<'a> ComponentDataRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the component impl `ObjectField` and `Clone`
+    // NOTE: We manually declare that the component impl `ObjectField`
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
-    pub fn get<C: Component + ObjectField + Clone>(&self) -> Option<Cow<'_, C>> {
+    pub fn get<C: Component + ObjectField>(&self) -> Option<Cow<'_, C>> {
         if C::ID != self.component_id {
             return None;
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            let component = unsafe { &*user_handle.cast().as_ptr() };
-            Cow::Borrowed(component)
+            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
         } else {
             Cow::Owned(ObjectField::from_object(self.schema_type.fields()))
         };
@@ -166,22 +165,21 @@ impl<'a> ComponentUpdateRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the update impl `ObjectField` and `Clone`
+    // NOTE: We manually declare that the update impl `ObjectField`
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
     pub(crate) fn get<C>(&self) -> Option<Cow<'_, C::Update>>
     where
         C: Component,
-        C::Update: ObjectField + Clone,
+        C::Update: ObjectField,
     {
         if C::ID != self.component_id {
             return None;
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            let component = unsafe { &*user_handle.cast().as_ptr() };
-            Cow::Borrowed(component)
+            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
         } else {
             Cow::Owned(ObjectField::from_object(self.schema_type.fields()))
         };
@@ -208,22 +206,21 @@ impl<'a> CommandRequestRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the update impl `ObjectField` and `Clone`
+    // NOTE: We manually declare that the request impl `ObjectField`
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
     pub(crate) fn get<C>(&self) -> Option<Cow<'_, C::CommandRequest>>
     where
         C: Component,
-        C::CommandRequest: ObjectField + Clone,
+        C::CommandRequest: ObjectField,
     {
         if C::ID != self.component_id {
             return None;
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            let component = unsafe { &*user_handle.cast().as_ptr() };
-            Cow::Borrowed(component)
+            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
         } else {
             Cow::Owned(ObjectField::from_object(self.schema_type.object()))
         };
@@ -250,22 +247,21 @@ impl<'a> CommandResponseRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the update impl `ObjectField` and `Clone`
+    // NOTE: We manually declare that the response impl `ObjectField`
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
     pub fn get<C>(&self) -> Option<Cow<'_, C::CommandResponse>>
     where
         C: Component,
-        C::CommandResponse: ObjectField + Clone,
+        C::CommandResponse: ObjectField,
     {
         if C::ID != self.component_id {
             return None;
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            let component = unsafe { &*user_handle.cast().as_ptr() };
-            Cow::Borrowed(component)
+            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
         } else {
             Cow::Owned(ObjectField::from_object(self.schema_type.object()))
         };

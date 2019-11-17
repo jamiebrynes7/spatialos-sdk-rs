@@ -50,7 +50,7 @@ pub trait Field {
     }
 }
 
-pub trait ObjectField: Sized {
+pub trait ObjectField: Sized + Clone {
     fn from_object(object: &SchemaObject) -> Self;
     fn into_object(&self, object: &mut SchemaObject);
 }
