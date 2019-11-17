@@ -21,6 +21,7 @@ pub use self::{
     collections::*, command_request::*, command_response::*, component_data::*,
     component_update::*, object::*, owned::Owned, primitives::*,
 };
+#[doc(inline)]
 pub use crate::impl_field_for_enum_field;
 
 pub(crate) use self::ptr::*;
@@ -51,8 +52,42 @@ pub trait Field {
     }
 }
 
+/// A struct that can be serialized into (and deserialized from) a [`SchemaObject`].
+///
+/// Schemalang [components] and [types], as well as the various associated types
+/// generated for components (i.e. updates and commands), are represented as a
+/// [`SchemaObject`] when serialized. This trait defines the conversion for such
+/// types, and provides a blanket implementation of the [`Field`] trait so that the
+/// types can be serialized as part of larger objects.
+///
+/// You should generally not have to implement this trait manually for any types.
+/// The implementation for any schema-defined types will be generated for you by the
+/// code generator provided with the SDK.
+///
+/// [components]: https://docs.improbable.io/reference/14.2/shared/schema/reference#components
+/// [types]: https://docs.improbable.io/reference/14.2/shared/schema/reference#types
+/// [`SchemaObject`]: struct.SchemaObject.html
+/// [`Field`]: trait.Field.html
 pub trait ObjectField: Sized + Clone {
+    /// Deserializes an instance of this type from a [`SchemaObject`].
+    ///
+    /// Note that deserialization can never fail as the underlying SpatialOS API ensures
+    /// that missing or invalid fields will always provide a valid default value during
+    /// deserialization. As such, if the data in `object` doesn't match what is expected
+    /// by the deserialization logic (e.g. due to a version mismatch between the current
+    /// schema version and the version `object` was generated from), the returned object
+    /// will have default values for any fields that are missing in `object` or have a
+    /// type differing from what is expected.
+    ///
+    /// [`SchemaObject`]: struct.SchemaObject.html
     fn from_object(object: &SchemaObject) -> Self;
+
+    /// Serializes an instance of this type into a [`SchemaObject`].
+    ///
+    /// Note that serialization can never fail, as there is no way to form an invalid
+    /// instance of a schema object type.
+    ///
+    /// [`SchemaObject`]: struct.SchemaObject.html
     fn into_object(&self, object: &mut SchemaObject);
 }
 
@@ -79,14 +114,51 @@ where
     }
 }
 
+/// The error type returned when a conversion to a schema enum type fails.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UnknownDiscriminantError;
 
+/// A type that corresponds to a [schemalang enumeration][schema-enum].
+///
+/// Schemalang enums are C-like enums (i.e. they only have a discriminant and do not
+/// contain any additional data) represented as `u32` values when serialized. They
+/// default to the first variant defined in their schema declaration.
+///
+/// Converting the serialized `u32` representation back to the Rust representation
+/// can fail if the serialized discriminant doesn't match any of the recognized
+/// variants (e.g. if the serialized data was generated from a different schema
+/// version than what the current program is using). As such, conversion is handled
+/// using the [`TryFrom`] trait, with [`UnknownDiscriminantError`] indicating that
+/// value couldn't be converted.
+///
+/// You should generally not have to implement this trait manually for any types.
+/// The implementation for any schema-defined types will be generated for you by the
+/// code generator provided with the SDK.
+///
+/// [schema-enum]: https://docs.improbable.io/reference/14.2/shared/schema/reference#enumerations
+/// [`TryFrom`]: https://doc.rust-lang.org/std/convert/trait.TryFrom.html
+/// [`UnknownDiscriminantError`]: struct.UnknownDiscriminantError.html
 pub trait EnumField:
     Sized + Clone + Copy + Default + TryFrom<u32, Error = UnknownDiscriminantError> + Into<u32>
 {
 }
 
+/// Helper macro for generating the [`Field`] implementation for a schema enum.
+///
+/// Ideally we would like to provide a blanket impl of [`Field`] for all types
+/// implementing [`EnumField`] the way we do with [`ObjectField`], but Rust's
+/// current coherence rules mean that there can only be one blanket impl for a given
+/// trait. For now, this macro at least provides a lightweight way to implement the
+/// trait for such types. Once the coherence rules [have been made more flexible][rfc-1053],
+/// we can remove this macro and use a regular blanket impl.
+///
+/// You should generally not have to use this macro manually. The code generated for
+/// schema-defined enums will handle this for you.
+///
+/// [`Field`]: trait.Field.html
+/// [`EnumField`]: trait.EnumField.html
+/// [`ObjectField`]: trait.ObjectField.html
+/// [rfc-1053]: https://github.com/rust-lang/rfcs/issues/1053
 #[macro_export]
 macro_rules! impl_field_for_enum_field {
     ($type:ty) => {
