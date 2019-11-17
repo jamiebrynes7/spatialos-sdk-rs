@@ -77,7 +77,7 @@ impl ObjectField for CommandData {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaInt32>(1, &input.value);
+        output.add::<SchemaInt32>(1, &self.value);
     }
 }
 
@@ -92,7 +92,7 @@ impl ObjectField for TestType {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaInt32>(1, &input.value);
+        output.add::<SchemaInt32>(1, &self.value);
     }
 }
 
@@ -107,7 +107,7 @@ impl ObjectField for TestType_Inner {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaFloat>(2, &input.number);
+        output.add::<SchemaFloat>(2, &self.number);
     }
 }
 
@@ -126,9 +126,9 @@ impl ObjectField for Vector3d {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaDouble>(1, &input.x);
-        output.add::<SchemaDouble>(2, &input.y);
-        output.add::<SchemaDouble>(3, &input.z);
+        output.add::<SchemaDouble>(1, &self.x);
+        output.add::<SchemaDouble>(2, &self.y);
+        output.add::<SchemaDouble>(3, &self.z);
     }
 }
 
@@ -144,7 +144,7 @@ impl ObjectField for EntityIdTest {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaEntityId>(1, &input.eid);
+        output.add::<SchemaEntityId>(1, &self.eid);
     }
 }
 impl ComponentData<EntityIdTest> for EntityIdTest {
@@ -164,7 +164,7 @@ impl ObjectField for EntityIdTestUpdate {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &input.eid {
+        if let Some(value) = &self.eid {
             output.add::<SchemaEntityId>(1, value);
         }
     }
@@ -264,7 +264,7 @@ impl ObjectField for EnumTestComponent {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<generated::example::TestEnum>(1, &input.test);
+        output.add::<generated::example::TestEnum>(1, &self.test);
     }
 }
 impl ComponentData<EnumTestComponent> for EnumTestComponent {
@@ -284,7 +284,7 @@ impl ObjectField for EnumTestComponentUpdate {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &input.test {
+        if let Some(value) = &self.test {
             output.add::<generated::example::TestEnum>(1, value);
         }
     }
@@ -384,7 +384,7 @@ impl ObjectField for Example {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaFloat>(1, &input.x);
+        output.add::<SchemaFloat>(1, &self.x);
     }
 }
 impl ComponentData<Example> for Example {
@@ -404,7 +404,7 @@ impl ObjectField for ExampleUpdate {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &input.x {
+        if let Some(value) = &self.x {
             output.add::<SchemaFloat>(1, value);
         }
     }
@@ -526,9 +526,9 @@ impl ObjectField for Rotate {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaDouble>(1, &input.angle);
-        output.add::<generated::example::Vector3d>(2, &input.center);
-        output.add::<SchemaDouble>(3, &input.radius);
+        output.add::<SchemaDouble>(1, &self.angle);
+        output.add::<generated::example::Vector3d>(2, &self.center);
+        output.add::<SchemaDouble>(3, &self.radius);
     }
 }
 impl ComponentData<Rotate> for Rotate {
@@ -554,13 +554,13 @@ impl ObjectField for RotateUpdate {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &input.angle {
+        if let Some(value) = &self.angle {
             output.add::<SchemaDouble>(1, value);
         }
-        if let Some(value) = &input.center {
+        if let Some(value) = &self.center {
             output.add::<generated::example::Vector3d>(2, value);
         }
-        if let Some(value) = &input.radius {
+        if let Some(value) = &self.radius {
             output.add::<SchemaDouble>(3, value);
         }
     }
@@ -674,7 +674,7 @@ impl ObjectField for ComponentInterest {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<List<generated::improbable::ComponentInterest_Query>>(1, &input.queries);
+        output.add::<List<generated::improbable::ComponentInterest_Query>>(1, &self.queries);
     }
 }
 
@@ -691,8 +691,8 @@ impl ObjectField for ComponentInterest_BoxConstraint {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<generated::improbable::Coordinates>(1, &input.center);
-        output.add::<generated::improbable::EdgeLength>(2, &input.edge_length);
+        output.add::<generated::improbable::Coordinates>(1, &self.center);
+        output.add::<generated::improbable::EdgeLength>(2, &self.edge_length);
     }
 }
 
@@ -709,8 +709,8 @@ impl ObjectField for ComponentInterest_CylinderConstraint {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<generated::improbable::Coordinates>(1, &input.center);
-        output.add::<SchemaDouble>(2, &input.radius);
+        output.add::<generated::improbable::Coordinates>(1, &self.center);
+        output.add::<SchemaDouble>(2, &self.radius);
     }
 }
 
@@ -731,10 +731,10 @@ impl ObjectField for ComponentInterest_Query {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<generated::improbable::ComponentInterest_QueryConstraint>(1, &input.constraint);
-        output.add::<Optional<SchemaBool>>(2, &input.full_snapshot_result);
-        output.add::<List<SchemaUint32>>(3, &input.result_component_id);
-        output.add::<Optional<SchemaFloat>>(4, &input.frequency);
+        output.add::<generated::improbable::ComponentInterest_QueryConstraint>(1, &self.constraint);
+        output.add::<Optional<SchemaBool>>(2, &self.full_snapshot_result);
+        output.add::<List<SchemaUint32>>(3, &self.result_component_id);
+        output.add::<Optional<SchemaFloat>>(4, &self.frequency);
     }
 }
 
@@ -767,16 +767,16 @@ impl ObjectField for ComponentInterest_QueryConstraint {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<Optional<generated::improbable::ComponentInterest_SphereConstraint>>(1, &input.sphere_constraint);
-        output.add::<Optional<generated::improbable::ComponentInterest_CylinderConstraint>>(2, &input.cylinder_constraint);
-        output.add::<Optional<generated::improbable::ComponentInterest_BoxConstraint>>(3, &input.box_constraint);
-        output.add::<Optional<generated::improbable::ComponentInterest_RelativeSphereConstraint>>(4, &input.relative_sphere_constraint);
-        output.add::<Optional<generated::improbable::ComponentInterest_RelativeCylinderConstraint>>(5, &input.relative_cylinder_constraint);
-        output.add::<Optional<generated::improbable::ComponentInterest_RelativeBoxConstraint>>(6, &input.relative_box_constraint);
-        output.add::<Optional<SchemaInt64>>(7, &input.entity_id_constraint);
-        output.add::<Optional<SchemaUint32>>(8, &input.component_constraint);
-        output.add::<List<generated::improbable::ComponentInterest_QueryConstraint>>(9, &input.and_constraint);
-        output.add::<List<generated::improbable::ComponentInterest_QueryConstraint>>(10, &input.or_constraint);
+        output.add::<Optional<generated::improbable::ComponentInterest_SphereConstraint>>(1, &self.sphere_constraint);
+        output.add::<Optional<generated::improbable::ComponentInterest_CylinderConstraint>>(2, &self.cylinder_constraint);
+        output.add::<Optional<generated::improbable::ComponentInterest_BoxConstraint>>(3, &self.box_constraint);
+        output.add::<Optional<generated::improbable::ComponentInterest_RelativeSphereConstraint>>(4, &self.relative_sphere_constraint);
+        output.add::<Optional<generated::improbable::ComponentInterest_RelativeCylinderConstraint>>(5, &self.relative_cylinder_constraint);
+        output.add::<Optional<generated::improbable::ComponentInterest_RelativeBoxConstraint>>(6, &self.relative_box_constraint);
+        output.add::<Optional<SchemaInt64>>(7, &self.entity_id_constraint);
+        output.add::<Optional<SchemaUint32>>(8, &self.component_constraint);
+        output.add::<List<generated::improbable::ComponentInterest_QueryConstraint>>(9, &self.and_constraint);
+        output.add::<List<generated::improbable::ComponentInterest_QueryConstraint>>(10, &self.or_constraint);
     }
 }
 
@@ -791,7 +791,7 @@ impl ObjectField for ComponentInterest_RelativeBoxConstraint {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<generated::improbable::EdgeLength>(1, &input.edge_length);
+        output.add::<generated::improbable::EdgeLength>(1, &self.edge_length);
     }
 }
 
@@ -806,7 +806,7 @@ impl ObjectField for ComponentInterest_RelativeCylinderConstraint {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaDouble>(1, &input.radius);
+        output.add::<SchemaDouble>(1, &self.radius);
     }
 }
 
@@ -821,7 +821,7 @@ impl ObjectField for ComponentInterest_RelativeSphereConstraint {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaDouble>(1, &input.radius);
+        output.add::<SchemaDouble>(1, &self.radius);
     }
 }
 
@@ -838,8 +838,8 @@ impl ObjectField for ComponentInterest_SphereConstraint {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<generated::improbable::Coordinates>(1, &input.center);
-        output.add::<SchemaDouble>(2, &input.radius);
+        output.add::<generated::improbable::Coordinates>(1, &self.center);
+        output.add::<SchemaDouble>(2, &self.radius);
     }
 }
 
@@ -858,9 +858,9 @@ impl ObjectField for Coordinates {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaDouble>(1, &input.x);
-        output.add::<SchemaDouble>(2, &input.y);
-        output.add::<SchemaDouble>(3, &input.z);
+        output.add::<SchemaDouble>(1, &self.x);
+        output.add::<SchemaDouble>(2, &self.y);
+        output.add::<SchemaDouble>(3, &self.z);
     }
 }
 
@@ -879,9 +879,9 @@ impl ObjectField for EdgeLength {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaDouble>(1, &input.x);
-        output.add::<SchemaDouble>(2, &input.y);
-        output.add::<SchemaDouble>(3, &input.z);
+        output.add::<SchemaDouble>(1, &self.x);
+        output.add::<SchemaDouble>(2, &self.y);
+        output.add::<SchemaDouble>(3, &self.z);
     }
 }
 
@@ -896,7 +896,7 @@ impl ObjectField for WorkerAttributeSet {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<List<SchemaString>>(1, &input.attribute);
+        output.add::<List<SchemaString>>(1, &self.attribute);
     }
 }
 
@@ -911,7 +911,7 @@ impl ObjectField for WorkerRequirementSet {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<List<generated::improbable::WorkerAttributeSet>>(1, &input.attribute_set);
+        output.add::<List<generated::improbable::WorkerAttributeSet>>(1, &self.attribute_set);
     }
 }
 
@@ -929,8 +929,8 @@ impl ObjectField for EntityAcl {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<generated::improbable::WorkerRequirementSet>(1, &input.read_acl);
-        output.add::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, &input.component_write_acl);
+        output.add::<generated::improbable::WorkerRequirementSet>(1, &self.read_acl);
+        output.add::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, &self.component_write_acl);
     }
 }
 impl ComponentData<EntityAcl> for EntityAcl {
@@ -953,10 +953,10 @@ impl ObjectField for EntityAclUpdate {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &input.read_acl {
+        if let Some(value) = &self.read_acl {
             output.add::<generated::improbable::WorkerRequirementSet>(1, value);
         }
-        if let Some(value) = &input.component_write_acl {
+        if let Some(value) = &self.component_write_acl {
             output.add::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, value);
         }
     }
@@ -1057,7 +1057,7 @@ impl ObjectField for Interest {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, &input.component_interest);
+        output.add::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, &self.component_interest);
     }
 }
 impl ComponentData<Interest> for Interest {
@@ -1077,7 +1077,7 @@ impl ObjectField for InterestUpdate {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &input.component_interest {
+        if let Some(value) = &self.component_interest {
             output.add::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, value);
         }
     }
@@ -1177,7 +1177,7 @@ impl ObjectField for Metadata {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaString>(1, &input.entity_type);
+        output.add::<SchemaString>(1, &self.entity_type);
     }
 }
 impl ComponentData<Metadata> for Metadata {
@@ -1197,7 +1197,7 @@ impl ObjectField for MetadataUpdate {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &input.entity_type {
+        if let Some(value) = &self.entity_type {
             output.add::<SchemaString>(1, value);
         }
     }
@@ -1407,7 +1407,7 @@ impl ObjectField for Position {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<generated::improbable::Coordinates>(1, &input.coords);
+        output.add::<generated::improbable::Coordinates>(1, &self.coords);
     }
 }
 impl ComponentData<Position> for Position {
@@ -1427,7 +1427,7 @@ impl ObjectField for PositionUpdate {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &input.coords {
+        if let Some(value) = &self.coords {
             output.add::<generated::improbable::Coordinates>(1, value);
         }
     }
@@ -1588,9 +1588,9 @@ impl ObjectField for Connection {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<generated::improbable::restricted::Connection_ConnectionStatus>(1, &input.status);
-        output.add::<SchemaUint32>(2, &input.data_latency_ms);
-        output.add::<SchemaUint64>(3, &input.connected_since_utc);
+        output.add::<generated::improbable::restricted::Connection_ConnectionStatus>(1, &self.status);
+        output.add::<SchemaUint32>(2, &self.data_latency_ms);
+        output.add::<SchemaUint64>(3, &self.connected_since_utc);
     }
 }
 
@@ -1633,9 +1633,9 @@ impl ObjectField for PlayerIdentity {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaString>(1, &input.player_identifier);
-        output.add::<SchemaString>(2, &input.provider);
-        output.add::<SchemaBytes>(3, &input.metadata);
+        output.add::<SchemaString>(1, &self.player_identifier);
+        output.add::<SchemaString>(2, &self.provider);
+        output.add::<SchemaBytes>(3, &self.metadata);
     }
 }
 
@@ -1651,7 +1651,7 @@ impl ObjectField for PlayerClient {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<generated::improbable::restricted::PlayerIdentity>(1, &input.player_identity);
+        output.add::<generated::improbable::restricted::PlayerIdentity>(1, &self.player_identity);
     }
 }
 impl ComponentData<PlayerClient> for PlayerClient {
@@ -1671,7 +1671,7 @@ impl ObjectField for PlayerClientUpdate {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &input.player_identity {
+        if let Some(value) = &self.player_identity {
             output.add::<generated::improbable::restricted::PlayerIdentity>(1, value);
         }
     }
@@ -1885,9 +1885,9 @@ impl ObjectField for Worker {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        output.add::<SchemaString>(1, &input.worker_id);
-        output.add::<SchemaString>(2, &input.worker_type);
-        output.add::<generated::improbable::restricted::Connection>(3, &input.connection);
+        output.add::<SchemaString>(1, &self.worker_id);
+        output.add::<SchemaString>(2, &self.worker_type);
+        output.add::<generated::improbable::restricted::Connection>(3, &self.connection);
     }
 }
 impl ComponentData<Worker> for Worker {
@@ -1913,13 +1913,13 @@ impl ObjectField for WorkerUpdate {
         }
     }
     fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &input.worker_id {
+        if let Some(value) = &self.worker_id {
             output.add::<SchemaString>(1, value);
         }
-        if let Some(value) = &input.worker_type {
+        if let Some(value) = &self.worker_type {
             output.add::<SchemaString>(2, value);
         }
-        if let Some(value) = &input.connection {
+        if let Some(value) = &self.connection {
             output.add::<generated::improbable::restricted::Connection>(3, value);
         }
     }

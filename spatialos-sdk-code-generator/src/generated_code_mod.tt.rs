@@ -63,7 +63,7 @@ impl ObjectField for <#= self.rust_name(&type_def.qualified_name) #> {
     fn into_object(&self, output: &mut SchemaObject) {<#
         for field in &type_def.fields {
         #>
-        <#= self.serialize_field(field, &format!("&input.{}", field.name), "output") #>;<# } #>
+        <#= self.serialize_field(field, &format!("&self.{}", field.name), "output") #>;<# } #>
     }
 }
 <# } #>
@@ -86,7 +86,7 @@ impl ObjectField for <#= self.rust_name(&component.qualified_name) #> {
     fn into_object(&self, output: &mut SchemaObject) {<#
         for field in &component_fields {
         #>
-        <#= self.serialize_field(field, &format!("&input.{}", field.name), "output") #>;<# } #>
+        <#= self.serialize_field(field, &format!("&self.{}", field.name), "output") #>;<# } #>
     }
 }
 impl ComponentData<<#= self.rust_name(&component.qualified_name) #>> for <#= self.rust_name(&component.qualified_name) #> {
@@ -113,7 +113,7 @@ impl ObjectField for <#= self.rust_name(&component.qualified_name) #>Update {
     fn into_object(&self, output: &mut SchemaObject) {<#
         for field in &component_fields {
         #>
-        if let Some(value) = &input.<#= field.name #> {
+        if let Some(value) = &self.<#= field.name #> {
             <#= self.serialize_field(field, "value", "output") #>;
         }<# } #>
     }
