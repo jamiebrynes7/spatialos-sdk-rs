@@ -539,7 +539,10 @@ pub struct AddComponentOp<'a> {
 }
 
 impl<'a> AddComponentOp<'a> {
-    pub fn get<C: Component + ObjectField + Clone>(&self) -> Option<Cow<'_, C>> {
+    pub fn get<C>(&self) -> Option<Cow<'_, C>>
+    where
+        C: Component + ObjectField,
+    {
         self.component_data.get::<C>()
     }
 }
@@ -568,7 +571,7 @@ impl<'a> ComponentUpdateOp<'a> {
     pub fn get<C>(&self) -> Option<Cow<'_, C::Update>>
     where
         C: Component,
-        C::Update: ObjectField + Clone,
+        C::Update: ObjectField,
     {
         self.component_update.get::<C>()
     }
@@ -589,7 +592,7 @@ impl<'a> CommandRequestOp<'a> {
     pub fn get<C>(&self) -> Option<Cow<'_, C::CommandRequest>>
     where
         C: Component,
-        C::CommandRequest: ObjectField + Clone,
+        C::CommandRequest: ObjectField,
     {
         self.request.get::<C>()
     }
