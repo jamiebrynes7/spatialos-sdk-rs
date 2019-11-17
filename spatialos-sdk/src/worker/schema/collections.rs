@@ -117,8 +117,4 @@ where
     fn count(_object: &SchemaObject, _field: FieldId) -> usize {
         panic!("Map fields cannot be counted");
     }
-
-    fn add_list(_object: &mut SchemaObject, _field: FieldId, _value: &[Self::RustType]) {
-        panic!()
-    }
 }
