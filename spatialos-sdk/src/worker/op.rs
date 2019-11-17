@@ -6,6 +6,7 @@ use crate::worker::{
     entity::Entity,
     internal::utils::*,
     metrics::Metrics,
+    schema::ObjectField,
     {Authority, EntityId, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
@@ -538,7 +539,7 @@ pub struct AddComponentOp<'a> {
 }
 
 impl<'a> AddComponentOp<'a> {
-    pub fn get<C: Component + TypeConversion + Clone>(&self) -> Option<Cow<'_, C>> {
+    pub fn get<C: Component + ObjectField + Clone>(&self) -> Option<Cow<'_, C>> {
         self.component_data.get::<C>()
     }
 }
@@ -567,7 +568,7 @@ impl<'a> ComponentUpdateOp<'a> {
     pub fn get<C>(&self) -> Option<Cow<'_, C::Update>>
     where
         C: Component,
-        C::Update: TypeConversion + Clone,
+        C::Update: ObjectField + Clone,
     {
         self.component_update.get::<C>()
     }
@@ -588,7 +589,7 @@ impl<'a> CommandRequestOp<'a> {
     pub fn get<C>(&self) -> Option<Cow<'_, C::CommandRequest>>
     where
         C: Component,
-        C::CommandRequest: TypeConversion + Clone,
+        C::CommandRequest: ObjectField + Clone,
     {
         self.request.get::<C>()
     }

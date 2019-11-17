@@ -8,7 +8,7 @@
 
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::generated as generated;
 
@@ -20,7 +20,7 @@ use super::generated as generated;
 pub mod example {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::generated as generated;
 
@@ -32,19 +32,29 @@ pub enum TestEnum {
     SECOND,
 }
 
-impl From<u32> for TestEnum {
-    fn from(value: u32) -> Self {
-        match value {
+impl EnumField for TestEnum {}
 
-            0 => TestEnum::FIRST, 
-            1 => TestEnum::SECOND, 
-            _ => panic!(format!("Could not convert {} to enum TestEnum.", value))
+impl Default for TestEnum {
+    const fn default() -> Self {
+        TestEnum::FIRST
+    }
+}
+
+impl TryFrom<u32> for TestEnum {
+    type Error = UnknownDiscriminantError;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        match value {
+            
+            0 => Ok(TestEnum::FIRST), 
+            1 => Ok(TestEnum::SECOND), 
+            _ => Error(UnknownDiscriminantError)
         }
     }
 }
 
-impl TestEnum {
-    pub(crate) fn as_u32(self) -> u32 {
+impl Into<u32> for TestEnum {
+    fn into(self) -> u32 {
         match self {
             
             TestEnum::FIRST => 0, 
@@ -52,6 +62,8 @@ impl TestEnum {
         }
     }
 }
+
+impl_field_for_enum_field!(TestEnum);
 
 /* Types. */
 #[derive(Debug, Clone)]
@@ -657,7 +669,7 @@ inventory::submit!(VTable::new::<Rotate>());
 pub mod improbable {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::generated as generated;
 
@@ -1544,7 +1556,7 @@ inventory::submit!(VTable::new::<Position>());
 pub mod restricted {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::super::generated as generated;
 
@@ -1558,21 +1570,31 @@ pub enum Connection_ConnectionStatus {
     DISCONNECTED,
 }
 
-impl From<u32> for Connection_ConnectionStatus {
-    fn from(value: u32) -> Self {
-        match value {
+impl EnumField for Connection_ConnectionStatus {}
 
-            0 => Connection_ConnectionStatus::UNKNOWN, 
-            1 => Connection_ConnectionStatus::AWAITING_WORKER_CONNECTION, 
-            2 => Connection_ConnectionStatus::CONNECTED, 
-            3 => Connection_ConnectionStatus::DISCONNECTED, 
-            _ => panic!(format!("Could not convert {} to enum Connection_ConnectionStatus.", value))
+impl Default for Connection_ConnectionStatus {
+    const fn default() -> Self {
+        Connection_ConnectionStatus::UNKNOWN
+    }
+}
+
+impl TryFrom<u32> for Connection_ConnectionStatus {
+    type Error = UnknownDiscriminantError;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        match value {
+            
+            0 => Ok(Connection_ConnectionStatus::UNKNOWN), 
+            1 => Ok(Connection_ConnectionStatus::AWAITING_WORKER_CONNECTION), 
+            2 => Ok(Connection_ConnectionStatus::CONNECTED), 
+            3 => Ok(Connection_ConnectionStatus::DISCONNECTED), 
+            _ => Error(UnknownDiscriminantError)
         }
     }
 }
 
-impl Connection_ConnectionStatus {
-    pub(crate) fn as_u32(self) -> u32 {
+impl Into<u32> for Connection_ConnectionStatus {
+    fn into(self) -> u32 {
         match self {
             
             Connection_ConnectionStatus::UNKNOWN => 0, 
@@ -1582,6 +1604,8 @@ impl Connection_ConnectionStatus {
         }
     }
 }
+
+impl_field_for_enum_field!(Connection_ConnectionStatus);
 
 /* Types. */
 #[derive(Debug, Clone)]

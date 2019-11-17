@@ -1,6 +1,6 @@
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, convert::TryFrom};
 
 use <#= vec!["super".to_string(); self.depth() + 1].join("::") #>::generated as generated;
 
@@ -14,24 +14,36 @@ pub enum <#= enum_rust_name #> {
     <#= enum_value.name #>,<# } #>
 }
 
-impl From<u32> for <#= enum_rust_name #> {
-    fn from(value: u32) -> Self {
+impl EnumField for <#= enum_rust_name #> {}
+
+impl Default for <#= enum_rust_name #> {
+    const fn default() -> Self {
+        <#= enum_rust_name #>::<#= &enum_def.values[0].name #>
+    }
+}
+
+impl TryFrom<u32> for <#= enum_rust_name #> {
+    type Error = UnknownDiscriminantError;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
         match value {
-<# for enum_value in &enum_def.values { #>
-            <#= enum_value.value #> => <#= enum_rust_name #>::<#= enum_value.name #>, <# } #>
-            _ => panic!(format!("Could not convert {} to enum <#= enum_rust_name #>.", value))
+            <# for enum_value in &enum_def.values { #>
+            <#= enum_value.value #> => Ok(<#= enum_rust_name #>::<#= enum_value.name #>), <# } #>
+            _ => Error(UnknownDiscriminantError)
         }
     }
 }
 
-impl <#= enum_rust_name #> {
-    pub(crate) fn as_u32(self) -> u32 {
+impl Into<u32> for <#= enum_rust_name #> {
+    fn into(self) -> u32 {
         match self {
             <# for enum_value in &enum_def.values { #>
             <#= enum_rust_name #>::<#= enum_value.name #> => <#= enum_value.value #>, <# } #>
         }
     }
 }
+
+impl_field_for_enum_field!(<#= enum_rust_name #>);
 <# } #>
 /* Types. */<# for type_name in &self.types { let type_def = self.get_type_definition(type_name); #>
 #[derive(Debug, Clone)]
