@@ -375,7 +375,7 @@ impl Package {
                 ref key_type,
                 ref value_type,
             } => format!(
-                "{}.get::<Map<{}, {}>>({})",
+                "Some({}.get::<Map<{}, {}>>({}))",
                 schema_field,
                 self.schema_type_name(key_type),
                 self.schema_type_name(value_type),

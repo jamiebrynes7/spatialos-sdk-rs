@@ -963,7 +963,7 @@ impl TypeConversion for EntityAclUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
             read_acl: if input.object_count(1) > 0 { Some(<generated::improbable::WorkerRequirementSet as TypeConversion>::from_type(&input.get_object(1))?) } else { None },
-            component_write_acl: input.get::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2),
+            component_write_acl: Some(input.get::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2)),
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
@@ -1089,7 +1089,7 @@ pub struct InterestUpdate {
 impl TypeConversion for InterestUpdate {
     fn from_type(input: &SchemaObject) -> Result<Self, String> {
         Ok(Self {
-            component_interest: input.get::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1),
+            component_interest: Some(input.get::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1)),
         })
     }
     fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
