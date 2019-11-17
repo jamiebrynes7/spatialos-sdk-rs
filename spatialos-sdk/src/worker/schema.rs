@@ -79,9 +79,9 @@ where
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct UnknownDiscriminantError;
+pub struct UnknownDiscriminantError;
 
-trait EnumField:
+pub trait EnumField:
     Sized + Clone + Copy + Default + TryFrom<u32, Error = UnknownDiscriminantError> + Into<u32>
 {
 }

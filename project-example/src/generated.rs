@@ -35,7 +35,7 @@ pub enum TestEnum {
 impl EnumField for TestEnum {}
 
 impl Default for TestEnum {
-    const fn default() -> Self {
+    fn default() -> Self {
         TestEnum::FIRST
     }
 }
@@ -48,7 +48,7 @@ impl TryFrom<u32> for TestEnum {
             
             0 => Ok(TestEnum::FIRST), 
             1 => Ok(TestEnum::SECOND), 
-            _ => Error(UnknownDiscriminantError)
+            _ => Err(UnknownDiscriminantError)
         }
     }
 }
@@ -70,15 +70,14 @@ impl_field_for_enum_field!(TestEnum);
 pub struct CommandData {
     pub value: i32,
 }
-impl TypeConversion for CommandData {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for CommandData {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             value: input.get::<SchemaInt32>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaInt32>(1, &input.value);
-        Ok(())
     }
 }
 
@@ -86,15 +85,14 @@ impl TypeConversion for CommandData {
 pub struct TestType {
     pub value: i32,
 }
-impl TypeConversion for TestType {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for TestType {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             value: input.get::<SchemaInt32>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaInt32>(1, &input.value);
-        Ok(())
     }
 }
 
@@ -102,15 +100,14 @@ impl TypeConversion for TestType {
 pub struct TestType_Inner {
     pub number: f32,
 }
-impl TypeConversion for TestType_Inner {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for TestType_Inner {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             number: input.get::<SchemaFloat>(2),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaFloat>(2, &input.number);
-        Ok(())
     }
 }
 
@@ -120,19 +117,18 @@ pub struct Vector3d {
     pub y: f64,
     pub z: f64,
 }
-impl TypeConversion for Vector3d {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for Vector3d {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             x: input.get::<SchemaDouble>(1),
             y: input.get::<SchemaDouble>(2),
             z: input.get::<SchemaDouble>(3),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &input.x);
         output.add::<SchemaDouble>(2, &input.y);
         output.add::<SchemaDouble>(3, &input.z);
-        Ok(())
     }
 }
 
@@ -141,15 +137,14 @@ impl TypeConversion for Vector3d {
 pub struct EntityIdTest {
     pub eid: spatialos_sdk::worker::EntityId,
 }
-impl TypeConversion for EntityIdTest {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for EntityIdTest {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             eid: input.get::<SchemaEntityId>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaEntityId>(1, &input.eid);
-        Ok(())
     }
 }
 impl ComponentData<EntityIdTest> for EntityIdTest {
@@ -162,17 +157,16 @@ impl ComponentData<EntityIdTest> for EntityIdTest {
 pub struct EntityIdTestUpdate {
     pub eid: Option<spatialos_sdk::worker::EntityId>,
 }
-impl TypeConversion for EntityIdTestUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for EntityIdTestUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             eid: if input.count::<SchemaEntityId>(1) > 0 { Some(input.get::<SchemaEntityId>(1)) } else { None },
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         if let Some(value) = &input.eid {
             output.add::<SchemaEntityId>(1, value);
         }
-        Ok(())
     }
 }
 impl ComponentUpdate<EntityIdTest> for EntityIdTestUpdate {
@@ -197,11 +191,11 @@ impl Component for EntityIdTest {
     const ID: ComponentId = 2001;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::example::EntityIdTest, String> {
-        <generated::example::EntityIdTest as TypeConversion>::from_type(&data.fields())
+        <generated::example::EntityIdTest as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EntityIdTestUpdate, String> {
-        <generated::example::EntityIdTestUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::example::EntityIdTestUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EntityIdTestCommandRequest, String> {
@@ -218,13 +212,13 @@ impl Component for EntityIdTest {
 
     fn to_data(data: &generated::example::EntityIdTest) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::example::EntityIdTest as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::example::EntityIdTest as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::EntityIdTestUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::EntityIdTestUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::example::EntityIdTestUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -263,15 +257,14 @@ inventory::submit!(VTable::new::<EntityIdTest>());
 pub struct EnumTestComponent {
     pub test: generated::example::TestEnum,
 }
-impl TypeConversion for EnumTestComponent {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for EnumTestComponent {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             test: input.get::<generated::example::TestEnum>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::example::TestEnum>(1, &input.test);
-        Ok(())
     }
 }
 impl ComponentData<EnumTestComponent> for EnumTestComponent {
@@ -284,17 +277,16 @@ impl ComponentData<EnumTestComponent> for EnumTestComponent {
 pub struct EnumTestComponentUpdate {
     pub test: Option<generated::example::TestEnum>,
 }
-impl TypeConversion for EnumTestComponentUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for EnumTestComponentUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             test: if input.count::<SchemaEnum>(1) > 0 { Some(input.get::<generated::example::TestEnum>(1)) } else { None },
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         if let Some(value) = &input.test {
             output.add::<generated::example::TestEnum>(1, value);
         }
-        Ok(())
     }
 }
 impl ComponentUpdate<EnumTestComponent> for EnumTestComponentUpdate {
@@ -319,11 +311,11 @@ impl Component for EnumTestComponent {
     const ID: ComponentId = 2002;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::example::EnumTestComponent, String> {
-        <generated::example::EnumTestComponent as TypeConversion>::from_type(&data.fields())
+        <generated::example::EnumTestComponent as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EnumTestComponentUpdate, String> {
-        <generated::example::EnumTestComponentUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::example::EnumTestComponentUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EnumTestComponentCommandRequest, String> {
@@ -340,13 +332,13 @@ impl Component for EnumTestComponent {
 
     fn to_data(data: &generated::example::EnumTestComponent) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::example::EnumTestComponent as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::example::EnumTestComponent as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::EnumTestComponentUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::EnumTestComponentUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::example::EnumTestComponentUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -385,15 +377,14 @@ inventory::submit!(VTable::new::<EnumTestComponent>());
 pub struct Example {
     pub x: f32,
 }
-impl TypeConversion for Example {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for Example {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             x: input.get::<SchemaFloat>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaFloat>(1, &input.x);
-        Ok(())
     }
 }
 impl ComponentData<Example> for Example {
@@ -406,17 +397,16 @@ impl ComponentData<Example> for Example {
 pub struct ExampleUpdate {
     pub x: Option<f32>,
 }
-impl TypeConversion for ExampleUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for ExampleUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             x: if input.count::<SchemaFloat>(1) > 0 { Some(input.get::<SchemaFloat>(1)) } else { None },
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         if let Some(value) = &input.x {
             output.add::<SchemaFloat>(1, value);
         }
-        Ok(())
     }
 }
 impl ComponentUpdate<Example> for ExampleUpdate {
@@ -443,17 +433,17 @@ impl Component for Example {
     const ID: ComponentId = 1000;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::example::Example, String> {
-        <generated::example::Example as TypeConversion>::from_type(&data.fields())
+        <generated::example::Example as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::ExampleUpdate, String> {
-        <generated::example::ExampleUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::example::ExampleUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest, String> {
         match command_index {
             1 => {
-                let result = <generated::example::CommandData as TypeConversion>::from_type(&request.object());
+                let result = <generated::example::CommandData as ObjectField>::from_object(&request.object());
                 result.and_then(|deserialized| Ok(ExampleCommandRequest::TestCommand(deserialized)))
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Example.", command_index))
@@ -463,7 +453,7 @@ impl Component for Example {
     fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::ExampleCommandResponse, String> {
         match command_index {
             1 => {
-                let result = <generated::example::CommandData as TypeConversion>::from_type(&response.object());
+                let result = <generated::example::CommandData as ObjectField>::from_object(&response.object());
                 result.and_then(|deserialized| Ok(ExampleCommandResponse::TestCommand(deserialized)))
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Example.", command_index))
@@ -472,13 +462,13 @@ impl Component for Example {
 
     fn to_data(data: &generated::example::Example) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::example::Example as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::example::Example as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::ExampleUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::ExampleUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::example::ExampleUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -486,7 +476,7 @@ impl Component for Example {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             ExampleCommandRequest::TestCommand(ref data) => {
-                <generated::example::CommandData as TypeConversion>::to_type(data, &mut serialized_request.object_mut())?;
+                <generated::example::CommandData as ObjectField>::into_object(data, &mut serialized_request.object_mut())?;
             },
             _ => unreachable!()
         }
@@ -497,7 +487,7 @@ impl Component for Example {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             ExampleCommandResponse::TestCommand(ref data) => {
-                <generated::example::CommandData as TypeConversion>::to_type(data, &mut serialized_response.object_mut())?;
+                <generated::example::CommandData as ObjectField>::into_object(data, &mut serialized_response.object_mut())?;
             },
             _ => unreachable!()
         }
@@ -527,19 +517,18 @@ pub struct Rotate {
     pub center: generated::example::Vector3d,
     pub radius: f64,
 }
-impl TypeConversion for Rotate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for Rotate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             angle: input.get::<SchemaDouble>(1),
             center: input.get::<generated::example::Vector3d>(2),
             radius: input.get::<SchemaDouble>(3),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &input.angle);
         output.add::<generated::example::Vector3d>(2, &input.center);
         output.add::<SchemaDouble>(3, &input.radius);
-        Ok(())
     }
 }
 impl ComponentData<Rotate> for Rotate {
@@ -556,15 +545,15 @@ pub struct RotateUpdate {
     pub center: Option<generated::example::Vector3d>,
     pub radius: Option<f64>,
 }
-impl TypeConversion for RotateUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for RotateUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             angle: if input.count::<SchemaDouble>(1) > 0 { Some(input.get::<SchemaDouble>(1)) } else { None },
             center: if input.object_count(2) > 0 { Some(input.get::<generated::example::Vector3d>(2)) } else { None },
             radius: if input.count::<SchemaDouble>(3) > 0 { Some(input.get::<SchemaDouble>(3)) } else { None },
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         if let Some(value) = &input.angle {
             output.add::<SchemaDouble>(1, value);
         }
@@ -574,7 +563,6 @@ impl TypeConversion for RotateUpdate {
         if let Some(value) = &input.radius {
             output.add::<SchemaDouble>(3, value);
         }
-        Ok(())
     }
 }
 impl ComponentUpdate<Rotate> for RotateUpdate {
@@ -601,11 +589,11 @@ impl Component for Rotate {
     const ID: ComponentId = 1001;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::example::Rotate, String> {
-        <generated::example::Rotate as TypeConversion>::from_type(&data.fields())
+        <generated::example::Rotate as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::RotateUpdate, String> {
-        <generated::example::RotateUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::example::RotateUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::RotateCommandRequest, String> {
@@ -622,13 +610,13 @@ impl Component for Rotate {
 
     fn to_data(data: &generated::example::Rotate) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::example::Rotate as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::example::Rotate as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::RotateUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::RotateUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::example::RotateUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -679,15 +667,14 @@ use super::super::generated as generated;
 pub struct ComponentInterest {
     pub queries: Vec<generated::improbable::ComponentInterest_Query>,
 }
-impl TypeConversion for ComponentInterest {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for ComponentInterest {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             queries: input.get::<List<generated::improbable::ComponentInterest_Query>>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<List<generated::improbable::ComponentInterest_Query>>(1, &input.queries);
-        Ok(())
     }
 }
 
@@ -696,17 +683,16 @@ pub struct ComponentInterest_BoxConstraint {
     pub center: generated::improbable::Coordinates,
     pub edge_length: generated::improbable::EdgeLength,
 }
-impl TypeConversion for ComponentInterest_BoxConstraint {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for ComponentInterest_BoxConstraint {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             center: input.get::<generated::improbable::Coordinates>(1),
             edge_length: input.get::<generated::improbable::EdgeLength>(2),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::Coordinates>(1, &input.center);
         output.add::<generated::improbable::EdgeLength>(2, &input.edge_length);
-        Ok(())
     }
 }
 
@@ -715,17 +701,16 @@ pub struct ComponentInterest_CylinderConstraint {
     pub center: generated::improbable::Coordinates,
     pub radius: f64,
 }
-impl TypeConversion for ComponentInterest_CylinderConstraint {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for ComponentInterest_CylinderConstraint {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             center: input.get::<generated::improbable::Coordinates>(1),
             radius: input.get::<SchemaDouble>(2),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::Coordinates>(1, &input.center);
         output.add::<SchemaDouble>(2, &input.radius);
-        Ok(())
     }
 }
 
@@ -736,21 +721,20 @@ pub struct ComponentInterest_Query {
     pub result_component_id: Vec<u32>,
     pub frequency: Option<f32>,
 }
-impl TypeConversion for ComponentInterest_Query {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for ComponentInterest_Query {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             constraint: input.get::<generated::improbable::ComponentInterest_QueryConstraint>(1),
             full_snapshot_result: input.get::<Optional<SchemaBool>>(2),
             result_component_id: input.get::<List<SchemaUint32>>(3),
             frequency: input.get::<Optional<SchemaFloat>>(4),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::ComponentInterest_QueryConstraint>(1, &input.constraint);
         output.add::<Optional<SchemaBool>>(2, &input.full_snapshot_result);
         output.add::<List<SchemaUint32>>(3, &input.result_component_id);
         output.add::<Optional<SchemaFloat>>(4, &input.frequency);
-        Ok(())
     }
 }
 
@@ -767,9 +751,9 @@ pub struct ComponentInterest_QueryConstraint {
     pub and_constraint: Vec<generated::improbable::ComponentInterest_QueryConstraint>,
     pub or_constraint: Vec<generated::improbable::ComponentInterest_QueryConstraint>,
 }
-impl TypeConversion for ComponentInterest_QueryConstraint {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for ComponentInterest_QueryConstraint {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             sphere_constraint: input.get::<Optional<generated::improbable::ComponentInterest_SphereConstraint>>(1),
             cylinder_constraint: input.get::<Optional<generated::improbable::ComponentInterest_CylinderConstraint>>(2),
             box_constraint: input.get::<Optional<generated::improbable::ComponentInterest_BoxConstraint>>(3),
@@ -780,9 +764,9 @@ impl TypeConversion for ComponentInterest_QueryConstraint {
             component_constraint: input.get::<Optional<SchemaUint32>>(8),
             and_constraint: input.get::<List<generated::improbable::ComponentInterest_QueryConstraint>>(9),
             or_constraint: input.get::<List<generated::improbable::ComponentInterest_QueryConstraint>>(10),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<Optional<generated::improbable::ComponentInterest_SphereConstraint>>(1, &input.sphere_constraint);
         output.add::<Optional<generated::improbable::ComponentInterest_CylinderConstraint>>(2, &input.cylinder_constraint);
         output.add::<Optional<generated::improbable::ComponentInterest_BoxConstraint>>(3, &input.box_constraint);
@@ -793,7 +777,6 @@ impl TypeConversion for ComponentInterest_QueryConstraint {
         output.add::<Optional<SchemaUint32>>(8, &input.component_constraint);
         output.add::<List<generated::improbable::ComponentInterest_QueryConstraint>>(9, &input.and_constraint);
         output.add::<List<generated::improbable::ComponentInterest_QueryConstraint>>(10, &input.or_constraint);
-        Ok(())
     }
 }
 
@@ -801,15 +784,14 @@ impl TypeConversion for ComponentInterest_QueryConstraint {
 pub struct ComponentInterest_RelativeBoxConstraint {
     pub edge_length: generated::improbable::EdgeLength,
 }
-impl TypeConversion for ComponentInterest_RelativeBoxConstraint {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for ComponentInterest_RelativeBoxConstraint {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             edge_length: input.get::<generated::improbable::EdgeLength>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::EdgeLength>(1, &input.edge_length);
-        Ok(())
     }
 }
 
@@ -817,15 +799,14 @@ impl TypeConversion for ComponentInterest_RelativeBoxConstraint {
 pub struct ComponentInterest_RelativeCylinderConstraint {
     pub radius: f64,
 }
-impl TypeConversion for ComponentInterest_RelativeCylinderConstraint {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for ComponentInterest_RelativeCylinderConstraint {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             radius: input.get::<SchemaDouble>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &input.radius);
-        Ok(())
     }
 }
 
@@ -833,15 +814,14 @@ impl TypeConversion for ComponentInterest_RelativeCylinderConstraint {
 pub struct ComponentInterest_RelativeSphereConstraint {
     pub radius: f64,
 }
-impl TypeConversion for ComponentInterest_RelativeSphereConstraint {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for ComponentInterest_RelativeSphereConstraint {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             radius: input.get::<SchemaDouble>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &input.radius);
-        Ok(())
     }
 }
 
@@ -850,17 +830,16 @@ pub struct ComponentInterest_SphereConstraint {
     pub center: generated::improbable::Coordinates,
     pub radius: f64,
 }
-impl TypeConversion for ComponentInterest_SphereConstraint {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for ComponentInterest_SphereConstraint {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             center: input.get::<generated::improbable::Coordinates>(1),
             radius: input.get::<SchemaDouble>(2),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::Coordinates>(1, &input.center);
         output.add::<SchemaDouble>(2, &input.radius);
-        Ok(())
     }
 }
 
@@ -870,19 +849,18 @@ pub struct Coordinates {
     pub y: f64,
     pub z: f64,
 }
-impl TypeConversion for Coordinates {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for Coordinates {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             x: input.get::<SchemaDouble>(1),
             y: input.get::<SchemaDouble>(2),
             z: input.get::<SchemaDouble>(3),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &input.x);
         output.add::<SchemaDouble>(2, &input.y);
         output.add::<SchemaDouble>(3, &input.z);
-        Ok(())
     }
 }
 
@@ -892,19 +870,18 @@ pub struct EdgeLength {
     pub y: f64,
     pub z: f64,
 }
-impl TypeConversion for EdgeLength {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for EdgeLength {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             x: input.get::<SchemaDouble>(1),
             y: input.get::<SchemaDouble>(2),
             z: input.get::<SchemaDouble>(3),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &input.x);
         output.add::<SchemaDouble>(2, &input.y);
         output.add::<SchemaDouble>(3, &input.z);
-        Ok(())
     }
 }
 
@@ -912,15 +889,14 @@ impl TypeConversion for EdgeLength {
 pub struct WorkerAttributeSet {
     pub attribute: Vec<String>,
 }
-impl TypeConversion for WorkerAttributeSet {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for WorkerAttributeSet {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             attribute: input.get::<List<SchemaString>>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<List<SchemaString>>(1, &input.attribute);
-        Ok(())
     }
 }
 
@@ -928,15 +904,14 @@ impl TypeConversion for WorkerAttributeSet {
 pub struct WorkerRequirementSet {
     pub attribute_set: Vec<generated::improbable::WorkerAttributeSet>,
 }
-impl TypeConversion for WorkerRequirementSet {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for WorkerRequirementSet {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             attribute_set: input.get::<List<generated::improbable::WorkerAttributeSet>>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<List<generated::improbable::WorkerAttributeSet>>(1, &input.attribute_set);
-        Ok(())
     }
 }
 
@@ -946,17 +921,16 @@ pub struct EntityAcl {
     pub read_acl: generated::improbable::WorkerRequirementSet,
     pub component_write_acl: BTreeMap<u32, generated::improbable::WorkerRequirementSet>,
 }
-impl TypeConversion for EntityAcl {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for EntityAcl {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             read_acl: input.get::<generated::improbable::WorkerRequirementSet>(1),
             component_write_acl: input.get::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::WorkerRequirementSet>(1, &input.read_acl);
         output.add::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, &input.component_write_acl);
-        Ok(())
     }
 }
 impl ComponentData<EntityAcl> for EntityAcl {
@@ -971,21 +945,20 @@ pub struct EntityAclUpdate {
     pub read_acl: Option<generated::improbable::WorkerRequirementSet>,
     pub component_write_acl: Option<BTreeMap<u32, generated::improbable::WorkerRequirementSet>>,
 }
-impl TypeConversion for EntityAclUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for EntityAclUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             read_acl: if input.object_count(1) > 0 { Some(input.get::<generated::improbable::WorkerRequirementSet>(1)) } else { None },
             component_write_acl: Some(input.get::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2)),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         if let Some(value) = &input.read_acl {
             output.add::<generated::improbable::WorkerRequirementSet>(1, value);
         }
         if let Some(value) = &input.component_write_acl {
             output.add::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, value);
         }
-        Ok(())
     }
 }
 impl ComponentUpdate<EntityAcl> for EntityAclUpdate {
@@ -1011,11 +984,11 @@ impl Component for EntityAcl {
     const ID: ComponentId = 50;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::EntityAcl, String> {
-        <generated::improbable::EntityAcl as TypeConversion>::from_type(&data.fields())
+        <generated::improbable::EntityAcl as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::EntityAclUpdate, String> {
-        <generated::improbable::EntityAclUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::improbable::EntityAclUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::EntityAclCommandRequest, String> {
@@ -1032,13 +1005,13 @@ impl Component for EntityAcl {
 
     fn to_data(data: &generated::improbable::EntityAcl) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::EntityAcl as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::EntityAcl as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::EntityAclUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::EntityAclUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::EntityAclUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -1077,15 +1050,14 @@ inventory::submit!(VTable::new::<EntityAcl>());
 pub struct Interest {
     pub component_interest: BTreeMap<u32, generated::improbable::ComponentInterest>,
 }
-impl TypeConversion for Interest {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for Interest {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             component_interest: input.get::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, &input.component_interest);
-        Ok(())
     }
 }
 impl ComponentData<Interest> for Interest {
@@ -1098,17 +1070,16 @@ impl ComponentData<Interest> for Interest {
 pub struct InterestUpdate {
     pub component_interest: Option<BTreeMap<u32, generated::improbable::ComponentInterest>>,
 }
-impl TypeConversion for InterestUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for InterestUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             component_interest: Some(input.get::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1)),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         if let Some(value) = &input.component_interest {
             output.add::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, value);
         }
-        Ok(())
     }
 }
 impl ComponentUpdate<Interest> for InterestUpdate {
@@ -1133,11 +1104,11 @@ impl Component for Interest {
     const ID: ComponentId = 58;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Interest, String> {
-        <generated::improbable::Interest as TypeConversion>::from_type(&data.fields())
+        <generated::improbable::Interest as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::InterestUpdate, String> {
-        <generated::improbable::InterestUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::improbable::InterestUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::InterestCommandRequest, String> {
@@ -1154,13 +1125,13 @@ impl Component for Interest {
 
     fn to_data(data: &generated::improbable::Interest) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Interest as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::Interest as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::InterestUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::InterestUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::InterestUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -1199,15 +1170,14 @@ inventory::submit!(VTable::new::<Interest>());
 pub struct Metadata {
     pub entity_type: String,
 }
-impl TypeConversion for Metadata {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for Metadata {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             entity_type: input.get::<SchemaString>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaString>(1, &input.entity_type);
-        Ok(())
     }
 }
 impl ComponentData<Metadata> for Metadata {
@@ -1220,17 +1190,16 @@ impl ComponentData<Metadata> for Metadata {
 pub struct MetadataUpdate {
     pub entity_type: Option<String>,
 }
-impl TypeConversion for MetadataUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for MetadataUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             entity_type: if input.count::<SchemaString>(1) > 0 { Some(input.get::<SchemaString>(1)) } else { None },
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         if let Some(value) = &input.entity_type {
             output.add::<SchemaString>(1, value);
         }
-        Ok(())
     }
 }
 impl ComponentUpdate<Metadata> for MetadataUpdate {
@@ -1255,11 +1224,11 @@ impl Component for Metadata {
     const ID: ComponentId = 53;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Metadata, String> {
-        <generated::improbable::Metadata as TypeConversion>::from_type(&data.fields())
+        <generated::improbable::Metadata as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::MetadataUpdate, String> {
-        <generated::improbable::MetadataUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::improbable::MetadataUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::MetadataCommandRequest, String> {
@@ -1276,13 +1245,13 @@ impl Component for Metadata {
 
     fn to_data(data: &generated::improbable::Metadata) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Metadata as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::Metadata as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::MetadataUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::MetadataUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::MetadataUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -1320,13 +1289,12 @@ inventory::submit!(VTable::new::<Metadata>());
 #[derive(Debug, Clone)]
 pub struct Persistence {
 }
-impl TypeConversion for Persistence {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
-        })
+impl ObjectField for Persistence {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        Ok(())
+    fn into_object(&self, output: &mut SchemaObject) {
     }
 }
 impl ComponentData<Persistence> for Persistence {
@@ -1337,13 +1305,12 @@ impl ComponentData<Persistence> for Persistence {
 #[derive(Debug, Clone, Default)]
 pub struct PersistenceUpdate {
 }
-impl TypeConversion for PersistenceUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
-        })
+impl ObjectField for PersistenceUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        Ok(())
+    fn into_object(&self, output: &mut SchemaObject) {
     }
 }
 impl ComponentUpdate<Persistence> for PersistenceUpdate {
@@ -1367,11 +1334,11 @@ impl Component for Persistence {
     const ID: ComponentId = 55;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Persistence, String> {
-        <generated::improbable::Persistence as TypeConversion>::from_type(&data.fields())
+        <generated::improbable::Persistence as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PersistenceUpdate, String> {
-        <generated::improbable::PersistenceUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::improbable::PersistenceUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PersistenceCommandRequest, String> {
@@ -1388,13 +1355,13 @@ impl Component for Persistence {
 
     fn to_data(data: &generated::improbable::Persistence) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Persistence as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::Persistence as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::PersistenceUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::PersistenceUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::PersistenceUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -1433,15 +1400,14 @@ inventory::submit!(VTable::new::<Persistence>());
 pub struct Position {
     pub coords: generated::improbable::Coordinates,
 }
-impl TypeConversion for Position {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for Position {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             coords: input.get::<generated::improbable::Coordinates>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::Coordinates>(1, &input.coords);
-        Ok(())
     }
 }
 impl ComponentData<Position> for Position {
@@ -1454,17 +1420,16 @@ impl ComponentData<Position> for Position {
 pub struct PositionUpdate {
     pub coords: Option<generated::improbable::Coordinates>,
 }
-impl TypeConversion for PositionUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for PositionUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             coords: if input.object_count(1) > 0 { Some(input.get::<generated::improbable::Coordinates>(1)) } else { None },
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         if let Some(value) = &input.coords {
             output.add::<generated::improbable::Coordinates>(1, value);
         }
-        Ok(())
     }
 }
 impl ComponentUpdate<Position> for PositionUpdate {
@@ -1489,11 +1454,11 @@ impl Component for Position {
     const ID: ComponentId = 54;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Position, String> {
-        <generated::improbable::Position as TypeConversion>::from_type(&data.fields())
+        <generated::improbable::Position as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PositionUpdate, String> {
-        <generated::improbable::PositionUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::improbable::PositionUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PositionCommandRequest, String> {
@@ -1510,13 +1475,13 @@ impl Component for Position {
 
     fn to_data(data: &generated::improbable::Position) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Position as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::Position as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::PositionUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::PositionUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::PositionUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -1573,7 +1538,7 @@ pub enum Connection_ConnectionStatus {
 impl EnumField for Connection_ConnectionStatus {}
 
 impl Default for Connection_ConnectionStatus {
-    const fn default() -> Self {
+    fn default() -> Self {
         Connection_ConnectionStatus::UNKNOWN
     }
 }
@@ -1588,7 +1553,7 @@ impl TryFrom<u32> for Connection_ConnectionStatus {
             1 => Ok(Connection_ConnectionStatus::AWAITING_WORKER_CONNECTION), 
             2 => Ok(Connection_ConnectionStatus::CONNECTED), 
             3 => Ok(Connection_ConnectionStatus::DISCONNECTED), 
-            _ => Error(UnknownDiscriminantError)
+            _ => Err(UnknownDiscriminantError)
         }
     }
 }
@@ -1614,45 +1579,42 @@ pub struct Connection {
     pub data_latency_ms: u32,
     pub connected_since_utc: u64,
 }
-impl TypeConversion for Connection {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for Connection {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             status: input.get::<generated::improbable::restricted::Connection_ConnectionStatus>(1),
             data_latency_ms: input.get::<SchemaUint32>(2),
             connected_since_utc: input.get::<SchemaUint64>(3),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::restricted::Connection_ConnectionStatus>(1, &input.status);
         output.add::<SchemaUint32>(2, &input.data_latency_ms);
         output.add::<SchemaUint64>(3, &input.connected_since_utc);
-        Ok(())
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct DisconnectRequest {
 }
-impl TypeConversion for DisconnectRequest {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
-        })
+impl ObjectField for DisconnectRequest {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        Ok(())
+    fn into_object(&self, output: &mut SchemaObject) {
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct DisconnectResponse {
 }
-impl TypeConversion for DisconnectResponse {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
-        })
+impl ObjectField for DisconnectResponse {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        Ok(())
+    fn into_object(&self, output: &mut SchemaObject) {
     }
 }
 
@@ -1662,19 +1624,18 @@ pub struct PlayerIdentity {
     pub provider: String,
     pub metadata: Vec<u8>,
 }
-impl TypeConversion for PlayerIdentity {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for PlayerIdentity {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             player_identifier: input.get::<SchemaString>(1),
             provider: input.get::<SchemaString>(2),
             metadata: input.get::<SchemaBytes>(3),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaString>(1, &input.player_identifier);
         output.add::<SchemaString>(2, &input.provider);
         output.add::<SchemaBytes>(3, &input.metadata);
-        Ok(())
     }
 }
 
@@ -1683,15 +1644,14 @@ impl TypeConversion for PlayerIdentity {
 pub struct PlayerClient {
     pub player_identity: generated::improbable::restricted::PlayerIdentity,
 }
-impl TypeConversion for PlayerClient {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for PlayerClient {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             player_identity: input.get::<generated::improbable::restricted::PlayerIdentity>(1),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::restricted::PlayerIdentity>(1, &input.player_identity);
-        Ok(())
     }
 }
 impl ComponentData<PlayerClient> for PlayerClient {
@@ -1704,17 +1664,16 @@ impl ComponentData<PlayerClient> for PlayerClient {
 pub struct PlayerClientUpdate {
     pub player_identity: Option<generated::improbable::restricted::PlayerIdentity>,
 }
-impl TypeConversion for PlayerClientUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for PlayerClientUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             player_identity: if input.object_count(1) > 0 { Some(input.get::<generated::improbable::restricted::PlayerIdentity>(1)) } else { None },
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         if let Some(value) = &input.player_identity {
             output.add::<generated::improbable::restricted::PlayerIdentity>(1, value);
         }
-        Ok(())
     }
 }
 impl ComponentUpdate<PlayerClient> for PlayerClientUpdate {
@@ -1739,11 +1698,11 @@ impl Component for PlayerClient {
     const ID: ComponentId = 61;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::PlayerClient, String> {
-        <generated::improbable::restricted::PlayerClient as TypeConversion>::from_type(&data.fields())
+        <generated::improbable::restricted::PlayerClient as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::PlayerClientUpdate, String> {
-        <generated::improbable::restricted::PlayerClientUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::improbable::restricted::PlayerClientUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::PlayerClientCommandRequest, String> {
@@ -1760,13 +1719,13 @@ impl Component for PlayerClient {
 
     fn to_data(data: &generated::improbable::restricted::PlayerClient) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::restricted::PlayerClient as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::restricted::PlayerClient as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::restricted::PlayerClientUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::PlayerClientUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::PlayerClientUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -1804,13 +1763,12 @@ inventory::submit!(VTable::new::<PlayerClient>());
 #[derive(Debug, Clone)]
 pub struct System {
 }
-impl TypeConversion for System {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
-        })
+impl ObjectField for System {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        Ok(())
+    fn into_object(&self, output: &mut SchemaObject) {
     }
 }
 impl ComponentData<System> for System {
@@ -1821,13 +1779,12 @@ impl ComponentData<System> for System {
 #[derive(Debug, Clone, Default)]
 pub struct SystemUpdate {
 }
-impl TypeConversion for SystemUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
-        })
+impl ObjectField for SystemUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
-        Ok(())
+    fn into_object(&self, output: &mut SchemaObject) {
     }
 }
 impl ComponentUpdate<System> for SystemUpdate {
@@ -1851,11 +1808,11 @@ impl Component for System {
     const ID: ComponentId = 59;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::System, String> {
-        <generated::improbable::restricted::System as TypeConversion>::from_type(&data.fields())
+        <generated::improbable::restricted::System as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::SystemUpdate, String> {
-        <generated::improbable::restricted::SystemUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::improbable::restricted::SystemUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::SystemCommandRequest, String> {
@@ -1872,13 +1829,13 @@ impl Component for System {
 
     fn to_data(data: &generated::improbable::restricted::System) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::restricted::System as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::restricted::System as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::restricted::SystemUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::SystemUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::SystemUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -1919,19 +1876,18 @@ pub struct Worker {
     pub worker_type: String,
     pub connection: generated::improbable::restricted::Connection,
 }
-impl TypeConversion for Worker {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for Worker {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             worker_id: input.get::<SchemaString>(1),
             worker_type: input.get::<SchemaString>(2),
             connection: input.get::<generated::improbable::restricted::Connection>(3),
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaString>(1, &input.worker_id);
         output.add::<SchemaString>(2, &input.worker_type);
         output.add::<generated::improbable::restricted::Connection>(3, &input.connection);
-        Ok(())
     }
 }
 impl ComponentData<Worker> for Worker {
@@ -1948,15 +1904,15 @@ pub struct WorkerUpdate {
     pub worker_type: Option<String>,
     pub connection: Option<generated::improbable::restricted::Connection>,
 }
-impl TypeConversion for WorkerUpdate {
-    fn from_type(input: &SchemaObject) -> Result<Self, String> {
-        Ok(Self {
+impl ObjectField for WorkerUpdate {
+    fn from_object(input: &SchemaObject) -> Self {
+        Self {
             worker_id: if input.count::<SchemaString>(1) > 0 { Some(input.get::<SchemaString>(1)) } else { None },
             worker_type: if input.count::<SchemaString>(2) > 0 { Some(input.get::<SchemaString>(2)) } else { None },
             connection: if input.object_count(3) > 0 { Some(input.get::<generated::improbable::restricted::Connection>(3)) } else { None },
-        })
+        }
     }
-    fn to_type(input: &Self, output: &mut SchemaObject) -> Result<(), String> {
+    fn into_object(&self, output: &mut SchemaObject) {
         if let Some(value) = &input.worker_id {
             output.add::<SchemaString>(1, value);
         }
@@ -1966,7 +1922,6 @@ impl TypeConversion for WorkerUpdate {
         if let Some(value) = &input.connection {
             output.add::<generated::improbable::restricted::Connection>(3, value);
         }
-        Ok(())
     }
 }
 impl ComponentUpdate<Worker> for WorkerUpdate {
@@ -1995,17 +1950,17 @@ impl Component for Worker {
     const ID: ComponentId = 60;
 
     fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::Worker, String> {
-        <generated::improbable::restricted::Worker as TypeConversion>::from_type(&data.fields())
+        <generated::improbable::restricted::Worker as ObjectField>::from_object(&data.fields())
     }
 
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::WorkerUpdate, String> {
-        <generated::improbable::restricted::WorkerUpdate as TypeConversion>::from_type(&update.fields())
+        <generated::improbable::restricted::WorkerUpdate as ObjectField>::from_object(&update.fields())
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::WorkerCommandRequest, String> {
         match command_index {
             1 => {
-                let result = <generated::improbable::restricted::DisconnectRequest as TypeConversion>::from_type(&request.object());
+                let result = <generated::improbable::restricted::DisconnectRequest as ObjectField>::from_object(&request.object());
                 result.and_then(|deserialized| Ok(WorkerCommandRequest::Disconnect(deserialized)))
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Worker.", command_index))
@@ -2015,7 +1970,7 @@ impl Component for Worker {
     fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::WorkerCommandResponse, String> {
         match command_index {
             1 => {
-                let result = <generated::improbable::restricted::DisconnectResponse as TypeConversion>::from_type(&response.object());
+                let result = <generated::improbable::restricted::DisconnectResponse as ObjectField>::from_object(&response.object());
                 result.and_then(|deserialized| Ok(WorkerCommandResponse::Disconnect(deserialized)))
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Worker.", command_index))
@@ -2024,13 +1979,13 @@ impl Component for Worker {
 
     fn to_data(data: &generated::improbable::restricted::Worker) -> Result<Owned<SchemaComponentData>, String> {
         let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::restricted::Worker as TypeConversion>::to_type(data, &mut serialized_data.fields_mut())?;
+        <generated::improbable::restricted::Worker as ObjectField>::into_object(data, &mut serialized_data.fields_mut())?;
         Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::restricted::WorkerUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
         let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::WorkerUpdate as TypeConversion>::to_type(update, &mut serialized_update.fields_mut())?;
+        <generated::improbable::restricted::WorkerUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut())?;
         Ok(serialized_update)
     }
 
@@ -2038,7 +1993,7 @@ impl Component for Worker {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             WorkerCommandRequest::Disconnect(ref data) => {
-                <generated::improbable::restricted::DisconnectRequest as TypeConversion>::to_type(data, &mut serialized_request.object_mut())?;
+                <generated::improbable::restricted::DisconnectRequest as ObjectField>::into_object(data, &mut serialized_request.object_mut())?;
             },
             _ => unreachable!()
         }
@@ -2049,7 +2004,7 @@ impl Component for Worker {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             WorkerCommandResponse::Disconnect(ref data) => {
-                <generated::improbable::restricted::DisconnectResponse as TypeConversion>::to_type(data, &mut serialized_response.object_mut())?;
+                <generated::improbable::restricted::DisconnectResponse as ObjectField>::into_object(data, &mut serialized_response.object_mut())?;
             },
             _ => unreachable!()
         }
