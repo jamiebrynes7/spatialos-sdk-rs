@@ -23,7 +23,7 @@ pub(crate) use self::ptr::*;
 
 pub type FieldId = u32;
 
-pub trait SchemaPrimitiveField {
+pub trait Field {
     type RustType: Sized;
 
     fn get_or_default(object: &SchemaObject, field: FieldId) -> Self::RustType;
