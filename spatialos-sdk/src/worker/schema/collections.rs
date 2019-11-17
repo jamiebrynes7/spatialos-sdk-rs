@@ -2,7 +2,70 @@ use crate::worker::schema::{Field, FieldId, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::BTreeMap, marker::PhantomData};
 
-#[derive(Debug)]
+pub struct Optional<T>(PhantomData<T>);
+
+impl<T> Field for Optional<T>
+where
+    T: Field,
+{
+    type RustType = Option<T::RustType>;
+
+    fn get_or_default(object: &SchemaObject, field: FieldId) -> Self::RustType {
+        if T::count(object, field) > 0 {
+            Some(object.get::<T>(field))
+        } else {
+            None
+        }
+    }
+
+    fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+        if let Some(value) = value {
+            object.add::<T>(field, value);
+        }
+    }
+
+    fn index(_object: &SchemaObject, _field: FieldId, _index: usize) -> Self::RustType {
+        panic!("Optional fields cannot be indexed into")
+    }
+
+    fn count(_object: &SchemaObject, _field: FieldId) -> usize {
+        panic!("Optional fields cannot be counted")
+    }
+}
+
+pub struct List<T>(PhantomData<T>);
+
+impl<T> Field for List<T>
+where
+    T: Field,
+{
+    type RustType = Vec<T::RustType>;
+
+    fn get_or_default(object: &SchemaObject, field: FieldId) -> Self::RustType {
+        let count = object.count::<T>(field);
+        let mut result = Vec::with_capacity(count);
+        for index in 0..count {
+            result.push(object.get_index::<T>(field, index));
+        }
+
+        result
+    }
+
+    fn add(object: &mut SchemaObject, field: FieldId, values: &Self::RustType) {
+        for value in values {
+            object.add::<T>(field, value);
+        }
+    }
+
+    fn index(_object: &SchemaObject, _field: FieldId, _index: usize) -> Self::RustType {
+        panic!("List fields cannot be indexed into")
+    }
+
+    fn count(_object: &SchemaObject, _field: FieldId) -> usize {
+        panic!("List fields cannot be counted")
+    }
+}
+
 pub struct Map<K, V>(PhantomData<(K, V)>);
 
 impl<K, V> Field for Map<K, V>
