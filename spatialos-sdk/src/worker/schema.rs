@@ -30,7 +30,12 @@ pub trait Field {
     fn index(object: &SchemaObject, field: FieldId, index: usize) -> Self::RustType;
     fn count(object: &SchemaObject, field: FieldId) -> usize;
     fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType);
-    fn add_list(object: &mut SchemaObject, field: FieldId, value: &[Self::RustType]);
+
+    fn add_list(object: &mut SchemaObject, field: FieldId, values: &[Self::RustType]) {
+        for value in values {
+            Self::add(object, field, value);
+        }
+    }
 
     fn get_list(object: &SchemaObject, field: FieldId) -> Vec<Self::RustType> {
         let count = Self::count(object, field);
