@@ -1,3 +1,5 @@
+use crate::worker::component::TypeConversion;
+
 // NOTE: This module defines macros that are used in other submodules, so it must be
 // declared first in order for those macros to be visible to all sibling modules.
 #[cfg(test)]
@@ -45,5 +47,31 @@ pub trait Field {
             result.push(Self::index(object, field, index));
         }
         result
+    }
+}
+
+impl<T> Field for T
+where
+    T: TypeConversion,
+{
+    type RustType = Self;
+
+    fn get_or_default(object: &SchemaObject, field: FieldId) -> Self::RustType {
+        Self::from_type(object.get_object(field))
+            .unwrap_or_else(|_| panic!("Failed to deserialize {}", std::any::type_name::<Self>()))
+    }
+
+    fn index(object: &SchemaObject, field: FieldId, index: usize) -> Self::RustType {
+        Self::from_type(object.index_object(field, index))
+            .unwrap_or_else(|_| panic!("Failed to deserialize {}", std::any::type_name::<Self>()))
+    }
+
+    fn count(object: &SchemaObject, field: FieldId) -> usize {
+        object.object_count(field)
+    }
+
+    fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+        Self::to_type(value, object.add_object(field))
+            .unwrap_or_else(|_| panic!("Failed to serialize {}", std::any::type_name::<Self>()))
     }
 }
