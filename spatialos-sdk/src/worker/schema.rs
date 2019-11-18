@@ -1,3 +1,61 @@
+//! Logic for serializing schema data.
+//!
+//! # Examples
+//!
+//! Serialization example using `Optional`:
+//!
+//! ```
+//! use spatialos_sdk::worker::schema::*;
+//!
+//! let mut data = SchemaComponentData::new();
+//! let object = data.fields_mut();
+//!
+//! let some_field = Some(123);
+//! let none_field = None;
+//!
+//! // Add the fields to the serialized data.
+//! object.add::<Optional<SchemaInt32>>(1, &some_field);
+//! object.add::<Optional<SchemaString>>(2, &none_field);
+//!
+//! // Get fields from serialized data.
+//! let some_result = object.get::<Optional<SchemaInt32>>(1);
+//! let none_result = object.get::<Optional<SchemaString>>(2);
+//!
+//! assert_eq!(some_field, some_result);
+//! assert_eq!(none_field, none_result);
+//! ```
+//!
+//! For the following schema type definition:
+//!
+//! ```schemalang,ignore
+//! type MyType {
+//!     option<int32> optional_value = 1;
+//! }
+//! ```
+//!
+//! The following code would be used to handle serialization:
+//!
+//! ```
+//! use spatialos_sdk::worker::schema::*;
+//!
+//! #[derive(Debug, Default, Clone)]
+//! pub struct MyType {
+//!     pub optional_value: Option<i32>,
+//! }
+//!
+//! impl ObjectField for MyType {
+//!     fn from_object(object: &SchemaObject) -> Self {
+//!         Self {
+//!             optional_value: object.get::<Optional<SchemaInt32>>(1),
+//!         }
+//!     }
+//!
+//!     fn into_object(&self, object: &mut SchemaObject) {
+//!         object.add::<Optional<SchemaInt32>>(1, &self.optional_value);
+//!     }
+//! }
+//! ```
+
 use std::convert::TryFrom;
 
 // NOTE: This module defines macros that are used in other submodules, so it must be

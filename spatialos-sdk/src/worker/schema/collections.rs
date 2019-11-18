@@ -2,6 +2,17 @@ use crate::worker::schema::{Field, FieldId, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::BTreeMap, marker::PhantomData};
 
+/// Marker type corresponding to the [`option`] schemalang collection type.
+///
+/// `option<T>` is represented as [`Option<U>`][option] in the generated Rust code,
+/// where `U` is the Rust type corresponding to `T`. This type is named `Optional`
+/// instead of `Option` to avoid conflicting with Rust's built-in [`Option`][option]
+/// type.
+///
+/// See the [module-level documentation](index.html) for more information.
+///
+/// [`option`]: https://docs.improbable.io/reference/14.2/shared/schema/reference#collection-types
+/// [option]: https://doc.rust-lang.org/std/option/index.html
 pub struct Optional<T>(PhantomData<T>);
 
 impl<T> Field for Optional<T>
@@ -33,6 +44,15 @@ where
     }
 }
 
+/// Marker type corresponding to the [`list`] schemalang collection type.
+///
+/// `list<T>` is represented as [`Vec<U>`][vec] in the Rust code, where `U` is the Rust
+/// type corresponding to `T`.
+///
+/// See the [module-level documentation](index.html) for more information.
+///
+/// [`list`]: https://docs.improbable.io/reference/14.2/shared/schema/reference#collection-types
+/// [vec]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 pub struct List<T>(PhantomData<T>);
 
 impl<T> Field for List<T>
@@ -66,6 +86,22 @@ where
     }
 }
 
+/// Marker type corresponding to the [`map`] schemalang collection type.
+///
+/// `map<K, V>` is represented as [`BTreeMap<T, U>`][btree] in the generated Rust
+/// code, where `T` is the Rust type corresponding to `K`, and `U` is the Rust type
+/// corresponding to `V`.
+///
+/// [`BTreeMap`][btree] is used instead of [`HashMap`] in order to provide
+/// deterministic ordering of values within the map. This allows the underlying
+/// serialization library to generate smaller diffs when sending updates of schema
+/// data containing a `map`.
+///
+/// See the [module-level documentation](index.html) for more information.
+///
+/// [`map`]: https://docs.improbable.io/reference/14.2/shared/schema/reference#collection-types
+/// [btree]: https://doc.rust-lang.org/std/collections/struct.BTreeMap.html
+/// [`HashMap`]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
 pub struct Map<K, V>(PhantomData<(K, V)>);
 
 impl<K, V> Field for Map<K, V>
