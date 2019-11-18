@@ -111,6 +111,20 @@ pub trait Field {
         }
         result
     }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool;
+
+    fn get_update(update: &SchemaComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+        if Self::has_update(update, field) {
+            Some(Self::get_or_default(update.fields(), field))
+        } else {
+            None
+        }
+    }
+
+    fn add_update(update: &mut SchemaComponentUpdate, field: FieldId, value: &Self::RustType) {
+        Self::add(update.fields_mut(), field, value);
+    }
 }
 
 /// A struct that can be serialized into (and deserialized from) a [`SchemaObject`].
@@ -172,6 +186,10 @@ where
 
     fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
         value.into_object(object.add_object(field));
+    }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+        Self::count(update.fields(), field) > 0
     }
 }
 
@@ -271,6 +289,13 @@ macro_rules! impl_field_for_enum_field {
                 value: &Self::RustType,
             ) {
                 object.add::<$crate::worker::schema::SchemaEnum>(field, &(*value).into());
+            }
+
+            fn has_update(
+                update: &$crate::worker::schema::SchemaComponentUpdate,
+                field: $crate::worker::schema::FieldId,
+            ) -> bool {
+                Self::count(update.fields(), field) > 0
             }
         }
     };
