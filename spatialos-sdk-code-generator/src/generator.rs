@@ -1,10 +1,11 @@
 use crate::schema_bundle::*;
 use heck::CamelCase;
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
-fn get_rust_primitive_type_tag(primitive_type: &PrimitiveType) -> &str {
+fn primitive_type_name(primitive_type: &PrimitiveType) -> &'static str {
     match primitive_type {
         PrimitiveType::Invalid => panic!("Encountered invalid primitive."),
         PrimitiveType::Int32 => "SchemaInt32",
@@ -76,6 +77,40 @@ impl Package {
             identifier_package.rust_name(qualified_name),
         ]
         .join("::")
+    }
+
+    fn schema_type_name(&self, type_ref: &TypeReference) -> Cow<'static, str> {
+        match type_ref {
+            TypeReference::Primitive(prim) => primitive_type_name(prim).into(),
+            TypeReference::Enum(name) => self.rust_fqname(name).into(),
+            TypeReference::Type(name) => self.rust_fqname(name).into(),
+        }
+    }
+
+    fn field_type_name(&self, field_ty: &FieldDefinition_FieldType) -> Cow<'static, str> {
+        match field_ty {
+            FieldDefinition_FieldType::Singular { type_reference } => {
+                self.schema_type_name(type_reference)
+            }
+
+            FieldDefinition_FieldType::Option { inner_type } => {
+                format!("Optional<{}>", self.schema_type_name(inner_type)).into()
+            }
+
+            FieldDefinition_FieldType::List { inner_type } => {
+                format!("List<{}>", self.schema_type_name(inner_type)).into()
+            }
+
+            FieldDefinition_FieldType::Map {
+                key_type,
+                value_type,
+            } => format!(
+                "Map<{}, {}>",
+                self.schema_type_name(key_type),
+                self.schema_type_name(value_type),
+            )
+            .into(),
+        }
     }
 
     fn get_enum_definition(&self, qualified_name: &str) -> EnumDefinition {
@@ -176,23 +211,6 @@ impl Package {
         }
     }
 
-    // Some types need to be borrowed when serializing (such as strings or objects). This helper function returns true
-    // if this is required.
-    fn type_needs_borrow(&self, type_ref: &TypeReference) -> bool {
-        match type_ref {
-            TypeReference::Primitive(ref primitive) => match primitive {
-                PrimitiveType::String => true,
-                PrimitiveType::Bytes => true,
-                PrimitiveType::Entity => true,
-                _ => false,
-            },
-            // Enums are always data.
-            TypeReference::Enum(_) => false,
-            // Types always need borrowing, as they're structs.
-            TypeReference::Type(_) => true,
-        }
-    }
-
     // Generates an expression which serializes a field from an expression into a schema object. The generated
     // expression should always have type ().
     fn serialize_field(
@@ -201,141 +219,23 @@ impl Package {
         expression: &str,
         schema_object: &str,
     ) -> String {
-        match field.field_type {
-            FieldDefinition_FieldType::Singular { ref type_reference } => {
-                self.serialize_type(field.field_id, type_reference, expression, schema_object)
-            }
-            FieldDefinition_FieldType::Option { ref inner_type } => {
-                let ref_decorator = if self.type_needs_borrow(inner_type) {
-                    "ref "
-                } else {
-                    ""
-                };
-                format!(
-                    "if let Some({}data) = {} {{ {}; }}",
-                    ref_decorator,
-                    expression,
-                    self.serialize_type(field.field_id, inner_type, "data", schema_object)
-                )
-            }
-            FieldDefinition_FieldType::List { ref inner_type } => {
-                // If we have a list of primitives, we can just pass a slice directly to add_list.
-                match inner_type {
-                    TypeReference::Primitive(ref primitive) => format!(
-                        "{}.add_list::<{}>({}, &{}[..])",
-                        schema_object,
-                        get_rust_primitive_type_tag(primitive),
-                        field.field_id,
-                        expression
-                    ),
-                    _ => {
-                        let add_item = self.serialize_type(
-                            field.field_id,
-                            inner_type,
-                            "element",
-                            schema_object,
-                        );
-                        format!("for element in ({}).iter() {{ {}; }}", expression, add_item)
-                    }
-                }
-            }
-            FieldDefinition_FieldType::Map {
-                ref key_type,
-                ref value_type,
-            } => {
-                let kvpair_object = format!(
-                    "let mut object = {}.add_object({})",
-                    schema_object, field.field_id
-                );
-                let serialize_key = self.serialize_type(1, key_type, "k", "object");
-                let serialize_value = self.serialize_type(
-                    2,
-                    value_type,
-                    if !self.type_needs_borrow(value_type) {
-                        "*v"
-                    } else {
-                        "v"
-                    },
-                    "object",
-                );
-                format!(
-                    "for (k, v) in {} {{ {}; {}; {}; }}",
-                    expression, kvpair_object, serialize_key, serialize_value
-                )
-            }
-        }
-    }
-
-    // Generates an expression which serializes a value from an expression into a schema object. The generated
-    // expression should always have type ().
-    fn serialize_type(
-        &self,
-        field_id: u32,
-        value_type: &TypeReference,
-        expression: &str,
-        schema_object: &str,
-    ) -> String {
-        match value_type {
-            TypeReference::Primitive(ref primitive) => format!(
-                "{}.add::<{}>({}, {})",
-                schema_object,
-                get_rust_primitive_type_tag(primitive),
-                field_id,
-                expression,
-            ),
-            TypeReference::Enum(_) => format!(
-                "{}.add::<SchemaEnum>({}, &{}.as_u32())",
-                schema_object, field_id, expression
-            ),
-            TypeReference::Type(ref type_ref) => {
-                let type_definition =
-                    self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
-                format!(
-                    "<{} as TypeConversion>::to_type(&{}, &mut {}.add_object({}))?",
-                    type_definition, expression, schema_object, field_id
-                )
-            }
-        }
+        format!(
+            "{}.add::<{}>({}, {})",
+            schema_object,
+            self.field_type_name(&field.field_type),
+            field.field_id,
+            expression,
+        )
     }
 
     // Generates an expression which deserializes a field from a schema field 'schema_field'.
     fn deserialize_field(&self, field: &FieldDefinition, schema_field: &str) -> String {
-        match field.field_type {
-            FieldDefinition_FieldType::Singular { ref type_reference } => {
-                self.deserialize_type(field.field_id, type_reference, schema_field)
-            }
-
-            FieldDefinition_FieldType::Option { ref inner_type } => {
-                let count_expr = self.count_field(field.field_id, inner_type, schema_field);
-                let deserialize_expr =
-                    self.deserialize_type(field.field_id, inner_type, schema_field);
-                format!(
-                    "if {} > 0 {{ Some({}) }} else {{ None }}",
-                    count_expr, deserialize_expr
-                )
-            }
-
-            FieldDefinition_FieldType::List { ref inner_type } => {
-                self.deserialize_list(field.field_id, inner_type, schema_field)
-            }
-
-            FieldDefinition_FieldType::Map {
-                ref key_type,
-                ref value_type,
-            } => {
-                let capacity = format!("{}.object_count({})", schema_field, field.field_id);
-                let deserialize_key = self.deserialize_type(1, key_type, "kv");
-                let deserialize_value = self.deserialize_type(2, value_type, "kv");
-                format!(
-                    "{{ let size = {}; let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object({}, i); m.insert({}, {}); }}; m }}",
-                    capacity,
-                    schema_field,
-                    field.field_id,
-                    deserialize_key,
-                    deserialize_value,
-                )
-            }
-        }
+        format!(
+            "{}.get::<{}>({})",
+            schema_field,
+            self.field_type_name(&field.field_type),
+            field.field_id
+        )
     }
 
     fn deserialize_update_field(&self, field: &FieldDefinition, schema_field: &str) -> String {
@@ -348,24 +248,12 @@ impl Package {
                 self.deserialize_type_update(field.field_id, inner_type, schema_field)
             }
 
-            FieldDefinition_FieldType::List { ref inner_type } => {
-                self.deserialize_list(field.field_id, inner_type, schema_field)
-            }
-
-            FieldDefinition_FieldType::Map {
-                ref key_type,
-                ref value_type,
-            } => {
-                let capacity = format!("{}.object_count({})", schema_field, field.field_id);
-                let deserialize_key = self.deserialize_type(1, key_type, "kv");
-                let deserialize_value = self.deserialize_type(2, value_type, "kv");
+            FieldDefinition_FieldType::List { .. } | FieldDefinition_FieldType::Map { .. } => {
                 format!(
-                    "{{ let size = {}; if size > 0 {{ let mut m = BTreeMap::new(); for i in 0..size {{ let kv = {}.index_object({}, i); m.insert({}, {}); }} Some(m) }} else {{ None }} }}",
-                    capacity,
+                    "Some({}.get::<{}>({}))",
                     schema_field,
-                    field.field_id,
-                    deserialize_key,
-                    deserialize_value,
+                    self.field_type_name(&field.field_type),
+                    field.field_id
                 )
             }
         }
@@ -379,28 +267,12 @@ impl Package {
         value_type: &TypeReference,
         schema_object: &str,
     ) -> String {
-        match value_type {
-            TypeReference::Primitive(primitive) => format!(
-                "{}.get::<{}>({})",
-                schema_object,
-                get_rust_primitive_type_tag(primitive),
-                field_id
-            ),
-
-            TypeReference::Enum(_) => format!(
-                "From::from({}.get::<SchemaEnum>({}))",
-                schema_object, field_id
-            ),
-
-            TypeReference::Type(ref type_ref) => {
-                let type_name =
-                    self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
-                format!(
-                    "<{} as TypeConversion>::from_type(&{}.get_object({}))?",
-                    type_name, schema_object, field_id
-                )
-            }
-        }
+        format!(
+            "{}.get::<{}>({})",
+            schema_object,
+            self.schema_type_name(value_type),
+            field_id
+        )
     }
 
     fn deserialize_type_update(
@@ -417,40 +289,6 @@ impl Package {
         )
     }
 
-    fn deserialize_list(
-        &self,
-        field_id: u32,
-        value_type: &TypeReference,
-        schema_object: &str,
-    ) -> String {
-        match value_type {
-            TypeReference::Primitive(primitive) => format!(
-                "{}.get_list::<{}>({})",
-                schema_object,
-                get_rust_primitive_type_tag(primitive),
-                field_id
-            ),
-
-            TypeReference::Enum(_) => format!(
-                "{}.get_list::<SchemaEnum>({}).into_iter().map(Into::into).collect()",
-                schema_object, field_id
-            ),
-
-            TypeReference::Type(ref type_ref) => {
-                let type_name =
-                    self.rust_fqname(&self.get_type_definition(type_ref).qualified_name);
-
-                let capacity = format!("{}.object_count({})", schema_object, field_id);
-                let deserialize_element = format!(
-                    "<{} as TypeConversion>::from_type(&{}.index_object({}, i))?",
-                    type_name, schema_object, field_id
-                );
-
-                format!("{{ let size = {}; let mut l = Vec::with_capacity(size); for i in 0..size {{ l.push({}); }} l }}", capacity, deserialize_element)
-            }
-        }
-    }
-
     fn count_field(
         &self,
         field_id: u32,
@@ -461,8 +299,8 @@ impl Package {
             TypeReference::Primitive(primitive) => format!(
                 "{}.count::<{}>({})",
                 schema_object,
-                get_rust_primitive_type_tag(primitive),
-                field_id
+                primitive_type_name(primitive),
+                field_id,
             ),
 
             TypeReference::Enum(_) => {

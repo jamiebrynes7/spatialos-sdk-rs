@@ -19,27 +19,14 @@ pub trait ComponentData<C: Component> {
     fn merge(&mut self, update: C::Update);
 }
 
-// A trait that's implemented by a type to convert to/from schema objects.
-pub trait TypeConversion
-where
-    Self: std::marker::Sized,
-{
-    fn from_type(input: &schema::SchemaObject) -> Result<Self, String>;
-    fn to_type(input: &Self, output: &mut schema::SchemaObject) -> Result<(), String>;
-}
-
 // A trait that's implemented by a component to convert to/from schema handle types.
-pub trait Component
-where
-    Self: std::marker::Sized,
-{
+pub trait Component: ObjectField {
     type Update;
     type CommandRequest;
     type CommandResponse;
 
     const ID: ComponentId;
 
-    fn from_data(data: &schema::SchemaComponentData) -> Result<Self, String>;
     fn from_update(update: &schema::SchemaComponentUpdate) -> Result<Self::Update, String>;
     fn from_request(
         command_index: CommandIndex,
@@ -50,7 +37,6 @@ where
         response: &schema::SchemaCommandResponse,
     ) -> Result<Self::CommandResponse, String>;
 
-    fn to_data(data: &Self) -> Result<Owned<SchemaComponentData>, String>;
     fn to_update(update: &Self::Update) -> Result<Owned<SchemaComponentUpdate>, String>;
     fn to_request(request: &Self::CommandRequest) -> Result<Owned<SchemaCommandRequest>, String>;
     fn to_response(
@@ -139,23 +125,18 @@ impl<'a> ComponentDataRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the component impl `TypeConversion` and `Clone`
-    // here, but in practice this will always be true for all component types. Future
-    // iterations should clean this up such that the `Component` trait can imply these
-    // other bounds automatically (i.e. by making them super traits of `Component`).
-    pub fn get<C: Component + TypeConversion + Clone>(&self) -> Option<Cow<'_, C>> {
+    pub fn get<C: Component>(&self) -> Option<Cow<'_, C>> {
         if C::ID != self.component_id {
             return None;
         }
 
-        if let Some(user_handle) = &self.user_handle {
-            let component = unsafe { &*user_handle.cast().as_ptr() };
-            Some(Cow::Borrowed(component))
+        let cow = if let Some(user_handle) = &self.user_handle {
+            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
         } else {
-            TypeConversion::from_type(self.schema_type.fields())
-                .ok()
-                .map(Cow::Owned)
-        }
+            Cow::Owned(ObjectField::from_object(self.schema_type.fields()))
+        };
+
+        Some(cow)
     }
 }
 
@@ -175,27 +156,26 @@ impl<'a> ComponentUpdateRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the update impl `TypeConversion` and `Clone`
+    // NOTE: We manually declare that the update impl `ObjectField`
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
     pub(crate) fn get<C>(&self) -> Option<Cow<'_, C::Update>>
     where
         C: Component,
-        C::Update: TypeConversion + Clone,
+        C::Update: ObjectField,
     {
         if C::ID != self.component_id {
             return None;
         }
 
-        if let Some(user_handle) = &self.user_handle {
-            let component = unsafe { &*user_handle.cast().as_ptr() };
-            Some(Cow::Borrowed(component))
+        let cow = if let Some(user_handle) = &self.user_handle {
+            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
         } else {
-            TypeConversion::from_type(self.schema_type.fields())
-                .ok()
-                .map(Cow::Owned)
-        }
+            Cow::Owned(ObjectField::from_object(self.schema_type.fields()))
+        };
+
+        Some(cow)
     }
 }
 
@@ -217,27 +197,26 @@ impl<'a> CommandRequestRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the update impl `TypeConversion` and `Clone`
+    // NOTE: We manually declare that the request impl `ObjectField`
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
     pub(crate) fn get<C>(&self) -> Option<Cow<'_, C::CommandRequest>>
     where
         C: Component,
-        C::CommandRequest: TypeConversion + Clone,
+        C::CommandRequest: ObjectField,
     {
         if C::ID != self.component_id {
             return None;
         }
 
-        if let Some(user_handle) = &self.user_handle {
-            let component = unsafe { &*user_handle.cast().as_ptr() };
-            Some(Cow::Borrowed(component))
+        let cow = if let Some(user_handle) = &self.user_handle {
+            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
         } else {
-            TypeConversion::from_type(self.schema_type.object())
-                .ok()
-                .map(Cow::Owned)
-        }
+            Cow::Owned(ObjectField::from_object(self.schema_type.object()))
+        };
+
+        Some(cow)
     }
 }
 
@@ -259,27 +238,26 @@ impl<'a> CommandResponseRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the update impl `TypeConversion` and `Clone`
+    // NOTE: We manually declare that the response impl `ObjectField`
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
     pub fn get<C>(&self) -> Option<Cow<'_, C::CommandResponse>>
     where
         C: Component,
-        C::CommandResponse: TypeConversion + Clone,
+        C::CommandResponse: ObjectField,
     {
         if C::ID != self.component_id {
             return None;
         }
 
-        if let Some(user_handle) = &self.user_handle {
-            let component = unsafe { &*user_handle.cast().as_ptr() };
-            Some(Cow::Borrowed(component))
+        let cow = if let Some(user_handle) = &self.user_handle {
+            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
         } else {
-            TypeConversion::from_type(self.schema_type.object())
-                .ok()
-                .map(Cow::Owned)
-        }
+            Cow::Owned(ObjectField::from_object(self.schema_type.object()))
+        };
+
+        Some(cow)
     }
 }
 
@@ -401,13 +379,9 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     handle_out: *mut *mut Worker_ComponentDataHandle,
 ) -> u8 {
     let schema_data = schema::SchemaComponentData::from_raw(data);
-    let deserialized_result = C::from_data(schema_data);
-    if let Ok(deserialized_data) = deserialized_result {
-        *handle_out = handle_allocate(deserialized_data);
-        1
-    } else {
-        0
-    }
+    let deserialized_data = schema_data.deserialize::<C>();
+    *handle_out = handle_allocate(deserialized_data);
+    1
 }
 
 unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
@@ -416,12 +390,8 @@ unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
     handle: *mut raw::c_void,
     data: *mut *mut Schema_ComponentData,
 ) {
-    let client_data = &*(handle as *const C);
-    if let Ok(schema_data) = C::to_data(client_data) {
-        *data = schema_data.into_raw();
-    } else {
-        *data = ptr::null_mut();
-    }
+    let client_data = &*handle.cast::<C>();
+    *data = SchemaComponentData::from_component(client_data).into_raw();
 }
 
 unsafe extern "C" fn vtable_component_update_free<C: Component>(

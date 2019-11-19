@@ -1,5 +1,5 @@
 use crate::worker::{
-    schema::{DataPointer, FieldId, SchemaObject, SchemaPrimitiveField},
+    schema::{DataPointer, Field, FieldId, SchemaObject},
     EntityId,
 };
 use spatialos_sdk_sys::worker::*;
@@ -18,7 +18,7 @@ macro_rules! impl_primitive_field {
         #[derive(Debug)]
         pub struct $schema_type;
 
-        impl SchemaPrimitiveField for $schema_type {
+        impl Field for $schema_type {
             type RustType = $rust_type;
 
             fn get_or_default(object: &SchemaObject, field: FieldId) -> $rust_type {
@@ -180,7 +180,7 @@ pub struct SchemaBytes;
 #[derive(Debug)]
 pub struct SchemaString;
 
-impl SchemaPrimitiveField for SchemaEntityId {
+impl Field for SchemaEntityId {
     type RustType = EntityId;
 
     fn get_or_default(object: &SchemaObject, field: FieldId) -> EntityId {
@@ -210,7 +210,7 @@ impl SchemaPrimitiveField for SchemaEntityId {
     }
 }
 
-impl SchemaPrimitiveField for SchemaBool {
+impl Field for SchemaBool {
     type RustType = bool;
 
     fn get_or_default(object: &SchemaObject, field: FieldId) -> bool {
@@ -240,7 +240,7 @@ impl SchemaPrimitiveField for SchemaBool {
     }
 }
 
-impl SchemaPrimitiveField for SchemaString {
+impl Field for SchemaString {
     type RustType = String;
 
     fn get_or_default(object: &SchemaObject, field: FieldId) -> String {
@@ -284,7 +284,7 @@ impl SchemaPrimitiveField for SchemaString {
     }
 }
 
-impl SchemaPrimitiveField for SchemaBytes {
+impl Field for SchemaBytes {
     type RustType = Vec<u8>;
 
     fn get_or_default(object: &SchemaObject, field: FieldId) -> Vec<u8> {

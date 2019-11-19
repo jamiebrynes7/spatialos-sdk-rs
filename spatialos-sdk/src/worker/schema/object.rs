@@ -1,4 +1,4 @@
-use crate::worker::schema::{DataPointer, FieldId, SchemaPrimitiveField};
+use crate::worker::schema::{DataPointer, Field, FieldId};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -6,27 +6,27 @@ use std::marker::PhantomData;
 pub struct SchemaObject(PhantomData<*mut Schema_Object>);
 
 impl SchemaObject {
-    pub fn get<T: SchemaPrimitiveField>(&self, field: FieldId) -> T::RustType {
+    pub fn get<T: Field>(&self, field: FieldId) -> T::RustType {
         T::get_or_default(self, field)
     }
 
-    pub fn get_index<T: SchemaPrimitiveField>(&self, field: FieldId, index: usize) -> T::RustType {
+    pub fn get_index<T: Field>(&self, field: FieldId, index: usize) -> T::RustType {
         T::index(self, field, index)
     }
 
-    pub fn count<T: SchemaPrimitiveField>(&self, field: FieldId) -> usize {
+    pub fn count<T: Field>(&self, field: FieldId) -> usize {
         T::count(self, field)
     }
 
-    pub fn add<T: SchemaPrimitiveField>(&mut self, field: FieldId, value: &T::RustType) {
+    pub fn add<T: Field>(&mut self, field: FieldId, value: &T::RustType) {
         T::add(self, field, value);
     }
 
-    pub fn get_list<T: SchemaPrimitiveField>(&self, field: FieldId) -> Vec<T::RustType> {
+    pub fn get_list<T: Field>(&self, field: FieldId) -> Vec<T::RustType> {
         T::get_list(self, field)
     }
 
-    pub fn add_list<T: SchemaPrimitiveField>(&mut self, field: FieldId, value: &[T::RustType]) {
+    pub fn add_list<T: Field>(&mut self, field: FieldId, value: &[T::RustType]) {
         T::add_list(self, field, value);
     }
 
