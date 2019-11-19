@@ -299,8 +299,8 @@ impl Package {
             TypeReference::Primitive(primitive) => format!(
                 "{}.count::<{}>({})",
                 schema_object,
-                get_rust_primitive_type_tag(primitive),
-                field_id
+                primitive_type_name(primitive),
+                field_id,
             ),
 
             TypeReference::Enum(_) => {
