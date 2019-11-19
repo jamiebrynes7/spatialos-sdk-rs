@@ -29,7 +29,10 @@ impl TryFrom<u32> for <#= enum_rust_name #> {
         match value {
             <# for enum_value in &enum_def.values { #>
             <#= enum_value.value #> => Ok(<#= enum_rust_name #>::<#= enum_value.name #>), <# } #>
-            _ => Err(UnknownDiscriminantError)
+            _ => Err(UnknownDiscriminantError {
+                type_name: std::any::type_name::<Self>(),
+                value,
+            }),
         }
     }
 }

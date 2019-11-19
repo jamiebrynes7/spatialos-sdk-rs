@@ -56,7 +56,10 @@
 //! }
 //! ```
 
-use std::convert::TryFrom;
+use std::{
+    convert::TryFrom,
+    fmt::{self, Display, Formatter},
+};
 
 // NOTE: This module defines macros that are used in other submodules, so it must be
 // declared first in order for those macros to be visible to all sibling modules.
@@ -174,7 +177,20 @@ where
 
 /// The error type returned when a conversion to a schema enum type fails.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct UnknownDiscriminantError;
+pub struct UnknownDiscriminantError {
+    pub type_name: &'static str,
+    pub value: u32,
+}
+
+impl Display for UnknownDiscriminantError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Found unknown discriminant value {} for enum `{}` while deserializing schema data",
+            self.value, self.type_name,
+        )
+    }
+}
 
 /// A type that corresponds to a [schemalang enumeration][schema-enum].
 ///

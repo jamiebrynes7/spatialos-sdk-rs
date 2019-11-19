@@ -48,7 +48,10 @@ impl TryFrom<u32> for TestEnum {
             
             0 => Ok(TestEnum::FIRST), 
             1 => Ok(TestEnum::SECOND), 
-            _ => Err(UnknownDiscriminantError)
+            _ => Err(UnknownDiscriminantError {
+                type_name: std::any::type_name::<Self>(),
+                value,
+            }),
         }
     }
 }
@@ -1553,7 +1556,10 @@ impl TryFrom<u32> for Connection_ConnectionStatus {
             1 => Ok(Connection_ConnectionStatus::AWAITING_WORKER_CONNECTION), 
             2 => Ok(Connection_ConnectionStatus::CONNECTED), 
             3 => Ok(Connection_ConnectionStatus::DISCONNECTED), 
-            _ => Err(UnknownDiscriminantError)
+            _ => Err(UnknownDiscriminantError {
+                type_name: std::any::type_name::<Self>(),
+                value,
+            }),
         }
     }
 }
