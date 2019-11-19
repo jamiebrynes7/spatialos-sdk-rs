@@ -1,4 +1,4 @@
-use crate::worker::schema::{DataPointer, FieldId, Owned, OwnedPointer, SchemaObject};
+use crate::worker::schema::{DataPointer, Field, FieldId, Owned, OwnedPointer, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -34,6 +34,20 @@ impl SchemaComponentUpdate {
         unsafe {
             Schema_AddComponentUpdateClearedField(self.as_ptr_mut(), field);
         }
+    }
+
+    pub fn get<T>(&self, field: FieldId) -> Option<T::RustType>
+    where
+        T: Field,
+    {
+        T::get_update(self, field)
+    }
+
+    pub fn add<T>(&mut self, field: FieldId, value: &Option<T::RustType>)
+    where
+        T: Field,
+    {
+        T::add_update(self, field, value);
     }
 }
 

@@ -122,8 +122,14 @@ pub trait Field {
         }
     }
 
-    fn add_update(update: &mut SchemaComponentUpdate, field: FieldId, value: &Self::RustType) {
-        Self::add(update.fields_mut(), field, value);
+    fn add_update(
+        update: &mut SchemaComponentUpdate,
+        field: FieldId,
+        value: &Option<Self::RustType>,
+    ) {
+        if let Some(value) = value {
+            Self::add(update.fields_mut(), field, value);
+        }
     }
 }
 

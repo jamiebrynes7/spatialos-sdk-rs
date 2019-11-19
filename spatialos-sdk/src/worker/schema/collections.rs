@@ -47,13 +47,19 @@ where
         }
     }
 
-    fn add_update(update: &mut SchemaComponentUpdate, field: FieldId, value: &Self::RustType) {
+    fn add_update(
+        update: &mut SchemaComponentUpdate,
+        field: FieldId,
+        value: &Option<Self::RustType>,
+    ) {
         match value {
-            Some(value) => {
+            Some(Some(value)) => {
                 update.fields_mut().add::<T>(field, value);
             }
 
-            None => update.add_cleared(field),
+            Some(None) => update.add_cleared(field),
+
+            None => {}
         }
     }
 
@@ -113,11 +119,17 @@ where
         }
     }
 
-    fn add_update(update: &mut SchemaComponentUpdate, field: FieldId, value: &Self::RustType) {
-        if value.is_empty() {
-            update.add_cleared(field);
-        } else {
-            Self::add(update.fields_mut(), field, value);
+    fn add_update(
+        update: &mut SchemaComponentUpdate,
+        field: FieldId,
+        value: &Option<Self::RustType>,
+    ) {
+        if let Some(value) = value {
+            if value.is_empty() {
+                update.add_cleared(field);
+            } else {
+                Self::add(update.fields_mut(), field, value);
+            }
         }
     }
 
@@ -204,11 +216,17 @@ where
         }
     }
 
-    fn add_update(update: &mut SchemaComponentUpdate, field: FieldId, value: &Self::RustType) {
-        if value.is_empty() {
-            update.add_cleared(field);
-        } else {
-            Self::add(update.fields_mut(), field, value);
+    fn add_update(
+        update: &mut SchemaComponentUpdate,
+        field: FieldId,
+        value: &Option<Self::RustType>,
+    ) {
+        if let Some(value) = value {
+            if value.is_empty() {
+                update.add_cleared(field);
+            } else {
+                Self::add(update.fields_mut(), field, value);
+            }
         }
     }
 

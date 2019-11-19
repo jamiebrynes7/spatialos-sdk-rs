@@ -213,18 +213,13 @@ impl Package {
 
     // Generates an expression which serializes a field from an expression into a schema object. The generated
     // expression should always have type ().
-    fn serialize_field(
-        &self,
-        field: &FieldDefinition,
-        expression: &str,
-        schema_object: &str,
-    ) -> String {
+    fn serialize_field(&self, field: &FieldDefinition, schema_object: &str) -> String {
         format!(
-            "{}.add::<{}>({}, {})",
+            "{}.add::<{}>({}, &self.{})",
             schema_object,
             self.field_type_name(&field.field_type),
             field.field_id,
-            expression,
+            field.name,
         )
     }
 
@@ -234,81 +229,27 @@ impl Package {
             "{}.get::<{}>({})",
             schema_field,
             self.field_type_name(&field.field_type),
-            field.field_id
+            field.field_id,
         )
     }
 
-    fn deserialize_update_field(&self, field: &FieldDefinition, schema_field: &str) -> String {
-        match field.field_type {
-            FieldDefinition_FieldType::Singular { ref type_reference } => {
-                self.deserialize_type_update(field.field_id, type_reference, schema_field)
-            }
-
-            FieldDefinition_FieldType::Option { ref inner_type } => {
-                self.deserialize_type_update(field.field_id, inner_type, schema_field)
-            }
-
-            FieldDefinition_FieldType::List { .. } | FieldDefinition_FieldType::Map { .. } => {
-                format!(
-                    "Some({}.get::<{}>({}))",
-                    schema_field,
-                    self.field_type_name(&field.field_type),
-                    field.field_id
-                )
-            }
-        }
-    }
-
-    // Generates an expression which deserializes a value from a schema type in 'schema_expr'. In the non primitive
-    // case, this expression is of type Result<GeneratedType, String>, otherwise it is just T (where T is the primitive type).
-    fn deserialize_type(
-        &self,
-        field_id: u32,
-        value_type: &TypeReference,
-        schema_object: &str,
-    ) -> String {
+    fn deserialize_update_field(&self, field: &FieldDefinition, update: &str) -> String {
         format!(
-            "{}.get::<{}>({})",
-            schema_object,
-            self.schema_type_name(value_type),
-            field_id
+            "{}.get_update::<{}>({})",
+            update,
+            self.field_type_name(&field.field_type),
+            field.field_id,
         )
     }
 
-    fn deserialize_type_update(
-        &self,
-        field_id: u32,
-        value_type: &TypeReference,
-        schema_object: &str,
-    ) -> String {
-        let count_expr = self.count_field(field_id, value_type, schema_object);
-        let deserialize_expr = self.deserialize_type(field_id, value_type, schema_object);
+    fn serialize_update_field(&self, field: &FieldDefinition, update: &str) -> String {
         format!(
-            "if {} > 0 {{ Some({}) }} else {{ None }}",
-            count_expr, deserialize_expr
+            "{}.add_update::<{}>({}, &self.{})",
+            update,
+            self.field_type_name(&field.field_type),
+            field.field_id,
+            field.name,
         )
-    }
-
-    fn count_field(
-        &self,
-        field_id: u32,
-        value_type: &TypeReference,
-        schema_object: &str,
-    ) -> String {
-        match value_type {
-            TypeReference::Primitive(primitive) => format!(
-                "{}.count::<{}>({})",
-                schema_object,
-                primitive_type_name(primitive),
-                field_id,
-            ),
-
-            TypeReference::Enum(_) => {
-                format!("{}.count::<SchemaEnum>({})", schema_object, field_id)
-            }
-
-            TypeReference::Type(..) => format!("{}.object_count({})", schema_object, field_id),
-        }
     }
 }
 
