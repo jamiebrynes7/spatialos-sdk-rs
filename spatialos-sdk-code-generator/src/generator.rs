@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
-fn get_rust_primitive_type_tag(primitive_type: &PrimitiveType) -> &'static str {
+fn primitive_type_name(primitive_type: &PrimitiveType) -> &'static str {
     match primitive_type {
         PrimitiveType::Invalid => panic!("Encountered invalid primitive."),
         PrimitiveType::Int32 => "SchemaInt32",
@@ -81,7 +81,7 @@ impl Package {
 
     fn schema_type_name(&self, type_ref: &TypeReference) -> Cow<'static, str> {
         match type_ref {
-            TypeReference::Primitive(prim) => get_rust_primitive_type_tag(prim).into(),
+            TypeReference::Primitive(prim) => primitive_type_name(prim).into(),
             TypeReference::Enum(name) => self.rust_fqname(name).into(),
             TypeReference::Type(name) => self.rust_fqname(name).into(),
         }
