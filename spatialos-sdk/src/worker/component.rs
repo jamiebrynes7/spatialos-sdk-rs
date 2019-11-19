@@ -20,17 +20,13 @@ pub trait ComponentData<C: Component> {
 }
 
 // A trait that's implemented by a component to convert to/from schema handle types.
-pub trait Component
-where
-    Self: std::marker::Sized,
-{
+pub trait Component: ObjectField {
     type Update;
     type CommandRequest;
     type CommandResponse;
 
     const ID: ComponentId;
 
-    fn from_data(data: &schema::SchemaComponentData) -> Result<Self, String>;
     fn from_update(update: &schema::SchemaComponentUpdate) -> Result<Self::Update, String>;
     fn from_request(
         command_index: CommandIndex,
@@ -41,7 +37,6 @@ where
         response: &schema::SchemaCommandResponse,
     ) -> Result<Self::CommandResponse, String>;
 
-    fn to_data(data: &Self) -> Result<Owned<SchemaComponentData>, String>;
     fn to_update(update: &Self::Update) -> Result<Owned<SchemaComponentUpdate>, String>;
     fn to_request(request: &Self::CommandRequest) -> Result<Owned<SchemaCommandRequest>, String>;
     fn to_response(
@@ -130,11 +125,7 @@ impl<'a> ComponentDataRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the component impl `ObjectField`
-    // here, but in practice this will always be true for all component types. Future
-    // iterations should clean this up such that the `Component` trait can imply these
-    // other bounds automatically (i.e. by making them super traits of `Component`).
-    pub fn get<C: Component + ObjectField>(&self) -> Option<Cow<'_, C>> {
+    pub fn get<C: Component>(&self) -> Option<Cow<'_, C>> {
         if C::ID != self.component_id {
             return None;
         }
@@ -388,13 +379,9 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     handle_out: *mut *mut Worker_ComponentDataHandle,
 ) -> u8 {
     let schema_data = schema::SchemaComponentData::from_raw(data);
-    let deserialized_result = C::from_data(schema_data);
-    if let Ok(deserialized_data) = deserialized_result {
-        *handle_out = handle_allocate(deserialized_data);
-        1
-    } else {
-        0
-    }
+    let deserialized_data = schema_data.deserialize::<C>();
+    *handle_out = handle_allocate(deserialized_data);
+    1
 }
 
 unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
@@ -403,12 +390,8 @@ unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
     handle: *mut raw::c_void,
     data: *mut *mut Schema_ComponentData,
 ) {
-    let client_data = &*(handle as *const C);
-    if let Ok(schema_data) = C::to_data(client_data) {
-        *data = schema_data.into_raw();
-    } else {
-        *data = ptr::null_mut();
-    }
+    let client_data = &*handle.cast::<C>();
+    *data = SchemaComponentData::from_component(client_data).into_raw();
 }
 
 unsafe extern "C" fn vtable_component_update_free<C: Component>(

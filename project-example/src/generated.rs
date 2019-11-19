@@ -193,10 +193,6 @@ impl Component for EntityIdTest {
 
     const ID: ComponentId = 2001;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::example::EntityIdTest, String> {
-        Ok(<generated::example::EntityIdTest as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EntityIdTestUpdate, String> {
         Ok(<generated::example::EntityIdTestUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -211,12 +207,6 @@ impl Component for EntityIdTest {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EntityIdTest.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::example::EntityIdTest) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::example::EntityIdTest as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::EntityIdTestUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
@@ -313,10 +303,6 @@ impl Component for EnumTestComponent {
 
     const ID: ComponentId = 2002;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::example::EnumTestComponent, String> {
-        Ok(<generated::example::EnumTestComponent as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EnumTestComponentUpdate, String> {
         Ok(<generated::example::EnumTestComponentUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -331,12 +317,6 @@ impl Component for EnumTestComponent {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EnumTestComponent.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::example::EnumTestComponent) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::example::EnumTestComponent as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::EnumTestComponentUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
@@ -435,10 +415,6 @@ impl Component for Example {
 
     const ID: ComponentId = 1000;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::example::Example, String> {
-        Ok(<generated::example::Example as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::ExampleUpdate, String> {
         Ok(<generated::example::ExampleUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -461,12 +437,6 @@ impl Component for Example {
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Example.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::example::Example) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::example::Example as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::ExampleUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
@@ -591,10 +561,6 @@ impl Component for Rotate {
 
     const ID: ComponentId = 1001;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::example::Rotate, String> {
-        Ok(<generated::example::Rotate as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::RotateUpdate, String> {
         Ok(<generated::example::RotateUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -609,12 +575,6 @@ impl Component for Rotate {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Rotate.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::example::Rotate) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::example::Rotate as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::example::RotateUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
@@ -986,10 +946,6 @@ impl Component for EntityAcl {
 
     const ID: ComponentId = 50;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::EntityAcl, String> {
-        Ok(<generated::improbable::EntityAcl as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::EntityAclUpdate, String> {
         Ok(<generated::improbable::EntityAclUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -1004,12 +960,6 @@ impl Component for EntityAcl {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EntityAcl.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::improbable::EntityAcl) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::EntityAcl as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::EntityAclUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
@@ -1106,10 +1056,6 @@ impl Component for Interest {
 
     const ID: ComponentId = 58;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Interest, String> {
-        Ok(<generated::improbable::Interest as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::InterestUpdate, String> {
         Ok(<generated::improbable::InterestUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -1124,12 +1070,6 @@ impl Component for Interest {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Interest.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::improbable::Interest) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Interest as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::InterestUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
@@ -1226,10 +1166,6 @@ impl Component for Metadata {
 
     const ID: ComponentId = 53;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Metadata, String> {
-        Ok(<generated::improbable::Metadata as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::MetadataUpdate, String> {
         Ok(<generated::improbable::MetadataUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -1244,12 +1180,6 @@ impl Component for Metadata {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Metadata.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::improbable::Metadata) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Metadata as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::MetadataUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
@@ -1336,10 +1266,6 @@ impl Component for Persistence {
 
     const ID: ComponentId = 55;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Persistence, String> {
-        Ok(<generated::improbable::Persistence as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PersistenceUpdate, String> {
         Ok(<generated::improbable::PersistenceUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -1354,12 +1280,6 @@ impl Component for Persistence {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Persistence.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::improbable::Persistence) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Persistence as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::PersistenceUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
@@ -1456,10 +1376,6 @@ impl Component for Position {
 
     const ID: ComponentId = 54;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::Position, String> {
-        Ok(<generated::improbable::Position as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PositionUpdate, String> {
         Ok(<generated::improbable::PositionUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -1474,12 +1390,6 @@ impl Component for Position {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Position.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::improbable::Position) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::Position as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::PositionUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
@@ -1703,10 +1613,6 @@ impl Component for PlayerClient {
 
     const ID: ComponentId = 61;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::PlayerClient, String> {
-        Ok(<generated::improbable::restricted::PlayerClient as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::PlayerClientUpdate, String> {
         Ok(<generated::improbable::restricted::PlayerClientUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -1721,12 +1627,6 @@ impl Component for PlayerClient {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component PlayerClient.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::improbable::restricted::PlayerClient) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::restricted::PlayerClient as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::restricted::PlayerClientUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
@@ -1813,10 +1713,6 @@ impl Component for System {
 
     const ID: ComponentId = 59;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::System, String> {
-        Ok(<generated::improbable::restricted::System as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::SystemUpdate, String> {
         Ok(<generated::improbable::restricted::SystemUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -1831,12 +1727,6 @@ impl Component for System {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component System.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::improbable::restricted::System) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::restricted::System as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::restricted::SystemUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
@@ -1955,10 +1845,6 @@ impl Component for Worker {
 
     const ID: ComponentId = 60;
 
-    fn from_data(data: &SchemaComponentData) -> Result<generated::improbable::restricted::Worker, String> {
-        Ok(<generated::improbable::restricted::Worker as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::WorkerUpdate, String> {
         Ok(<generated::improbable::restricted::WorkerUpdate as ObjectField>::from_object(&update.fields()))
     }
@@ -1981,12 +1867,6 @@ impl Component for Worker {
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Worker.", command_index))
         }
-    }
-
-    fn to_data(data: &generated::improbable::restricted::Worker) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <generated::improbable::restricted::Worker as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &generated::improbable::restricted::WorkerUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {

@@ -150,10 +150,6 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
 
     const ID: ComponentId = <#= component.component_id #>;
 
-    fn from_data(data: &SchemaComponentData) -> Result<<#= self.rust_fqname(&component.qualified_name) #>, String> {
-        Ok(<<#= self.rust_fqname(&component.qualified_name) #> as ObjectField>::from_object(&data.fields()))
-    }
-
     fn from_update(update: &SchemaComponentUpdate) -> Result<<#= self.rust_fqname(&component.qualified_name) #>Update, String> {
         Ok(<<#= self.rust_fqname(&component.qualified_name) #>Update as ObjectField>::from_object(&update.fields()))
     }
@@ -180,12 +176,6 @@ impl Component for <#= self.rust_name(&component.qualified_name) #> {
             },<# } #>
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component <#= self.rust_name(&component.qualified_name) #>.", command_index))
         }
-    }
-
-    fn to_data(data: &<#= self.rust_fqname(&component.qualified_name) #>) -> Result<Owned<SchemaComponentData>, String> {
-        let mut serialized_data = SchemaComponentData::new();
-        <<#= self.rust_fqname(&component.qualified_name) #> as ObjectField>::into_object(data, &mut serialized_data.fields_mut());
-        Ok(serialized_data)
     }
 
     fn to_update(update: &<#= self.rust_fqname(&component.qualified_name) #>Update) -> Result<Owned<SchemaComponentUpdate>, String> {

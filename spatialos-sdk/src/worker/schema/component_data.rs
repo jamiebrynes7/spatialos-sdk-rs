@@ -1,4 +1,7 @@
-use crate::worker::schema::{DataPointer, Owned, OwnedPointer, SchemaObject};
+use crate::worker::{
+    component::Component,
+    schema::{DataPointer, Owned, OwnedPointer, SchemaObject},
+};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -12,8 +15,18 @@ use std::marker::PhantomData;
 pub struct SchemaComponentData(PhantomData<*mut Schema_ComponentData>);
 
 impl SchemaComponentData {
-    pub fn new() -> Owned<SchemaComponentData> {
+    pub fn new() -> Owned<Self> {
         Owned::new()
+    }
+
+    pub fn from_component<C: Component>(component: &C) -> Owned<Self> {
+        let mut result = Self::new();
+        component.into_object(result.fields_mut());
+        result
+    }
+
+    pub fn deserialize<C: Component>(&self) -> C {
+        C::from_object(self.fields())
     }
 
     pub fn fields(&self) -> &SchemaObject {

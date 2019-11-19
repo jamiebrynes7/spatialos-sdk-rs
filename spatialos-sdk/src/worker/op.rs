@@ -541,7 +541,7 @@ pub struct AddComponentOp<'a> {
 impl<'a> AddComponentOp<'a> {
     pub fn get<C>(&self) -> Option<Cow<'_, C>>
     where
-        C: Component + ObjectField,
+        C: Component,
     {
         self.component_data.get::<C>()
     }
