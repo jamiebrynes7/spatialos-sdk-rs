@@ -192,6 +192,8 @@ impl Display for UnknownDiscriminantError {
     }
 }
 
+impl std::error::Error for UnknownDiscriminantError {}
+
 /// A type that corresponds to a [schemalang enumeration][schema-enum].
 ///
 /// Schemalang enums are C-like enums (i.e. they only have a discriminant and do not
