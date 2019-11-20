@@ -409,7 +409,7 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
     let schema_update = SchemaComponentUpdate::from_raw(update);
-    let deserialized_update = C::Update::from_update(schema_update);
+    let deserialized_update = schema_update.deserialize::<C>();
     *handle_out = handle_allocate(deserialized_update);
     1
 }
@@ -423,7 +423,7 @@ unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
     let data: &C::Update = &*(handle as *const _);
     let mut update = SchemaComponentUpdate::new();
     data.into_update(&mut update);
-    *result = update.into_raw();
+    *result = SchemaComponentUpdate::from_update(data).into_raw();
 }
 
 unsafe extern "C" fn vtable_command_request_free<C: Component>(

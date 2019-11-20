@@ -1,4 +1,7 @@
-use crate::worker::schema::{DataPointer, Field, FieldId, Owned, OwnedPointer, SchemaObject};
+use crate::worker::{
+    component::{Component, Update},
+    schema::{DataPointer, Field, FieldId, Owned, OwnedPointer, SchemaObject},
+};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -6,8 +9,18 @@ use std::marker::PhantomData;
 pub struct SchemaComponentUpdate(PhantomData<*mut Schema_ComponentUpdate>);
 
 impl SchemaComponentUpdate {
-    pub fn new() -> Owned<SchemaComponentUpdate> {
+    pub fn new() -> Owned<Self> {
         Owned::new()
+    }
+
+    pub fn from_update<U: Update>(update: &U) -> Owned<Self> {
+        let mut result = Owned::new();
+        update.into_update(&mut result);
+        result
+    }
+
+    pub fn deserialize<C: Component>(&self) -> C::Update {
+        C::Update::from_update(&self)
     }
 
     pub fn fields(&self) -> &SchemaObject {
