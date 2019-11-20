@@ -156,10 +156,6 @@ impl<'a> ComponentUpdateRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the update impl `ObjectField`
-    // here, but in practice this will always be true for all component types. Future
-    // iterations should clean this up such that the `Component` trait can imply these
-    // other bounds automatically (i.e. by making them super traits of `Component`).
     pub(crate) fn get<C: Component>(&self) -> Option<Cow<'_, C::Update>> {
         if C::ID != self.component_id {
             return None;
