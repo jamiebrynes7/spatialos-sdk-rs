@@ -421,8 +421,6 @@ unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
     result: *mut *mut Schema_ComponentUpdate,
 ) {
     let data: &C::Update = &*(handle as *const _);
-    let mut update = SchemaComponentUpdate::new();
-    data.into_update(&mut update);
     *result = SchemaComponentUpdate::from_update(data).into_raw();
 }
 
