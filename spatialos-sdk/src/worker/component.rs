@@ -19,7 +19,7 @@ pub trait Component: ObjectField {
 
     const ID: ComponentId;
 
-    fn merge_update(&mut self, update: &Self::Update);
+    fn merge_update(&mut self, update: Self::Update);
 
     fn from_request(
         command_index: CommandIndex,
@@ -39,11 +39,12 @@ pub trait Component: ObjectField {
     fn get_response_command_index(response: &Self::CommandResponse) -> u32;
 }
 
-pub trait Update: Sized {
+pub trait Update: Sized + Clone {
     type Component: Component<Update = Self>;
 
     fn from_update(update: &SchemaComponentUpdate) -> Self;
     fn into_update(&self, update: &mut SchemaComponentUpdate);
+    fn merge(&mut self, other: Self);
 }
 
 /// Additional parameters for sending component updates.
@@ -159,11 +160,7 @@ impl<'a> ComponentUpdateRef<'a> {
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
-    pub(crate) fn get<C>(&self) -> Option<Cow<'_, C::Update>>
-    where
-        C: Component,
-        C::Update: ObjectField,
-    {
+    pub(crate) fn get<C: Component>(&self) -> Option<Cow<'_, C::Update>> {
         if C::ID != self.component_id {
             return None;
         }
@@ -171,7 +168,7 @@ impl<'a> ComponentUpdateRef<'a> {
         let cow = if let Some(user_handle) = &self.user_handle {
             Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
         } else {
-            Cow::Owned(ObjectField::from_object(self.schema_type.fields()))
+            Cow::Owned(Update::from_update(&self.schema_type))
         };
 
         Some(cow)

@@ -36,14 +36,14 @@ impl SchemaComponentUpdate {
         }
     }
 
-    pub fn get<T>(&self, field: FieldId) -> Option<T::RustType>
+    pub fn get_field<T>(&self, field: FieldId) -> Option<T::RustType>
     where
         T: Field,
     {
         T::get_update(self, field)
     }
 
-    pub fn add<T>(&mut self, field: FieldId, value: &Option<T::RustType>)
+    pub fn add_field<T>(&mut self, field: FieldId, value: &Option<T::RustType>)
     where
         T: Field,
     {

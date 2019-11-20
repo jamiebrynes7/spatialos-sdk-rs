@@ -235,7 +235,7 @@ impl Package {
 
     fn deserialize_update_field(&self, field: &FieldDefinition, update: &str) -> String {
         format!(
-            "{}.get_update::<{}>({})",
+            "{}.get_field::<{}>({})",
             update,
             self.field_type_name(&field.field_type),
             field.field_id,
@@ -244,7 +244,7 @@ impl Package {
 
     fn serialize_update_field(&self, field: &FieldDefinition, update: &str) -> String {
         format!(
-            "{}.add_update::<{}>({}, &self.{})",
+            "{}.add_field::<{}>({}, &self.{})",
             update,
             self.field_type_name(&field.field_type),
             field.field_id,

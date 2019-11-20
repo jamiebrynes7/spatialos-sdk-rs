@@ -116,7 +116,13 @@ impl Update for <#= update_name #> {
 
     fn into_update(&self, update: &mut SchemaComponentUpdate) {<#
         for field in &component_fields {#>
-        <#= self.serialize_update_field(field, "output") #>;<# } #>
+        <#= self.serialize_update_field(field, "update") #>;<# } #>
+    }
+
+    fn merge(&mut self, update: Self) {<#
+        for field in &component_fields {
+        #>
+        if update.<#= field.name #>.is_some() { self.<#= field.name #> = update.<#= field.name #>; }<# } #>
     }
 }
 
@@ -141,10 +147,10 @@ impl Component for <#= component_name #> {
 
     const ID: ComponentId = <#= component.component_id #>;
 
-    fn merge_update(&mut self, update: &Self::Update) {<#
-        for field in &self.get_component_fields(&component) {
+    fn merge_update(&mut self, update: Self::Update) {<#
+        for field in &component_fields {
         #>
-        if update.<#= field.name #>.is_some() { self.<#= field.name #> = update.<#= field.name #>; }<# } #>
+        if let Some(value) = update.<#= field.name #> { self.<#= field.name #> = value; }<# } #>
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandRequest, String> {
