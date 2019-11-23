@@ -11,23 +11,16 @@ pub use inventory;
 pub type ComponentId = Worker_ComponentId;
 pub type CommandIndex = Worker_CommandIndex;
 
-pub trait ComponentUpdate<C: Component> {
-    fn merge(&mut self, update: Self);
-}
-
-pub trait ComponentData<C: Component> {
-    fn merge(&mut self, update: C::Update);
-}
-
 // A trait that's implemented by a component to convert to/from schema handle types.
 pub trait Component: ObjectField {
-    type Update;
+    type Update: Update<Component = Self>;
     type CommandRequest;
     type CommandResponse;
 
     const ID: ComponentId;
 
-    fn from_update(update: &schema::SchemaComponentUpdate) -> Result<Self::Update, String>;
+    fn merge_update(&mut self, update: Self::Update);
+
     fn from_request(
         command_index: CommandIndex,
         request: &schema::SchemaCommandRequest,
@@ -37,7 +30,6 @@ pub trait Component: ObjectField {
         response: &schema::SchemaCommandResponse,
     ) -> Result<Self::CommandResponse, String>;
 
-    fn to_update(update: &Self::Update) -> Result<Owned<SchemaComponentUpdate>, String>;
     fn to_request(request: &Self::CommandRequest) -> Result<Owned<SchemaCommandRequest>, String>;
     fn to_response(
         response: &Self::CommandResponse,
@@ -45,6 +37,14 @@ pub trait Component: ObjectField {
 
     fn get_request_command_index(request: &Self::CommandRequest) -> u32;
     fn get_response_command_index(response: &Self::CommandResponse) -> u32;
+}
+
+pub trait Update: Sized + Clone {
+    type Component: Component<Update = Self>;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self;
+    fn into_schema(&self, update: &mut SchemaComponentUpdate);
+    fn merge(&mut self, other: Self);
 }
 
 /// Additional parameters for sending component updates.
@@ -156,15 +156,7 @@ impl<'a> ComponentUpdateRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the update impl `ObjectField`
-    // here, but in practice this will always be true for all component types. Future
-    // iterations should clean this up such that the `Component` trait can imply these
-    // other bounds automatically (i.e. by making them super traits of `Component`).
-    pub(crate) fn get<C>(&self) -> Option<Cow<'_, C::Update>>
-    where
-        C: Component,
-        C::Update: ObjectField,
-    {
+    pub(crate) fn get<C: Component>(&self) -> Option<Cow<'_, C::Update>> {
         if C::ID != self.component_id {
             return None;
         }
@@ -172,7 +164,7 @@ impl<'a> ComponentUpdateRef<'a> {
         let cow = if let Some(user_handle) = &self.user_handle {
             Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
         } else {
-            Cow::Owned(ObjectField::from_object(self.schema_type.fields()))
+            Cow::Owned(Update::from_schema(&self.schema_type))
         };
 
         Some(cow)
@@ -417,28 +409,19 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
     let schema_update = SchemaComponentUpdate::from_raw(update);
-    let deserialized_result = C::from_update(schema_update);
-    if let Ok(deserialized_update) = deserialized_result {
-        *handle_out = handle_allocate(deserialized_update);
-        1
-    } else {
-        0
-    }
+    let deserialized_update = schema_update.deserialize::<C>();
+    *handle_out = handle_allocate(deserialized_update);
+    1
 }
 
 unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
     _: u32,
     _: *mut raw::c_void,
     handle: *mut raw::c_void,
-    update: *mut *mut Schema_ComponentUpdate,
+    result: *mut *mut Schema_ComponentUpdate,
 ) {
-    let data = &*(handle as *const _);
-    let schema_result = C::to_update(data);
-    if let Ok(schema_update) = schema_result {
-        *update = schema_update.into_raw();
-    } else {
-        *update = ptr::null_mut();
-    }
+    let data: &C::Update = &*(handle as *const _);
+    *result = SchemaComponentUpdate::from_update(data).into_raw();
 }
 
 unsafe extern "C" fn vtable_command_request_free<C: Component>(

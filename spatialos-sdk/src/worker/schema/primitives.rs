@@ -1,5 +1,5 @@
 use crate::worker::{
-    schema::{DataPointer, Field, FieldId, SchemaObject},
+    schema::{DataPointer, Field, FieldId, SchemaComponentUpdate, SchemaObject},
     EntityId,
 };
 use spatialos_sdk_sys::worker::*;
@@ -48,6 +48,10 @@ macro_rules! impl_primitive_field {
                 unsafe {
                     $schema_add_list(object.as_ptr_mut(), field, ptr, len);
                 }
+            }
+
+            fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+                Self::count(update.fields(), field) > 0
             }
         }
     };
@@ -208,6 +212,10 @@ impl Field for SchemaEntityId {
             Schema_AddEntityIdList(object.as_ptr_mut(), field, ptr, value.len() as u32);
         }
     }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+        Self::count(update.fields(), field) > 0
+    }
 }
 
 impl Field for SchemaBool {
@@ -237,6 +245,10 @@ impl Field for SchemaBool {
             let ptr = converted_list.as_ptr();
             Schema_AddBoolList(object.as_ptr_mut(), field, ptr, value.len() as u32);
         }
+    }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+        Self::count(update.fields(), field) > 0
     }
 }
 
@@ -282,6 +294,10 @@ impl Field for SchemaString {
             Self::add(object, field, value);
         }
     }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+        Self::count(update.fields(), field) > 0
+    }
 }
 
 impl Field for SchemaBytes {
@@ -324,5 +340,9 @@ impl Field for SchemaBytes {
         for value in value {
             Self::add(object, field, value);
         }
+    }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+        Self::count(update.fields(), field) > 0
     }
 }

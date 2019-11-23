@@ -1,4 +1,7 @@
-use crate::worker::schema::{DataPointer, Owned, OwnedPointer, SchemaObject};
+use crate::worker::{
+    component::{Component, Update},
+    schema::{DataPointer, Field, FieldId, Owned, OwnedPointer, SchemaObject},
+};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -6,8 +9,18 @@ use std::marker::PhantomData;
 pub struct SchemaComponentUpdate(PhantomData<*mut Schema_ComponentUpdate>);
 
 impl SchemaComponentUpdate {
-    pub fn new() -> Owned<SchemaComponentUpdate> {
+    pub fn new() -> Owned<Self> {
         Owned::new()
+    }
+
+    pub fn from_update<U: Update>(update: &U) -> Owned<Self> {
+        let mut result = Owned::new();
+        update.into_schema(&mut result);
+        result
+    }
+
+    pub fn deserialize<C: Component>(&self) -> C::Update {
+        C::Update::from_schema(&self)
     }
 
     pub fn fields(&self) -> &SchemaObject {
@@ -26,7 +39,29 @@ impl SchemaComponentUpdate {
         unsafe { SchemaObject::from_raw_mut(Schema_GetComponentUpdateEvents(self.as_ptr_mut())) }
     }
 
-    // TODO: Cleared fields.
+    pub fn is_field_cleared(&self, field: FieldId) -> bool {
+        0 != unsafe { Schema_IsComponentUpdateFieldCleared(self.as_ptr() as *mut _, field) }
+    }
+
+    pub fn add_cleared(&mut self, field: FieldId) {
+        unsafe {
+            Schema_AddComponentUpdateClearedField(self.as_ptr_mut(), field);
+        }
+    }
+
+    pub fn get_field<T>(&self, field: FieldId) -> Option<T::RustType>
+    where
+        T: Field,
+    {
+        T::get_update(self, field)
+    }
+
+    pub fn add_field<T>(&mut self, field: FieldId, value: &Option<T::RustType>)
+    where
+        T: Field,
+    {
+        T::add_update(self, field, value);
+    }
 }
 
 unsafe impl DataPointer for SchemaComponentUpdate {
