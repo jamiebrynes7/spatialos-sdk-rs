@@ -105,7 +105,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                 // of a new entity before sending any component data for that entity.
                 WorkerOp::AddComponent(add_component) => match add_component.component_id {
                     example::Rotate::ID => {
-                        let rotate = add_component.get::<example::Rotate>().unwrap();
+                        let rotate = add_component.get::<example::Rotate>().unwrap().unwrap();
                         let entity_state = world
                             .get_mut(&add_component.entity_id)
                             .expect("Entity wasn't present in local world");
@@ -135,7 +135,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                 // component.
                 WorkerOp::ComponentUpdate(update) => match update.component_id {
                     example::Rotate::ID => {
-                        let component_update = update.get::<example::Rotate>().unwrap();
+                        let component_update = update.get::<example::Rotate>().unwrap().unwrap();
                         let state = world.get_mut(&update.entity_id).unwrap();
                         let rotate = state.rotate.as_mut().unwrap();
                         rotate.merge_update(component_update.into_owned());

@@ -226,19 +226,19 @@ impl Package {
     // Generates an expression which deserializes a field from a schema field 'schema_field'.
     fn deserialize_field(&self, field: &FieldDefinition, schema_field: &str) -> String {
         format!(
-            "{}.get::<{}>({})",
+            "{}.get::<{}>({field}).map_err(Error::at_field::<Self>({field}))?",
             schema_field,
             self.field_type_name(&field.field_type),
-            field.field_id,
+            field = field.field_id,
         )
     }
 
     fn deserialize_update_field(&self, field: &FieldDefinition, update: &str) -> String {
         format!(
-            "{}.get_field::<{}>({})",
+            "{}.get_field::<{}>({field}).map_err(Error::at_field::<Self>({field}))?",
             update,
             self.field_type_name(&field.field_type),
-            field.field_id,
+            field = field.field_id,
         )
     }
 

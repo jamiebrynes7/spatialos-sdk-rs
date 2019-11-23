@@ -56,6 +56,7 @@
 //! }
 //! ```
 
+use crate::worker::component::CommandIndex;
 use std::{
     convert::TryFrom,
     fmt::{self, Display, Formatter},
@@ -273,7 +274,7 @@ macro_rules! impl_field_for_enum_field {
                 object: &$crate::worker::schema::SchemaObject,
                 field: $crate::worker::schema::FieldId,
             ) -> $crate::worker::schema::Result<Self::RustType> {
-                Self::try_from(object.get::<$crate::worker::schema::SchemaEnum>(field))
+                Self::try_from(object.get::<$crate::worker::schema::SchemaEnum>(field)?)
                     .map_err(Into::into)
             }
 
@@ -282,7 +283,7 @@ macro_rules! impl_field_for_enum_field {
                 field: $crate::worker::schema::FieldId,
                 index: usize,
             ) -> $crate::worker::schema::Result<Self::RustType> {
-                Self::try_from(object.get_index::<$crate::worker::schema::SchemaEnum>(field, index))
+                Self::try_from(object.get_index::<$crate::worker::schema::SchemaEnum>(field, index)?)
                     .map_err(Into::into)
             }
 
@@ -328,6 +329,13 @@ impl Error {
         }
     }
 
+    pub fn unknown_command<T>(command_index: CommandIndex) -> Self {
+        Self {
+            type_name: std::any::type_name::<T>(),
+            kind: ErrorKind::UnknownCommand(command_index),
+        }
+    }
+
     pub fn missing_field<T>() -> Self {
         Self {
             type_name: std::any::type_name::<T>(),
@@ -342,7 +350,7 @@ impl Error {
         }
     }
 
-    pub fn at_field<T: ObjectField>(field: FieldId) -> impl FnOnce(Self) -> Self {
+    pub fn at_field<T>(field: FieldId) -> impl FnOnce(Self) -> Self {
         move |error| Self {
             type_name: std::any::type_name::<T>(),
             kind: ErrorKind::InvalidValue {
@@ -372,6 +380,12 @@ impl Display for Error {
                 f,
                 "Unknown discriminant {} for enum {}",
                 value, self.type_name
+            ),
+
+            ErrorKind::UnknownCommand(command_index) => write!(
+                f,
+                "Unknown command index {} for command {}",
+                command_index, self.type_name
             ),
 
             ErrorKind::MissingField => write!(f, "Missing field of type {}", self.type_name),
@@ -425,6 +439,7 @@ impl From<UnknownDiscriminantError> for Error {
 #[derive(Debug)]
 pub enum ErrorKind {
     UnknownDiscriminant(u32),
+    UnknownCommand(CommandIndex),
     MissingField,
     IndexOutOfBounds {
         index: usize,
