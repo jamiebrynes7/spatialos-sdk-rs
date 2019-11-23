@@ -37,7 +37,7 @@ macro_rules! impl_primitive_field {
             type RustType = $rust_type;
 
             fn get(object: &SchemaObject, field: FieldId) -> Result<$rust_type> {
-                if Self::count(object, field) > 1 {
+                if Self::count(object, field) > 0 {
                     Ok(unsafe { mem::transmute($schema_get(object.as_ptr(), field)) })
                 } else {
                     Err(Error::missing_field::<Self>())

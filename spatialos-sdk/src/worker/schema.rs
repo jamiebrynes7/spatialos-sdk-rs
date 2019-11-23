@@ -18,8 +18,8 @@
 //! object.add::<Optional<SchemaString>>(2, &none_field);
 //!
 //! // Get fields from serialized data.
-//! let some_result = object.get::<Optional<SchemaInt32>>(1);
-//! let none_result = object.get::<Optional<SchemaString>>(2);
+//! let some_result = object.get::<Optional<SchemaInt32>>(1).unwrap();
+//! let none_result = object.get::<Optional<SchemaString>>(2).unwrap();
 //!
 //! assert_eq!(some_field, some_result);
 //! assert_eq!(none_field, none_result);
@@ -36,7 +36,7 @@
 //! The following code would be used to handle serialization:
 //!
 //! ```
-//! use spatialos_sdk::worker::schema::*;
+//! use spatialos_sdk::worker::schema::{self, *};
 //!
 //! #[derive(Debug, Default, Clone)]
 //! pub struct MyType {
@@ -44,10 +44,12 @@
 //! }
 //!
 //! impl ObjectField for MyType {
-//!     fn from_object(object: &SchemaObject) -> Self {
-//!         Self {
-//!             optional_value: object.get::<Optional<SchemaInt32>>(1),
-//!         }
+//!     fn from_object(object: &SchemaObject) -> schema::Result<Self> {
+//!         Ok(Self {
+//!             optional_value: object
+//!                 .get::<Optional<SchemaInt32>>(1)
+//!                 .map_err(Error::at_field::<Self>(1))?,
+//!         })
 //!     }
 //!
 //!     fn into_object(&self, object: &mut SchemaObject) {
@@ -283,8 +285,10 @@ macro_rules! impl_field_for_enum_field {
                 field: $crate::worker::schema::FieldId,
                 index: usize,
             ) -> $crate::worker::schema::Result<Self::RustType> {
-                Self::try_from(object.get_index::<$crate::worker::schema::SchemaEnum>(field, index)?)
-                    .map_err(Into::into)
+                Self::try_from(
+                    object.get_index::<$crate::worker::schema::SchemaEnum>(field, index)?,
+                )
+                .map_err(Into::into)
             }
 
             fn count(

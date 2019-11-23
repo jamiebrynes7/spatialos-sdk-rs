@@ -375,6 +375,9 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
             1
         }
 
+        // TODO: How should we handle errors occurring during vtable serialization? We could
+        // probably store the whole `Result` in the user handle and pass it to the user when
+        // they try to retrieve the result.
         Err(..) => {
             *handle_out = ptr::null_mut();
             0
