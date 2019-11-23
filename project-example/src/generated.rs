@@ -161,13 +161,13 @@ pub struct EntityIdTestUpdate {
 impl Update for EntityIdTestUpdate {
     type Component = EntityIdTest;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
             eid: update.get_field::<SchemaEntityId>(1),
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
         update.add_field::<SchemaEntityId>(1, &self.eid);
     }
 
@@ -263,13 +263,13 @@ pub struct EnumTestComponentUpdate {
 impl Update for EnumTestComponentUpdate {
     type Component = EnumTestComponent;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
             test: update.get_field::<generated::example::TestEnum>(1),
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
         update.add_field::<generated::example::TestEnum>(1, &self.test);
     }
 
@@ -365,13 +365,13 @@ pub struct ExampleUpdate {
 impl Update for ExampleUpdate {
     type Component = Example;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
             x: update.get_field::<SchemaFloat>(1),
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
         update.add_field::<SchemaFloat>(1, &self.x);
     }
 
@@ -493,7 +493,7 @@ pub struct RotateUpdate {
 impl Update for RotateUpdate {
     type Component = Rotate;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
             angle: update.get_field::<SchemaDouble>(1),
             center: update.get_field::<generated::example::Vector3d>(2),
@@ -501,7 +501,7 @@ impl Update for RotateUpdate {
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
         update.add_field::<SchemaDouble>(1, &self.angle);
         update.add_field::<generated::example::Vector3d>(2, &self.center);
         update.add_field::<SchemaDouble>(3, &self.radius);
@@ -872,14 +872,14 @@ pub struct EntityAclUpdate {
 impl Update for EntityAclUpdate {
     type Component = EntityAcl;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
             read_acl: update.get_field::<generated::improbable::WorkerRequirementSet>(1),
             component_write_acl: update.get_field::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2),
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
         update.add_field::<generated::improbable::WorkerRequirementSet>(1, &self.read_acl);
         update.add_field::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, &self.component_write_acl);
     }
@@ -978,13 +978,13 @@ pub struct InterestUpdate {
 impl Update for InterestUpdate {
     type Component = Interest;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
             component_interest: update.get_field::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1),
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
         update.add_field::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, &self.component_interest);
     }
 
@@ -1080,13 +1080,13 @@ pub struct MetadataUpdate {
 impl Update for MetadataUpdate {
     type Component = Metadata;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
             entity_type: update.get_field::<SchemaString>(1),
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
         update.add_field::<SchemaString>(1, &self.entity_type);
     }
 
@@ -1178,12 +1178,12 @@ pub struct PersistenceUpdate {
 impl Update for PersistenceUpdate {
     type Component = Persistence;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
     }
 
     fn merge(&mut self, update: Self) {
@@ -1276,13 +1276,13 @@ pub struct PositionUpdate {
 impl Update for PositionUpdate {
     type Component = Position;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
             coords: update.get_field::<generated::improbable::Coordinates>(1),
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
         update.add_field::<generated::improbable::Coordinates>(1, &self.coords);
     }
 
@@ -1505,13 +1505,13 @@ pub struct PlayerClientUpdate {
 impl Update for PlayerClientUpdate {
     type Component = PlayerClient;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
             player_identity: update.get_field::<generated::improbable::restricted::PlayerIdentity>(1),
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
         update.add_field::<generated::improbable::restricted::PlayerIdentity>(1, &self.player_identity);
     }
 
@@ -1603,12 +1603,12 @@ pub struct SystemUpdate {
 impl Update for SystemUpdate {
     type Component = System;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
     }
 
     fn merge(&mut self, update: Self) {
@@ -1709,7 +1709,7 @@ pub struct WorkerUpdate {
 impl Update for WorkerUpdate {
     type Component = Worker;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
             worker_id: update.get_field::<SchemaString>(1),
             worker_type: update.get_field::<SchemaString>(2),
@@ -1717,7 +1717,7 @@ impl Update for WorkerUpdate {
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
         update.add_field::<SchemaString>(1, &self.worker_id);
         update.add_field::<SchemaString>(2, &self.worker_type);
         update.add_field::<generated::improbable::restricted::Connection>(3, &self.connection);

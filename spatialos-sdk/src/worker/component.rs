@@ -42,8 +42,8 @@ pub trait Component: ObjectField {
 pub trait Update: Sized + Clone {
     type Component: Component<Update = Self>;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self;
-    fn into_update(&self, update: &mut SchemaComponentUpdate);
+    fn from_schema(update: &SchemaComponentUpdate) -> Self;
+    fn into_schema(&self, update: &mut SchemaComponentUpdate);
     fn merge(&mut self, other: Self);
 }
 
@@ -164,7 +164,7 @@ impl<'a> ComponentUpdateRef<'a> {
         let cow = if let Some(user_handle) = &self.user_handle {
             Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
         } else {
-            Cow::Owned(Update::from_update(&self.schema_type))
+            Cow::Owned(Update::from_schema(&self.schema_type))
         };
 
         Some(cow)

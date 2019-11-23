@@ -15,12 +15,12 @@ impl SchemaComponentUpdate {
 
     pub fn from_update<U: Update>(update: &U) -> Owned<Self> {
         let mut result = Owned::new();
-        update.into_update(&mut result);
+        update.into_schema(&mut result);
         result
     }
 
     pub fn deserialize<C: Component>(&self) -> C::Update {
-        C::Update::from_update(&self)
+        C::Update::from_schema(&self)
     }
 
     pub fn fields(&self) -> &SchemaObject {

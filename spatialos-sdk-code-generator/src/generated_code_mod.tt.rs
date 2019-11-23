@@ -107,14 +107,14 @@ pub struct <#= update_name #> {<#
 impl Update for <#= update_name #> {
     type Component = <#= component_name #>;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Self {
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {<#
             for field in &component_fields {#>
             <#= field.name #>: <#= self.deserialize_update_field(field, "update") #>,<# } #>
         }
     }
 
-    fn into_update(&self, update: &mut SchemaComponentUpdate) {<#
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {<#
         for field in &component_fields {#>
         <#= self.serialize_update_field(field, "update") #>;<# } #>
     }
