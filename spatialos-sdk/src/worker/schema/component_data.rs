@@ -1,6 +1,6 @@
 use crate::worker::{
     component::Component,
-    schema::{DataPointer, Owned, OwnedPointer, SchemaObject},
+    schema::{DataPointer, Owned, OwnedPointer, Result, SchemaObject},
 };
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
@@ -25,7 +25,7 @@ impl SchemaComponentData {
         result
     }
 
-    pub fn deserialize<C: Component>(&self) -> C {
+    pub fn deserialize<C: Component>(&self) -> Result<C> {
         C::from_object(self.fields())
     }
 

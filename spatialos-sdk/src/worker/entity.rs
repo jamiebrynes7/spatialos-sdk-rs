@@ -5,6 +5,7 @@ use crate::worker::{
 use spatialos_sdk_sys::worker::{Worker_ComponentData, Worker_Entity};
 use std::collections::HashMap;
 use std::ptr;
+use std::result::Result;
 use std::slice;
 
 #[derive(Debug)]
