@@ -39,7 +39,7 @@ impl SchemaComponentUpdate {
         unsafe { SchemaObject::from_raw_mut(Schema_GetComponentUpdateEvents(self.as_ptr_mut())) }
     }
 
-    pub fn field_cleared(&self, field: FieldId) -> bool {
+    pub fn is_field_cleared(&self, field: FieldId) -> bool {
         0 != unsafe { Schema_IsComponentUpdateFieldCleared(self.as_ptr() as *mut _, field) }
     }
 

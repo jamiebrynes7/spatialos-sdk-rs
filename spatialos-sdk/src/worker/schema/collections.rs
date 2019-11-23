@@ -36,11 +36,11 @@ where
     }
 
     fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
-        T::count(update.fields(), field) > 0 || update.field_cleared(field)
+        T::count(update.fields(), field) > 0 || update.is_field_cleared(field)
     }
 
     fn get_update(update: &SchemaComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        if update.field_cleared(field) {
+        if update.is_field_cleared(field) {
             Some(None)
         } else {
             Self::get_or_default(update.fields(), field).map(Some)
@@ -106,11 +106,11 @@ where
     }
 
     fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
-        T::count(update.fields(), field) > 0 || update.field_cleared(field)
+        T::count(update.fields(), field) > 0 || update.is_field_cleared(field)
     }
 
     fn get_update(update: &SchemaComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        if update.field_cleared(field) {
+        if update.is_field_cleared(field) {
             Some(Default::default())
         } else if T::count(update.fields(), field) > 0 {
             Some(Self::get_or_default(update.fields(), field))
@@ -203,11 +203,11 @@ where
     }
 
     fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
-        update.fields().object_count(field) > 0 || update.field_cleared(field)
+        update.fields().object_count(field) > 0 || update.is_field_cleared(field)
     }
 
     fn get_update(update: &SchemaComponentUpdate, field: FieldId) -> Option<Self::RustType> {
-        if update.field_cleared(field) {
+        if update.is_field_cleared(field) {
             Some(Default::default())
         } else if update.fields().object_count(field) > 0 {
             Some(Self::get_or_default(update.fields(), field))
