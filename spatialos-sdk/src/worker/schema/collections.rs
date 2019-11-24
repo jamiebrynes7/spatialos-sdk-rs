@@ -1,4 +1,4 @@
-use crate::worker::schema::{Field, FieldId, SchemaObject};
+use crate::worker::schema::{Field, FieldId, SchemaComponentUpdate, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::BTreeMap, marker::PhantomData};
 
@@ -32,6 +32,34 @@ where
     fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
         if let Some(value) = value {
             object.add::<T>(field, value);
+        }
+    }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+        T::count(update.fields(), field) > 0 || update.is_field_cleared(field)
+    }
+
+    fn get_update(update: &SchemaComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+        if update.is_field_cleared(field) {
+            Some(None)
+        } else {
+            Self::get_or_default(update.fields(), field).map(Some)
+        }
+    }
+
+    fn add_update(
+        update: &mut SchemaComponentUpdate,
+        field: FieldId,
+        value: &Option<Self::RustType>,
+    ) {
+        match value {
+            Some(Some(value)) => {
+                update.fields_mut().add::<T>(field, value);
+            }
+
+            Some(None) => update.add_cleared(field),
+
+            None => {}
         }
     }
 
@@ -74,6 +102,34 @@ where
     fn add(object: &mut SchemaObject, field: FieldId, values: &Self::RustType) {
         for value in values {
             object.add::<T>(field, value);
+        }
+    }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+        T::count(update.fields(), field) > 0 || update.is_field_cleared(field)
+    }
+
+    fn get_update(update: &SchemaComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+        if update.is_field_cleared(field) {
+            Some(Default::default())
+        } else if T::count(update.fields(), field) > 0 {
+            Some(Self::get_or_default(update.fields(), field))
+        } else {
+            None
+        }
+    }
+
+    fn add_update(
+        update: &mut SchemaComponentUpdate,
+        field: FieldId,
+        value: &Option<Self::RustType>,
+    ) {
+        if let Some(value) = value {
+            if value.is_empty() {
+                update.add_cleared(field);
+            } else {
+                Self::add(update.fields_mut(), field, value);
+            }
         }
     }
 
@@ -143,6 +199,34 @@ where
             let pair = object.add_object(field);
             pair.add::<K>(SCHEMA_MAP_KEY_FIELD_ID, key);
             pair.add::<V>(SCHEMA_MAP_VALUE_FIELD_ID, value);
+        }
+    }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+        update.fields().object_count(field) > 0 || update.is_field_cleared(field)
+    }
+
+    fn get_update(update: &SchemaComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+        if update.is_field_cleared(field) {
+            Some(Default::default())
+        } else if update.fields().object_count(field) > 0 {
+            Some(Self::get_or_default(update.fields(), field))
+        } else {
+            None
+        }
+    }
+
+    fn add_update(
+        update: &mut SchemaComponentUpdate,
+        field: FieldId,
+        value: &Option<Self::RustType>,
+    ) {
+        if let Some(value) = value {
+            if value.is_empty() {
+                update.add_cleared(field);
+            } else {
+                Self::add(update.fields_mut(), field, value);
+            }
         }
     }
 

@@ -140,19 +140,16 @@ impl ObjectField for Vector3d {
 pub struct EntityIdTest {
     pub eid: spatialos_sdk::worker::EntityId,
 }
+
 impl ObjectField for EntityIdTest {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
             eid: input.get::<SchemaEntityId>(1),
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaEntityId>(1, &self.eid);
-    }
-}
-impl ComponentData<EntityIdTest> for EntityIdTest {
-    fn merge(&mut self, update: EntityIdTestUpdate) {
-        if let Some(value) = update.eid { self.eid = value; }
     }
 }
 
@@ -160,20 +157,21 @@ impl ComponentData<EntityIdTest> for EntityIdTest {
 pub struct EntityIdTestUpdate {
     pub eid: Option<spatialos_sdk::worker::EntityId>,
 }
-impl ObjectField for EntityIdTestUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for EntityIdTestUpdate {
+    type Component = EntityIdTest;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
-            eid: if input.count::<SchemaEntityId>(1) > 0 { Some(input.get::<SchemaEntityId>(1)) } else { None },
+            eid: update.get_field::<SchemaEntityId>(1),
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &self.eid {
-            output.add::<SchemaEntityId>(1, value);
-        }
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
+        update.add_field::<SchemaEntityId>(1, &self.eid);
     }
-}
-impl ComponentUpdate<EntityIdTest> for EntityIdTestUpdate {
-    fn merge(&mut self, update: EntityIdTestUpdate) {
+
+    fn merge(&mut self, update: Self) {
         if update.eid.is_some() { self.eid = update.eid; }
     }
 }
@@ -187,14 +185,14 @@ pub enum EntityIdTestCommandResponse {
 }
 
 impl Component for EntityIdTest {
-    type Update = generated::example::EntityIdTestUpdate;
+    type Update = EntityIdTestUpdate;
     type CommandRequest = generated::example::EntityIdTestCommandRequest;
     type CommandResponse = generated::example::EntityIdTestCommandResponse;
 
     const ID: ComponentId = 2001;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EntityIdTestUpdate, String> {
-        Ok(<generated::example::EntityIdTestUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
+        if let Some(value) = update.eid { self.eid = value; }
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EntityIdTestCommandRequest, String> {
@@ -207,12 +205,6 @@ impl Component for EntityIdTest {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EntityIdTest.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::example::EntityIdTestUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::EntityIdTestUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::example::EntityIdTestCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
@@ -250,19 +242,16 @@ inventory::submit!(VTable::new::<EntityIdTest>());
 pub struct EnumTestComponent {
     pub test: generated::example::TestEnum,
 }
+
 impl ObjectField for EnumTestComponent {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
             test: input.get::<generated::example::TestEnum>(1),
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::example::TestEnum>(1, &self.test);
-    }
-}
-impl ComponentData<EnumTestComponent> for EnumTestComponent {
-    fn merge(&mut self, update: EnumTestComponentUpdate) {
-        if let Some(value) = update.test { self.test = value; }
     }
 }
 
@@ -270,20 +259,21 @@ impl ComponentData<EnumTestComponent> for EnumTestComponent {
 pub struct EnumTestComponentUpdate {
     pub test: Option<generated::example::TestEnum>,
 }
-impl ObjectField for EnumTestComponentUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for EnumTestComponentUpdate {
+    type Component = EnumTestComponent;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
-            test: if input.count::<SchemaEnum>(1) > 0 { Some(input.get::<generated::example::TestEnum>(1)) } else { None },
+            test: update.get_field::<generated::example::TestEnum>(1),
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &self.test {
-            output.add::<generated::example::TestEnum>(1, value);
-        }
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
+        update.add_field::<generated::example::TestEnum>(1, &self.test);
     }
-}
-impl ComponentUpdate<EnumTestComponent> for EnumTestComponentUpdate {
-    fn merge(&mut self, update: EnumTestComponentUpdate) {
+
+    fn merge(&mut self, update: Self) {
         if update.test.is_some() { self.test = update.test; }
     }
 }
@@ -297,14 +287,14 @@ pub enum EnumTestComponentCommandResponse {
 }
 
 impl Component for EnumTestComponent {
-    type Update = generated::example::EnumTestComponentUpdate;
+    type Update = EnumTestComponentUpdate;
     type CommandRequest = generated::example::EnumTestComponentCommandRequest;
     type CommandResponse = generated::example::EnumTestComponentCommandResponse;
 
     const ID: ComponentId = 2002;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::EnumTestComponentUpdate, String> {
-        Ok(<generated::example::EnumTestComponentUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
+        if let Some(value) = update.test { self.test = value; }
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EnumTestComponentCommandRequest, String> {
@@ -317,12 +307,6 @@ impl Component for EnumTestComponent {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EnumTestComponent.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::example::EnumTestComponentUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::EnumTestComponentUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::example::EnumTestComponentCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
@@ -360,19 +344,16 @@ inventory::submit!(VTable::new::<EnumTestComponent>());
 pub struct Example {
     pub x: f32,
 }
+
 impl ObjectField for Example {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
             x: input.get::<SchemaFloat>(1),
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaFloat>(1, &self.x);
-    }
-}
-impl ComponentData<Example> for Example {
-    fn merge(&mut self, update: ExampleUpdate) {
-        if let Some(value) = update.x { self.x = value; }
     }
 }
 
@@ -380,20 +361,21 @@ impl ComponentData<Example> for Example {
 pub struct ExampleUpdate {
     pub x: Option<f32>,
 }
-impl ObjectField for ExampleUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for ExampleUpdate {
+    type Component = Example;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
-            x: if input.count::<SchemaFloat>(1) > 0 { Some(input.get::<SchemaFloat>(1)) } else { None },
+            x: update.get_field::<SchemaFloat>(1),
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &self.x {
-            output.add::<SchemaFloat>(1, value);
-        }
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
+        update.add_field::<SchemaFloat>(1, &self.x);
     }
-}
-impl ComponentUpdate<Example> for ExampleUpdate {
-    fn merge(&mut self, update: ExampleUpdate) {
+
+    fn merge(&mut self, update: Self) {
         if update.x.is_some() { self.x = update.x; }
     }
 }
@@ -409,14 +391,14 @@ pub enum ExampleCommandResponse {
 }
 
 impl Component for Example {
-    type Update = generated::example::ExampleUpdate;
+    type Update = ExampleUpdate;
     type CommandRequest = generated::example::ExampleCommandRequest;
     type CommandResponse = generated::example::ExampleCommandResponse;
 
     const ID: ComponentId = 1000;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::ExampleUpdate, String> {
-        Ok(<generated::example::ExampleUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
+        if let Some(value) = update.x { self.x = value; }
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest, String> {
@@ -437,12 +419,6 @@ impl Component for Example {
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Example.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::example::ExampleUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::ExampleUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::example::ExampleCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
@@ -490,6 +466,7 @@ pub struct Rotate {
     pub center: generated::example::Vector3d,
     pub radius: f64,
 }
+
 impl ObjectField for Rotate {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
@@ -498,17 +475,11 @@ impl ObjectField for Rotate {
             radius: input.get::<SchemaDouble>(3),
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &self.angle);
         output.add::<generated::example::Vector3d>(2, &self.center);
         output.add::<SchemaDouble>(3, &self.radius);
-    }
-}
-impl ComponentData<Rotate> for Rotate {
-    fn merge(&mut self, update: RotateUpdate) {
-        if let Some(value) = update.angle { self.angle = value; }
-        if let Some(value) = update.center { self.center = value; }
-        if let Some(value) = update.radius { self.radius = value; }
     }
 }
 
@@ -518,28 +489,25 @@ pub struct RotateUpdate {
     pub center: Option<generated::example::Vector3d>,
     pub radius: Option<f64>,
 }
-impl ObjectField for RotateUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for RotateUpdate {
+    type Component = Rotate;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
-            angle: if input.count::<SchemaDouble>(1) > 0 { Some(input.get::<SchemaDouble>(1)) } else { None },
-            center: if input.object_count(2) > 0 { Some(input.get::<generated::example::Vector3d>(2)) } else { None },
-            radius: if input.count::<SchemaDouble>(3) > 0 { Some(input.get::<SchemaDouble>(3)) } else { None },
+            angle: update.get_field::<SchemaDouble>(1),
+            center: update.get_field::<generated::example::Vector3d>(2),
+            radius: update.get_field::<SchemaDouble>(3),
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &self.angle {
-            output.add::<SchemaDouble>(1, value);
-        }
-        if let Some(value) = &self.center {
-            output.add::<generated::example::Vector3d>(2, value);
-        }
-        if let Some(value) = &self.radius {
-            output.add::<SchemaDouble>(3, value);
-        }
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
+        update.add_field::<SchemaDouble>(1, &self.angle);
+        update.add_field::<generated::example::Vector3d>(2, &self.center);
+        update.add_field::<SchemaDouble>(3, &self.radius);
     }
-}
-impl ComponentUpdate<Rotate> for RotateUpdate {
-    fn merge(&mut self, update: RotateUpdate) {
+
+    fn merge(&mut self, update: Self) {
         if update.angle.is_some() { self.angle = update.angle; }
         if update.center.is_some() { self.center = update.center; }
         if update.radius.is_some() { self.radius = update.radius; }
@@ -555,14 +523,16 @@ pub enum RotateCommandResponse {
 }
 
 impl Component for Rotate {
-    type Update = generated::example::RotateUpdate;
+    type Update = RotateUpdate;
     type CommandRequest = generated::example::RotateCommandRequest;
     type CommandResponse = generated::example::RotateCommandResponse;
 
     const ID: ComponentId = 1001;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::example::RotateUpdate, String> {
-        Ok(<generated::example::RotateUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
+        if let Some(value) = update.angle { self.angle = value; }
+        if let Some(value) = update.center { self.center = value; }
+        if let Some(value) = update.radius { self.radius = value; }
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::RotateCommandRequest, String> {
@@ -575,12 +545,6 @@ impl Component for Rotate {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Rotate.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::example::RotateUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::example::RotateUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::example::RotateCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
@@ -884,6 +848,7 @@ pub struct EntityAcl {
     pub read_acl: generated::improbable::WorkerRequirementSet,
     pub component_write_acl: BTreeMap<u32, generated::improbable::WorkerRequirementSet>,
 }
+
 impl ObjectField for EntityAcl {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
@@ -891,15 +856,10 @@ impl ObjectField for EntityAcl {
             component_write_acl: input.get::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2),
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::WorkerRequirementSet>(1, &self.read_acl);
         output.add::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, &self.component_write_acl);
-    }
-}
-impl ComponentData<EntityAcl> for EntityAcl {
-    fn merge(&mut self, update: EntityAclUpdate) {
-        if let Some(value) = update.read_acl { self.read_acl = value; }
-        if let Some(value) = update.component_write_acl { self.component_write_acl = value; }
     }
 }
 
@@ -908,24 +868,23 @@ pub struct EntityAclUpdate {
     pub read_acl: Option<generated::improbable::WorkerRequirementSet>,
     pub component_write_acl: Option<BTreeMap<u32, generated::improbable::WorkerRequirementSet>>,
 }
-impl ObjectField for EntityAclUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for EntityAclUpdate {
+    type Component = EntityAcl;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
-            read_acl: if input.object_count(1) > 0 { Some(input.get::<generated::improbable::WorkerRequirementSet>(1)) } else { None },
-            component_write_acl: Some(input.get::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2)),
+            read_acl: update.get_field::<generated::improbable::WorkerRequirementSet>(1),
+            component_write_acl: update.get_field::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2),
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &self.read_acl {
-            output.add::<generated::improbable::WorkerRequirementSet>(1, value);
-        }
-        if let Some(value) = &self.component_write_acl {
-            output.add::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, value);
-        }
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
+        update.add_field::<generated::improbable::WorkerRequirementSet>(1, &self.read_acl);
+        update.add_field::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, &self.component_write_acl);
     }
-}
-impl ComponentUpdate<EntityAcl> for EntityAclUpdate {
-    fn merge(&mut self, update: EntityAclUpdate) {
+
+    fn merge(&mut self, update: Self) {
         if update.read_acl.is_some() { self.read_acl = update.read_acl; }
         if update.component_write_acl.is_some() { self.component_write_acl = update.component_write_acl; }
     }
@@ -940,14 +899,15 @@ pub enum EntityAclCommandResponse {
 }
 
 impl Component for EntityAcl {
-    type Update = generated::improbable::EntityAclUpdate;
+    type Update = EntityAclUpdate;
     type CommandRequest = generated::improbable::EntityAclCommandRequest;
     type CommandResponse = generated::improbable::EntityAclCommandResponse;
 
     const ID: ComponentId = 50;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::EntityAclUpdate, String> {
-        Ok(<generated::improbable::EntityAclUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
+        if let Some(value) = update.read_acl { self.read_acl = value; }
+        if let Some(value) = update.component_write_acl { self.component_write_acl = value; }
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::EntityAclCommandRequest, String> {
@@ -960,12 +920,6 @@ impl Component for EntityAcl {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EntityAcl.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::improbable::EntityAclUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::EntityAclUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::EntityAclCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
@@ -1003,19 +957,16 @@ inventory::submit!(VTable::new::<EntityAcl>());
 pub struct Interest {
     pub component_interest: BTreeMap<u32, generated::improbable::ComponentInterest>,
 }
+
 impl ObjectField for Interest {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
             component_interest: input.get::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1),
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, &self.component_interest);
-    }
-}
-impl ComponentData<Interest> for Interest {
-    fn merge(&mut self, update: InterestUpdate) {
-        if let Some(value) = update.component_interest { self.component_interest = value; }
     }
 }
 
@@ -1023,20 +974,21 @@ impl ComponentData<Interest> for Interest {
 pub struct InterestUpdate {
     pub component_interest: Option<BTreeMap<u32, generated::improbable::ComponentInterest>>,
 }
-impl ObjectField for InterestUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for InterestUpdate {
+    type Component = Interest;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
-            component_interest: Some(input.get::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1)),
+            component_interest: update.get_field::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1),
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &self.component_interest {
-            output.add::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, value);
-        }
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
+        update.add_field::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, &self.component_interest);
     }
-}
-impl ComponentUpdate<Interest> for InterestUpdate {
-    fn merge(&mut self, update: InterestUpdate) {
+
+    fn merge(&mut self, update: Self) {
         if update.component_interest.is_some() { self.component_interest = update.component_interest; }
     }
 }
@@ -1050,14 +1002,14 @@ pub enum InterestCommandResponse {
 }
 
 impl Component for Interest {
-    type Update = generated::improbable::InterestUpdate;
+    type Update = InterestUpdate;
     type CommandRequest = generated::improbable::InterestCommandRequest;
     type CommandResponse = generated::improbable::InterestCommandResponse;
 
     const ID: ComponentId = 58;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::InterestUpdate, String> {
-        Ok(<generated::improbable::InterestUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
+        if let Some(value) = update.component_interest { self.component_interest = value; }
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::InterestCommandRequest, String> {
@@ -1070,12 +1022,6 @@ impl Component for Interest {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Interest.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::improbable::InterestUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::InterestUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::InterestCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
@@ -1113,19 +1059,16 @@ inventory::submit!(VTable::new::<Interest>());
 pub struct Metadata {
     pub entity_type: String,
 }
+
 impl ObjectField for Metadata {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
             entity_type: input.get::<SchemaString>(1),
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaString>(1, &self.entity_type);
-    }
-}
-impl ComponentData<Metadata> for Metadata {
-    fn merge(&mut self, update: MetadataUpdate) {
-        if let Some(value) = update.entity_type { self.entity_type = value; }
     }
 }
 
@@ -1133,20 +1076,21 @@ impl ComponentData<Metadata> for Metadata {
 pub struct MetadataUpdate {
     pub entity_type: Option<String>,
 }
-impl ObjectField for MetadataUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for MetadataUpdate {
+    type Component = Metadata;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
-            entity_type: if input.count::<SchemaString>(1) > 0 { Some(input.get::<SchemaString>(1)) } else { None },
+            entity_type: update.get_field::<SchemaString>(1),
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &self.entity_type {
-            output.add::<SchemaString>(1, value);
-        }
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
+        update.add_field::<SchemaString>(1, &self.entity_type);
     }
-}
-impl ComponentUpdate<Metadata> for MetadataUpdate {
-    fn merge(&mut self, update: MetadataUpdate) {
+
+    fn merge(&mut self, update: Self) {
         if update.entity_type.is_some() { self.entity_type = update.entity_type; }
     }
 }
@@ -1160,14 +1104,14 @@ pub enum MetadataCommandResponse {
 }
 
 impl Component for Metadata {
-    type Update = generated::improbable::MetadataUpdate;
+    type Update = MetadataUpdate;
     type CommandRequest = generated::improbable::MetadataCommandRequest;
     type CommandResponse = generated::improbable::MetadataCommandResponse;
 
     const ID: ComponentId = 53;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::MetadataUpdate, String> {
-        Ok(<generated::improbable::MetadataUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
+        if let Some(value) = update.entity_type { self.entity_type = value; }
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::MetadataCommandRequest, String> {
@@ -1180,12 +1124,6 @@ impl Component for Metadata {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Metadata.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::improbable::MetadataUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::MetadataUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::MetadataCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
@@ -1222,32 +1160,33 @@ inventory::submit!(VTable::new::<Metadata>());
 #[derive(Debug, Clone)]
 pub struct Persistence {
 }
+
 impl ObjectField for Persistence {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
-    }
-}
-impl ComponentData<Persistence> for Persistence {
-    fn merge(&mut self, update: PersistenceUpdate) {
     }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct PersistenceUpdate {
 }
-impl ObjectField for PersistenceUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for PersistenceUpdate {
+    type Component = Persistence;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
     }
-}
-impl ComponentUpdate<Persistence> for PersistenceUpdate {
-    fn merge(&mut self, update: PersistenceUpdate) {
+
+    fn merge(&mut self, update: Self) {
     }
 }
 
@@ -1260,14 +1199,13 @@ pub enum PersistenceCommandResponse {
 }
 
 impl Component for Persistence {
-    type Update = generated::improbable::PersistenceUpdate;
+    type Update = PersistenceUpdate;
     type CommandRequest = generated::improbable::PersistenceCommandRequest;
     type CommandResponse = generated::improbable::PersistenceCommandResponse;
 
     const ID: ComponentId = 55;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PersistenceUpdate, String> {
-        Ok(<generated::improbable::PersistenceUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PersistenceCommandRequest, String> {
@@ -1280,12 +1218,6 @@ impl Component for Persistence {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Persistence.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::improbable::PersistenceUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::PersistenceUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::PersistenceCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
@@ -1323,19 +1255,16 @@ inventory::submit!(VTable::new::<Persistence>());
 pub struct Position {
     pub coords: generated::improbable::Coordinates,
 }
+
 impl ObjectField for Position {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
             coords: input.get::<generated::improbable::Coordinates>(1),
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::Coordinates>(1, &self.coords);
-    }
-}
-impl ComponentData<Position> for Position {
-    fn merge(&mut self, update: PositionUpdate) {
-        if let Some(value) = update.coords { self.coords = value; }
     }
 }
 
@@ -1343,20 +1272,21 @@ impl ComponentData<Position> for Position {
 pub struct PositionUpdate {
     pub coords: Option<generated::improbable::Coordinates>,
 }
-impl ObjectField for PositionUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for PositionUpdate {
+    type Component = Position;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
-            coords: if input.object_count(1) > 0 { Some(input.get::<generated::improbable::Coordinates>(1)) } else { None },
+            coords: update.get_field::<generated::improbable::Coordinates>(1),
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &self.coords {
-            output.add::<generated::improbable::Coordinates>(1, value);
-        }
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
+        update.add_field::<generated::improbable::Coordinates>(1, &self.coords);
     }
-}
-impl ComponentUpdate<Position> for PositionUpdate {
-    fn merge(&mut self, update: PositionUpdate) {
+
+    fn merge(&mut self, update: Self) {
         if update.coords.is_some() { self.coords = update.coords; }
     }
 }
@@ -1370,14 +1300,14 @@ pub enum PositionCommandResponse {
 }
 
 impl Component for Position {
-    type Update = generated::improbable::PositionUpdate;
+    type Update = PositionUpdate;
     type CommandRequest = generated::improbable::PositionCommandRequest;
     type CommandResponse = generated::improbable::PositionCommandResponse;
 
     const ID: ComponentId = 54;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::PositionUpdate, String> {
-        Ok(<generated::improbable::PositionUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
+        if let Some(value) = update.coords { self.coords = value; }
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PositionCommandRequest, String> {
@@ -1390,12 +1320,6 @@ impl Component for Position {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Position.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::improbable::PositionUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::PositionUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::PositionCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
@@ -1560,19 +1484,16 @@ impl ObjectField for PlayerIdentity {
 pub struct PlayerClient {
     pub player_identity: generated::improbable::restricted::PlayerIdentity,
 }
+
 impl ObjectField for PlayerClient {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
             player_identity: input.get::<generated::improbable::restricted::PlayerIdentity>(1),
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::restricted::PlayerIdentity>(1, &self.player_identity);
-    }
-}
-impl ComponentData<PlayerClient> for PlayerClient {
-    fn merge(&mut self, update: PlayerClientUpdate) {
-        if let Some(value) = update.player_identity { self.player_identity = value; }
     }
 }
 
@@ -1580,20 +1501,21 @@ impl ComponentData<PlayerClient> for PlayerClient {
 pub struct PlayerClientUpdate {
     pub player_identity: Option<generated::improbable::restricted::PlayerIdentity>,
 }
-impl ObjectField for PlayerClientUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for PlayerClientUpdate {
+    type Component = PlayerClient;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
-            player_identity: if input.object_count(1) > 0 { Some(input.get::<generated::improbable::restricted::PlayerIdentity>(1)) } else { None },
+            player_identity: update.get_field::<generated::improbable::restricted::PlayerIdentity>(1),
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &self.player_identity {
-            output.add::<generated::improbable::restricted::PlayerIdentity>(1, value);
-        }
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
+        update.add_field::<generated::improbable::restricted::PlayerIdentity>(1, &self.player_identity);
     }
-}
-impl ComponentUpdate<PlayerClient> for PlayerClientUpdate {
-    fn merge(&mut self, update: PlayerClientUpdate) {
+
+    fn merge(&mut self, update: Self) {
         if update.player_identity.is_some() { self.player_identity = update.player_identity; }
     }
 }
@@ -1607,14 +1529,14 @@ pub enum PlayerClientCommandResponse {
 }
 
 impl Component for PlayerClient {
-    type Update = generated::improbable::restricted::PlayerClientUpdate;
+    type Update = PlayerClientUpdate;
     type CommandRequest = generated::improbable::restricted::PlayerClientCommandRequest;
     type CommandResponse = generated::improbable::restricted::PlayerClientCommandResponse;
 
     const ID: ComponentId = 61;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::PlayerClientUpdate, String> {
-        Ok(<generated::improbable::restricted::PlayerClientUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
+        if let Some(value) = update.player_identity { self.player_identity = value; }
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::PlayerClientCommandRequest, String> {
@@ -1627,12 +1549,6 @@ impl Component for PlayerClient {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component PlayerClient.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::improbable::restricted::PlayerClientUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::PlayerClientUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::restricted::PlayerClientCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
@@ -1669,32 +1585,33 @@ inventory::submit!(VTable::new::<PlayerClient>());
 #[derive(Debug, Clone)]
 pub struct System {
 }
+
 impl ObjectField for System {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
-    }
-}
-impl ComponentData<System> for System {
-    fn merge(&mut self, update: SystemUpdate) {
     }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct SystemUpdate {
 }
-impl ObjectField for SystemUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for SystemUpdate {
+    type Component = System;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
     }
-}
-impl ComponentUpdate<System> for SystemUpdate {
-    fn merge(&mut self, update: SystemUpdate) {
+
+    fn merge(&mut self, update: Self) {
     }
 }
 
@@ -1707,14 +1624,13 @@ pub enum SystemCommandResponse {
 }
 
 impl Component for System {
-    type Update = generated::improbable::restricted::SystemUpdate;
+    type Update = SystemUpdate;
     type CommandRequest = generated::improbable::restricted::SystemCommandRequest;
     type CommandResponse = generated::improbable::restricted::SystemCommandResponse;
 
     const ID: ComponentId = 59;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::SystemUpdate, String> {
-        Ok(<generated::improbable::restricted::SystemUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::SystemCommandRequest, String> {
@@ -1727,12 +1643,6 @@ impl Component for System {
         match command_index {
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component System.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::improbable::restricted::SystemUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::SystemUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::restricted::SystemCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
@@ -1772,6 +1682,7 @@ pub struct Worker {
     pub worker_type: String,
     pub connection: generated::improbable::restricted::Connection,
 }
+
 impl ObjectField for Worker {
     fn from_object(input: &SchemaObject) -> Self {
         Self {
@@ -1780,17 +1691,11 @@ impl ObjectField for Worker {
             connection: input.get::<generated::improbable::restricted::Connection>(3),
         }
     }
+
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaString>(1, &self.worker_id);
         output.add::<SchemaString>(2, &self.worker_type);
         output.add::<generated::improbable::restricted::Connection>(3, &self.connection);
-    }
-}
-impl ComponentData<Worker> for Worker {
-    fn merge(&mut self, update: WorkerUpdate) {
-        if let Some(value) = update.worker_id { self.worker_id = value; }
-        if let Some(value) = update.worker_type { self.worker_type = value; }
-        if let Some(value) = update.connection { self.connection = value; }
     }
 }
 
@@ -1800,28 +1705,25 @@ pub struct WorkerUpdate {
     pub worker_type: Option<String>,
     pub connection: Option<generated::improbable::restricted::Connection>,
 }
-impl ObjectField for WorkerUpdate {
-    fn from_object(input: &SchemaObject) -> Self {
+
+impl Update for WorkerUpdate {
+    type Component = Worker;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Self {
         Self {
-            worker_id: if input.count::<SchemaString>(1) > 0 { Some(input.get::<SchemaString>(1)) } else { None },
-            worker_type: if input.count::<SchemaString>(2) > 0 { Some(input.get::<SchemaString>(2)) } else { None },
-            connection: if input.object_count(3) > 0 { Some(input.get::<generated::improbable::restricted::Connection>(3)) } else { None },
+            worker_id: update.get_field::<SchemaString>(1),
+            worker_type: update.get_field::<SchemaString>(2),
+            connection: update.get_field::<generated::improbable::restricted::Connection>(3),
         }
     }
-    fn into_object(&self, output: &mut SchemaObject) {
-        if let Some(value) = &self.worker_id {
-            output.add::<SchemaString>(1, value);
-        }
-        if let Some(value) = &self.worker_type {
-            output.add::<SchemaString>(2, value);
-        }
-        if let Some(value) = &self.connection {
-            output.add::<generated::improbable::restricted::Connection>(3, value);
-        }
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
+        update.add_field::<SchemaString>(1, &self.worker_id);
+        update.add_field::<SchemaString>(2, &self.worker_type);
+        update.add_field::<generated::improbable::restricted::Connection>(3, &self.connection);
     }
-}
-impl ComponentUpdate<Worker> for WorkerUpdate {
-    fn merge(&mut self, update: WorkerUpdate) {
+
+    fn merge(&mut self, update: Self) {
         if update.worker_id.is_some() { self.worker_id = update.worker_id; }
         if update.worker_type.is_some() { self.worker_type = update.worker_type; }
         if update.connection.is_some() { self.connection = update.connection; }
@@ -1839,14 +1741,16 @@ pub enum WorkerCommandResponse {
 }
 
 impl Component for Worker {
-    type Update = generated::improbable::restricted::WorkerUpdate;
+    type Update = WorkerUpdate;
     type CommandRequest = generated::improbable::restricted::WorkerCommandRequest;
     type CommandResponse = generated::improbable::restricted::WorkerCommandResponse;
 
     const ID: ComponentId = 60;
 
-    fn from_update(update: &SchemaComponentUpdate) -> Result<generated::improbable::restricted::WorkerUpdate, String> {
-        Ok(<generated::improbable::restricted::WorkerUpdate as ObjectField>::from_object(&update.fields()))
+    fn merge_update(&mut self, update: Self::Update) {
+        if let Some(value) = update.worker_id { self.worker_id = value; }
+        if let Some(value) = update.worker_type { self.worker_type = value; }
+        if let Some(value) = update.connection { self.connection = value; }
     }
 
     fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::WorkerCommandRequest, String> {
@@ -1867,12 +1771,6 @@ impl Component for Worker {
             },
             _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Worker.", command_index))
         }
-    }
-
-    fn to_update(update: &generated::improbable::restricted::WorkerUpdate) -> Result<Owned<SchemaComponentUpdate>, String> {
-        let mut serialized_update = SchemaComponentUpdate::new();
-        <generated::improbable::restricted::WorkerUpdate as ObjectField>::into_object(update, &mut serialized_update.fields_mut());
-        Ok(serialized_update)
     }
 
     fn to_request(request: &generated::improbable::restricted::WorkerCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {

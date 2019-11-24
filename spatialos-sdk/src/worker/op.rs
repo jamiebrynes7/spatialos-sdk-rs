@@ -571,7 +571,6 @@ impl<'a> ComponentUpdateOp<'a> {
     pub fn get<C>(&self) -> Option<Cow<'_, C::Update>>
     where
         C: Component,
-        C::Update: ObjectField,
     {
         self.component_update.get::<C>()
     }

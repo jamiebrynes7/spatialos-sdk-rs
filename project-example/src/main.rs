@@ -3,7 +3,7 @@ use generated::{example, improbable};
 use rand::Rng;
 use spatialos_sdk::worker::{
     commands::{EntityQueryRequest, ReserveEntityIdsRequest},
-    component::{Component, ComponentData, UpdateParameters},
+    component::{Component, UpdateParameters},
     connection::{Connection, WorkerConnection},
     entity_builder::EntityBuilder,
     metrics::{HistogramMetric, Metrics},
@@ -138,7 +138,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                         let component_update = update.get::<example::Rotate>().unwrap();
                         let state = world.get_mut(&update.entity_id).unwrap();
                         let rotate = state.rotate.as_mut().unwrap();
-                        rotate.merge(component_update.into_owned());
+                        rotate.merge_update(component_update.into_owned());
                     }
                     id => println!("Received unknown component: {}", id),
                 },
@@ -157,7 +157,7 @@ fn logic_loop(c: &mut WorkerConnection) {
         // Perform update logic for all entities that we have authority over. Note that
         // we only want to update entities that:
         //
-        // * Are in our area of intersted (i.e. are represented in `world`).
+        // * Are in our area of interest (i.e. are represented in `world`).
         // * Have a `Rotate` component.
         // * We have authority over the `Rotate` component.
         for (&entity_id, entity_state) in &mut world {
