@@ -14,10 +14,9 @@ jobs:
         uses: actions/checkout@master
 
       - name: Install Rust
-        if: matrix.os == 'macOS-latest'
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: "1.39.0"
 
       - name: Install Rust components
         run: rustup component add rustfmt clippy
