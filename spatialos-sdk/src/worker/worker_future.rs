@@ -1,9 +1,11 @@
-use std::future::Future;
-use std::pin::Pin;
-use std::sync::{Arc, Mutex};
-use std::task::{Context, Poll};
-use std::thread;
-use std::thread::JoinHandle;
+use std::{
+    future::Future,
+    pin::Pin,
+    sync::{Arc, Mutex},
+    task::{Context, Poll},
+    thread,
+    thread::JoinHandle,
+};
 
 pub enum WorkerFuture<T: WorkerSdkFuture> {
     NotStarted(T),
@@ -13,7 +15,7 @@ pub enum WorkerFuture<T: WorkerSdkFuture> {
 pub struct WorkerFutureHandle<T: WorkerSdkFuture> {
     pub(crate) ptr: *mut T::RawPointer,
     pub(crate) shared_result: Arc<Mutex<Option<T::Output>>>,
-    pub(crate) thread: Option<JoinHandle<()>>
+    pub(crate) thread: Option<JoinHandle<()>>,
 }
 
 impl<T: WorkerSdkFuture> Clone for WorkerFutureHandle<T> {
@@ -21,7 +23,7 @@ impl<T: WorkerSdkFuture> Clone for WorkerFutureHandle<T> {
         WorkerFutureHandle {
             ptr: self.ptr,
             shared_result: self.shared_result.clone(),
-            thread: None
+            thread: None,
         }
     }
 }
@@ -59,7 +61,7 @@ impl<T: WorkerSdkFuture> WorkerFutureHandle<T> {
     }
 }
 
-pub trait WorkerSdkFuture : Unpin + Send {
+pub trait WorkerSdkFuture: Unpin + Send {
     type RawPointer;
     type Output;
 
@@ -72,7 +74,8 @@ impl<T: WorkerSdkFuture + 'static> Future for WorkerFuture<T> {
     type Output = T::Output;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let mut next_state;
+        let mut next_state = None;
+        let mut result = Poll::Pending;
 
         match self.as_mut().get_mut() {
             WorkerFuture::NotStarted(future) => {
@@ -90,7 +93,11 @@ impl<T: WorkerSdkFuture + 'static> Future for WorkerFuture<T> {
                 next_state = Some(WorkerFuture::InProgress(handle));
             }
             WorkerFuture::InProgress(context) => {
-                return Poll::Ready(context.shared_result.lock().unwrap().take().unwrap());
+                let mut shared_result = context.shared_result.lock().unwrap();
+
+                if shared_result.is_some() {
+                    result = Poll::Ready(shared_result.take().unwrap())
+                }
             }
         }
 
@@ -98,7 +105,7 @@ impl<T: WorkerSdkFuture + 'static> Future for WorkerFuture<T> {
             std::mem::swap(self.as_mut().get_mut(), next);
         }
 
-        Poll::Pending
+        result
     }
 }
 
