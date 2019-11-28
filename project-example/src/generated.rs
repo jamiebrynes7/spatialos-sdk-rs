@@ -43,7 +43,7 @@ impl Default for TestEnum {
 impl TryFrom<u32> for TestEnum {
     type Error = UnknownDiscriminantError;
 
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
+    fn try_from(value: u32) -> std::result::Result<Self, Self::Error> {
         match value {
             
             0 => Ok(TestEnum::FIRST), 
@@ -74,10 +74,10 @@ pub struct CommandData {
     pub value: i32,
 }
 impl ObjectField for CommandData {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            value: input.get::<SchemaInt32>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            value: input.get::<SchemaInt32>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaInt32>(1, &self.value);
@@ -89,10 +89,10 @@ pub struct TestType {
     pub value: i32,
 }
 impl ObjectField for TestType {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            value: input.get::<SchemaInt32>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            value: input.get::<SchemaInt32>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaInt32>(1, &self.value);
@@ -104,10 +104,10 @@ pub struct TestType_Inner {
     pub number: f32,
 }
 impl ObjectField for TestType_Inner {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            number: input.get::<SchemaFloat>(2),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            number: input.get::<SchemaFloat>(2).map_err(Error::at_field::<Self>(2))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaFloat>(2, &self.number);
@@ -121,12 +121,12 @@ pub struct Vector3d {
     pub z: f64,
 }
 impl ObjectField for Vector3d {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            x: input.get::<SchemaDouble>(1),
-            y: input.get::<SchemaDouble>(2),
-            z: input.get::<SchemaDouble>(3),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            x: input.get::<SchemaDouble>(1).map_err(Error::at_field::<Self>(1))?,
+            y: input.get::<SchemaDouble>(2).map_err(Error::at_field::<Self>(2))?,
+            z: input.get::<SchemaDouble>(3).map_err(Error::at_field::<Self>(3))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &self.x);
@@ -142,10 +142,10 @@ pub struct EntityIdTest {
 }
 
 impl ObjectField for EntityIdTest {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            eid: input.get::<SchemaEntityId>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            eid: input.get::<SchemaEntityId>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -161,10 +161,10 @@ pub struct EntityIdTestUpdate {
 impl Update for EntityIdTestUpdate {
     type Component = EntityIdTest;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-            eid: update.get_field::<SchemaEntityId>(1),
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+            eid: update.get_field::<SchemaEntityId>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -195,32 +195,32 @@ impl Component for EntityIdTest {
         if let Some(value) = update.eid { self.eid = value; }
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EntityIdTestCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EntityIdTestCommandRequest> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EntityIdTest.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::EntityIdTestCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::EntityIdTestCommandResponse> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EntityIdTest.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::example::EntityIdTestCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::example::EntityIdTestCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::example::EntityIdTestCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::example::EntityIdTestCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::example::EntityIdTestCommandRequest) -> u32 {
@@ -244,10 +244,10 @@ pub struct EnumTestComponent {
 }
 
 impl ObjectField for EnumTestComponent {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            test: input.get::<generated::example::TestEnum>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            test: input.get::<generated::example::TestEnum>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -263,10 +263,10 @@ pub struct EnumTestComponentUpdate {
 impl Update for EnumTestComponentUpdate {
     type Component = EnumTestComponent;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-            test: update.get_field::<generated::example::TestEnum>(1),
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+            test: update.get_field::<generated::example::TestEnum>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -297,32 +297,32 @@ impl Component for EnumTestComponent {
         if let Some(value) = update.test { self.test = value; }
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EnumTestComponentCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EnumTestComponentCommandRequest> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EnumTestComponent.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::EnumTestComponentCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::EnumTestComponentCommandResponse> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EnumTestComponent.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::example::EnumTestComponentCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::example::EnumTestComponentCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::example::EnumTestComponentCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::example::EnumTestComponentCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::example::EnumTestComponentCommandRequest) -> u32 {
@@ -346,10 +346,10 @@ pub struct Example {
 }
 
 impl ObjectField for Example {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            x: input.get::<SchemaFloat>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            x: input.get::<SchemaFloat>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -365,10 +365,10 @@ pub struct ExampleUpdate {
 impl Update for ExampleUpdate {
     type Component = Example;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-            x: update.get_field::<SchemaFloat>(1),
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+            x: update.get_field::<SchemaFloat>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -401,27 +401,27 @@ impl Component for Example {
         if let Some(value) = update.x { self.x = value; }
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest> {
         match command_index {
             1 => {
-                let deserialized = <generated::example::CommandData as ObjectField>::from_object(&request.object());
-                Ok(ExampleCommandRequest::TestCommand(deserialized))
+                <generated::example::CommandData as ObjectField>::from_object(&request.object())
+                    .map(ExampleCommandRequest::TestCommand)
             },
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Example.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::ExampleCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::ExampleCommandResponse> {
         match command_index {
             1 => {
-                let deserialized = <generated::example::CommandData as ObjectField>::from_object(&response.object());
-                Ok(ExampleCommandResponse::TestCommand(deserialized))
+                <generated::example::CommandData as ObjectField>::from_object(&response.object())
+                    .map(ExampleCommandResponse::TestCommand)
             },
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Example.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::example::ExampleCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::example::ExampleCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             ExampleCommandRequest::TestCommand(ref data) => {
@@ -429,10 +429,10 @@ impl Component for Example {
             },
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::example::ExampleCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::example::ExampleCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             ExampleCommandResponse::TestCommand(ref data) => {
@@ -440,7 +440,7 @@ impl Component for Example {
             },
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::example::ExampleCommandRequest) -> u32 {
@@ -468,12 +468,12 @@ pub struct Rotate {
 }
 
 impl ObjectField for Rotate {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            angle: input.get::<SchemaDouble>(1),
-            center: input.get::<generated::example::Vector3d>(2),
-            radius: input.get::<SchemaDouble>(3),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            angle: input.get::<SchemaDouble>(1).map_err(Error::at_field::<Self>(1))?,
+            center: input.get::<generated::example::Vector3d>(2).map_err(Error::at_field::<Self>(2))?,
+            radius: input.get::<SchemaDouble>(3).map_err(Error::at_field::<Self>(3))?,
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -493,12 +493,12 @@ pub struct RotateUpdate {
 impl Update for RotateUpdate {
     type Component = Rotate;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-            angle: update.get_field::<SchemaDouble>(1),
-            center: update.get_field::<generated::example::Vector3d>(2),
-            radius: update.get_field::<SchemaDouble>(3),
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+            angle: update.get_field::<SchemaDouble>(1).map_err(Error::at_field::<Self>(1))?,
+            center: update.get_field::<generated::example::Vector3d>(2).map_err(Error::at_field::<Self>(2))?,
+            radius: update.get_field::<SchemaDouble>(3).map_err(Error::at_field::<Self>(3))?,
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -535,32 +535,32 @@ impl Component for Rotate {
         if let Some(value) = update.radius { self.radius = value; }
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::RotateCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::RotateCommandRequest> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Rotate.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::RotateCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::RotateCommandResponse> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Rotate.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::example::RotateCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::example::RotateCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::example::RotateCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::example::RotateCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::example::RotateCommandRequest) -> u32 {
@@ -595,10 +595,10 @@ pub struct ComponentInterest {
     pub queries: Vec<generated::improbable::ComponentInterest_Query>,
 }
 impl ObjectField for ComponentInterest {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            queries: input.get::<List<generated::improbable::ComponentInterest_Query>>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            queries: input.get::<List<generated::improbable::ComponentInterest_Query>>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<List<generated::improbable::ComponentInterest_Query>>(1, &self.queries);
@@ -611,11 +611,11 @@ pub struct ComponentInterest_BoxConstraint {
     pub edge_length: generated::improbable::EdgeLength,
 }
 impl ObjectField for ComponentInterest_BoxConstraint {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            center: input.get::<generated::improbable::Coordinates>(1),
-            edge_length: input.get::<generated::improbable::EdgeLength>(2),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            center: input.get::<generated::improbable::Coordinates>(1).map_err(Error::at_field::<Self>(1))?,
+            edge_length: input.get::<generated::improbable::EdgeLength>(2).map_err(Error::at_field::<Self>(2))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::Coordinates>(1, &self.center);
@@ -629,11 +629,11 @@ pub struct ComponentInterest_CylinderConstraint {
     pub radius: f64,
 }
 impl ObjectField for ComponentInterest_CylinderConstraint {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            center: input.get::<generated::improbable::Coordinates>(1),
-            radius: input.get::<SchemaDouble>(2),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            center: input.get::<generated::improbable::Coordinates>(1).map_err(Error::at_field::<Self>(1))?,
+            radius: input.get::<SchemaDouble>(2).map_err(Error::at_field::<Self>(2))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::Coordinates>(1, &self.center);
@@ -649,13 +649,13 @@ pub struct ComponentInterest_Query {
     pub frequency: Option<f32>,
 }
 impl ObjectField for ComponentInterest_Query {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            constraint: input.get::<generated::improbable::ComponentInterest_QueryConstraint>(1),
-            full_snapshot_result: input.get::<Optional<SchemaBool>>(2),
-            result_component_id: input.get::<List<SchemaUint32>>(3),
-            frequency: input.get::<Optional<SchemaFloat>>(4),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            constraint: input.get::<generated::improbable::ComponentInterest_QueryConstraint>(1).map_err(Error::at_field::<Self>(1))?,
+            full_snapshot_result: input.get::<Optional<SchemaBool>>(2).map_err(Error::at_field::<Self>(2))?,
+            result_component_id: input.get::<List<SchemaUint32>>(3).map_err(Error::at_field::<Self>(3))?,
+            frequency: input.get::<Optional<SchemaFloat>>(4).map_err(Error::at_field::<Self>(4))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::ComponentInterest_QueryConstraint>(1, &self.constraint);
@@ -679,19 +679,19 @@ pub struct ComponentInterest_QueryConstraint {
     pub or_constraint: Vec<generated::improbable::ComponentInterest_QueryConstraint>,
 }
 impl ObjectField for ComponentInterest_QueryConstraint {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            sphere_constraint: input.get::<Optional<generated::improbable::ComponentInterest_SphereConstraint>>(1),
-            cylinder_constraint: input.get::<Optional<generated::improbable::ComponentInterest_CylinderConstraint>>(2),
-            box_constraint: input.get::<Optional<generated::improbable::ComponentInterest_BoxConstraint>>(3),
-            relative_sphere_constraint: input.get::<Optional<generated::improbable::ComponentInterest_RelativeSphereConstraint>>(4),
-            relative_cylinder_constraint: input.get::<Optional<generated::improbable::ComponentInterest_RelativeCylinderConstraint>>(5),
-            relative_box_constraint: input.get::<Optional<generated::improbable::ComponentInterest_RelativeBoxConstraint>>(6),
-            entity_id_constraint: input.get::<Optional<SchemaInt64>>(7),
-            component_constraint: input.get::<Optional<SchemaUint32>>(8),
-            and_constraint: input.get::<List<generated::improbable::ComponentInterest_QueryConstraint>>(9),
-            or_constraint: input.get::<List<generated::improbable::ComponentInterest_QueryConstraint>>(10),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            sphere_constraint: input.get::<Optional<generated::improbable::ComponentInterest_SphereConstraint>>(1).map_err(Error::at_field::<Self>(1))?,
+            cylinder_constraint: input.get::<Optional<generated::improbable::ComponentInterest_CylinderConstraint>>(2).map_err(Error::at_field::<Self>(2))?,
+            box_constraint: input.get::<Optional<generated::improbable::ComponentInterest_BoxConstraint>>(3).map_err(Error::at_field::<Self>(3))?,
+            relative_sphere_constraint: input.get::<Optional<generated::improbable::ComponentInterest_RelativeSphereConstraint>>(4).map_err(Error::at_field::<Self>(4))?,
+            relative_cylinder_constraint: input.get::<Optional<generated::improbable::ComponentInterest_RelativeCylinderConstraint>>(5).map_err(Error::at_field::<Self>(5))?,
+            relative_box_constraint: input.get::<Optional<generated::improbable::ComponentInterest_RelativeBoxConstraint>>(6).map_err(Error::at_field::<Self>(6))?,
+            entity_id_constraint: input.get::<Optional<SchemaInt64>>(7).map_err(Error::at_field::<Self>(7))?,
+            component_constraint: input.get::<Optional<SchemaUint32>>(8).map_err(Error::at_field::<Self>(8))?,
+            and_constraint: input.get::<List<generated::improbable::ComponentInterest_QueryConstraint>>(9).map_err(Error::at_field::<Self>(9))?,
+            or_constraint: input.get::<List<generated::improbable::ComponentInterest_QueryConstraint>>(10).map_err(Error::at_field::<Self>(10))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<Optional<generated::improbable::ComponentInterest_SphereConstraint>>(1, &self.sphere_constraint);
@@ -712,10 +712,10 @@ pub struct ComponentInterest_RelativeBoxConstraint {
     pub edge_length: generated::improbable::EdgeLength,
 }
 impl ObjectField for ComponentInterest_RelativeBoxConstraint {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            edge_length: input.get::<generated::improbable::EdgeLength>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            edge_length: input.get::<generated::improbable::EdgeLength>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::EdgeLength>(1, &self.edge_length);
@@ -727,10 +727,10 @@ pub struct ComponentInterest_RelativeCylinderConstraint {
     pub radius: f64,
 }
 impl ObjectField for ComponentInterest_RelativeCylinderConstraint {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            radius: input.get::<SchemaDouble>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            radius: input.get::<SchemaDouble>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &self.radius);
@@ -742,10 +742,10 @@ pub struct ComponentInterest_RelativeSphereConstraint {
     pub radius: f64,
 }
 impl ObjectField for ComponentInterest_RelativeSphereConstraint {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            radius: input.get::<SchemaDouble>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            radius: input.get::<SchemaDouble>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &self.radius);
@@ -758,11 +758,11 @@ pub struct ComponentInterest_SphereConstraint {
     pub radius: f64,
 }
 impl ObjectField for ComponentInterest_SphereConstraint {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            center: input.get::<generated::improbable::Coordinates>(1),
-            radius: input.get::<SchemaDouble>(2),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            center: input.get::<generated::improbable::Coordinates>(1).map_err(Error::at_field::<Self>(1))?,
+            radius: input.get::<SchemaDouble>(2).map_err(Error::at_field::<Self>(2))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::Coordinates>(1, &self.center);
@@ -777,12 +777,12 @@ pub struct Coordinates {
     pub z: f64,
 }
 impl ObjectField for Coordinates {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            x: input.get::<SchemaDouble>(1),
-            y: input.get::<SchemaDouble>(2),
-            z: input.get::<SchemaDouble>(3),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            x: input.get::<SchemaDouble>(1).map_err(Error::at_field::<Self>(1))?,
+            y: input.get::<SchemaDouble>(2).map_err(Error::at_field::<Self>(2))?,
+            z: input.get::<SchemaDouble>(3).map_err(Error::at_field::<Self>(3))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &self.x);
@@ -798,12 +798,12 @@ pub struct EdgeLength {
     pub z: f64,
 }
 impl ObjectField for EdgeLength {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            x: input.get::<SchemaDouble>(1),
-            y: input.get::<SchemaDouble>(2),
-            z: input.get::<SchemaDouble>(3),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            x: input.get::<SchemaDouble>(1).map_err(Error::at_field::<Self>(1))?,
+            y: input.get::<SchemaDouble>(2).map_err(Error::at_field::<Self>(2))?,
+            z: input.get::<SchemaDouble>(3).map_err(Error::at_field::<Self>(3))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaDouble>(1, &self.x);
@@ -817,10 +817,10 @@ pub struct WorkerAttributeSet {
     pub attribute: Vec<String>,
 }
 impl ObjectField for WorkerAttributeSet {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            attribute: input.get::<List<SchemaString>>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            attribute: input.get::<List<SchemaString>>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<List<SchemaString>>(1, &self.attribute);
@@ -832,10 +832,10 @@ pub struct WorkerRequirementSet {
     pub attribute_set: Vec<generated::improbable::WorkerAttributeSet>,
 }
 impl ObjectField for WorkerRequirementSet {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            attribute_set: input.get::<List<generated::improbable::WorkerAttributeSet>>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            attribute_set: input.get::<List<generated::improbable::WorkerAttributeSet>>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<List<generated::improbable::WorkerAttributeSet>>(1, &self.attribute_set);
@@ -850,11 +850,11 @@ pub struct EntityAcl {
 }
 
 impl ObjectField for EntityAcl {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            read_acl: input.get::<generated::improbable::WorkerRequirementSet>(1),
-            component_write_acl: input.get::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            read_acl: input.get::<generated::improbable::WorkerRequirementSet>(1).map_err(Error::at_field::<Self>(1))?,
+            component_write_acl: input.get::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2).map_err(Error::at_field::<Self>(2))?,
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -872,11 +872,11 @@ pub struct EntityAclUpdate {
 impl Update for EntityAclUpdate {
     type Component = EntityAcl;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-            read_acl: update.get_field::<generated::improbable::WorkerRequirementSet>(1),
-            component_write_acl: update.get_field::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2),
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+            read_acl: update.get_field::<generated::improbable::WorkerRequirementSet>(1).map_err(Error::at_field::<Self>(1))?,
+            component_write_acl: update.get_field::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2).map_err(Error::at_field::<Self>(2))?,
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -910,32 +910,32 @@ impl Component for EntityAcl {
         if let Some(value) = update.component_write_acl { self.component_write_acl = value; }
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::EntityAclCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::EntityAclCommandRequest> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component EntityAcl.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::EntityAclCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::EntityAclCommandResponse> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component EntityAcl.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::improbable::EntityAclCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::improbable::EntityAclCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::improbable::EntityAclCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::improbable::EntityAclCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::improbable::EntityAclCommandRequest) -> u32 {
@@ -959,10 +959,10 @@ pub struct Interest {
 }
 
 impl ObjectField for Interest {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            component_interest: input.get::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            component_interest: input.get::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -978,10 +978,10 @@ pub struct InterestUpdate {
 impl Update for InterestUpdate {
     type Component = Interest;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-            component_interest: update.get_field::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1),
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+            component_interest: update.get_field::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -1012,32 +1012,32 @@ impl Component for Interest {
         if let Some(value) = update.component_interest { self.component_interest = value; }
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::InterestCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::InterestCommandRequest> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Interest.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::InterestCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::InterestCommandResponse> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Interest.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::improbable::InterestCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::improbable::InterestCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::improbable::InterestCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::improbable::InterestCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::improbable::InterestCommandRequest) -> u32 {
@@ -1061,10 +1061,10 @@ pub struct Metadata {
 }
 
 impl ObjectField for Metadata {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            entity_type: input.get::<SchemaString>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            entity_type: input.get::<SchemaString>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -1080,10 +1080,10 @@ pub struct MetadataUpdate {
 impl Update for MetadataUpdate {
     type Component = Metadata;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-            entity_type: update.get_field::<SchemaString>(1),
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+            entity_type: update.get_field::<SchemaString>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -1114,32 +1114,32 @@ impl Component for Metadata {
         if let Some(value) = update.entity_type { self.entity_type = value; }
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::MetadataCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::MetadataCommandRequest> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Metadata.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::MetadataCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::MetadataCommandResponse> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Metadata.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::improbable::MetadataCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::improbable::MetadataCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::improbable::MetadataCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::improbable::MetadataCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::improbable::MetadataCommandRequest) -> u32 {
@@ -1162,9 +1162,9 @@ pub struct Persistence {
 }
 
 impl ObjectField for Persistence {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -1178,9 +1178,9 @@ pub struct PersistenceUpdate {
 impl Update for PersistenceUpdate {
     type Component = Persistence;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -1208,32 +1208,32 @@ impl Component for Persistence {
     fn merge_update(&mut self, update: Self::Update) {
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PersistenceCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PersistenceCommandRequest> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Persistence.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::PersistenceCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::PersistenceCommandResponse> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Persistence.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::improbable::PersistenceCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::improbable::PersistenceCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::improbable::PersistenceCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::improbable::PersistenceCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::improbable::PersistenceCommandRequest) -> u32 {
@@ -1257,10 +1257,10 @@ pub struct Position {
 }
 
 impl ObjectField for Position {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            coords: input.get::<generated::improbable::Coordinates>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            coords: input.get::<generated::improbable::Coordinates>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -1276,10 +1276,10 @@ pub struct PositionUpdate {
 impl Update for PositionUpdate {
     type Component = Position;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-            coords: update.get_field::<generated::improbable::Coordinates>(1),
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+            coords: update.get_field::<generated::improbable::Coordinates>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -1310,32 +1310,32 @@ impl Component for Position {
         if let Some(value) = update.coords { self.coords = value; }
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PositionCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PositionCommandRequest> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Position.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::PositionCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::PositionCommandResponse> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Position.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::improbable::PositionCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::improbable::PositionCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::improbable::PositionCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::improbable::PositionCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::improbable::PositionCommandRequest) -> u32 {
@@ -1383,7 +1383,7 @@ impl Default for Connection_ConnectionStatus {
 impl TryFrom<u32> for Connection_ConnectionStatus {
     type Error = UnknownDiscriminantError;
 
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
+    fn try_from(value: u32) -> std::result::Result<Self, Self::Error> {
         match value {
             
             0 => Ok(Connection_ConnectionStatus::UNKNOWN), 
@@ -1420,12 +1420,12 @@ pub struct Connection {
     pub connected_since_utc: u64,
 }
 impl ObjectField for Connection {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            status: input.get::<generated::improbable::restricted::Connection_ConnectionStatus>(1),
-            data_latency_ms: input.get::<SchemaUint32>(2),
-            connected_since_utc: input.get::<SchemaUint64>(3),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            status: input.get::<generated::improbable::restricted::Connection_ConnectionStatus>(1).map_err(Error::at_field::<Self>(1))?,
+            data_latency_ms: input.get::<SchemaUint32>(2).map_err(Error::at_field::<Self>(2))?,
+            connected_since_utc: input.get::<SchemaUint64>(3).map_err(Error::at_field::<Self>(3))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<generated::improbable::restricted::Connection_ConnectionStatus>(1, &self.status);
@@ -1438,9 +1438,9 @@ impl ObjectField for Connection {
 pub struct DisconnectRequest {
 }
 impl ObjectField for DisconnectRequest {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
     }
@@ -1450,9 +1450,9 @@ impl ObjectField for DisconnectRequest {
 pub struct DisconnectResponse {
 }
 impl ObjectField for DisconnectResponse {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
     }
@@ -1465,12 +1465,12 @@ pub struct PlayerIdentity {
     pub metadata: Vec<u8>,
 }
 impl ObjectField for PlayerIdentity {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            player_identifier: input.get::<SchemaString>(1),
-            provider: input.get::<SchemaString>(2),
-            metadata: input.get::<SchemaBytes>(3),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            player_identifier: input.get::<SchemaString>(1).map_err(Error::at_field::<Self>(1))?,
+            provider: input.get::<SchemaString>(2).map_err(Error::at_field::<Self>(2))?,
+            metadata: input.get::<SchemaBytes>(3).map_err(Error::at_field::<Self>(3))?,
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaString>(1, &self.player_identifier);
@@ -1486,10 +1486,10 @@ pub struct PlayerClient {
 }
 
 impl ObjectField for PlayerClient {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            player_identity: input.get::<generated::improbable::restricted::PlayerIdentity>(1),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            player_identity: input.get::<generated::improbable::restricted::PlayerIdentity>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -1505,10 +1505,10 @@ pub struct PlayerClientUpdate {
 impl Update for PlayerClientUpdate {
     type Component = PlayerClient;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-            player_identity: update.get_field::<generated::improbable::restricted::PlayerIdentity>(1),
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+            player_identity: update.get_field::<generated::improbable::restricted::PlayerIdentity>(1).map_err(Error::at_field::<Self>(1))?,
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -1539,32 +1539,32 @@ impl Component for PlayerClient {
         if let Some(value) = update.player_identity { self.player_identity = value; }
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::PlayerClientCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::PlayerClientCommandRequest> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component PlayerClient.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::PlayerClientCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::PlayerClientCommandResponse> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component PlayerClient.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::improbable::restricted::PlayerClientCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::improbable::restricted::PlayerClientCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::improbable::restricted::PlayerClientCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::improbable::restricted::PlayerClientCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::improbable::restricted::PlayerClientCommandRequest) -> u32 {
@@ -1587,9 +1587,9 @@ pub struct System {
 }
 
 impl ObjectField for System {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -1603,9 +1603,9 @@ pub struct SystemUpdate {
 impl Update for SystemUpdate {
     type Component = System;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -1633,32 +1633,32 @@ impl Component for System {
     fn merge_update(&mut self, update: Self::Update) {
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::SystemCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::SystemCommandRequest> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component System.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::SystemCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::SystemCommandResponse> {
         match command_index {
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component System.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::improbable::restricted::SystemCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::improbable::restricted::SystemCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::improbable::restricted::SystemCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::improbable::restricted::SystemCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::improbable::restricted::SystemCommandRequest) -> u32 {
@@ -1684,12 +1684,12 @@ pub struct Worker {
 }
 
 impl ObjectField for Worker {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {
-            worker_id: input.get::<SchemaString>(1),
-            worker_type: input.get::<SchemaString>(2),
-            connection: input.get::<generated::improbable::restricted::Connection>(3),
-        }
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            worker_id: input.get::<SchemaString>(1).map_err(Error::at_field::<Self>(1))?,
+            worker_type: input.get::<SchemaString>(2).map_err(Error::at_field::<Self>(2))?,
+            connection: input.get::<generated::improbable::restricted::Connection>(3).map_err(Error::at_field::<Self>(3))?,
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {
@@ -1709,12 +1709,12 @@ pub struct WorkerUpdate {
 impl Update for WorkerUpdate {
     type Component = Worker;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {
-            worker_id: update.get_field::<SchemaString>(1),
-            worker_type: update.get_field::<SchemaString>(2),
-            connection: update.get_field::<generated::improbable::restricted::Connection>(3),
-        }
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+            worker_id: update.get_field::<SchemaString>(1).map_err(Error::at_field::<Self>(1))?,
+            worker_type: update.get_field::<SchemaString>(2).map_err(Error::at_field::<Self>(2))?,
+            connection: update.get_field::<generated::improbable::restricted::Connection>(3).map_err(Error::at_field::<Self>(3))?,
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
@@ -1753,27 +1753,27 @@ impl Component for Worker {
         if let Some(value) = update.connection { self.connection = value; }
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::WorkerCommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::WorkerCommandRequest> {
         match command_index {
             1 => {
-                let deserialized = <generated::improbable::restricted::DisconnectRequest as ObjectField>::from_object(&request.object());
-                Ok(WorkerCommandRequest::Disconnect(deserialized))
+                <generated::improbable::restricted::DisconnectRequest as ObjectField>::from_object(&request.object())
+                    .map(WorkerCommandRequest::Disconnect)
             },
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component Worker.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::WorkerCommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::WorkerCommandResponse> {
         match command_index {
             1 => {
-                let deserialized = <generated::improbable::restricted::DisconnectResponse as ObjectField>::from_object(&response.object());
-                Ok(WorkerCommandResponse::Disconnect(deserialized))
+                <generated::improbable::restricted::DisconnectResponse as ObjectField>::from_object(&response.object())
+                    .map(WorkerCommandResponse::Disconnect)
             },
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component Worker.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &generated::improbable::restricted::WorkerCommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &generated::improbable::restricted::WorkerCommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {
             WorkerCommandRequest::Disconnect(ref data) => {
@@ -1781,10 +1781,10 @@ impl Component for Worker {
             },
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &generated::improbable::restricted::WorkerCommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &generated::improbable::restricted::WorkerCommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {
             WorkerCommandResponse::Disconnect(ref data) => {
@@ -1792,7 +1792,7 @@ impl Component for Worker {
             },
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &generated::improbable::restricted::WorkerCommandRequest) -> u32 {
