@@ -18,7 +18,7 @@ pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Box<dyn std::
     // Run codegen and such.
     crate::codegen::run_codegen(config)?;
 
-    // Use `cargo install` to build workers and copy the exectuables to the build
+    // Use `cargo install` to build workers and copy the executables to the build
     // directory.
     //
     // TODO: Manually copy the built executables instead of using `cargo install`.
@@ -38,6 +38,7 @@ pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Box<dyn std::
                 .arg(&build_dir)
                 .arg("--force")
                 .arg("--path")
+                .arg("--locked")
                 .arg(worker_path);
 
             if config.local_build_profile == BuildProfile::Debug {
