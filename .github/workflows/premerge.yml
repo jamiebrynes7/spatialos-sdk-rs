@@ -64,7 +64,7 @@ jobs:
 
       - name: Clippy
         if: matrix.os == 'macOS-latest' # Only need to run this once and MacOS machines appear to be the fastest.
-        uses: actions-rs/clippy-check@v1
+        uses: jamiebrynes7/cargo-clippy@bugfix/clippy-1.39
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-targets --all-features -- -D warnings -A dead-code
