@@ -613,10 +613,6 @@ pub enum WorkerConnectionFuture {
     Locator(Locator, ConnectionParameters),
 }
 
-// SAFE: The Locator is owned by the WorkerConnectionFuture and cannot be copied or cloned so
-// the underlying pointer cannot be copied.
-unsafe impl Send for WorkerConnectionFuture {}
-
 impl WorkerSdkFuture for WorkerConnectionFuture {
     type RawPointer = Worker_ConnectionFuture;
     type Output = Result<WorkerConnection, ConnectionStatusError>;

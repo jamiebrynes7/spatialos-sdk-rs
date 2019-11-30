@@ -43,7 +43,7 @@ struct SendPtr<T> {
 
 unsafe impl<T> Send for SendPtr<T> {}
 
-pub trait WorkerSdkFuture: Unpin + Send {
+pub trait WorkerSdkFuture: Unpin {
     type RawPointer;
     type Output: Send;
 
