@@ -30,7 +30,7 @@ impl Locator {
         request: PlayerIdentityTokenRequest,
     ) -> WorkerFuture<PlayerIdentityTokenFuture> {
         let cstr = CString::new(hostname).unwrap();
-        WorkerFuture::NotStarted(PlayerIdentityTokenFuture::new(cstr, port, request))
+        WorkerFuture::new(PlayerIdentityTokenFuture::new(cstr, port, request))
     }
 
     pub fn create_development_login_tokens(
@@ -39,7 +39,7 @@ impl Locator {
         request: LoginTokensRequest,
     ) -> WorkerFuture<LoginTokensFuture> {
         let cstr = CString::new(hostname).unwrap();
-        WorkerFuture::NotStarted(LoginTokensFuture::new(cstr, port, request))
+        WorkerFuture::new(LoginTokensFuture::new(cstr, port, request))
     }
 }
 

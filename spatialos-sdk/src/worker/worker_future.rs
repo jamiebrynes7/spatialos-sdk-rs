@@ -1,69 +1,51 @@
+use futures::channel::oneshot::*;
 use std::{
     future::Future,
     pin::Pin,
-    sync::{Arc, Mutex},
     task::{Context, Poll},
     thread,
     thread::JoinHandle,
 };
 
-pub enum WorkerFuture<T: WorkerSdkFuture> {
+pub struct WorkerFuture<T: WorkerSdkFuture> {
+    inner: WorkerFutureState<T>,
+}
+
+impl<T: WorkerSdkFuture> WorkerFuture<T> {
+    pub fn new(future: T) -> Self {
+        WorkerFuture {
+            inner: WorkerFutureState::NotStarted(future),
+        }
+    }
+}
+
+enum WorkerFutureState<T: WorkerSdkFuture> {
     NotStarted(T),
-    InProgress(WorkerFutureHandle<T>),
+    InProgress(InProgressHandle<T>),
 }
 
-pub struct WorkerFutureHandle<T: WorkerSdkFuture> {
-    pub(crate) ptr: *mut T::RawPointer,
-    pub(crate) shared_result: Arc<Mutex<Option<T::Output>>>,
-    pub(crate) thread: Option<JoinHandle<()>>,
+struct InProgressHandle<T: WorkerSdkFuture> {
+    pub result_rx: Receiver<T::Output>,
+    pub thread: Option<JoinHandle<()>>,
 }
 
-impl<T: WorkerSdkFuture> Clone for WorkerFutureHandle<T> {
-    fn clone(&self) -> Self {
-        WorkerFutureHandle {
-            ptr: self.ptr,
-            shared_result: self.shared_result.clone(),
-            thread: None,
+impl<T: WorkerSdkFuture> Drop for WorkerFuture<T> {
+    fn drop(&mut self) {
+        if let WorkerFutureState::InProgress(handle) = &mut self.inner {
+            handle.thread.take().unwrap().join().unwrap();
         }
     }
 }
 
-// SAFE: It should be safe to send WorkerFutureHandle<T> between threads given the following
-// conditions around *mut T::RawPointer.
-//
-// First, some context. For the Worker SDK futures, there are only two operations you can
-// perform with this pointer:
-//
-//  * Poll (blocking or with timeout)
-//  * Destroy
-//
-// Given the following rules, we can guarantee that its thread-safe:
-//
-//  1. Poll cannot be called after Destroy.
-//      We ensure this cannot be true as we store a reference to the handle of the thread where Poll
-//      could be running. If this reference is present in the handle during drop(), we join that thread.
-//      This guarantees us that poll has already begun (and then finished) by the time Destroy is called.
-//      Since we only ever call Poll once, we cannot possibly call Poll after Destroy.
-//  2. Destroy is called at most once.
-//      We call Destroy in the drop() of the WorkerFuture<T> only. Something cannot be dropped more than once.
-//
-// This has the side effect the the Drop impl can block, but this was the already the case anyway with the
-// Worker SDK future Destroy methods (which I believe wait for the future to complete).
-unsafe impl<T: WorkerSdkFuture> Send for WorkerFutureHandle<T> {}
-
-impl<T: WorkerSdkFuture> WorkerFutureHandle<T> {
-    pub(crate) fn new(ptr: *mut T::RawPointer) -> Self {
-        WorkerFutureHandle {
-            ptr,
-            shared_result: Arc::new(Mutex::new(None)),
-            thread: None,
-        }
-    }
+struct SendPtr<T> {
+    pub ptr: *mut T,
 }
+
+unsafe impl<T> Send for SendPtr<T> {}
 
 pub trait WorkerSdkFuture: Unpin + Send {
     type RawPointer;
-    type Output;
+    type Output: Send;
 
     fn start(&self) -> *mut Self::RawPointer;
     unsafe fn get(ptr: *mut Self::RawPointer) -> Self::Output;
@@ -77,48 +59,37 @@ impl<T: WorkerSdkFuture + 'static> Future for WorkerFuture<T> {
         let mut next_state = None;
         let mut result = Poll::Pending;
 
-        match self.as_mut().get_mut() {
-            WorkerFuture::NotStarted(future) => {
-                let mut handle = WorkerFutureHandle::new(future.start());
-
-                let thread_handle = handle.clone();
+        match &mut self.as_mut().get_mut().inner {
+            WorkerFutureState::NotStarted(future) => {
+                let (tx, rx) = futures::channel::oneshot::channel();
                 let thread_waker = cx.waker().clone();
+                let send_ptr = SendPtr {
+                    ptr: future.start(),
+                };
 
-                handle.thread = Some(thread::spawn(move || unsafe {
-                    let value = T::get(thread_handle.ptr);
-                    thread_handle.shared_result.lock().unwrap().replace(value);
+                let thread = thread::spawn(move || unsafe {
+                    let value = T::get(send_ptr.ptr);
+                    tx.send(value).unwrap_or(());
                     thread_waker.wake();
+                    T::destroy(send_ptr.ptr)
+                });
+
+                next_state = Some(WorkerFutureState::InProgress(InProgressHandle {
+                    result_rx: rx,
+                    thread: Some(thread),
                 }));
-
-                next_state = Some(WorkerFuture::InProgress(handle));
             }
-            WorkerFuture::InProgress(context) => {
-                let mut shared_result = context.shared_result.lock().unwrap();
-
-                if shared_result.is_some() {
-                    result = Poll::Ready(shared_result.take().unwrap())
+            WorkerFutureState::InProgress(context) => {
+                if let Some(val) = context.result_rx.try_recv().unwrap_or(None) {
+                    result = Poll::Ready(val)
                 }
             }
         }
 
         if let Some(ref mut next) = next_state {
-            std::mem::swap(self.as_mut().get_mut(), next);
+            std::mem::swap(&mut self.as_mut().get_mut().inner, next);
         }
 
         result
-    }
-}
-
-impl<T: WorkerSdkFuture> Drop for WorkerFuture<T> {
-    fn drop(&mut self) {
-        if let WorkerFuture::InProgress(handle) = self {
-            if let Some(join_handle) = handle.thread.take() {
-                join_handle.join().expect("Failed to join thread");
-            }
-
-            unsafe {
-                T::destroy(handle.ptr);
-            }
-        }
     }
 }

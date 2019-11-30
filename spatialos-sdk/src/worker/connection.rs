@@ -218,19 +218,17 @@ impl WorkerConnection {
         let worker_id_cstr =
             CString::new(worker_id).expect("Received 0 byte in supplied Worker ID");
 
-        WorkerFuture::NotStarted(WorkerConnectionFuture::Receptionist(
-            hostname_cstr,
-            worker_id_cstr,
-            port,
-            params,
-        ))
+        let future =
+            WorkerConnectionFuture::Receptionist(hostname_cstr, worker_id_cstr, port, params);
+
+        WorkerFuture::new(future)
     }
 
     pub fn connect_locator(
         locator: Locator,
         params: ConnectionParameters,
     ) -> WorkerFuture<WorkerConnectionFuture> {
-        WorkerFuture::NotStarted(WorkerConnectionFuture::Locator(locator, params))
+        WorkerFuture::new(WorkerConnectionFuture::Locator(locator, params))
     }
 }
 
