@@ -1,4 +1,4 @@
-use crate::worker::schema::{DataPointer, Field, FieldId};
+use crate::worker::schema::{DataPointer, Field, FieldId, Result};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -6,11 +6,11 @@ use std::marker::PhantomData;
 pub struct SchemaObject(PhantomData<*mut Schema_Object>);
 
 impl SchemaObject {
-    pub fn get<T: Field>(&self, field: FieldId) -> T::RustType {
-        T::get_or_default(self, field)
+    pub fn get<T: Field>(&self, field: FieldId) -> Result<T::RustType> {
+        T::get(self, field)
     }
 
-    pub fn get_index<T: Field>(&self, field: FieldId, index: usize) -> T::RustType {
+    pub fn get_index<T: Field>(&self, field: FieldId, index: usize) -> Result<T::RustType> {
         T::index(self, field, index)
     }
 
@@ -22,7 +22,7 @@ impl SchemaObject {
         T::add(self, field, value);
     }
 
-    pub fn get_list<T: Field>(&self, field: FieldId) -> Vec<T::RustType> {
+    pub fn get_list<T: Field>(&self, field: FieldId) -> Result<Vec<T::RustType>> {
         T::get_list(self, field)
     }
 

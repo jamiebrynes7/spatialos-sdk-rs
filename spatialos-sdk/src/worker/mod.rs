@@ -21,7 +21,11 @@ use std::cmp::Ordering;
 use std::fmt::{Display, Error, Formatter};
 use std::marker::PhantomData;
 
+// NOTE: This must be `repr(transparent)` in order for it to be ABI-compatible with
+// the C API, which uses a raw `i64` to represent an entity ID. See the comment on
+// the `impl_primitive_field!` macro for more details.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+#[repr(transparent)]
 pub struct EntityId {
     pub id: i64,
 }

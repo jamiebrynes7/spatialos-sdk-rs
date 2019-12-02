@@ -24,16 +24,14 @@ pub trait Component: ObjectField {
     fn from_request(
         command_index: CommandIndex,
         request: &schema::SchemaCommandRequest,
-    ) -> Result<Self::CommandRequest, String>;
+    ) -> schema::Result<Self::CommandRequest>;
     fn from_response(
         command_index: CommandIndex,
         response: &schema::SchemaCommandResponse,
-    ) -> Result<Self::CommandResponse, String>;
+    ) -> schema::Result<Self::CommandResponse>;
 
-    fn to_request(request: &Self::CommandRequest) -> Result<Owned<SchemaCommandRequest>, String>;
-    fn to_response(
-        response: &Self::CommandResponse,
-    ) -> Result<Owned<SchemaCommandResponse>, String>;
+    fn to_request(request: &Self::CommandRequest) -> Owned<SchemaCommandRequest>;
+    fn to_response(response: &Self::CommandResponse) -> Owned<SchemaCommandResponse>;
 
     fn get_request_command_index(request: &Self::CommandRequest) -> u32;
     fn get_response_command_index(response: &Self::CommandResponse) -> u32;
@@ -42,7 +40,7 @@ pub trait Component: ObjectField {
 pub trait Update: Sized + Clone {
     type Component: Component<Update = Self>;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self;
+    fn from_schema(update: &SchemaComponentUpdate) -> schema::Result<Self>;
     fn into_schema(&self, update: &mut SchemaComponentUpdate);
     fn merge(&mut self, other: Self);
 }
@@ -125,15 +123,15 @@ impl<'a> ComponentDataRef<'a> {
         }
     }
 
-    pub fn get<C: Component>(&self) -> Option<Cow<'_, C>> {
+    pub fn get<C: Component>(&self) -> Option<schema::Result<Cow<'_, C>>> {
         if C::ID != self.component_id {
             return None;
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
+            Ok(Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() }))
         } else {
-            Cow::Owned(ObjectField::from_object(self.schema_type.fields()))
+            ObjectField::from_object(self.schema_type.fields()).map(Cow::Owned)
         };
 
         Some(cow)
@@ -156,15 +154,15 @@ impl<'a> ComponentUpdateRef<'a> {
         }
     }
 
-    pub(crate) fn get<C: Component>(&self) -> Option<Cow<'_, C::Update>> {
+    pub(crate) fn get<C: Component>(&self) -> Option<schema::Result<Cow<'_, C::Update>>> {
         if C::ID != self.component_id {
             return None;
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
+            Ok(Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() }))
         } else {
-            Cow::Owned(Update::from_schema(&self.schema_type))
+            Update::from_schema(&self.schema_type).map(Cow::Owned)
         };
 
         Some(cow)
@@ -193,7 +191,7 @@ impl<'a> CommandRequestRef<'a> {
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
-    pub(crate) fn get<C>(&self) -> Option<Cow<'_, C::CommandRequest>>
+    pub(crate) fn get<C>(&self) -> Option<schema::Result<Cow<'_, C::CommandRequest>>>
     where
         C: Component,
         C::CommandRequest: ObjectField,
@@ -203,9 +201,9 @@ impl<'a> CommandRequestRef<'a> {
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
+            Ok(Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() }))
         } else {
-            Cow::Owned(ObjectField::from_object(self.schema_type.object()))
+            ObjectField::from_object(self.schema_type.object()).map(Cow::Owned)
         };
 
         Some(cow)
@@ -234,7 +232,7 @@ impl<'a> CommandResponseRef<'a> {
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
-    pub fn get<C>(&self) -> Option<Cow<'_, C::CommandResponse>>
+    pub fn get<C>(&self) -> Option<schema::Result<Cow<'_, C::CommandResponse>>>
     where
         C: Component,
         C::CommandResponse: ObjectField,
@@ -244,9 +242,9 @@ impl<'a> CommandResponseRef<'a> {
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
+            Ok(Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() }))
         } else {
-            Cow::Owned(ObjectField::from_object(self.schema_type.object()))
+            ObjectField::from_object(self.schema_type.object()).map(Cow::Owned)
         };
 
         Some(cow)
@@ -371,9 +369,20 @@ unsafe extern "C" fn vtable_component_data_deserialize<C: Component>(
     handle_out: *mut *mut Worker_ComponentDataHandle,
 ) -> u8 {
     let schema_data = schema::SchemaComponentData::from_raw(data);
-    let deserialized_data = schema_data.deserialize::<C>();
-    *handle_out = handle_allocate(deserialized_data);
-    1
+    match schema_data.deserialize::<C>() {
+        Ok(deserialized_data) => {
+            *handle_out = handle_allocate(deserialized_data);
+            1
+        }
+
+        // TODO: How should we handle errors occurring during vtable serialization? We could
+        // probably store the whole `Result` in the user handle and pass it to the user when
+        // they try to retrieve the result.
+        Err(..) => {
+            *handle_out = ptr::null_mut();
+            0
+        }
+    }
 }
 
 unsafe extern "C" fn vtable_component_data_serialize<C: Component>(
@@ -409,9 +418,20 @@ unsafe extern "C" fn vtable_component_update_deserialize<C: Component>(
     handle_out: *mut *mut Worker_ComponentUpdateHandle,
 ) -> u8 {
     let schema_update = SchemaComponentUpdate::from_raw(update);
-    let deserialized_update = schema_update.deserialize::<C>();
-    *handle_out = handle_allocate(deserialized_update);
-    1
+    match schema_update.deserialize::<C>() {
+        Ok(deserialized_update) => {
+            *handle_out = handle_allocate(deserialized_update);
+            1
+        }
+
+        // TODO: How should we handle errors occurring during vtable serialization? We could
+        // probably store the whole `Result` in the user handle and pass it to the user when
+        // they try to retrieve the result.
+        Err(..) => {
+            *handle_out = ptr::null_mut();
+            0
+        }
+    }
 }
 
 unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
@@ -467,12 +487,7 @@ unsafe extern "C" fn vtable_command_request_serialize<C: Component>(
     request: *mut *mut Schema_CommandRequest,
 ) {
     let data = &*(handle as *const _);
-    let schema_result = C::to_request(data);
-    if let Ok(schema_request) = schema_result {
-        *request = schema_request.into_raw();
-    } else {
-        *request = ptr::null_mut();
-    }
+    *request = C::to_request(data).into_raw();
 }
 
 unsafe extern "C" fn vtable_command_response_free<C: Component>(
@@ -518,10 +533,5 @@ unsafe extern "C" fn vtable_command_response_serialize<C: Component>(
     response: *mut *mut Schema_CommandResponse,
 ) {
     let data = &*(handle as *const _);
-    let schema_result = C::to_response(data);
-    if let Ok(schema_response) = schema_result {
-        *response = schema_response.into_raw();
-    } else {
-        *response = ptr::null_mut();
-    }
+    *response = C::to_response(data).into_raw();
 }

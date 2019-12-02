@@ -1,5 +1,8 @@
 use crate::worker::{component::Component, component::ComponentId, entity::Entity, schema::*};
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    result::Result,
+};
 
 const ENTITY_ACL_COMPONENT_ID: ComponentId = 50;
 const METADATA_COMPONENT_ID: ComponentId = 53;

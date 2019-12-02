@@ -18,8 +18,8 @@
 //! object.add::<Optional<SchemaString>>(2, &none_field);
 //!
 //! // Get fields from serialized data.
-//! let some_result = object.get::<Optional<SchemaInt32>>(1);
-//! let none_result = object.get::<Optional<SchemaString>>(2);
+//! let some_result = object.get::<Optional<SchemaInt32>>(1).unwrap();
+//! let none_result = object.get::<Optional<SchemaString>>(2).unwrap();
 //!
 //! assert_eq!(some_field, some_result);
 //! assert_eq!(none_field, none_result);
@@ -36,7 +36,7 @@
 //! The following code would be used to handle serialization:
 //!
 //! ```
-//! use spatialos_sdk::worker::schema::*;
+//! use spatialos_sdk::worker::schema::{self, *};
 //!
 //! #[derive(Debug, Default, Clone)]
 //! pub struct MyType {
@@ -44,10 +44,12 @@
 //! }
 //!
 //! impl ObjectField for MyType {
-//!     fn from_object(object: &SchemaObject) -> Self {
-//!         Self {
-//!             optional_value: object.get::<Optional<SchemaInt32>>(1),
-//!         }
+//!     fn from_object(object: &SchemaObject) -> schema::Result<Self> {
+//!         Ok(Self {
+//!             optional_value: object
+//!                 .get::<Optional<SchemaInt32>>(1)
+//!                 .map_err(Error::at_field::<Self>(1))?,
+//!         })
 //!     }
 //!
 //!     fn into_object(&self, object: &mut SchemaObject) {
@@ -56,6 +58,7 @@
 //! }
 //! ```
 
+use crate::worker::component::CommandIndex;
 use std::{
     convert::TryFrom,
     fmt::{self, Display, Formatter},
@@ -92,9 +95,12 @@ pub type FieldId = u32;
 pub trait Field {
     type RustType: Sized;
 
-    fn get_or_default(object: &SchemaObject, field: FieldId) -> Self::RustType;
-    fn index(object: &SchemaObject, field: FieldId, index: usize) -> Self::RustType;
+    fn get(object: &SchemaObject, field: FieldId) -> Result<Self::RustType>;
+
+    fn index(object: &SchemaObject, field: FieldId, index: usize) -> Result<Self::RustType>;
+
     fn count(object: &SchemaObject, field: FieldId) -> usize;
+
     fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType);
 
     fn add_list(object: &mut SchemaObject, field: FieldId, values: &[Self::RustType]) {
@@ -103,22 +109,23 @@ pub trait Field {
         }
     }
 
-    fn get_list(object: &SchemaObject, field: FieldId) -> Vec<Self::RustType> {
+    fn get_list(object: &SchemaObject, field: FieldId) -> Result<Vec<Self::RustType>> {
         let count = Self::count(object, field);
-        let mut result = Vec::with_capacity(count);
-        for index in 0..count {
-            result.push(Self::index(object, field, index));
-        }
-        result
+        (0..count)
+            .map(|index| Self::index(object, field, index))
+            .collect()
     }
 
     fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool;
 
-    fn get_update(update: &SchemaComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+    fn get_update(
+        update: &SchemaComponentUpdate,
+        field: FieldId,
+    ) -> Result<Option<Self::RustType>> {
         if Self::has_update(update, field) {
-            Some(Self::get_or_default(update.fields(), field))
+            Self::get(update.fields(), field).map(Some)
         } else {
-            None
+            Ok(None)
         }
     }
 
@@ -161,7 +168,7 @@ pub trait ObjectField: Sized + Clone {
     /// type differing from what is expected.
     ///
     /// [`SchemaObject`]: struct.SchemaObject.html
-    fn from_object(object: &SchemaObject) -> Self;
+    fn from_object(object: &SchemaObject) -> Result<Self>;
 
     /// Serializes an instance of this type into a [`SchemaObject`].
     ///
@@ -178,11 +185,11 @@ where
 {
     type RustType = Self;
 
-    fn get_or_default(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn get(object: &SchemaObject, field: FieldId) -> Result<Self::RustType> {
         Self::from_object(object.get_object(field))
     }
 
-    fn index(object: &SchemaObject, field: FieldId, index: usize) -> Self::RustType {
+    fn index(object: &SchemaObject, field: FieldId, index: usize) -> Result<Self::RustType> {
         Self::from_object(object.index_object(field, index))
     }
 
@@ -265,21 +272,23 @@ macro_rules! impl_field_for_enum_field {
         impl $crate::worker::schema::Field for $type {
             type RustType = Self;
 
-            fn get_or_default(
+            fn get(
                 object: &$crate::worker::schema::SchemaObject,
                 field: $crate::worker::schema::FieldId,
-            ) -> Self::RustType {
-                Self::try_from(object.get::<$crate::worker::schema::SchemaEnum>(field))
-                    .unwrap_or_default()
+            ) -> $crate::worker::schema::Result<Self::RustType> {
+                Self::try_from(object.get::<$crate::worker::schema::SchemaEnum>(field)?)
+                    .map_err(Into::into)
             }
 
             fn index(
                 object: &$crate::worker::schema::SchemaObject,
                 field: $crate::worker::schema::FieldId,
                 index: usize,
-            ) -> Self::RustType {
-                Self::try_from(object.get_index::<$crate::worker::schema::SchemaEnum>(field, index))
-                    .unwrap_or_default()
+            ) -> $crate::worker::schema::Result<Self::RustType> {
+                Self::try_from(
+                    object.get_index::<$crate::worker::schema::SchemaEnum>(field, index)?,
+                )
+                .map_err(Into::into)
             }
 
             fn count(
@@ -305,4 +314,144 @@ macro_rules! impl_field_for_enum_field {
             }
         }
     };
+}
+
+pub type Result<T> = std::result::Result<T, Error>;
+
+/// An error that can occur during schema deserialization.
+#[derive(Debug)]
+pub struct Error {
+    type_name: &'static str,
+    kind: ErrorKind,
+}
+
+impl Error {
+    pub fn unknown_discriminant<T: EnumField>(value: u32) -> Self {
+        Self {
+            type_name: std::any::type_name::<T>(),
+            kind: ErrorKind::UnknownDiscriminant(value),
+        }
+    }
+
+    pub fn unknown_command<T>(command_index: CommandIndex) -> Self {
+        Self {
+            type_name: std::any::type_name::<T>(),
+            kind: ErrorKind::UnknownCommand(command_index),
+        }
+    }
+
+    pub fn missing_field<T>() -> Self {
+        Self {
+            type_name: std::any::type_name::<T>(),
+            kind: ErrorKind::MissingField,
+        }
+    }
+
+    pub fn index_out_of_bounds<T>(index: usize, count: usize) -> Self {
+        Self {
+            type_name: std::any::type_name::<T>(),
+            kind: ErrorKind::IndexOutOfBounds { index, count },
+        }
+    }
+
+    pub fn at_field<T>(field: FieldId) -> impl FnOnce(Self) -> Self {
+        move |error| Self {
+            type_name: std::any::type_name::<T>(),
+            kind: ErrorKind::InvalidValue {
+                field,
+                index: None,
+                error: Box::new(error),
+            },
+        }
+    }
+
+    pub fn at_index<T>(field: FieldId, index: usize) -> impl FnOnce(Self) -> Self {
+        move |error| Self {
+            type_name: std::any::type_name::<T>(),
+            kind: ErrorKind::InvalidValue {
+                field,
+                index: Some(index),
+                error: Box::new(error),
+            },
+        }
+    }
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match &self.kind {
+            ErrorKind::UnknownDiscriminant(value) => write!(
+                f,
+                "Unknown discriminant {} for enum {}",
+                value, self.type_name
+            ),
+
+            ErrorKind::UnknownCommand(command_index) => write!(
+                f,
+                "Unknown command index {} for command {}",
+                command_index, self.type_name
+            ),
+
+            ErrorKind::MissingField => write!(f, "Missing field of type {}", self.type_name),
+
+            ErrorKind::IndexOutOfBounds { index, count } => write!(
+                f,
+                "Index out of bounds for type {}, index: {}, count: {}",
+                self.type_name, index, count
+            ),
+
+            ErrorKind::InvalidValue {
+                field,
+                index,
+                error,
+            } => match index {
+                Some(index) => write!(
+                    f,
+                    "Invalid value in field {} at index {} for type {}: {}",
+                    field, index, self.type_name, error
+                ),
+
+                None => write!(
+                    f,
+                    "Invalid value in field {} for type {}: {}",
+                    field, self.type_name, error
+                ),
+            },
+        }
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        if let ErrorKind::InvalidValue { error, .. } = &self.kind {
+            return Some(&**error as &dyn std::error::Error);
+        }
+
+        None
+    }
+}
+
+impl From<UnknownDiscriminantError> for Error {
+    fn from(from: UnknownDiscriminantError) -> Self {
+        Self {
+            type_name: from.type_name,
+            kind: ErrorKind::UnknownDiscriminant(from.value),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum ErrorKind {
+    UnknownDiscriminant(u32),
+    UnknownCommand(CommandIndex),
+    MissingField,
+    IndexOutOfBounds {
+        index: usize,
+        count: usize,
+    },
+    InvalidValue {
+        field: FieldId,
+        index: Option<usize>,
+        error: Box<Error>,
+    },
 }

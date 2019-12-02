@@ -25,7 +25,7 @@ impl Default for <#= enum_rust_name #> {
 impl TryFrom<u32> for <#= enum_rust_name #> {
     type Error = UnknownDiscriminantError;
 
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
+    fn try_from(value: u32) -> std::result::Result<Self, Self::Error> {
         match value {
             <# for enum_value in &enum_def.values { #>
             <#= enum_value.value #> => Ok(<#= enum_rust_name #>::<#= enum_value.name #>), <# } #>
@@ -56,12 +56,12 @@ pub struct <#= self.rust_name(&type_def.qualified_name) #> {<#
     pub <#= field.name #>: <#= self.generate_field_type(field) #>,<# } #>
 }
 impl ObjectField for <#= self.rust_name(&type_def.qualified_name) #> {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {<#
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {<#
             for field in &type_def.fields {
             #>
             <#= field.name #>: <#= self.deserialize_field(field, "input") #>,<# } #>
-        }
+        })
     }
     fn into_object(&self, output: &mut SchemaObject) {<#
         for field in &type_def.fields {
@@ -83,11 +83,11 @@ pub struct <#= component_name #> {<#
 }
 
 impl ObjectField for <#= component_name #> {
-    fn from_object(input: &SchemaObject) -> Self {
-        Self {<#
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {<#
             for field in &component_fields {#>
             <#= field.name #>: <#= self.deserialize_field(field, "input") #>,<# } #>
-        }
+        })
     }
 
     fn into_object(&self, output: &mut SchemaObject) {<#
@@ -107,11 +107,11 @@ pub struct <#= update_name #> {<#
 impl Update for <#= update_name #> {
     type Component = <#= component_name #>;
 
-    fn from_schema(update: &SchemaComponentUpdate) -> Self {
-        Self {<#
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {<#
             for field in &component_fields {#>
             <#= field.name #>: <#= self.deserialize_update_field(field, "update") #>,<# } #>
-        }
+        })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {<#
@@ -153,31 +153,31 @@ impl Component for <#= component_name #> {
         if let Some(value) = update.<#= field.name #> { self.<#= field.name #> = value; }<# } #>
     }
 
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandRequest, String> {
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandRequest> {
         match command_index {<#
             for command in &component.commands {
             #>
             <#= command.command_index #> => {
-                let deserialized = <<#= self.rust_fqname(&command.request_type) #> as ObjectField>::from_object(&request.object());
-                Ok(<#= component_name #>CommandRequest::<#= command.name.to_camel_case() #>(deserialized))
+                <<#= self.rust_fqname(&command.request_type) #> as ObjectField>::from_object(&request.object())
+                    .map(<#= component_name #>CommandRequest::<#= command.name.to_camel_case() #>)
             },<# } #>
-            _ => Err(format!("Attempted to deserialize an unrecognised command request with index {} in component <#= component_name #>.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandResponse, String> {
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandResponse> {
         match command_index {<#
             for command in &component.commands {
             #>
             <#= command.command_index #> => {
-                let deserialized = <<#= self.rust_fqname(&command.response_type) #> as ObjectField>::from_object(&response.object());
-                Ok(<#= component_name #>CommandResponse::<#= command.name.to_camel_case() #>(deserialized))
+                <<#= self.rust_fqname(&command.response_type) #> as ObjectField>::from_object(&response.object())
+                    .map(<#= component_name #>CommandResponse::<#= command.name.to_camel_case() #>)
             },<# } #>
-            _ => Err(format!("Attempted to deserialize an unrecognised command response with index {} in component <#= component_name #>.", command_index))
+            _ => Err(Error::unknown_command::<Self>(command_index))
         }
     }
 
-    fn to_request(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> Result<Owned<SchemaCommandRequest>, String> {
+    fn to_request(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> Owned<SchemaCommandRequest> {
         let mut serialized_request = SchemaCommandRequest::new();
         match request {<#
             for command in &component.commands {
@@ -187,10 +187,10 @@ impl Component for <#= component_name #> {
             },<# } #>
             _ => unreachable!()
         }
-        Ok(serialized_request)
+        serialized_request
     }
 
-    fn to_response(response: &<#= self.rust_fqname(&component.qualified_name) #>CommandResponse) -> Result<Owned<SchemaCommandResponse>, String> {
+    fn to_response(response: &<#= self.rust_fqname(&component.qualified_name) #>CommandResponse) -> Owned<SchemaCommandResponse> {
         let mut serialized_response = SchemaCommandResponse::new();
         match response {<#
             for command in &component.commands {
@@ -200,7 +200,7 @@ impl Component for <#= component_name #> {
             },<# } #>
             _ => unreachable!()
         }
-        Ok(serialized_response)
+        serialized_response
     }
 
     fn get_request_command_index(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> u32 {

@@ -1,6 +1,6 @@
 use crate::worker::{
     component::{Component, Update},
-    schema::{DataPointer, Field, FieldId, Owned, OwnedPointer, SchemaObject},
+    schema::{DataPointer, Field, FieldId, Owned, OwnedPointer, Result, SchemaObject},
 };
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
@@ -19,7 +19,7 @@ impl SchemaComponentUpdate {
         result
     }
 
-    pub fn deserialize<C: Component>(&self) -> C::Update {
+    pub fn deserialize<C: Component>(&self) -> Result<C::Update> {
         C::Update::from_schema(&self)
     }
 
@@ -49,7 +49,7 @@ impl SchemaComponentUpdate {
         }
     }
 
-    pub fn get_field<T>(&self, field: FieldId) -> Option<T::RustType>
+    pub fn get_field<T>(&self, field: FieldId) -> Result<Option<T::RustType>>
     where
         T: Field,
     {

@@ -1,4 +1,4 @@
-use crate::worker::schema::{Field, FieldId, SchemaComponentUpdate, SchemaObject};
+use crate::worker::schema::{Error, Field, FieldId, Result, SchemaComponentUpdate, SchemaObject};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::BTreeMap, marker::PhantomData};
 
@@ -21,11 +21,11 @@ where
 {
     type RustType = Option<T::RustType>;
 
-    fn get_or_default(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn get(object: &SchemaObject, field: FieldId) -> Result<Self::RustType> {
         if T::count(object, field) > 0 {
-            Some(object.get::<T>(field))
+            object.get::<T>(field).map(Some)
         } else {
-            None
+            Ok(None)
         }
     }
 
@@ -39,11 +39,14 @@ where
         T::count(update.fields(), field) > 0 || update.is_field_cleared(field)
     }
 
-    fn get_update(update: &SchemaComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+    fn get_update(
+        update: &SchemaComponentUpdate,
+        field: FieldId,
+    ) -> Result<Option<Self::RustType>> {
         if update.is_field_cleared(field) {
-            Some(None)
+            Ok(Some(None))
         } else {
-            Self::get_or_default(update.fields(), field).map(Some)
+            Self::get(update.fields(), field).map(Some)
         }
     }
 
@@ -63,7 +66,7 @@ where
         }
     }
 
-    fn index(_object: &SchemaObject, _field: FieldId, _index: usize) -> Self::RustType {
+    fn index(_object: &SchemaObject, _field: FieldId, _index: usize) -> Result<Self::RustType> {
         panic!("Optional fields cannot be indexed into")
     }
 
@@ -89,14 +92,17 @@ where
 {
     type RustType = Vec<T::RustType>;
 
-    fn get_or_default(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn get(object: &SchemaObject, field: FieldId) -> Result<Self::RustType> {
         let count = object.count::<T>(field);
         let mut result = Vec::with_capacity(count);
         for index in 0..count {
-            result.push(object.get_index::<T>(field, index));
+            let value = object
+                .get_index::<T>(field, index)
+                .map_err(Error::at_index::<Self>(field, index))?;
+            result.push(value);
         }
 
-        result
+        Ok(result)
     }
 
     fn add(object: &mut SchemaObject, field: FieldId, values: &Self::RustType) {
@@ -109,13 +115,16 @@ where
         T::count(update.fields(), field) > 0 || update.is_field_cleared(field)
     }
 
-    fn get_update(update: &SchemaComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+    fn get_update(
+        update: &SchemaComponentUpdate,
+        field: FieldId,
+    ) -> Result<Option<Self::RustType>> {
         if update.is_field_cleared(field) {
-            Some(Default::default())
+            Ok(Some(Default::default()))
         } else if T::count(update.fields(), field) > 0 {
-            Some(Self::get_or_default(update.fields(), field))
+            Self::get(update.fields(), field).map(Some)
         } else {
-            None
+            Ok(None)
         }
     }
 
@@ -133,7 +142,7 @@ where
         }
     }
 
-    fn index(_object: &SchemaObject, _field: FieldId, _index: usize) -> Self::RustType {
+    fn index(_object: &SchemaObject, _field: FieldId, _index: usize) -> Result<Self::RustType> {
         panic!("List fields cannot be indexed into")
     }
 
@@ -168,7 +177,7 @@ where
 {
     type RustType = BTreeMap<K::RustType, V::RustType>;
 
-    fn get_or_default(object: &SchemaObject, field: FieldId) -> Self::RustType {
+    fn get(object: &SchemaObject, field: FieldId) -> Result<Self::RustType> {
         let mut result = BTreeMap::new();
 
         // Load each of the key-value pairs from the map object.
@@ -180,12 +189,17 @@ where
         let count = object.object_count(field);
         for index in 0..count {
             let pair = object.index_object(field, index);
-            let key = K::get_or_default(&pair, SCHEMA_MAP_KEY_FIELD_ID);
-            let value = V::get_or_default(&pair, SCHEMA_MAP_VALUE_FIELD_ID);
+
+            let key = K::get(&pair, SCHEMA_MAP_KEY_FIELD_ID)
+                .map_err(Error::at_index::<Self>(field, index))?;
+
+            let value = V::get(&pair, SCHEMA_MAP_VALUE_FIELD_ID)
+                .map_err(Error::at_index::<Self>(field, index))?;
+
             result.insert(key, value);
         }
 
-        result
+        Ok(result)
     }
 
     fn add(object: &mut SchemaObject, field: FieldId, map: &Self::RustType) {
@@ -206,13 +220,16 @@ where
         update.fields().object_count(field) > 0 || update.is_field_cleared(field)
     }
 
-    fn get_update(update: &SchemaComponentUpdate, field: FieldId) -> Option<Self::RustType> {
+    fn get_update(
+        update: &SchemaComponentUpdate,
+        field: FieldId,
+    ) -> Result<Option<Self::RustType>> {
         if update.is_field_cleared(field) {
-            Some(Default::default())
+            Ok(Some(Default::default()))
         } else if update.fields().object_count(field) > 0 {
-            Some(Self::get_or_default(update.fields(), field))
+            Self::get(update.fields(), field).map(Some)
         } else {
-            None
+            Ok(None)
         }
     }
 
@@ -230,7 +247,7 @@ where
         }
     }
 
-    fn index(_object: &SchemaObject, _field: FieldId, _index: usize) -> Self::RustType {
+    fn index(_object: &SchemaObject, _field: FieldId, _index: usize) -> Result<Self::RustType> {
         panic!("Map fields cannot be indexed into");
     }
 
