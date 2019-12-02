@@ -122,7 +122,7 @@ where
         if update.is_field_cleared(field) {
             Ok(Some(Default::default()))
         } else if T::count(update.fields(), field) > 0 {
-            Ok(Some(Self::get(update.fields(), field)?))
+            Self::get(update.fields(), field).map(Some)
         } else {
             Ok(None)
         }
