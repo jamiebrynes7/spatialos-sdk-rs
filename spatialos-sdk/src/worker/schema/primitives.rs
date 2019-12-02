@@ -33,6 +33,7 @@ macro_rules! impl_primitive_field {
         #[derive(Debug)]
         pub struct $schema_type;
 
+        #[allow(clippy::useless_transmute, clippy::transmute_int_to_bool)]
         impl Field for $schema_type {
             type RustType = $rust_type;
 
