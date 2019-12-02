@@ -123,7 +123,7 @@ pub trait Field {
         field: FieldId,
     ) -> Result<Option<Self::RustType>> {
         if Self::has_update(update, field) {
-            Self::get(update.fields(), field)).map(Some)
+            Self::get(update.fields(), field).map(Some)
         } else {
             Ok(None)
         }
