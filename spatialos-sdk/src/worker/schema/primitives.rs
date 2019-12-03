@@ -32,6 +32,7 @@ macro_rules! impl_primitive_field {
         $schema_count:ident,
         $schema_add:ident,
         $schema_add_list:ident,
+        $schema_get_list:ident,
     ) => {
         #[derive(Debug)]
         pub struct $schema_type;
@@ -85,6 +86,21 @@ macro_rules! impl_primitive_field {
                     $schema_add_list(object.as_ptr_mut(), field, ptr as *const _, len);
                 }
             }
+
+            fn get_list(object: &SchemaObject, field: FieldId) -> Result<Vec<$rust_type>> {
+                let count = Self::count(object, field) as usize;
+                let mut result = Vec::with_capacity(count);
+
+                // Populate the result `Vec` by directly writing into its buffer. We need to
+                // manually set the length since we're bypassing the usual methods of populating the
+                // list that would do that for us.
+                unsafe {
+                    result.set_len(count);
+                    $schema_get_list(object.as_ptr(), field, result.as_mut_ptr() as *mut _);
+                };
+
+                Ok(result)
+            }
         }
     };
 }
@@ -97,6 +113,7 @@ impl_primitive_field!(
     Schema_GetFloatCount,
     Schema_AddFloat,
     Schema_AddFloatList,
+    Schema_GetFloatList,
 );
 impl_primitive_field!(
     f64,
@@ -106,6 +123,7 @@ impl_primitive_field!(
     Schema_GetDoubleCount,
     Schema_AddDouble,
     Schema_AddDoubleList,
+    Schema_GetDoubleList,
 );
 impl_primitive_field!(
     i32,
@@ -115,6 +133,7 @@ impl_primitive_field!(
     Schema_GetInt32Count,
     Schema_AddInt32,
     Schema_AddInt32List,
+    Schema_GetInt32List,
 );
 impl_primitive_field!(
     i64,
@@ -124,6 +143,7 @@ impl_primitive_field!(
     Schema_GetInt64Count,
     Schema_AddInt64,
     Schema_AddInt64List,
+    Schema_GetInt64List,
 );
 impl_primitive_field!(
     u32,
@@ -133,6 +153,7 @@ impl_primitive_field!(
     Schema_GetUint32Count,
     Schema_AddUint32,
     Schema_AddUint32List,
+    Schema_GetUint32List,
 );
 impl_primitive_field!(
     u64,
@@ -142,6 +163,7 @@ impl_primitive_field!(
     Schema_GetUint64Count,
     Schema_AddUint64,
     Schema_AddUint64List,
+    Schema_GetUint64List,
 );
 impl_primitive_field!(
     i32,
@@ -151,6 +173,7 @@ impl_primitive_field!(
     Schema_GetSint32Count,
     Schema_AddSint32,
     Schema_AddSint32List,
+    Schema_GetSint32List,
 );
 impl_primitive_field!(
     i64,
@@ -160,6 +183,7 @@ impl_primitive_field!(
     Schema_GetSint64Count,
     Schema_AddSint64,
     Schema_AddSint64List,
+    Schema_GetSint64List,
 );
 impl_primitive_field!(
     u32,
@@ -169,6 +193,7 @@ impl_primitive_field!(
     Schema_GetFixed32Count,
     Schema_AddFixed32,
     Schema_AddFixed32List,
+    Schema_GetFixed32List,
 );
 impl_primitive_field!(
     u64,
@@ -178,6 +203,7 @@ impl_primitive_field!(
     Schema_GetFixed64Count,
     Schema_AddFixed64,
     Schema_AddFixed64List,
+    Schema_GetFixed64List,
 );
 impl_primitive_field!(
     i32,
@@ -187,6 +213,7 @@ impl_primitive_field!(
     Schema_GetSfixed32Count,
     Schema_AddSfixed32,
     Schema_AddSfixed32List,
+    Schema_GetSfixed32List,
 );
 impl_primitive_field!(
     i64,
@@ -196,6 +223,7 @@ impl_primitive_field!(
     Schema_GetSfixed64Count,
     Schema_AddSfixed64,
     Schema_AddSfixed64List,
+    Schema_GetSfixed64List,
 );
 impl_primitive_field!(
     u32,
@@ -205,6 +233,7 @@ impl_primitive_field!(
     Schema_GetEnumCount,
     Schema_AddEnum,
     Schema_AddEnumList,
+    Schema_GetEnumList,
 );
 impl_primitive_field!(
     EntityId,
@@ -214,6 +243,7 @@ impl_primitive_field!(
     Schema_GetEntityIdCount,
     Schema_AddEntityId,
     Schema_AddEntityIdList,
+    Schema_GetEntityIdList,
 );
 impl_primitive_field!(
     bool,
@@ -223,6 +253,7 @@ impl_primitive_field!(
     Schema_GetBoolCount,
     Schema_AddBool,
     Schema_AddBoolList,
+    Schema_GetBoolList,
 );
 
 #[derive(Debug)]
