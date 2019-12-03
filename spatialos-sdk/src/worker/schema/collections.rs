@@ -87,22 +87,11 @@ where
     type RustType = Vec<T::RustType>;
 
     fn get(object: &SchemaObject, field: FieldId) -> Result<Self::RustType> {
-        let count = object.count::<T>(field);
-        let mut result = Vec::with_capacity(count);
-        for index in 0..count {
-            let value = object
-                .get_index::<T>(field, index)
-                .map_err(Error::at_index::<Self>(field, index))?;
-            result.push(value);
-        }
-
-        Ok(result)
+        T::get_list(object, field)
     }
 
     fn add(object: &mut SchemaObject, field: FieldId, values: &Self::RustType) {
-        for value in values {
-            object.add::<T>(field, value);
-        }
+        T::add_list(object, field, values)
     }
 
     fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
