@@ -1,4 +1,4 @@
-use crate::worker::schema::{DataPointer, Field, FieldId, Result};
+use crate::worker::schema::{DataPointer, Field, FieldId, IndexedField, Result};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -10,11 +10,11 @@ impl SchemaObject {
         T::get(self, field)
     }
 
-    pub fn get_index<T: Field>(&self, field: FieldId, index: usize) -> Result<T::RustType> {
+    pub fn get_index<T: IndexedField>(&self, field: FieldId, index: usize) -> Result<T::RustType> {
         T::index(self, field, index)
     }
 
-    pub fn count<T: Field>(&self, field: FieldId) -> usize {
+    pub fn count<T: IndexedField>(&self, field: FieldId) -> usize {
         T::count(self, field)
     }
 
@@ -22,11 +22,11 @@ impl SchemaObject {
         T::add(self, field, value);
     }
 
-    pub fn get_list<T: Field>(&self, field: FieldId) -> Result<Vec<T::RustType>> {
+    pub fn get_list<T: IndexedField>(&self, field: FieldId) -> Result<Vec<T::RustType>> {
         T::get_list(self, field)
     }
 
-    pub fn add_list<T: Field>(&mut self, field: FieldId, value: &[T::RustType]) {
+    pub fn add_list<T: IndexedField>(&mut self, field: FieldId, value: &[T::RustType]) {
         T::add_list(self, field, value);
     }
 

@@ -1,5 +1,8 @@
 use crate::worker::{
-    schema::{DataPointer, Error, Field, FieldId, Result, SchemaComponentUpdate, SchemaObject},
+    schema::{
+        DataPointer, Error, Field, FieldId, IndexedField, Result, SchemaComponentUpdate,
+        SchemaObject,
+    },
     EntityId,
 };
 use spatialos_sdk_sys::worker::*;
@@ -45,6 +48,22 @@ macro_rules! impl_primitive_field {
                 }
             }
 
+            fn add(object: &mut SchemaObject, field: FieldId, value: &$rust_type) {
+                unsafe {
+                    $schema_add(object.as_ptr_mut(), field, mem::transmute(*value));
+                }
+            }
+
+            fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+                Self::count(update.fields(), field) > 0
+            }
+        }
+
+        impl IndexedField for $schema_type {
+            fn count(object: &SchemaObject, field: FieldId) -> usize {
+                unsafe { $schema_count(object.as_ptr(), field) as usize }
+            }
+
             fn index(object: &SchemaObject, field: FieldId, index: usize) -> Result<$rust_type> {
                 let count = Self::count(object, field);
                 if count > index {
@@ -53,16 +72,6 @@ macro_rules! impl_primitive_field {
                     })
                 } else {
                     Err(Error::index_out_of_bounds::<Self>(index, count))
-                }
-            }
-
-            fn count(object: &SchemaObject, field: FieldId) -> usize {
-                unsafe { $schema_count(object.as_ptr(), field) as usize }
-            }
-
-            fn add(object: &mut SchemaObject, field: FieldId, value: &$rust_type) {
-                unsafe {
-                    $schema_add(object.as_ptr_mut(), field, mem::transmute(*value));
                 }
             }
 
@@ -75,10 +84,6 @@ macro_rules! impl_primitive_field {
                 unsafe {
                     $schema_add_list(object.as_ptr_mut(), field, ptr as *const _, len);
                 }
-            }
-
-            fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
-                Self::count(update.fields(), field) > 0
             }
         }
     };
@@ -241,6 +246,28 @@ impl Field for SchemaString {
         }
     }
 
+    fn add(object: &mut SchemaObject, field: FieldId, value: &String) {
+        let utf8_bytes = value.as_bytes();
+        unsafe {
+            Schema_AddBytes(
+                object.as_ptr_mut(),
+                field,
+                utf8_bytes.as_ptr(),
+                utf8_bytes.len() as u32,
+            );
+        }
+    }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+        Self::count(update.fields(), field) > 0
+    }
+}
+
+impl IndexedField for SchemaString {
+    fn count(object: &SchemaObject, field: FieldId) -> usize {
+        unsafe { Schema_GetBytesCount(object.as_ptr(), field) as usize }
+    }
+
     fn index(object: &SchemaObject, field: FieldId, index: usize) -> Result<String> {
         let count = Self::count(object, field);
         if count > index {
@@ -255,30 +282,10 @@ impl Field for SchemaString {
         }
     }
 
-    fn count(object: &SchemaObject, field: FieldId) -> usize {
-        unsafe { Schema_GetBytesCount(object.as_ptr(), field) as usize }
-    }
-
-    fn add(object: &mut SchemaObject, field: FieldId, value: &String) {
-        let utf8_bytes = value.as_bytes();
-        unsafe {
-            Schema_AddBytes(
-                object.as_ptr_mut(),
-                field,
-                utf8_bytes.as_ptr(),
-                utf8_bytes.len() as u32,
-            );
-        }
-    }
-
     fn add_list(object: &mut SchemaObject, field: FieldId, value: &[String]) {
         for value in value {
             Self::add(object, field, value);
         }
-    }
-
-    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
-        Self::count(update.fields(), field) > 0
     }
 }
 
@@ -298,6 +305,27 @@ impl Field for SchemaBytes {
         }
     }
 
+    fn add(object: &mut SchemaObject, field: FieldId, value: &Vec<u8>) {
+        unsafe {
+            Schema_AddBytes(
+                object.as_ptr_mut(),
+                field,
+                value.as_ptr(),
+                value.len() as u32,
+            );
+        }
+    }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+        Self::count(update.fields(), field) > 0
+    }
+}
+
+impl IndexedField for SchemaBytes {
+    fn count(object: &SchemaObject, field: FieldId) -> usize {
+        unsafe { Schema_GetBytesCount(object.as_ptr(), field) as usize }
+    }
+
     fn index(object: &SchemaObject, field: FieldId, index: usize) -> Result<Vec<u8>> {
         let count = Self::count(object, field);
         if count > index {
@@ -312,28 +340,9 @@ impl Field for SchemaBytes {
         }
     }
 
-    fn count(object: &SchemaObject, field: FieldId) -> usize {
-        unsafe { Schema_GetBytesCount(object.as_ptr(), field) as usize }
-    }
-
-    fn add(object: &mut SchemaObject, field: FieldId, value: &Vec<u8>) {
-        unsafe {
-            Schema_AddBytes(
-                object.as_ptr_mut(),
-                field,
-                value.as_ptr(),
-                value.len() as u32,
-            );
-        }
-    }
-
     fn add_list(object: &mut SchemaObject, field: FieldId, value: &[Vec<u8>]) {
         for value in value {
             Self::add(object, field, value);
         }
-    }
-
-    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
-        Self::count(update.fields(), field) > 0
     }
 }
