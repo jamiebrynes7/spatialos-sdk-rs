@@ -60,6 +60,7 @@ macro_rules! impl_primitive_field {
             }
         }
 
+        #[allow(clippy::useless_transmute, clippy::transmute_int_to_bool)]
         impl IndexedField for $schema_type {
             fn count(object: &SchemaObject, field: FieldId) -> usize {
                 unsafe { $schema_count(object.as_ptr(), field) as usize }
