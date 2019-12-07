@@ -22,55 +22,107 @@ use std::{
 pub type ConnectionStatus = Result<(), ConnectionStatusError>;
 
 #[derive(Clone, PartialOrd, PartialEq, Eq, Debug)]
-pub enum ConnectionStatusError {
-    InternalError(String),
-    InvalidArgument(String),
-    NetworkError(String),
-    Timeout(String),
-    Cancelled(String),
-    Rejected(String),
-    PlayerIdentityTokenExpired(String),
-    LoginTokenExpired(String),
-    CapacityExceeded(String),
-    RateExceeded(String),
-    ServerShutdown(String),
+pub struct ConnectionStatusError {
+    pub code: ConnectionStatusErrorCode,
+    pub detail: String,
+}
+
+#[derive(Clone, PartialOrd, PartialEq, Eq, Debug)]
+pub enum ConnectionStatusErrorCode {
+    InternalError,
+    InvalidArgument,
+    NetworkError,
+    Timeout,
+    Cancelled,
+    Rejected,
+    PlayerIdentityTokenExpired,
+    LoginTokenExpired,
+    CapacityExceeded,
+    RateExceeded,
+    ServerShutdown,
+    Unknown,
+}
+
+impl From<i32> for ConnectionStatusErrorCode {
+    fn from(code: i32) -> Self {
+        match code {
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_INTERNAL_ERROR => {
+                ConnectionStatusErrorCode::InternalError
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_INVALID_ARGUMENT => {
+                ConnectionStatusErrorCode::InvalidArgument
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_NETWORK_ERROR => {
+                ConnectionStatusErrorCode::NetworkError
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_TIMEOUT => {
+                ConnectionStatusErrorCode::Timeout
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_CANCELLED => {
+                ConnectionStatusErrorCode::Cancelled
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_REJECTED => {
+                ConnectionStatusErrorCode::Rejected
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_PLAYER_IDENTITY_TOKEN_EXPIRED => {
+                ConnectionStatusErrorCode::PlayerIdentityTokenExpired
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_LOGIN_TOKEN_EXPIRED => {
+                ConnectionStatusErrorCode::LoginTokenExpired
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_CAPACITY_EXCEEDED => {
+                ConnectionStatusErrorCode::CapacityExceeded
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_RATE_EXCEEDED => {
+                ConnectionStatusErrorCode::RateExceeded
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SERVER_SHUTDOWN => {
+                ConnectionStatusErrorCode::ServerShutdown
+            }
+            _ => ConnectionStatusErrorCode::Unknown,
+        }
+    }
 }
 
 impl Display for ConnectionStatusError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ConnectionStatusError::InternalError(detail) => {
-                f.write_fmt(format_args!("Internal error: {}", detail))
+        match self.code {
+            ConnectionStatusErrorCode::InternalError => {
+                f.write_fmt(format_args!("Internal error: {}", self.detail))
             }
-            ConnectionStatusError::InvalidArgument(detail) => {
-                f.write_fmt(format_args!("Invalid argument: {}", detail))
+            ConnectionStatusErrorCode::InvalidArgument => {
+                f.write_fmt(format_args!("Invalid argument: {}", self.detail))
             }
-            ConnectionStatusError::NetworkError(detail) => {
-                f.write_fmt(format_args!("Network error: {}", detail))
+            ConnectionStatusErrorCode::NetworkError => {
+                f.write_fmt(format_args!("Network error: {}", self.detail))
             }
-            ConnectionStatusError::Timeout(detail) => {
-                f.write_fmt(format_args!("Timeout: {}", detail))
+            ConnectionStatusErrorCode::Timeout => {
+                f.write_fmt(format_args!("Timeout: {}", self.detail))
             }
-            ConnectionStatusError::Cancelled(detail) => {
-                f.write_fmt(format_args!("Cancelled: {}", detail))
+            ConnectionStatusErrorCode::Cancelled => {
+                f.write_fmt(format_args!("Cancelled: {}", self.detail))
             }
-            ConnectionStatusError::Rejected(detail) => {
-                f.write_fmt(format_args!("Rejected: {}", detail))
+            ConnectionStatusErrorCode::Rejected => {
+                f.write_fmt(format_args!("Rejected: {}", self.detail))
             }
-            ConnectionStatusError::PlayerIdentityTokenExpired(detail) => {
-                f.write_fmt(format_args!("Player identity token expired: {}", detail))
+            ConnectionStatusErrorCode::PlayerIdentityTokenExpired => f.write_fmt(format_args!(
+                "Player identity token expired: {}",
+                self.detail
+            )),
+            ConnectionStatusErrorCode::LoginTokenExpired => {
+                f.write_fmt(format_args!("Login token expired: {}", self.detail))
             }
-            ConnectionStatusError::LoginTokenExpired(detail) => {
-                f.write_fmt(format_args!("Login token expired: {}", detail))
+            ConnectionStatusErrorCode::CapacityExceeded => {
+                f.write_fmt(format_args!("Capacity exceeded: {}", self.detail))
             }
-            ConnectionStatusError::CapacityExceeded(detail) => {
-                f.write_fmt(format_args!("Capacity exceeded: {}", detail))
+            ConnectionStatusErrorCode::RateExceeded => {
+                f.write_fmt(format_args!("Rate exceeded: {}", self.detail))
             }
-            ConnectionStatusError::RateExceeded(detail) => {
-                f.write_fmt(format_args!("Rate exceeded: {}", detail))
+            ConnectionStatusErrorCode::ServerShutdown => {
+                f.write_fmt(format_args!("Server shutdown: {}", self.detail))
             }
-            ConnectionStatusError::ServerShutdown(detail) => {
-                f.write_fmt(format_args!("Server shutdown: {}", detail))
+            ConnectionStatusErrorCode::Unknown => {
+                f.write_fmt(format_args!("Unknown error: {}", self.detail))
             }
         }
     }
@@ -507,47 +559,19 @@ impl Connection for WorkerConnection {
     fn get_connection_status(&mut self) -> ConnectionStatus {
         let ptr = self.connection_ptr.get();
 
-        let code = i32::from(unsafe { Worker_Connection_GetConnectionStatusCode(ptr) });
+        let code = unsafe { Worker_Connection_GetConnectionStatusCode(ptr) } as i32;
+
+        if code == Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SUCCESS {
+            return Ok(());
+        }
+
         let detail =
             cstr_to_string(unsafe { Worker_Connection_GetConnectionStatusDetailString(ptr) });
 
-        match code {
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SUCCESS => Ok(()),
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_INTERNAL_ERROR => {
-                Err(ConnectionStatusError::InternalError(detail))
-            }
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_INVALID_ARGUMENT => {
-                Err(ConnectionStatusError::InvalidArgument(detail))
-            }
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_NETWORK_ERROR => {
-                Err(ConnectionStatusError::NetworkError(detail))
-            }
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_TIMEOUT => {
-                Err(ConnectionStatusError::Timeout(detail))
-            }
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_CANCELLED => {
-                Err(ConnectionStatusError::Cancelled(detail))
-            }
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_REJECTED => {
-                Err(ConnectionStatusError::Rejected(detail))
-            }
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_PLAYER_IDENTITY_TOKEN_EXPIRED => {
-                Err(ConnectionStatusError::PlayerIdentityTokenExpired(detail))
-            }
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_LOGIN_TOKEN_EXPIRED => {
-                Err(ConnectionStatusError::LoginTokenExpired(detail))
-            }
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_CAPACITY_EXCEEDED => {
-                Err(ConnectionStatusError::CapacityExceeded(detail))
-            }
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_RATE_EXCEEDED => {
-                Err(ConnectionStatusError::RateExceeded(detail))
-            }
-            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SERVER_SHUTDOWN => {
-                Err(ConnectionStatusError::ServerShutdown(detail))
-            }
-            _ => panic!(format!("Unknown connection status code: {}", code)),
-        }
+        Err(ConnectionStatusError {
+            code: ConnectionStatusErrorCode::from(code),
+            detail,
+        })
     }
 
     fn get_worker_flag(&mut self, name: &str) -> Option<String> {
