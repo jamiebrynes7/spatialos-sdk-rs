@@ -8,7 +8,7 @@ use std::{
     fs::{self, File},
     io::prelude::*,
     path::*,
-    process::Command
+    process::Command,
 };
 
 #[derive(Debug)]
