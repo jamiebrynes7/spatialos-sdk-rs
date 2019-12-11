@@ -1,11 +1,22 @@
-# SpatialOS SDK for Rust
-
-[![Build Status](https://travis-ci.org/jamiebrynes7/spatialos-sdk-rs.svg?branch=master)](https://travis-ci.org/jamiebrynes7/spatialos-sdk-rs) [![dependency status](https://deps.rs/repo/github/jamiebrynes7/spatialos-sdk-rs/status.svg)](https://deps.rs/repo/github/jamiebrynes7/spatialos-sdk-rs) ![Rustc Version](https://img.shields.io/badge/rustc-1.39-blue.svg)
+<div align="center">
+    <h1>SpatialOS SDK for Rust</h1>
+    <p>
+        <strong>An integration of the SpatialOS C API and the Rust programming language.</strong>
+    </p>
+    <p>
+        <a href="https://deps.rs/repo/github/jamiebrynes7/spatialos-sdk-rs"><img src="https://deps.rs/repo/github/jamiebrynes7/spatialos-sdk-rs/status.svg"/></a>
+        <img src="https://img.shields.io/badge/rustc-1.39-blue.svg"/>
+    </p>
+</div>
 
 
 > This is an **unofficial**, **unsupported**, and **untested** integration of the [SpatialOS SDK C API bindings](https://docs.improbable.io/reference/13.3/capi/introduction) with Rust. Improbable does not officially support Rust as a worker language.
 
+# Quick start
+
 ## Requirements
+
+To develop in this repository you'll need:
 
 1. Rust v1.39
 2. A [SpatialOS account](https://www.improbable.io/get-spatialos) 
@@ -13,19 +24,32 @@
 ## Setup
 
 1. Clone this repository.
-2. Install cargo-spatial: `cargo install --path ./cargo-spatial --force`
-3. Set the `SPATIAL_LIB_DIR` environment variable to the location of the dependencies: `export SPATIAL_LIB_DIR=$(pwd)/dependencies`.
-4. Run `cargo spatial download sdk --sdk-version 14.0.0` to download the C API dependencies.
-5. Run `cd spatialos-sdk && cargo build`.
+2. Install `cargo-spatial`.
+  ```
+  $ cargo install --path ./cargo-spatial --force
+  ```
+3. Set the `SPATIAL_LIB_DIR` environment variable to the location of the SpatialOS dependencies.
+   ```
+   $ export SPATIAL_LIB_DIR=$(pwd)/dependencies
+   ```
+4. Download the C API dependencies.
+   ```
+   $ cargo spatial download sdk --sdk-version 14.0.0
+   ```
+5. Build the `spatialos-sdk` crate.
+   ```
+   $ cd spatialos-sdk && cargo build
+   ```
 
-If these steps complete successfully, the `spatialos-sdk` crate has been built and linked successfully and can be used in user code.
+At this point, the `spatialos-sdk` crate has been built and linked successfully and can be used in user code.
 
 ## Running the Example Project
 
 To run the example project, you will need to:
 
 1. Navigate to `project-example`
-2. Run `cargo spatial local launch`
+2. Run `cargo spatial codegen` to generate the Rust bindings to [SpatialOS schema](https://docs.improbable.io/reference/14.2/shared/schema/introduction).
+3. Run `cargo spatial local launch`,
 
 This will start a local deployment of SpatialOS with one entity. The entity will have the `Example`
 component described in `project-example/schema/example.schema`.
