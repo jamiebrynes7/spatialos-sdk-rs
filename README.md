@@ -25,18 +25,22 @@ To develop in this repository you'll need:
 
 1. Clone this repository.
 2. Install `cargo-spatial`.
-  ```
-  $ cargo install --path ./cargo-spatial --force
-  ```
+   
+    ```
+    $ cargo install --path ./cargo-spatial --force
+    ```
 3. Set the `SPATIAL_LIB_DIR` environment variable to the location of the SpatialOS dependencies.
+   
    ```
    $ export SPATIAL_LIB_DIR=$(pwd)/dependencies
    ```
 4. Download the C API dependencies.
+   
    ```
    $ cargo spatial download sdk --sdk-version 14.0.0
    ```
 5. Build the `spatialos-sdk` crate.
+   
    ```
    $ cd spatialos-sdk && cargo build
    ```
