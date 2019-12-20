@@ -77,11 +77,11 @@ pub enum Value_Value {
     #[serde(rename = "uint32Value")]
     Uint32Value(u32),
     #[serde(rename = "uint64Value")]
-    Uint64Value(u64),
+    Uint64Value(String),
     #[serde(rename = "int32Value")]
     Int32Value(i32),
     #[serde(rename = "int64Value")]
-    Int64Value(i64),
+    Int64Value(String),
     #[serde(rename = "floatValue")]
     FloatValue(f32),
     #[serde(rename = "doubleValue")]
@@ -91,7 +91,7 @@ pub enum Value_Value {
     #[serde(rename = "bytesValue")]
     BytesValue(String),
     #[serde(rename = "entityIdValue")]
-    EntityIdValue(i64),
+    EntityIdValue(String),
     #[serde(rename = "enumValue")]
     EnumValue {
         #[serde(rename = "enum")]
