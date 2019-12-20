@@ -39,7 +39,7 @@ impl<T: WorkerSdkFuture> Drop for WorkerFuture<T> {
     }
 }
 
-pub trait WorkerSdkFuture: Send + Unpin {
+pub trait WorkerSdkFuture: Send + Unpin + 'static {
     type RawPointer;
     type Output: Send;
 
@@ -48,7 +48,7 @@ pub trait WorkerSdkFuture: Send + Unpin {
     unsafe fn destroy(ptr: *mut Self::RawPointer);
 }
 
-impl<T: WorkerSdkFuture + 'static> Future for WorkerFuture<T> {
+impl<T: WorkerSdkFuture> Future for WorkerFuture<T> {
     type Output = T::Output;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
