@@ -76,7 +76,6 @@ impl<T: WorkerSdkFuture> Future for WorkerFuture<T> {
                 };
 
                 *inner = Some(WorkerFutureState::InProgress(handle));
-                Poll::Pending
             }
             WorkerFutureState::InProgress(ref mut handle) => {
                 if let Some(val) = handle.result_rx.try_recv().unwrap_or(None) {
@@ -84,8 +83,9 @@ impl<T: WorkerSdkFuture> Future for WorkerFuture<T> {
                 }
 
                 *inner = Some(future_state);
-                Poll::Pending
             }
         }
+
+        Poll::Pending
     }
 }
