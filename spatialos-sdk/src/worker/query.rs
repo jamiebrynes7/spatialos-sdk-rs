@@ -461,7 +461,7 @@ mod test {
         let c2 = QueryConstraint::EntityId(EntityId::new(10));
         let constraints = vec![c1, c2];
 
-        let and = QueryConstraint::And(constraints.clone());
+        let and = QueryConstraint::And(constraints);
         let or = QueryConstraint::Or(vec![and, QueryConstraint::Component(5)]);
 
         let and = QueryConstraint::And(vec![
