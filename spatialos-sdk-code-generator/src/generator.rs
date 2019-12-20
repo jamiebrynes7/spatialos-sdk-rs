@@ -157,7 +157,7 @@ impl Package {
     fn get_component_fields(&self, component: &ComponentDefinition) -> Vec<FieldDefinition> {
         if let Some(ref data_definition) = component.data_definition {
             let data_type = self.resolve_type_reference(&data_definition);
-            data_type.fields.clone()
+            data_type.fields
         } else {
             component.fields.clone()
         }
