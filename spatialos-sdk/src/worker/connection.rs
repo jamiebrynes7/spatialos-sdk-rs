@@ -637,6 +637,8 @@ pub enum WorkerConnectionFuture {
     Locator(Locator, ConnectionParameters),
 }
 
+unsafe impl Send for WorkerConnectionFuture {}
+
 impl WorkerSdkFuture for WorkerConnectionFuture {
     type RawPointer = Worker_ConnectionFuture;
     type Output = Result<WorkerConnection, ConnectionStatusError>;

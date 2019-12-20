@@ -37,13 +37,7 @@ impl<T: WorkerSdkFuture> Drop for WorkerFuture<T> {
     }
 }
 
-struct SendPtr<T> {
-    pub ptr: *mut T,
-}
-
-unsafe impl<T> Send for SendPtr<T> {}
-
-pub trait WorkerSdkFuture: Unpin {
+pub trait WorkerSdkFuture: Send + Unpin {
     type RawPointer;
     type Output: Send;
 
@@ -56,40 +50,51 @@ impl<T: WorkerSdkFuture + 'static> Future for WorkerFuture<T> {
     type Output = T::Output;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let mut next_state = None;
-        let mut result = Poll::Pending;
+        let future_state = &mut self.as_mut().get_mut().inner;
 
-        match &mut self.as_mut().get_mut().inner {
-            WorkerFutureState::NotStarted(future) => {
+        match future_state {
+            // We don't want to borrow the WorkerSdkFuture object. We want to take it so we can
+            // send it to the thread which will block on the Worker SDK future.
+            // To do this, we construct the next state and then mem swap them.
+            // We do have to add the thread handle _after_ we start the thread though,
+            // so it gets a little awkward.
+            // Rust's enum destructing lets us down a little bit here.
+            WorkerFutureState::NotStarted(_) => {
                 let (tx, rx) = futures::channel::oneshot::channel();
-                let thread_waker = cx.waker().clone();
-                let send_ptr = SendPtr {
-                    ptr: future.start(),
-                };
+                let task = cx.waker().clone();
 
-                let thread = thread::spawn(move || unsafe {
-                    let value = T::get(send_ptr.ptr);
-                    tx.send(value).unwrap_or(());
-                    thread_waker.wake();
-                    T::destroy(send_ptr.ptr)
+                let mut state = WorkerFutureState::InProgress(InProgressHandle::<T> {
+                    result_rx: rx,
+                    thread: None,
                 });
 
-                next_state = Some(WorkerFutureState::InProgress(InProgressHandle {
-                    result_rx: rx,
-                    thread: Some(thread),
-                }));
-            }
-            WorkerFutureState::InProgress(context) => {
-                if let Some(val) = context.result_rx.try_recv().unwrap_or(None) {
-                    result = Poll::Ready(val)
+                std::mem::swap(future_state, &mut state);
+
+                // This is always true.
+                if let WorkerFutureState::NotStarted(ftr) = state {
+                    let thread = thread::spawn(move || unsafe {
+                        let ptr = ftr.start();
+                        let value = T::get(ptr);
+                        tx.send(value).unwrap_or(());
+                        task.wake();
+                        T::destroy(ptr)
+                    });
+
+                    // As is this one.
+                    if let WorkerFutureState::InProgress(handle) = future_state {
+                        handle.thread = Some(thread);
+                    }
                 }
+
+                Poll::Pending
+            }
+            WorkerFutureState::InProgress(handle) => {
+                if let Some(val) = handle.result_rx.try_recv().unwrap_or(None) {
+                    return Poll::Ready(val);
+                }
+
+                Poll::Pending
             }
         }
-
-        if let Some(ref mut next) = next_state {
-            std::mem::swap(&mut self.as_mut().get_mut().inner, next);
-        }
-
-        result
     }
 }

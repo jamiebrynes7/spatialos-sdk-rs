@@ -6,7 +6,7 @@ use crate::worker::{
     entity::Entity,
     metrics::Metrics,
     schema::{self, ObjectField},
-    utils::{cstr_to_string, cstr_array_to_vec_string},
+    utils::{cstr_array_to_vec_string, cstr_to_string},
     {Authority, EntityId, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
