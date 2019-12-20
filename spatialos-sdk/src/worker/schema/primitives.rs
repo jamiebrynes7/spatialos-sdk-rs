@@ -79,24 +79,16 @@ macro_rules! impl_primitive_field {
 
             fn add_list(object: &mut SchemaObject, field: FieldId, data: &[$rust_type]) {
                 // Determine how large the buffer needs to be.
-                //
-                // NOTE: We allocate extra padding when allocating the buffer in order to have room
-                // to adjust the alignment of the buffer to match the alignment of `Self::RustType`
-                // and still have enough room in the buffer for the right number of elements.
-                let byte_len = {
-                    let data_len = data.len() * mem::size_of::<Self::RustType>();
-                    let padding = mem::align_of::<Self::RustType>() - 1;
-                    data_len + padding
-                };
+                let byte_len = data.len() * mem::size_of::<Self::RustType>();
 
                 // Allocate a buffer that is owned by `object`.
+                //
+                // SAFETY: It's safe to convert the allocated buffer to a slice because the SDK
+                // allocates the buffer with an alignment of `std::max_align_t`, which ensures that
+                // it will be aligned for all types: https://en.cppreference.com/w/cpp/types/max_align_t
                 let buffer = unsafe {
                     let data_ptr = Schema_AllocateBuffer(object.as_ptr_mut(), byte_len as _);
-                    let buffer = slice::from_raw_parts_mut(data_ptr, byte_len);
-
-                    // Convert the byte buffer into a correctly-aligned slice of the data type.
-                    let (_prefix, buffer, _suffix) = buffer.align_to_mut::<Self::RustType>();
-                    buffer
+                    slice::from_raw_parts_mut(data_ptr as *mut _, byte_len)
                 };
 
                 // Populate the buffer.
