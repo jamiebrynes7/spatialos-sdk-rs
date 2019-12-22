@@ -1,4 +1,6 @@
-use crate::worker::schema::{Error, Field, FieldId, Result, SchemaComponentUpdate, SchemaObject};
+use crate::worker::schema::{
+    Error, Field, FieldId, IndexedField, Result, SchemaComponentUpdate, SchemaObject,
+};
 use spatialos_sdk_sys::worker::*;
 use std::{collections::BTreeMap, marker::PhantomData};
 
@@ -17,7 +19,7 @@ pub struct Optional<T>(PhantomData<T>);
 
 impl<T> Field for Optional<T>
 where
-    T: Field,
+    T: IndexedField,
 {
     type RustType = Option<T::RustType>;
 
@@ -65,14 +67,6 @@ where
             None => {}
         }
     }
-
-    fn index(_object: &SchemaObject, _field: FieldId, _index: usize) -> Result<Self::RustType> {
-        panic!("Optional fields cannot be indexed into")
-    }
-
-    fn count(_object: &SchemaObject, _field: FieldId) -> usize {
-        panic!("Optional fields cannot be counted")
-    }
 }
 
 /// Marker type corresponding to the [`list`] schemalang collection type.
@@ -88,27 +82,16 @@ pub struct List<T>(PhantomData<T>);
 
 impl<T> Field for List<T>
 where
-    T: Field,
+    T: IndexedField,
 {
     type RustType = Vec<T::RustType>;
 
     fn get(object: &SchemaObject, field: FieldId) -> Result<Self::RustType> {
-        let count = object.count::<T>(field);
-        let mut result = Vec::with_capacity(count);
-        for index in 0..count {
-            let value = object
-                .get_index::<T>(field, index)
-                .map_err(Error::at_index::<Self>(field, index))?;
-            result.push(value);
-        }
-
-        Ok(result)
+        T::get_list(object, field)
     }
 
     fn add(object: &mut SchemaObject, field: FieldId, values: &Self::RustType) {
-        for value in values {
-            object.add::<T>(field, value);
-        }
+        T::add_list(object, field, values)
     }
 
     fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
@@ -141,14 +124,6 @@ where
             }
         }
     }
-
-    fn index(_object: &SchemaObject, _field: FieldId, _index: usize) -> Result<Self::RustType> {
-        panic!("List fields cannot be indexed into")
-    }
-
-    fn count(_object: &SchemaObject, _field: FieldId) -> usize {
-        panic!("List fields cannot be counted")
-    }
 }
 
 /// Marker type corresponding to the [`map`] schemalang collection type.
@@ -171,8 +146,8 @@ pub struct Map<K, V>(PhantomData<(K, V)>);
 
 impl<K, V> Field for Map<K, V>
 where
-    K: Field,
-    V: Field,
+    K: IndexedField,
+    V: IndexedField,
     K::RustType: Ord,
 {
     type RustType = BTreeMap<K::RustType, V::RustType>;
@@ -245,13 +220,5 @@ where
                 Self::add(update.fields_mut(), field, value);
             }
         }
-    }
-
-    fn index(_object: &SchemaObject, _field: FieldId, _index: usize) -> Result<Self::RustType> {
-        panic!("Map fields cannot be indexed into");
-    }
-
-    fn count(_object: &SchemaObject, _field: FieldId) -> usize {
-        panic!("Map fields cannot be counted");
     }
 }

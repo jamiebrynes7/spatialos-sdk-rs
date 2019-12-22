@@ -97,24 +97,7 @@ pub trait Field {
 
     fn get(object: &SchemaObject, field: FieldId) -> Result<Self::RustType>;
 
-    fn index(object: &SchemaObject, field: FieldId, index: usize) -> Result<Self::RustType>;
-
-    fn count(object: &SchemaObject, field: FieldId) -> usize;
-
     fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType);
-
-    fn add_list(object: &mut SchemaObject, field: FieldId, values: &[Self::RustType]) {
-        for value in values {
-            Self::add(object, field, value);
-        }
-    }
-
-    fn get_list(object: &SchemaObject, field: FieldId) -> Result<Vec<Self::RustType>> {
-        let count = Self::count(object, field);
-        (0..count)
-            .map(|index| Self::index(object, field, index))
-            .collect()
-    }
 
     fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool;
 
@@ -137,6 +120,25 @@ pub trait Field {
         if let Some(value) = value {
             Self::add(update.fields_mut(), field, value);
         }
+    }
+}
+
+pub trait IndexedField: Field {
+    fn count(object: &SchemaObject, field: FieldId) -> usize;
+
+    fn index(object: &SchemaObject, field: FieldId, index: usize) -> Result<Self::RustType>;
+
+    fn add_list(object: &mut SchemaObject, field: FieldId, values: &[Self::RustType]) {
+        for value in values {
+            Self::add(object, field, value);
+        }
+    }
+
+    fn get_list(object: &SchemaObject, field: FieldId) -> Result<Vec<Self::RustType>> {
+        let count = Self::count(object, field);
+        (0..count)
+            .map(|index| Self::index(object, field, index))
+            .collect()
     }
 }
 
@@ -189,20 +191,25 @@ where
         Self::from_object(object.get_object(field))
     }
 
-    fn index(object: &SchemaObject, field: FieldId, index: usize) -> Result<Self::RustType> {
-        Self::from_object(object.index_object(field, index))
-    }
-
-    fn count(object: &SchemaObject, field: FieldId) -> usize {
-        object.object_count(field)
-    }
-
     fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
         value.into_object(object.add_object(field));
     }
 
     fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
         Self::count(update.fields(), field) > 0
+    }
+}
+
+impl<T> IndexedField for T
+where
+    T: ObjectField,
+{
+    fn count(object: &SchemaObject, field: FieldId) -> usize {
+        object.object_count(field)
+    }
+
+    fn index(object: &SchemaObject, field: FieldId, index: usize) -> Result<Self::RustType> {
+        Self::from_object(object.index_object(field, index))
     }
 }
 
@@ -280,24 +287,6 @@ macro_rules! impl_field_for_enum_field {
                     .map_err(Into::into)
             }
 
-            fn index(
-                object: &$crate::worker::schema::SchemaObject,
-                field: $crate::worker::schema::FieldId,
-                index: usize,
-            ) -> $crate::worker::schema::Result<Self::RustType> {
-                Self::try_from(
-                    object.get_index::<$crate::worker::schema::SchemaEnum>(field, index)?,
-                )
-                .map_err(Into::into)
-            }
-
-            fn count(
-                object: &$crate::worker::schema::SchemaObject,
-                field: $crate::worker::schema::FieldId,
-            ) -> usize {
-                object.count::<$crate::worker::schema::SchemaEnum>(field)
-            }
-
             fn add(
                 object: &mut $crate::worker::schema::SchemaObject,
                 field: $crate::worker::schema::FieldId,
@@ -311,6 +300,26 @@ macro_rules! impl_field_for_enum_field {
                 field: $crate::worker::schema::FieldId,
             ) -> bool {
                 Self::count(update.fields(), field) > 0
+            }
+        }
+
+        impl $crate::worker::schema::IndexedField for $type {
+            fn count(
+                object: &$crate::worker::schema::SchemaObject,
+                field: $crate::worker::schema::FieldId,
+            ) -> usize {
+                object.count::<$crate::worker::schema::SchemaEnum>(field)
+            }
+
+            fn index(
+                object: &$crate::worker::schema::SchemaObject,
+                field: $crate::worker::schema::FieldId,
+                index: usize,
+            ) -> $crate::worker::schema::Result<Self::RustType> {
+                Self::try_from(
+                    object.get_index::<$crate::worker::schema::SchemaEnum>(field, index)?,
+                )
+                .map_err(Into::into)
             }
         }
     };
