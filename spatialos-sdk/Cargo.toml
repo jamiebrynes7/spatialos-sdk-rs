@@ -9,8 +9,8 @@ edition = "2018"
 
 [dependencies]
 derivative = "1.0.2"
+futures = "0.3.1"
 spatialos-sdk-sys = { path = "../spatialos-sdk-sys"}
-futures = "0.1"
 inventory = "0.1"
 lazy_static = "1.3"
 

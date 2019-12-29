@@ -1,13 +1,13 @@
 # SpatialOS SDK for Rust
 
-[![Build Status](https://travis-ci.org/jamiebrynes7/spatialos-sdk-rs.svg?branch=master)](https://travis-ci.org/jamiebrynes7/spatialos-sdk-rs) [![dependency status](https://deps.rs/repo/github/jamiebrynes7/spatialos-sdk-rs/status.svg)](https://deps.rs/repo/github/jamiebrynes7/spatialos-sdk-rs) ![Rustc Version](https://img.shields.io/badge/rustc-1.38-blue.svg)
+[![Build Status](https://travis-ci.org/jamiebrynes7/spatialos-sdk-rs.svg?branch=master)](https://travis-ci.org/jamiebrynes7/spatialos-sdk-rs) [![dependency status](https://deps.rs/repo/github/jamiebrynes7/spatialos-sdk-rs/status.svg)](https://deps.rs/repo/github/jamiebrynes7/spatialos-sdk-rs) ![Rustc Version](https://img.shields.io/badge/rustc-1.39-blue.svg)
 
 
 > This is an **unofficial**, **unsupported**, and **untested** integration of the [SpatialOS SDK C API bindings](https://docs.improbable.io/reference/13.3/capi/introduction) with Rust. Improbable does not officially support Rust as a worker language.
 
 ## Requirements
 
-1. Rust v1.38
+1. Rust v1.39
 2. A [SpatialOS account](https://www.improbable.io/get-spatialos) 
 
 ## Setup

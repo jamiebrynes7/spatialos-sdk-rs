@@ -1,4 +1,10 @@
+mod connection_handler;
+#[rustfmt::skip]
+mod generated;
+mod opt;
+
 use crate::{connection_handler::*, opt::*};
+use futures::executor::block_on;
 use generated::{example, improbable};
 use rand::Rng;
 use spatialos_sdk::worker::{
@@ -14,14 +20,9 @@ use spatialos_sdk::worker::{
 use std::{collections::HashMap, f64};
 use structopt::StructOpt;
 
-mod connection_handler;
-#[rustfmt::skip]
-mod generated;
-mod opt;
-
 fn main() {
     let opt = Opt::from_args();
-    let mut worker_connection = match get_connection(opt) {
+    let mut worker_connection = match block_on(get_connection(opt)) {
         Ok(c) => c,
         Err(e) => panic!("{}", e),
     };

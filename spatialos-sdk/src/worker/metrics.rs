@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::ffi::CString;
 use std::slice;
 
-use crate::worker::internal::utils::cstr_to_string;
+use crate::worker::utils::cstr_to_string;
 use spatialos_sdk_sys::worker::{
     Worker_GaugeMetric, Worker_HistogramMetric, Worker_HistogramMetricBucket, Worker_Metrics,
 };
