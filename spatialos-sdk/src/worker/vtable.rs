@@ -1,10 +1,13 @@
-use spatialos_sdk_sys::worker::*;
-use std::{ptr, mem};
-use std::os::raw;
-use crate::worker::schema::{SchemaCommandResponse, DataPointer, SchemaComponentData, SchemaComponentUpdate, SchemaCommandRequest};
-use std::sync::Arc;
 use crate::worker::component::{Component, ComponentId};
+use crate::worker::schema::{
+    DataPointer, SchemaCommandRequest, SchemaCommandResponse, SchemaComponentData,
+    SchemaComponentUpdate,
+};
+use spatialos_sdk_sys::worker::*;
 use std::collections::HashMap;
+use std::os::raw;
+use std::sync::Arc;
+use std::{mem, ptr};
 
 inventory::collect!(VTable);
 
@@ -29,7 +32,7 @@ lazy_static::lazy_static! {
 #[derive(Clone, Debug)]
 pub(crate) struct ComponentDatabase {
     vtables: HashMap<ComponentId, VTable>,
-    raw_vtables: Vec<Worker_ComponentVtable>
+    raw_vtables: Vec<Worker_ComponentVtable>,
 }
 
 impl ComponentDatabase {

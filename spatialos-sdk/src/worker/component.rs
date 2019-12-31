@@ -1,9 +1,6 @@
 use crate::worker::schema::{self, *};
 use spatialos_sdk_sys::worker::*;
-use std::{
-    borrow::Cow,
-    ptr::NonNull,
-};
+use std::{borrow::Cow, ptr::NonNull};
 
 // Re-export inventory so generated code doesn't require the user to add inventory to their
 // Cargo.toml

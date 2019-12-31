@@ -8,8 +8,8 @@ use crate::worker::{
     op::OpList,
     parameters::ConnectionParameters,
     utils::cstr_to_string,
-    worker_future::{WorkerFuture, WorkerSdkFuture},
     vtable,
+    worker_future::{WorkerFuture, WorkerSdkFuture},
     {EntityId, InterestOverride, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;

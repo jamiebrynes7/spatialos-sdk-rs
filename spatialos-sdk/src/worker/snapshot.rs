@@ -1,4 +1,4 @@
-use crate::worker::{vtable::DATABASE, entity::Entity, utils::cstr_to_string, EntityId};
+use crate::worker::{entity::Entity, utils::cstr_to_string, vtable::DATABASE, EntityId};
 use spatialos_sdk_sys::worker::*;
 use std::{ffi::CString, path::Path};
 
