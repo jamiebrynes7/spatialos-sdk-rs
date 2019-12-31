@@ -8,7 +8,6 @@ pub use self::windows::*;
 
 use crate::{config::Config, opt::DownloadSdk};
 use log::*;
-use reqwest::get;
 use std::fs::File;
 use std::io::copy;
 use std::{
@@ -235,7 +234,7 @@ fn get_installer(
 ) -> Result<PathBuf, Box<dyn std::error::Error>> {
     // Download the installer.
     trace!("GET request to {}", download_url);
-    let mut response = get(download_url)?;
+    let mut response = reqwest::blocking::get(download_url)?;
 
     let (mut dest, path) = {
         let fname = response
