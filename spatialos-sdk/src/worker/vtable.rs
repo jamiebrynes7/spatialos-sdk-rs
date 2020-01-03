@@ -15,27 +15,6 @@ use crate::worker::{
 use spatialos_sdk_sys::worker::*;
 use std::{collections::HashMap, os::raw, ptr};
 
-pub const PASSTHROUGH_VTABLE: Worker_ComponentVtable = Worker_ComponentVtable {
-    component_id: 0,
-    user_data: ptr::null_mut(),
-    command_request_free: None,
-    command_request_copy: None,
-    command_request_deserialize: None,
-    command_request_serialize: None,
-    command_response_free: None,
-    command_response_copy: None,
-    command_response_deserialize: None,
-    command_response_serialize: None,
-    component_data_free: None,
-    component_data_copy: None,
-    component_data_deserialize: None,
-    component_data_serialize: None,
-    component_update_free: None,
-    component_update_copy: None,
-    component_update_deserialize: None,
-    component_update_serialize: None,
-};
-
 inventory::collect!(VTable);
 
 lazy_static::lazy_static! {
@@ -83,14 +62,15 @@ impl ComponentDatabase {
 unsafe impl Sync for ComponentDatabase {}
 unsafe impl Send for ComponentDatabase {}
 
+#[derive(Clone, Debug)]
 pub struct VTable {
-    pub(crate) vtable: Worker_ComponentVtable,
+    pub(crate) worker_vtable: Worker_ComponentVtable,
 }
 
 impl VTable {
     pub fn new<C: Component>() -> Self {
         VTable {
-            vtable: Worker_ComponentVtable {
+            worker_vtable: Worker_ComponentVtable {
                 component_id: C::ID,
                 user_data: ptr::null_mut(),
                 command_request_free: Some(vtable_command_request_free::<C>),
@@ -112,9 +92,32 @@ impl VTable {
             },
         }
     }
+
+    pub fn component_id(&self) -> ComponentId {
+        self.worker_vtable.component_id
+    }
 }
 
-inventory::collect!(VTable);
+pub const PASSTHROUGH_VTABLE: Worker_ComponentVtable = Worker_ComponentVtable {
+    component_id: 0,
+    user_data: ptr::null_mut(),
+    command_request_free: None,
+    command_request_copy: None,
+    command_request_deserialize: None,
+    command_request_serialize: None,
+    command_response_free: None,
+    command_response_copy: None,
+    command_response_deserialize: None,
+    command_response_serialize: None,
+    component_data_free: None,
+    component_data_copy: None,
+    component_data_deserialize: None,
+    component_data_serialize: None,
+    component_update_free: None,
+    component_update_copy: None,
+    component_update_deserialize: None,
+    component_update_serialize: None,
+};
 
 unsafe extern "C" fn component_data_free<C: Component>(
     component_id: ComponentId,
