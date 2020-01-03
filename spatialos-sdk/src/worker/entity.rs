@@ -1,8 +1,8 @@
 use crate::worker::{
-    component::{Component, ComponentId, DATABASE},
+    component::{Component, ComponentId},
     handle,
     schema::*,
-    vtable::{self, DATABASE},
+    vtable::DATABASE,
 };
 use spatialos_sdk_sys::worker::{Worker_ComponentData, Worker_Entity};
 use std::collections::HashMap;

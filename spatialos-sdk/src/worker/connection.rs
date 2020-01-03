@@ -9,7 +9,6 @@ use crate::worker::{
     op::OpList,
     parameters::ConnectionParameters,
     utils::cstr_to_string,
-    vtable,
     worker_future::{WorkerFuture, WorkerSdkFuture},
     {EntityId, InterestOverride, LogLevel, RequestId},
 };

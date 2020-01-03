@@ -13,7 +13,7 @@ use crate::worker::{
     schema::*,
 };
 use spatialos_sdk_sys::worker::*;
-use std::{os::raw, ptr};
+use std::{collections::HashMap, os::raw, ptr};
 
 pub const PASSTHROUGH_VTABLE: Worker_ComponentVtable = Worker_ComponentVtable {
     component_id: 0,
@@ -35,6 +35,53 @@ pub const PASSTHROUGH_VTABLE: Worker_ComponentVtable = Worker_ComponentVtable {
     component_update_deserialize: None,
     component_update_serialize: None,
 };
+
+inventory::collect!(VTable);
+
+lazy_static::lazy_static! {
+    pub(crate) static ref DATABASE: ComponentDatabase = {
+
+        let mut raw_vtables = Vec::new();
+        let mut vtables = HashMap::new();
+
+        for table in inventory::iter::<VTable>.into_iter() {
+            raw_vtables.push(table.worker_vtable);
+            vtables.insert(table.component_id(), table.clone());
+        }
+
+        ComponentDatabase {
+            vtables,
+            raw_vtables
+        }
+    };
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct ComponentDatabase {
+    vtables: HashMap<ComponentId, VTable>,
+    raw_vtables: Vec<Worker_ComponentVtable>,
+}
+
+impl ComponentDatabase {
+    pub(crate) fn has_vtable(&self, id: ComponentId) -> bool {
+        self.vtables.contains_key(&id)
+    }
+
+    pub(crate) fn get_vtable(&self, id: ComponentId) -> Option<&VTable> {
+        self.vtables.get(&id)
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> *const Worker_ComponentVtable {
+        self.raw_vtables.as_ptr()
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.vtables.len()
+    }
+}
+
+unsafe impl Sync for ComponentDatabase {}
+unsafe impl Send for ComponentDatabase {}
 
 pub struct VTable {
     pub(crate) vtable: Worker_ComponentVtable,
