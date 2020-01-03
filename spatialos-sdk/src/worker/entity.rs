@@ -1,5 +1,6 @@
 use crate::worker::{
-    component::{self, Component, ComponentId, DATABASE},
+    component::{Component, ComponentId, DATABASE},
+    handle,
     schema::*,
 };
 use spatialos_sdk_sys::worker::{Worker_ComponentData, Worker_Entity};
@@ -34,7 +35,7 @@ impl Entity {
     pub(crate) fn add<C: Component>(&mut self, component: C) -> Result<(), String> {
         self.pre_add_check(C::ID)?;
 
-        let data_ptr = component::handle_allocate(component);
+        let data_ptr = handle::allocate_raw(Ok(component));
         let raw_data = Worker_ComponentData {
             reserved: ptr::null_mut(),
             component_id: C::ID,

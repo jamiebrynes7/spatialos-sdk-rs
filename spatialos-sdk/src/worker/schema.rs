@@ -158,7 +158,7 @@ pub trait IndexedField: Field {
 /// [types]: https://docs.improbable.io/reference/14.2/shared/schema/reference#types
 /// [`SchemaObject`]: struct.SchemaObject.html
 /// [`Field`]: trait.Field.html
-pub trait ObjectField: Sized + Clone {
+pub trait ObjectField: 'static + Sized + Clone {
     /// Deserializes an instance of this type from a [`SchemaObject`].
     ///
     /// Note that deserialization can never fail as the underlying SpatialOS API ensures
@@ -328,7 +328,7 @@ macro_rules! impl_field_for_enum_field {
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// An error that can occur during schema deserialization.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Error {
     type_name: &'static str,
     kind: ErrorKind,
@@ -449,7 +449,7 @@ impl From<UnknownDiscriminantError> for Error {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ErrorKind {
     UnknownDiscriminant(u32),
     UnknownCommand(CommandIndex),

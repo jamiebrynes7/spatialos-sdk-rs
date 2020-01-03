@@ -1,3 +1,4 @@
+mod handle;
 pub mod internal;
 
 pub mod commands;

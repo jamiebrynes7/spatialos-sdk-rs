@@ -1,8 +1,9 @@
 use crate::ptr::MutPtr;
 use crate::worker::{
     commands::*,
-    component::{self, Component, UpdateParameters},
+    component::{Component, UpdateParameters},
     entity::Entity,
+    handle,
     internal::utils::cstr_to_string,
     locator::*,
     metrics::Metrics,
@@ -370,12 +371,16 @@ impl Connection for WorkerConnection {
             None => ptr::null(),
         };
 
+        // Allocate a user handle for the request data so that it can be serialized by the
+        // worker SDK.
+        let user_handle = handle::new(Ok(request));
+
         let mut command_request = Worker_CommandRequest {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             command_index,
             schema_type: ptr::null_mut(),
-            user_handle: component::handle_allocate(request),
+            user_handle: handle::get_raw(&user_handle),
         };
 
         let request_id = unsafe {
@@ -388,10 +393,6 @@ impl Connection for WorkerConnection {
             )
         };
 
-        unsafe {
-            component::handle_free::<C::CommandRequest>(command_request.user_handle);
-        }
-
         RequestId::new(request_id)
     }
 
@@ -400,13 +401,18 @@ impl Connection for WorkerConnection {
         request_id: RequestId<IncomingCommandRequest>,
         response: C::CommandResponse,
     ) {
+        // Allocate a user handle for the response data so that it can be serialized by the
+        // worker SDK.
+        let command_index = C::get_response_command_index(&response);
+        let user_handle = handle::new(Ok(response));
+
         unsafe {
             let mut raw_response = Worker_CommandResponse {
                 reserved: ptr::null_mut(),
                 component_id: C::ID,
-                command_index: C::get_response_command_index(&response),
+                command_index,
                 schema_type: ptr::null_mut(),
-                user_handle: component::handle_allocate(response),
+                user_handle: handle::get_raw(&user_handle),
             };
 
             Worker_Connection_SendCommandResponse(
@@ -414,8 +420,6 @@ impl Connection for WorkerConnection {
                 request_id.id,
                 &mut raw_response,
             );
-
-            component::handle_free::<C::CommandResponse>(raw_response.user_handle);
         }
     }
 
@@ -442,11 +446,15 @@ impl Connection for WorkerConnection {
         update: C::Update,
         parameters: UpdateParameters,
     ) {
+        // Allocate a user handle for the update data so that it can be serialized by the
+        // worker SDK.
+        let user_handle = handle::new(Ok(update));
+
         let mut component_update = Worker_ComponentUpdate {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             schema_type: ptr::null_mut(),
-            user_handle: component::handle_allocate(update),
+            user_handle: handle::get_raw(&user_handle),
         };
 
         let params = parameters.to_worker_sdk();
@@ -457,8 +465,6 @@ impl Connection for WorkerConnection {
                 &mut component_update,
                 &params,
             );
-
-            component::handle_free::<C::Update>(component_update.user_handle);
         }
     }
 
