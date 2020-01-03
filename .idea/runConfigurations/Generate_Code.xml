@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Generate Code" type="CompoundRunConfigurationType">
+    <toRun name="Generate code (example project) " type="CargoCommandRunConfiguration" />
+    <toRun name="Generate code (test suite)" type="CargoCommandRunConfiguration" />
+    <method v="2" />
+  </configuration>
+</component>
