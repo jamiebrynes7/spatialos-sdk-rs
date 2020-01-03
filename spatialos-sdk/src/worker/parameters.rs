@@ -1,4 +1,4 @@
-use crate::worker::{component::DATABASE, vtable};
+use crate::worker::vtable::{self, DATABASE};
 use spatialos_sdk_sys::worker::*;
 use std::{
     ffi::{CStr, CString},

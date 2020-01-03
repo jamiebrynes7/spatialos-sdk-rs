@@ -1,13 +1,14 @@
 use crate::ptr::MutPtr;
 use crate::worker::{
     commands::*,
-    component::{self, Component, UpdateParameters},
+    component::{Component, UpdateParameters},
     entity::Entity,
     locator::*,
     metrics::Metrics,
     op::OpList,
     parameters::ConnectionParameters,
     utils::cstr_to_string,
+    vtable,
     worker_future::{WorkerFuture, WorkerSdkFuture},
     {EntityId, InterestOverride, LogLevel, RequestId},
 };
@@ -424,7 +425,7 @@ impl Connection for WorkerConnection {
             component_id: C::ID,
             command_index,
             schema_type: ptr::null_mut(),
-            user_handle: component::handle_allocate(request),
+            user_handle: vtable::handle_allocate(request),
         };
 
         let request_id = unsafe {
@@ -438,7 +439,7 @@ impl Connection for WorkerConnection {
         };
 
         unsafe {
-            component::handle_free::<C::CommandRequest>(command_request.user_handle);
+            vtable::handle_free::<C::CommandRequest>(command_request.user_handle);
         }
 
         RequestId::new(request_id)
@@ -455,7 +456,7 @@ impl Connection for WorkerConnection {
                 component_id: C::ID,
                 command_index: C::get_response_command_index(&response),
                 schema_type: ptr::null_mut(),
-                user_handle: component::handle_allocate(response),
+                user_handle: vtable::handle_allocate(response),
             };
 
             Worker_Connection_SendCommandResponse(
@@ -464,7 +465,7 @@ impl Connection for WorkerConnection {
                 &mut raw_response,
             );
 
-            component::handle_free::<C::CommandResponse>(raw_response.user_handle);
+            vtable::handle_free::<C::CommandResponse>(raw_response.user_handle);
         }
     }
 
@@ -495,7 +496,7 @@ impl Connection for WorkerConnection {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             schema_type: ptr::null_mut(),
-            user_handle: component::handle_allocate(update),
+            user_handle: vtable::handle_allocate(update),
         };
 
         let params = parameters.to_worker_sdk();
@@ -507,7 +508,7 @@ impl Connection for WorkerConnection {
                 &params,
             );
 
-            component::handle_free::<C::Update>(component_update.user_handle);
+            vtable::handle_free::<C::Update>(component_update.user_handle);
         }
     }
 

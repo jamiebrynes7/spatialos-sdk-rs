@@ -8,6 +8,7 @@
 
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
+use spatialos_sdk::worker::vtable::VTable;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::generated as generated;
@@ -20,6 +21,7 @@ use super::generated as generated;
 pub mod example {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
+use spatialos_sdk::worker::vtable::VTable;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::generated as generated;
@@ -584,6 +586,7 @@ inventory::submit!(VTable::new::<Rotate>());
 pub mod improbable {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
+use spatialos_sdk::worker::vtable::VTable;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::generated as generated;
@@ -1358,6 +1361,7 @@ inventory::submit!(VTable::new::<Position>());
 pub mod restricted {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
+use spatialos_sdk::worker::vtable::VTable;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::super::generated as generated;
