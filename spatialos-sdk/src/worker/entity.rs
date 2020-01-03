@@ -2,6 +2,7 @@ use crate::worker::{
     component::{Component, ComponentId, DATABASE},
     handle,
     schema::*,
+    vtable::{self, DATABASE},
 };
 use spatialos_sdk_sys::worker::{Worker_ComponentData, Worker_Entity};
 use std::collections::HashMap;
@@ -59,6 +60,7 @@ impl Entity {
         // Call copy on the component data. We don't own this Worker_ComponentData.
         let vtable = DATABASE.get_vtable(id).unwrap();
         let copy_data_func = vtable
+            .worker_vtable
             .component_data_copy
             .unwrap_or_else(|| panic!("No component_data_free method defined for {}", id));
         copy_data_func(id, ptr::null_mut(), component.user_handle);
@@ -82,12 +84,15 @@ impl Entity {
         mut component: Owned<SchemaComponentData>,
     ) -> Result<(), String> {
         let vtable = DATABASE.get_vtable(component_id).unwrap();
-        let deserialize_func = vtable.component_data_deserialize.unwrap_or_else(|| {
-            panic!(
-                "No component_data_deserialize method defined for {}",
-                component_id
-            )
-        });
+        let deserialize_func = vtable
+            .worker_vtable
+            .component_data_deserialize
+            .unwrap_or_else(|| {
+                panic!(
+                    "No component_data_deserialize method defined for {}",
+                    component_id
+                )
+            });
 
         // Create the **void that the C API requires. We need to then clean this up later.
         // The value pointed to by handle_out_ptr is written to during the deserialize method.
@@ -167,6 +172,7 @@ impl Drop for Entity {
             let vtable = DATABASE.get_vtable(id).unwrap();
 
             let free_data_func = vtable
+                .worker_vtable
                 .component_data_free
                 .unwrap_or_else(|| panic!("No component_data_free method defined for {}", id));
 
@@ -195,6 +201,7 @@ impl RawEntity {
                 let vtable = DATABASE.get_vtable(id).unwrap();
 
                 let copy_data_func = vtable
+                    .worker_vtable
                     .component_data_copy
                     .unwrap_or_else(|| panic!("No component_data_copy method defined for {}", id));
 
@@ -215,7 +222,7 @@ impl Drop for RawEntity {
         for component_data in &self.components {
             let vtable = DATABASE.get_vtable(component_data.component_id).unwrap();
 
-            let free_data_func = vtable.component_data_free.unwrap_or_else(|| {
+            let free_data_func = vtable.worker_vtable.component_data_free.unwrap_or_else(|| {
                 panic!(
                     "No component_data_free method defined for {}",
                     component_data.component_id

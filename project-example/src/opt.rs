@@ -3,17 +3,15 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(
     name = "project-example",
-    about = "A SpatialOS worker written in Rust."
+    about = "A SpatialOS worker written in Rust.",
+    rename_all = "kebab-case"
 )]
 pub struct Opt {
-    #[structopt(name = "WORKER_TYPE", long, short = "w")]
-    pub worker_type: String,
-
-    #[structopt(name = "WORKER_ID", long, short = "i")]
+    #[structopt(long, short = "i")]
     pub worker_id: Option<String>,
 
-    #[structopt(name = "POLLING_CONNECTION", long = "polling-connection", short = "p")]
-    pub connect_with_poll: bool,
+    #[structopt(long, short = "w")]
+    pub worker_type: String,
 
     #[structopt(subcommand)]
     pub command: Command,
@@ -33,15 +31,15 @@ pub enum Command {
 
     #[structopt(name = "locator")]
     Locator {
-        #[structopt(name = "PLAYER_IDENTITY_TOKEN", short = "p")]
+        #[structopt(short = "p")]
         player_identity_token: String,
-        #[structopt(name = "LOGIN_TOKEN", long, short = "t")]
+        #[structopt(long, short = "t")]
         login_token: String,
     },
 
     #[structopt(name = "dev-auth")]
     DevelopmentAuthentication {
-        #[structopt(name = "DEV_AUTH_TOKEN", long, short = "t")]
+        #[structopt(long, short = "t")]
         dev_auth_token: String,
     },
 }

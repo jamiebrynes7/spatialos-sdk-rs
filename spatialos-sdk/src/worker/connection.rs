@@ -4,35 +4,33 @@ use crate::worker::{
     component::{Component, UpdateParameters},
     entity::Entity,
     handle,
-    internal::utils::cstr_to_string,
     locator::*,
     metrics::Metrics,
     op::OpList,
     parameters::ConnectionParameters,
+    utils::cstr_to_string,
+    vtable,
+    worker_future::{WorkerFuture, WorkerSdkFuture},
     {EntityId, InterestOverride, LogLevel, RequestId},
 };
-use futures::{Async, Future};
 use spatialos_sdk_sys::worker::*;
 use std::{
+    error::Error,
     ffi::{CStr, CString, NulError},
+    fmt::{Display, Formatter},
     ptr,
 };
 
-/// Information about the status of a worker connection or network request.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ConnectionStatus {
-    /// The status of the connection or request.
-    pub code: ConnectionStatusCode,
+pub type ConnectionStatus = Result<(), ConnectionStatusError>;
 
-    /// Detailed, human-readable description of the connection status.
-    ///
-    /// Will be "OK" if no error occurred.
+#[derive(Clone, PartialOrd, PartialEq, Eq, Debug)]
+pub struct ConnectionStatusError {
+    pub code: ConnectionStatusErrorCode,
     pub detail: String,
 }
 
-#[derive(Copy, Clone, PartialOrd, PartialEq, Eq, Debug)]
-pub enum ConnectionStatusCode {
-    Success,
+#[derive(Clone, PartialOrd, PartialEq, Eq, Debug)]
+pub enum ConnectionStatusErrorCode {
     InternalError,
     InvalidArgument,
     NetworkError,
@@ -44,27 +42,95 @@ pub enum ConnectionStatusCode {
     CapacityExceeded,
     RateExceeded,
     ServerShutdown,
+    Unknown,
 }
 
-impl From<u8> for ConnectionStatusCode {
-    fn from(value: u8) -> Self {
-        match u32::from(value) {
-            1 => ConnectionStatusCode::Success,
-            2 => ConnectionStatusCode::InternalError,
-            3 => ConnectionStatusCode::InvalidArgument,
-            4 => ConnectionStatusCode::NetworkError,
-            5 => ConnectionStatusCode::Timeout,
-            6 => ConnectionStatusCode::Cancelled,
-            7 => ConnectionStatusCode::Rejected,
-            8 => ConnectionStatusCode::PlayerIdentityTokenExpired,
-            9 => ConnectionStatusCode::LoginTokenExpired,
-            10 => ConnectionStatusCode::CapacityExceeded,
-            11 => ConnectionStatusCode::RateExceeded,
-            12 => ConnectionStatusCode::ServerShutdown,
-            _ => panic!(format!("Unknown connection status code: {}", value)),
+impl From<i32> for ConnectionStatusErrorCode {
+    fn from(code: i32) -> Self {
+        match code {
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_INTERNAL_ERROR => {
+                ConnectionStatusErrorCode::InternalError
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_INVALID_ARGUMENT => {
+                ConnectionStatusErrorCode::InvalidArgument
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_NETWORK_ERROR => {
+                ConnectionStatusErrorCode::NetworkError
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_TIMEOUT => {
+                ConnectionStatusErrorCode::Timeout
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_CANCELLED => {
+                ConnectionStatusErrorCode::Cancelled
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_REJECTED => {
+                ConnectionStatusErrorCode::Rejected
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_PLAYER_IDENTITY_TOKEN_EXPIRED => {
+                ConnectionStatusErrorCode::PlayerIdentityTokenExpired
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_LOGIN_TOKEN_EXPIRED => {
+                ConnectionStatusErrorCode::LoginTokenExpired
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_CAPACITY_EXCEEDED => {
+                ConnectionStatusErrorCode::CapacityExceeded
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_RATE_EXCEEDED => {
+                ConnectionStatusErrorCode::RateExceeded
+            }
+            Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SERVER_SHUTDOWN => {
+                ConnectionStatusErrorCode::ServerShutdown
+            }
+            _ => ConnectionStatusErrorCode::Unknown,
         }
     }
 }
+
+impl Display for ConnectionStatusError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self.code {
+            ConnectionStatusErrorCode::InternalError => {
+                f.write_fmt(format_args!("Internal error: {}", self.detail))
+            }
+            ConnectionStatusErrorCode::InvalidArgument => {
+                f.write_fmt(format_args!("Invalid argument: {}", self.detail))
+            }
+            ConnectionStatusErrorCode::NetworkError => {
+                f.write_fmt(format_args!("Network error: {}", self.detail))
+            }
+            ConnectionStatusErrorCode::Timeout => {
+                f.write_fmt(format_args!("Timeout: {}", self.detail))
+            }
+            ConnectionStatusErrorCode::Cancelled => {
+                f.write_fmt(format_args!("Cancelled: {}", self.detail))
+            }
+            ConnectionStatusErrorCode::Rejected => {
+                f.write_fmt(format_args!("Rejected: {}", self.detail))
+            }
+            ConnectionStatusErrorCode::PlayerIdentityTokenExpired => f.write_fmt(format_args!(
+                "Player identity token expired: {}",
+                self.detail
+            )),
+            ConnectionStatusErrorCode::LoginTokenExpired => {
+                f.write_fmt(format_args!("Login token expired: {}", self.detail))
+            }
+            ConnectionStatusErrorCode::CapacityExceeded => {
+                f.write_fmt(format_args!("Capacity exceeded: {}", self.detail))
+            }
+            ConnectionStatusErrorCode::RateExceeded => {
+                f.write_fmt(format_args!("Rate exceeded: {}", self.detail))
+            }
+            ConnectionStatusErrorCode::ServerShutdown => {
+                f.write_fmt(format_args!("Server shutdown: {}", self.detail))
+            }
+            ConnectionStatusErrorCode::Unknown => {
+                f.write_fmt(format_args!("Unknown error: {}", self.detail))
+            }
+        }
+    }
+}
+
+impl Error for ConnectionStatusError {}
 
 /// Connection trait to allow for mocking the connection.
 pub trait Connection {
@@ -196,43 +262,27 @@ impl WorkerConnection {
         }
     }
 
-    pub fn connect_receptionist_async(
+    pub fn connect_receptionist(
         worker_id: &str,
         hostname: &str,
         port: u16,
-        params: &ConnectionParameters,
-    ) -> WorkerConnectionFuture {
+        params: ConnectionParameters,
+    ) -> WorkerFuture<WorkerConnectionFuture> {
         let hostname_cstr = CString::new(hostname).expect("Received 0 byte in supplied hostname.");
         let worker_id_cstr =
             CString::new(worker_id).expect("Received 0 byte in supplied Worker ID");
 
-        // Flatten the Rust representation of the connection parameters into a format more
-        // compatible with the C API.
-        let params = params.flatten();
+        let future =
+            WorkerConnectionFuture::Receptionist(hostname_cstr, worker_id_cstr, port, params);
 
-        let future_ptr = unsafe {
-            Worker_ConnectAsync(
-                hostname_cstr.as_ptr(),
-                port,
-                worker_id_cstr.as_ptr(),
-                &params.as_raw(),
-            )
-        };
-        assert!(!future_ptr.is_null());
-        WorkerConnectionFuture::new(future_ptr)
+        WorkerFuture::new(future)
     }
 
-    pub fn connect_locator_async(
-        locator: &Locator,
-        params: &ConnectionParameters,
-    ) -> WorkerConnectionFuture {
-        // Flatten the Rust representation of the connection parameters into a format more
-        // compatible with the C API.
-        let params = params.flatten();
-
-        let future_ptr = unsafe { Worker_Locator_ConnectAsync(locator.locator, &params.as_raw()) };
-        assert!(!future_ptr.is_null());
-        WorkerConnectionFuture::new(future_ptr)
+    pub fn connect_locator(
+        locator: Locator,
+        params: ConnectionParameters,
+    ) -> WorkerFuture<WorkerConnectionFuture> {
+        WorkerFuture::new(WorkerConnectionFuture::Locator(locator, params))
     }
 }
 
@@ -515,11 +565,20 @@ impl Connection for WorkerConnection {
 
     fn get_connection_status(&mut self) -> ConnectionStatus {
         let ptr = self.connection_ptr.get();
-        unsafe {
-            let code = ConnectionStatusCode::from(Worker_Connection_GetConnectionStatusCode(ptr));
-            let detail = cstr_to_string(Worker_Connection_GetConnectionStatusDetailString(ptr));
-            ConnectionStatus { code, detail }
+
+        let code = unsafe { Worker_Connection_GetConnectionStatusCode(ptr) } as i32;
+
+        if code == Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SUCCESS {
+            return Ok(());
         }
+
+        let detail =
+            cstr_to_string(unsafe { Worker_Connection_GetConnectionStatusDetailString(ptr) });
+
+        Err(ConnectionStatusError {
+            code: ConnectionStatusErrorCode::from(code),
+            detail,
+        })
     }
 
     fn get_worker_flag(&mut self, name: &str) -> Option<String> {
@@ -580,73 +639,49 @@ impl Drop for WorkerConnection {
 unsafe impl Send for WorkerConnection {}
 unsafe impl Sync for WorkerConnection {}
 
-pub struct WorkerConnectionFuture {
-    future_ptr: *mut Worker_ConnectionFuture,
-    was_consumed: bool,
+pub enum WorkerConnectionFuture {
+    Receptionist(CString, CString, u16, ConnectionParameters),
+    Locator(Locator, ConnectionParameters),
 }
 
-impl WorkerConnectionFuture {
-    pub(crate) fn new(ptr: *mut Worker_ConnectionFuture) -> Self {
-        WorkerConnectionFuture {
-            future_ptr: ptr,
-            was_consumed: false,
+unsafe impl Send for WorkerConnectionFuture {}
+
+impl WorkerSdkFuture for WorkerConnectionFuture {
+    type RawPointer = Worker_ConnectionFuture;
+    type Output = Result<WorkerConnection, ConnectionStatusError>;
+
+    fn start(&self) -> *mut Self::RawPointer {
+        match &self {
+            WorkerConnectionFuture::Receptionist(hostname, worker_id, port, params) => {
+                let params = params.flatten();
+                unsafe {
+                    Worker_ConnectAsync(
+                        hostname.as_ptr(),
+                        *port,
+                        worker_id.as_ptr(),
+                        &params.as_raw(),
+                    )
+                }
+            }
+            WorkerConnectionFuture::Locator(locator, params) => {
+                let params = params.flatten();
+                unsafe { Worker_Locator_ConnectAsync(locator.locator, &params.as_raw()) }
+            }
         }
     }
-}
 
-impl Drop for WorkerConnectionFuture {
-    fn drop(&mut self) {
-        assert!(!self.future_ptr.is_null());
-        unsafe {
-            Worker_ConnectionFuture_Destroy(self.future_ptr);
-        };
-    }
-}
+    unsafe fn get(
+        ptr: *mut Worker_ConnectionFuture,
+    ) -> Result<WorkerConnection, ConnectionStatusError> {
+        let connection_ptr = Worker_ConnectionFuture_Get(ptr, ptr::null());
+        assert!(!connection_ptr.is_null());
 
-impl Future for WorkerConnectionFuture {
-    type Item = WorkerConnection;
-    type Error = String;
-
-    fn poll(&mut self) -> Result<Async<<Self as Future>::Item>, <Self as Future>::Error> {
-        if self.was_consumed {
-            return Err("WorkerConnectionFuture has already been consumed.".to_owned());
-        }
-
-        assert!(!self.future_ptr.is_null());
-        let connection_ptr = unsafe { Worker_ConnectionFuture_Get(self.future_ptr, &0) };
-
-        if connection_ptr.is_null() {
-            return Ok(Async::NotReady);
-        }
-
-        self.was_consumed = true;
         let mut connection = WorkerConnection::new(connection_ptr);
-
         let status = connection.get_connection_status();
-        if status.code == ConnectionStatusCode::Success {
-            return Ok(Async::Ready(connection));
-        }
-
-        Err(status.detail)
+        status.map(|()| connection)
     }
 
-    fn wait(self) -> Result<<Self as Future>::Item, <Self as Future>::Error>
-    where
-        Self: Sized,
-    {
-        if self.was_consumed {
-            return Err("WorkerConnectionFuture has already been consumed.".to_owned());
-        }
-
-        assert!(!self.future_ptr.is_null());
-        let connection_ptr = unsafe { Worker_ConnectionFuture_Get(self.future_ptr, ptr::null()) };
-        let mut connection = WorkerConnection::new(connection_ptr);
-
-        let status = connection.get_connection_status();
-        if status.code == ConnectionStatusCode::Success {
-            return Ok(connection);
-        }
-
-        Err(status.detail)
+    unsafe fn destroy(ptr: *mut Worker_ConnectionFuture) {
+        Worker_ConnectionFuture_Destroy(ptr);
     }
 }

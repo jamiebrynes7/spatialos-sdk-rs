@@ -14,13 +14,11 @@ jobs:
         uses: actions/checkout@master
 
       - name: Install Rust
-        if: matrix.os == 'macOS-latest'
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
-
-      - name: Install Rust components
-        run: rustup component add rustfmt clippy
+          toolchain: "1.39.0"
+          default: true
+          components: rustfmt, clippy
 
       - name: Install spatial
         uses: jamiebrynes7/get-spatial-cli-action@v1.1

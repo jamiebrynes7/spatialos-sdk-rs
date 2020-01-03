@@ -1,5 +1,4 @@
 mod handle;
-pub mod internal;
 
 pub mod commands;
 pub mod component;
@@ -13,7 +12,9 @@ pub mod parameters;
 pub mod query;
 pub mod schema;
 pub mod snapshot;
+pub(crate) mod utils;
 pub mod vtable;
+pub mod worker_future;
 
 use component::ComponentId;
 use derivative::Derivative;
@@ -188,6 +189,5 @@ pub enum ConnectionStatusCode {
 pub mod constants {
     pub const LOCATOR_HOSTNAME: &str = "locator.improbable.io";
     pub const LOCATOR_PORT: u16 = 444;
-
     pub const RECEPTIONIST_PORT: u16 = 7777;
 }
