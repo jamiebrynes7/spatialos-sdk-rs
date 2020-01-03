@@ -2,7 +2,6 @@
 **/*.rs.bk
 Cargo.lock
 
-.idea/
-
 # SpatialOS SDK dependencies.
 dependencies/
+.idea/workspace.xml
