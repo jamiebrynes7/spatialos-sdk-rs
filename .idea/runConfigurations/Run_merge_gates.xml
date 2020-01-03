@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run merge gates" type="CompoundRunConfigurationType">
+    <toRun name="Check" type="CargoCommandRunConfiguration" />
+    <toRun name="Lint (Check)" type="CargoCommandRunConfiguration" />
+    <toRun name="Clippy" type="CargoCommandRunConfiguration" />
+    <toRun name="Test" type="CargoCommandRunConfiguration" />
+    <method v="2" />
+  </configuration>
+</component>
