@@ -58,7 +58,7 @@ unsafe impl Send for ComponentDatabase {}
 
 #[derive(Clone, Debug)]
 pub struct VTable {
-    pub worker_vtable: Worker_ComponentVtable,
+    pub(crate) worker_vtable: Worker_ComponentVtable,
 }
 
 impl VTable {
