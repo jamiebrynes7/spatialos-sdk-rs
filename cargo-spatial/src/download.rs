@@ -6,12 +6,13 @@ pub use self::macos::*;
 #[cfg(target_os = "windows")]
 pub use self::windows::*;
 
-use crate::{config::Config, opt::DownloadSdk};
+use crate::{config::Config, errors::WrappedError, opt::DownloadSdk};
 use log::*;
-use std::fs::File;
-use std::io::copy;
 use std::{
+    fmt::{Display, Formatter},
     fs,
+    fs::File,
+    io::copy,
     path::{Path, PathBuf},
     process,
 };
@@ -152,28 +153,68 @@ static PLATFORM_PACKAGES: &[SpatialPackageSource] = &[
     SpatialPackageSource::Tools(SpatialToolsPackage::SnapshotConverterMac),
 ];
 
+#[derive(Debug)]
+pub enum ErrorKind {
+    IO,
+    BadConfig,
+    FailedDownload,
+}
+impl Display for ErrorKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        match self {
+            ErrorKind::IO => f.write_str("IO Error"),
+            ErrorKind::BadConfig => f.write_str("Bad Config"),
+            ErrorKind::FailedDownload => f.write_str("Download Failed"),
+        }
+    }
+}
+
 pub fn download_sdk(
     config: Result<Config, Box<dyn std::error::Error>>,
     options: &DownloadSdk,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), WrappedError<ErrorKind>> {
     let spatial_lib_dir = match config {
-        Ok(ref config) => config.spatial_lib_dir().ok_or("spatial_lib_dir value must be set in the config, or the SPATIAL_LIB_DIR environment variable must be set")?,
-        Err(_) => ::std::env::var("SPATIAL_LIB_DIR")?
-    };
+        Ok(ref config) => config.spatial_lib_dir(),
+        Err(_) => ::std::env::var("SPATIAL_LIB_DIR").ok()
+    }.ok_or(WrappedError {
+        kind: ErrorKind::BadConfig,
+        msg: "'spatial_lib_dir' value must be set in the config, or the 'SPATIAL_LIB_DIR' environment variable must be set".into(),
+        inner: None
+    })?;
 
-    let spatial_sdk_version = match options.sdk_version {
-        Some(ref version) => version.clone(),
-        None => config?.spatial_sdk_version,
-    };
+    let spatial_sdk_version = options
+        .sdk_version
+        .as_ref()
+        .map_or_else(
+            || config.map(|c| c.spatial_sdk_version),
+            |ref v| Ok(v.to_string()),
+        )
+        .map_err(|e| {
+            WrappedError {
+            kind: ErrorKind::BadConfig,
+            msg:
+            "'spatial_sdk_version' must be set in the config, or provided as a command line argument"
+                .into(),
+            inner: Some(e),
+        }
+        })?;
 
     info!("Downloading packages into: {}", spatial_lib_dir);
 
     // Clean existing directory.
     if Path::new(&spatial_lib_dir).exists() {
-        fs::remove_dir_all(&spatial_lib_dir)?;
+        fs::remove_dir_all(&spatial_lib_dir).map_err(|e| WrappedError {
+            kind: ErrorKind::IO,
+            msg: format!("Failed to remove directory {}.", &spatial_lib_dir),
+            inner: Some(Box::new(e)),
+        })?;
     }
 
-    fs::create_dir_all(&spatial_lib_dir)?;
+    fs::create_dir_all(&spatial_lib_dir).map_err(|e| WrappedError {
+        kind: ErrorKind::IO,
+        msg: format!("Failed to create directory {}.", &spatial_lib_dir),
+        inner: Some(Box::new(e)),
+    })?;
     trace!("Spatial lib directory cleaned.");
 
     for package in COMMON_PACKAGES {
@@ -199,7 +240,7 @@ fn download_package(
     package_source: SpatialPackageSource,
     sdk_version: &str,
     spatial_lib_dir: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), WrappedError<ErrorKind>> {
     info!("Downloading {}", package_source.package_name().join(" "));
 
     let mut output_path = PathBuf::new();
@@ -215,14 +256,34 @@ fn download_package(
 
     trace!("Running spatial command with arguments: {:?}", args);
 
-    let process = process::Command::new("spatial").args(args).output()?;
+    let process = process::Command::new("spatial")
+        .args(args)
+        .output()
+        .map_err(|e| WrappedError {
+            kind: ErrorKind::FailedDownload,
+            msg: "Failed to run 'spatial'.".into(),
+            inner: Some(Box::new(e)),
+        })?;
 
     if !process.status.success() {
-        let stdout = String::from_utf8(process.stdout)?;
-        let stderr = String::from_utf8(process.stderr)?;
-        trace!("{}", stdout);
-        trace!("{}", stderr);
-        return Err("Failed to download package.".into());
+        if let Ok(stdout) = String::from_utf8(process.stdout) {
+            trace!("{}", stdout);
+        } else {
+            warn!("Could not read 'spatial' standard out.");
+        }
+
+        return Err(match String::from_utf8(process.stderr) {
+            Ok(err) => WrappedError {
+                kind: ErrorKind::FailedDownload,
+                msg: err,
+                inner: None,
+            },
+            Err(e) => WrappedError {
+                kind: ErrorKind::FailedDownload,
+                msg: "Package download failed and stderr is not utf-8 compliant.".into(),
+                inner: Some(Box::new(e)),
+            },
+        });
     }
 
     Ok(())

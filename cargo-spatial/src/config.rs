@@ -90,12 +90,10 @@ impl Config {
     /// Returns the absolute path to the spatial SDK directory, or `None` if the path hasn't
     /// been configured.
     pub fn spatial_lib_dir(&self) -> Option<String> {
-        match self.spatial_lib_dir {
-            Some(ref path) => Some(self.resolve_path(path)),
-            None => ::std::env::var("SPATIAL_LIB_DIR")
-                .ok()
-                .map(|env_var| self.resolve_path(&env_var)),
-        }
+        self.spatial_lib_dir
+            .clone()
+            .or_else(|| ::std::env::var("SPATIAL_LIB_DIR").ok())
+            .map(|ref path| self.resolve_path(path))
     }
 
     /// Resolves the unresolved path into an absolute path.
