@@ -54,3 +54,9 @@ component EnumTestComponent {
 
     TestEnum test = 1;
 }
+
+component EntityTest {
+    id = 2003;
+
+    Entity entity = 1;
+}
