@@ -23,7 +23,7 @@ fn primitive_type_name(primitive_type: &PrimitiveType) -> &'static str {
         PrimitiveType::Double => "SchemaDouble",
         PrimitiveType::String => "SchemaString",
         PrimitiveType::EntityId => "SchemaEntityId",
-        PrimitiveType::Entity => panic!("Entity serialization unimplemented."),
+        PrimitiveType::Entity => "SchemaEntity",
         PrimitiveType::Bytes => "SchemaBytes",
     }
 }
@@ -176,7 +176,7 @@ impl Package {
                 PrimitiveType::Double => "f64",
                 PrimitiveType::String => "String",
                 PrimitiveType::EntityId => "spatialos_sdk::worker::EntityId",
-                PrimitiveType::Entity => panic!("Entity serialization unimplemented."),
+                PrimitiveType::Entity => "spatialos_sdk::worker::entity::Entity",
                 PrimitiveType::Bytes => "Vec<u8>",
             }
             .to_string(),
