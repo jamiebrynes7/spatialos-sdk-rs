@@ -52,6 +52,15 @@ impl SchemaObject {
     pub fn add_object(&mut self, field: FieldId) -> &mut SchemaObject {
         unsafe { Self::from_raw_mut(Schema_AddObject(self.as_ptr_mut(), field)) }
     }
+
+    pub fn unique_field_ids(&self) -> Vec<FieldId> {
+        unsafe {
+            let count = Schema_GetUniqueFieldIdCount(self.as_ptr());
+            let mut buffer = Vec::with_capacity(count as usize);
+            Schema_GetUniqueFieldIds(self.as_ptr(), buffer.as_mut_ptr());
+            buffer
+        }
+    }
 }
 
 unsafe impl DataPointer for SchemaObject {
