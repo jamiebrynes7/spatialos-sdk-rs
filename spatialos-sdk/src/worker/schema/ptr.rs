@@ -98,4 +98,5 @@ pub unsafe trait DataPointer: Sized {
 pub unsafe trait OwnedPointer: DataPointer {
     const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw;
     const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw);
+    const COPY_FN: unsafe extern "C" fn(*const Self::Raw) -> *mut Self::Raw;
 }

@@ -71,6 +71,8 @@ unsafe impl DataPointer for SchemaComponentUpdate {
 unsafe impl OwnedPointer for SchemaComponentUpdate {
     const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw = Schema_CreateComponentUpdate;
     const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw) = Schema_DestroyComponentUpdate;
+    const COPY_FN: unsafe extern "C" fn(*const Self::Raw) -> *mut Self::Raw =
+        Schema_CopyComponentUpdate;
 }
 
 // SAFETY: It should be safe to send a `SchemaComponentUpdate` between threads, so long as
