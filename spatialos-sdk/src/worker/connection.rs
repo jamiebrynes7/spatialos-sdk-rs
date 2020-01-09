@@ -340,7 +340,7 @@ impl Connection for WorkerConnection {
 
     fn send_create_entity_request(
         &mut self,
-        entity: Entity,
+        mut entity: Entity,
         entity_id: Option<EntityId>,
         timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest> {
@@ -352,7 +352,7 @@ impl Connection for WorkerConnection {
             Some(e) => &e.id,
             None => ptr::null(),
         };
-        let mut component_data = entity.raw_component_data();
+        let mut component_data = entity.as_raw();
         let id = unsafe {
             Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),
@@ -429,7 +429,7 @@ impl Connection for WorkerConnection {
             component_id: C::ID,
             command_index,
             schema_type: ptr::null_mut(),
-            user_handle: handle::get_raw(&user_handle),
+            user_handle: handle::as_raw(&user_handle),
         };
 
         let request_id = unsafe {
@@ -461,7 +461,7 @@ impl Connection for WorkerConnection {
                 component_id: C::ID,
                 command_index,
                 schema_type: ptr::null_mut(),
-                user_handle: handle::get_raw(&user_handle),
+                user_handle: handle::as_raw(&user_handle),
             };
 
             Worker_Connection_SendCommandResponse(
@@ -503,7 +503,7 @@ impl Connection for WorkerConnection {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             schema_type: ptr::null_mut(),
-            user_handle: handle::get_raw(&user_handle),
+            user_handle: handle::as_raw(&user_handle),
         };
 
         let params = parameters.to_worker_sdk();

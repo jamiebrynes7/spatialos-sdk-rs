@@ -32,7 +32,7 @@ pub fn new<T: 'static>(data: schema::Result<T>) -> UserHandle {
 }
 
 /// Returns the raw handle for the given user handle.
-pub fn get_raw(handle: &UserHandle) -> RawHandle {
+pub fn as_raw(handle: &UserHandle) -> RawHandle {
     &**handle as *const _ as *mut _
 }
 

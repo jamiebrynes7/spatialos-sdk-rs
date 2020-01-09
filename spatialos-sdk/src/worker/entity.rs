@@ -6,8 +6,7 @@ use crate::worker::{
     vtable::DATABASE,
 };
 use spatialos_sdk_sys::worker::Worker_ComponentData;
-use std::collections::HashMap;
-use std::result::Result;
+use std::{collections::HashMap, ptr, result::Result};
 
 #[derive(Debug, Clone)]
 enum Data {
@@ -47,19 +46,23 @@ impl Entity {
         Ok(())
     }
 
-    pub fn get<C: Component>(&self) -> Option<&C> {
-        self.components.get(&C::ID).map(|data| match data {
-            Data::UserHandle(handle) => unimplemented!(),
-            Data::SchemaData(schema_data) => unimplemented!(),
-        })
-    }
-
-    pub(crate) fn raw_component_data(&self) -> Vec<Worker_ComponentData> {
+    pub(crate) fn as_raw(&mut self) -> Vec<Worker_ComponentData> {
         self.components
-            .iter()
-            .map(|(component_id, data)| match data {
-                Data::UserHandle(handle) => unimplemented!(),
-                Data::SchemaData(schema_data) => unimplemented!(),
+            .iter_mut()
+            .map(|(&component_id, data)| match data {
+                Data::UserHandle(handle) => Worker_ComponentData {
+                    reserved: ptr::null_mut(),
+                    component_id,
+                    schema_type: ptr::null_mut(),
+                    user_handle: handle::as_raw(handle),
+                },
+
+                Data::SchemaData(schema_data) => Worker_ComponentData {
+                    reserved: ptr::null_mut(),
+                    component_id,
+                    schema_type: schema_data.as_ptr_mut(),
+                    user_handle: ptr::null_mut(),
+                },
             })
             .collect()
     }

@@ -53,8 +53,8 @@ impl SnapshotOutputStream {
         }
     }
 
-    pub fn write_entity(&mut self, id: EntityId, entity: &Entity) -> Result<(), SnapshotError> {
-        let components = entity.raw_component_data();
+    pub fn write_entity(&mut self, id: EntityId, entity: &mut Entity) -> Result<(), SnapshotError> {
+        let components = entity.as_raw();
         let wrk_entity = Worker_Entity {
             entity_id: id.id,
             components: components.as_ptr(),
