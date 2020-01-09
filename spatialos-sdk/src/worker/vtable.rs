@@ -144,7 +144,7 @@ unsafe extern "C" fn component_data_copy<C: Component>(
         "Mismatched component ID in vtable function",
     );
 
-    handle::clone_raw::<C>(handle)
+    handle::clone_raw(handle)
 }
 
 unsafe extern "C" fn component_data_deserialize<C: Component>(
@@ -209,7 +209,7 @@ unsafe extern "C" fn component_update_copy<C: Component>(
         "Mismatched component ID in vtable function",
     );
 
-    handle::clone_raw::<C::Update>(handle)
+    handle::clone_raw(handle)
 }
 
 unsafe extern "C" fn component_update_deserialize<C: Component>(
@@ -276,7 +276,7 @@ unsafe extern "C" fn vtable_command_request_copy<C: Component>(
         "Mismatched component ID in vtable function",
     );
 
-    handle::clone_raw::<C::CommandRequest>(handle)
+    handle::clone_raw(handle)
 }
 
 unsafe extern "C" fn vtable_command_request_deserialize<C: Component>(
@@ -345,7 +345,7 @@ unsafe extern "C" fn vtable_command_response_copy<C: Component>(
         "Mismatched component ID in vtable function",
     );
 
-    handle::clone_raw::<C::CommandResponse>(handle)
+    handle::clone_raw(handle)
 }
 
 unsafe extern "C" fn vtable_command_response_deserialize<C: Component>(

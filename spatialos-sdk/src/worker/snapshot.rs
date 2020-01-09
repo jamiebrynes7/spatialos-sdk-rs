@@ -57,8 +57,8 @@ impl SnapshotOutputStream {
         let components = entity.raw_component_data();
         let wrk_entity = Worker_Entity {
             entity_id: id.id,
-            components: components.components.as_ptr(),
-            component_count: components.components.len() as u32,
+            components: components.as_ptr(),
+            component_count: components.len() as u32,
         };
 
         let state = unsafe {
@@ -117,12 +117,13 @@ impl SnapshotInputStream {
 
         match Worker_StreamState::from(state.stream_state) {
             Worker_StreamState_WORKER_STREAM_STATE_GOOD => unsafe {
-                let entity = Entity::from_worker_sdk(&*entity_ptr);
-                if let Err(message) = entity {
-                    Err(SnapshotError::EntitySerializationFailure(message))
-                } else {
-                    Ok(entity.unwrap())
-                }
+                unimplemented!("TODO: Support reading entity data");
+                // let entity = Entity::from_worker_sdk(&*entity_ptr);
+                // if let Err(message) = entity {
+                //     Err(SnapshotError::EntitySerializationFailure(message))
+                // } else {
+                //     Ok(entity.unwrap())
+                // }
             },
             _ => Err(SnapshotError::from(state)),
         }

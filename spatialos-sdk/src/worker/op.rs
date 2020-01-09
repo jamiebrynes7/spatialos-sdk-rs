@@ -377,18 +377,19 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                                 // Is count type.
                                 StatusCode::Success(QueryResponse::Result(op.result_count))
                             } else {
-                                let mut entities = HashMap::new();
-                                let raw_entities =
-                                    slice::from_raw_parts(op.results, op.result_count as usize);
+                                unimplemented!("TODO: Support receiving entity data");
+                                // let mut entities = HashMap::new();
+                                // let raw_entities =
+                                //     slice::from_raw_parts(op.results, op.result_count as usize);
 
-                                for raw_entity in raw_entities {
-                                    entities.insert(
-                                        EntityId::new(raw_entity.entity_id),
-                                        Entity::from_worker_sdk(raw_entity).unwrap(),
-                                    );
-                                }
+                                // for raw_entity in raw_entities {
+                                //     entities.insert(
+                                //         EntityId::new(raw_entity.entity_id),
+                                //         Entity::from_worker_sdk(raw_entity).unwrap(),
+                                //     );
+                                // }
 
-                                StatusCode::Success(QueryResponse::Snapshot(entities))
+                                // StatusCode::Success(QueryResponse::Snapshot(entities))
                             }
                         }
                         Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => {

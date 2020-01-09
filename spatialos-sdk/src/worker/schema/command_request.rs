@@ -26,6 +26,8 @@ unsafe impl DataPointer for SchemaCommandRequest {
 unsafe impl OwnedPointer for SchemaCommandRequest {
     const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw = Schema_CreateCommandRequest;
     const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw) = Schema_DestroyCommandRequest;
+    const COPY_FN: unsafe extern "C" fn(*const Self::Raw) -> *mut Self::Raw =
+        Schema_CopyCommandRequest;
 }
 
 // SAFETY: It should be safe to send a `SchemaCommandRequest` between threads, so long as

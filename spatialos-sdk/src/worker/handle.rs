@@ -65,11 +65,9 @@ pub unsafe fn drop_raw<T: 'static>(handle: RawHandle) {
 ///
 /// # Safety
 ///
-/// This function must be called with the correct type `T` for the specified handle.
-/// Failing to do so will cause the data to be treated as the wrong type, which will
-/// result in undefined behavior.
-pub unsafe fn clone_raw<T: 'static>(handle: RawHandle) -> RawHandle {
-    let original = Arc::<schema::Result<T>>::from_raw(handle as *const _);
+/// This function must be passed a pointer to data allocated by an `Arc`.
+pub unsafe fn clone_raw(handle: RawHandle) -> RawHandle {
+    let original = Arc::from_raw(handle);
     let copy = original.clone();
     mem::forget(original);
     Arc::into_raw(copy) as *mut _

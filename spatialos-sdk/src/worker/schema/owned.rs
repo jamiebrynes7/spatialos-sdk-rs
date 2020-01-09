@@ -16,6 +16,7 @@
 
 use crate::worker::schema::OwnedPointer;
 use std::{
+    borrow::Borrow,
     mem,
     ops::{Deref, DerefMut},
     ptr::NonNull,
@@ -66,11 +67,23 @@ impl<T: Ownable> Default for Owned<T> {
     }
 }
 
+impl<T: Ownable> Clone for Owned<T> {
+    fn clone(&self) -> Self {
+        self.deref().into()
+    }
+}
+
 impl<T: Ownable> Deref for Owned<T> {
     type Target = T;
 
     fn deref(&self) -> &T {
         unsafe { &*self.0.cast().as_ptr() }
+    }
+}
+
+impl<T: Ownable> Borrow<T> for Owned<T> {
+    fn borrow(&self) -> &T {
+        &*self
     }
 }
 
@@ -81,3 +94,12 @@ impl<T: Ownable> DerefMut for Owned<T> {
 }
 
 unsafe impl<T: Ownable + Send> Send for Owned<T> {}
+
+impl<'a, T: Ownable> From<&'a T> for Owned<T> {
+    fn from(from: &T) -> Self {
+        let copy_ptr = unsafe { T::COPY_FN(from.as_ptr()) };
+        let copy_ptr =
+            NonNull::new(copy_ptr).expect("Got a null pointer from a schema data copy function");
+        Self(copy_ptr)
+    }
+}
