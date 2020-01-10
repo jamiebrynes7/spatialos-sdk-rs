@@ -1,4 +1,7 @@
-use crate::worker::schema::{self, *};
+use crate::worker::{
+    handle,
+    schema::{self, *},
+};
 use spatialos_sdk_sys::worker::*;
 use std::{borrow::Cow, ptr::NonNull};
 
@@ -127,7 +130,7 @@ impl<'a> ComponentDataRef<'a> {
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
+            Cow::Borrowed(unsafe { handle::deref_raw(user_handle.as_ptr()) })
         } else {
             Cow::Owned(ObjectField::from_object(self.schema_type.fields()))
         };
@@ -158,7 +161,7 @@ impl<'a> ComponentUpdateRef<'a> {
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
+            Cow::Borrowed(unsafe { handle::deref_raw(user_handle.as_ptr()) })
         } else {
             Cow::Owned(Update::from_schema(&self.schema_type))
         };
@@ -199,7 +202,7 @@ impl<'a> CommandRequestRef<'a> {
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
+            Cow::Borrowed(unsafe { handle::deref_raw(user_handle.as_ptr()) })
         } else {
             Cow::Owned(ObjectField::from_object(self.schema_type.object()))
         };
@@ -240,7 +243,7 @@ impl<'a> CommandResponseRef<'a> {
         }
 
         let cow = if let Some(user_handle) = &self.user_handle {
-            Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() })
+            Cow::Borrowed(unsafe { handle::deref_raw(user_handle.as_ptr()) })
         } else {
             Cow::Owned(ObjectField::from_object(self.schema_type.object()))
         };

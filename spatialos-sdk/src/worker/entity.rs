@@ -36,12 +36,11 @@ impl Entity {
     pub(crate) fn add<C: Component>(&mut self, component: C) -> Result<(), String> {
         self.pre_add_check(C::ID)?;
 
-        let data_ptr = handle::allocate_raw(Ok(component));
         let raw_data = Worker_ComponentData {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             schema_type: ptr::null_mut(),
-            user_handle: data_ptr as *mut _,
+            user_handle: handle::allocate_raw(Ok(component)),
         };
 
         self.components.insert(C::ID, raw_data);
