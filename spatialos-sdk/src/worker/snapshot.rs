@@ -1,6 +1,6 @@
-use crate::worker::{entity::Entity, utils::cstr_to_string, vtable::DATABASE, EntityId};
+use crate::worker::{entity::Entity, utils::cstr_to_string, EntityId};
 use spatialos_sdk_sys::worker::*;
-use std::{ffi::CString, path::Path};
+use std::{ffi::CString, path::Path, ptr};
 
 #[derive(Debug)]
 pub enum SnapshotError {
@@ -34,8 +34,8 @@ impl SnapshotOutputStream {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
         let params = Worker_SnapshotParameters {
-            component_vtable_count: DATABASE.len() as u32,
-            component_vtables: DATABASE.to_worker_sdk(),
+            component_vtable_count: 0,
+            component_vtables: ptr::null(),
             default_component_vtable: std::ptr::null(),
         };
         let stream_ptr =
@@ -53,12 +53,12 @@ impl SnapshotOutputStream {
         }
     }
 
-    pub fn write_entity(&mut self, id: EntityId, entity: &Entity) -> Result<(), SnapshotError> {
+    pub fn write_entity(&mut self, id: EntityId, entity: &mut Entity) -> Result<(), SnapshotError> {
         let components = entity.raw_component_data();
         let wrk_entity = Worker_Entity {
             entity_id: id.id,
-            components: components.components.as_ptr(),
-            component_count: components.components.len() as u32,
+            components: components.as_ptr(),
+            component_count: components.len() as u32,
         };
 
         let state = unsafe {
@@ -87,8 +87,8 @@ impl SnapshotInputStream {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
         let params = Worker_SnapshotParameters {
-            component_vtable_count: DATABASE.len() as u32,
-            component_vtables: DATABASE.to_worker_sdk(),
+            component_vtable_count: 0,
+            component_vtables: ptr::null(),
             default_component_vtable: std::ptr::null(),
         };
 

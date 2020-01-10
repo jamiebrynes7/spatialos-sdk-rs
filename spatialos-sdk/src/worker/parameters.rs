@@ -1,4 +1,3 @@
-use crate::worker::vtable::{self, DATABASE};
 use spatialos_sdk_sys::worker::*;
 use std::{
     ffi::{CStr, CString},
@@ -513,23 +512,9 @@ impl<'a> IntermediateConnectionParameters<'a> {
             enable_dynamic_components: 0,
             thread_affinity: self.params.thread_affinity.to_worker_sdk(),
 
-            component_vtable_count: if self.params.use_internal_serialization {
-                DATABASE.len() as u32
-            } else {
-                0
-            },
-
-            component_vtables: if self.params.use_internal_serialization {
-                DATABASE.to_worker_sdk()
-            } else {
-                ptr::null()
-            },
-
-            default_component_vtable: if self.params.use_internal_serialization {
-                ptr::null()
-            } else {
-                &vtable::PASSTHROUGH_VTABLE
-            },
+            component_vtable_count: 0,
+            component_vtables: ptr::null(),
+            default_component_vtable: ptr::null(),
         }
     }
 }

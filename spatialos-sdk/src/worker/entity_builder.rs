@@ -39,7 +39,7 @@ impl EntityBuilder {
     }
 
     pub fn add_component<C: Component, T: Into<String>>(&mut self, data: C, write_layer: T) {
-        if let Err(e) = self.entity.add(data) {
+        if let Err(e) = self.entity.add(&data) {
             self.error = Some(e);
         };
 
