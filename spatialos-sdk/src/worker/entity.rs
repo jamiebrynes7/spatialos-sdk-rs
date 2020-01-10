@@ -1,6 +1,6 @@
 use crate::worker::{
     component::{Component, ComponentId},
-    handle,
+    handle, schema,
     schema::*,
     vtable::DATABASE,
 };
@@ -127,10 +127,10 @@ impl Entity {
         self.add_raw(&component_data)
     }
 
-    pub fn get<C: Component>(&self) -> Option<&C> {
+    pub fn get<C: Component>(&self) -> Option<&schema::Result<C>> {
         self.components
             .get(&C::ID)
-            .map(|data| unsafe { &*(data.user_handle as *const _) })
+            .map(|data| unsafe { handle::deref_raw::<C>(data.user_handle) })
     }
 
     pub(crate) fn raw_component_data(&self) -> RawEntity {
