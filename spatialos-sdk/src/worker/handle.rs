@@ -74,3 +74,20 @@ pub unsafe fn clone_raw<T: 'static>(handle: RawHandle) -> RawHandle {
     mem::forget(original);
     Arc::into_raw(copy) as *mut _
 }
+
+/// Dereferences a `RawHandle` into the appropriate Rust type.
+///
+/// This is a helper function for working with raw handles within the vtable
+/// functions. In particular, the serialization functions are given a raw handle
+/// that they must dereference as the correct Rust type. Using this method instead
+/// of casting/dereferencing the raw pointer directly helps ensure that we keep our
+/// type definitions lined up.
+///
+/// # Safety
+///
+/// * This function must be called with the correct type `T` for the specified handle.
+/// * The pointer passed in for `handle` must have been created with either `new` or
+///   `allocate_raw`, i.e. it must be a valid user handle.
+pub unsafe fn deref_raw<'a, T: 'static>(handle: RawHandle) -> &'a schema::Result<T> {
+    &*handle.cast()
+}

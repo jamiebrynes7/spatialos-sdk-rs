@@ -180,7 +180,9 @@ unsafe extern "C" fn component_data_serialize<C: Component>(
         "Mismatched component ID in vtable function",
     );
 
-    let client_data = &*handle.cast::<C>();
+    let client_data = handle::deref_raw::<C>(handle)
+        .as_ref()
+        .expect("Cannot serialize `Err`");
     *data = SchemaComponentData::from_component(client_data).into_raw();
 }
 
@@ -245,7 +247,9 @@ unsafe extern "C" fn vtable_component_update_serialize<C: Component>(
         "Mismatched component ID in vtable function",
     );
 
-    let data = &*(handle as *const _);
+    let data = handle::deref_raw::<C::Update>(handle)
+        .as_ref()
+        .expect("Cannot serialize `Err`");
     *result = SchemaComponentUpdate::from_update::<C::Update>(data).into_raw();
 }
 
@@ -314,7 +318,9 @@ unsafe extern "C" fn vtable_command_request_serialize<C: Component>(
         "Mismatched component ID in vtable function",
     );
 
-    let data = &*(handle as *const _);
+    let data = handle::deref_raw::<C::CommandRequest>(handle)
+        .as_ref()
+        .expect("Cannot serialize an `Err`");
     *request = C::to_request(data).into_raw();
 }
 
@@ -381,6 +387,8 @@ unsafe extern "C" fn vtable_command_response_serialize<C: Component>(
         "Mismatched component ID in vtable function",
     );
 
-    let data = &*(handle as *const _);
+    let data = handle::deref_raw::<C::CommandResponse>(handle)
+        .as_ref()
+        .expect("Cannot serialize an `Err`");
     *response = C::to_response(data).into_raw();
 }
