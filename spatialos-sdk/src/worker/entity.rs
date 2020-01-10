@@ -9,7 +9,7 @@ use std::ptr;
 use std::result::Result;
 use std::slice;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Entity {
     components: HashMap<ComponentId, Owned<SchemaComponentData>>,
 }
@@ -26,8 +26,11 @@ impl Entity {
             slice::from_raw_parts(raw_entity.components, raw_entity.component_count as usize);
 
         for data in component_data {
-            unimplemented!(
-                "TODO: Copy the schema data so that it's owned by the `Entity` probably"
+            entity.pre_add_check(data.component_id)?;
+
+            entity.components.insert(
+                data.component_id,
+                SchemaComponentData::from_raw(data.schema_type).to_owned(),
             );
         }
 
