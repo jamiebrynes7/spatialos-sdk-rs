@@ -55,6 +55,14 @@ unsafe impl OwnedPointer for SchemaComponentData {
 // if one doesn't already exist), so it cannot be `Sync`.
 unsafe impl Send for SchemaComponentData {}
 
+impl ToOwned for SchemaComponentData {
+    type Owned = Owned<Self>;
+
+    fn to_owned(&self) -> Self::Owned {
+        Owned::from(self)
+    }
+}
+
 #[cfg(test)]
 mod test {
     pointer_type_tests!(super::SchemaComponentData);

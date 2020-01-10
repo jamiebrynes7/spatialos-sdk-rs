@@ -36,6 +36,14 @@ unsafe impl OwnedPointer for SchemaCommandRequest {
 // if one doesn't already exist), so it cannot be `Sync`.
 unsafe impl Send for SchemaCommandRequest {}
 
+impl ToOwned for SchemaCommandRequest {
+    type Owned = Owned<Self>;
+
+    fn to_owned(&self) -> Self::Owned {
+        Owned::from(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     pointer_type_tests!(super::SchemaCommandRequest);
