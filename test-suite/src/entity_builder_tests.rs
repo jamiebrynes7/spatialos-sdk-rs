@@ -8,10 +8,10 @@ fn position_is_serialized_correctly() {
     let builder = EntityBuilder::new(10.0, -10.0, 7.5, "rusty");
     let entity = builder.build().unwrap();
 
-    let maybe_position = entity.get::<Position>();
-    assert!(maybe_position.is_some());
-
-    let position = maybe_position.unwrap();
+    let position = entity
+        .get::<Position>()
+        .expect("No `Position` component found")
+        .expect("Failed to deserialize `Position`");
 
     approx::abs_diff_eq!(10.0, position.coords.x);
     approx::abs_diff_eq!(-10.0, position.coords.y);
@@ -33,10 +33,10 @@ fn entity_acl_is_serialized_correctly() {
 
     let entity = builder.build().unwrap();
 
-    let maybe_acl = entity.get::<EntityAcl>();
-    assert!(maybe_acl.is_some());
-
-    let acl = maybe_acl.unwrap();
+    let acl = entity
+        .get::<EntityAcl>()
+        .expect("No `EntityAcl` component found")
+        .expect("Failed to deserialize `EntityAcl`");
 
     // First check that we insert each layer into a different set.
     assert_eq!(5, acl.read_acl.attribute_set.len());
@@ -89,9 +89,10 @@ fn metadata_is_serialized_correctly() {
     builder.set_metadata("my_entity", "rusty");
     let entity = builder.build().unwrap();
 
-    let maybe_metadata = entity.get::<Metadata>();
-    assert!(maybe_metadata.is_some());
-    let metadata = maybe_metadata.unwrap();
+    let metadata = entity
+        .get::<Metadata>()
+        .expect("No `Metadata` component found")
+        .expect("Failed to deserialize `Metadata`");
 
     assert_eq!("my_entity", metadata.entity_type);
 }

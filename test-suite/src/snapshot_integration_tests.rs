@@ -9,11 +9,11 @@ use spatialos_sdk::worker::entity_builder::EntityBuilder;
 pub fn writing_invalid_entity_returns_error() {
     let snapshot_path = env::temp_dir().join("test2.snapshot");
 
-    let entity = Entity::new();
+    let mut entity = Entity::new();
 
     let error = SnapshotOutputStream::new(snapshot_path)
         .expect("Error")
-        .write_entity(EntityId::new(1), &entity);
+        .write_entity(EntityId::new(1), &mut entity);
 
     assert!(error.is_err());
 }
@@ -22,12 +22,12 @@ pub fn writing_invalid_entity_returns_error() {
 pub fn create_and_read_snapshot() {
     let snapshot_path = env::temp_dir().join("test.snapshot");
 
-    let entity = get_test_entity().expect("Error");
+    let mut entity = get_test_entity().expect("Error");
 
     {
         SnapshotOutputStream::new(snapshot_path.clone())
             .expect("Error")
-            .write_entity(EntityId::new(1), &entity)
+            .write_entity(EntityId::new(1), &mut entity)
             .expect("Error");
     }
 
@@ -38,9 +38,11 @@ pub fn create_and_read_snapshot() {
 
         let entity = snapshot.read_entity().expect("Error");
 
-        let position = entity.get::<Position>();
-        assert!(position.is_some());
-        let coords = &position.unwrap().coords;
+        let position = entity
+            .get::<Position>()
+            .expect("No `Position` component on entity")
+            .expect("Failed to deserialize `Position`");
+        let coords = &position.coords;
         approx::abs_diff_eq!(10.0, coords.x);
         approx::abs_diff_eq!(-10.0, coords.y);
         approx::abs_diff_eq!(0.0, coords.z);
@@ -48,9 +50,11 @@ pub fn create_and_read_snapshot() {
         let persistence = entity.get::<Persistence>();
         assert!(persistence.is_some());
 
-        let acl = entity.get::<EntityAcl>();
-        assert!(acl.is_some());
-        let read_acl = &acl.unwrap().read_acl;
+        let acl = entity
+            .get::<EntityAcl>()
+            .expect("No `EntityAcl` component on entity")
+            .expect("Failed to deserialize `EntityAcl`");
+        let read_acl = &acl.read_acl;
         assert_eq!(1, read_acl.attribute_set.len());
         assert_eq!("RustWorker", read_acl.attribute_set[0].attribute[0])
     }
