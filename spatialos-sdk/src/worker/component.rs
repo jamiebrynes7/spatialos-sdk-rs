@@ -1,10 +1,6 @@
 use crate::worker::schema::{self, *};
 use spatialos_sdk_sys::worker::*;
 
-// Re-export inventory so generated code doesn't require the user to add inventory to their
-// Cargo.toml
-pub use inventory;
-
 pub type ComponentId = Worker_ComponentId;
 pub type CommandIndex = Worker_CommandIndex;
 

@@ -8,7 +8,6 @@
 
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
-use spatialos_sdk::worker::vtable::VTable;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::generated as generated;
@@ -21,7 +20,6 @@ use super::generated as generated;
 pub mod example {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
-use spatialos_sdk::worker::vtable::VTable;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::generated as generated;
@@ -238,8 +236,6 @@ impl Component for EntityIdTest {
     }
 }
 
-inventory::submit!(VTable::new::<EntityIdTest>());
-
 #[derive(Debug, Clone)]
 pub struct EnumTestComponent {
     pub test: generated::example::TestEnum,
@@ -339,8 +335,6 @@ impl Component for EnumTestComponent {
         }
     }
 }
-
-inventory::submit!(VTable::new::<EnumTestComponent>());
 
 #[derive(Debug, Clone)]
 pub struct Example {
@@ -460,8 +454,6 @@ impl Component for Example {
     }
 }
 
-inventory::submit!(VTable::new::<Example>());
-
 #[derive(Debug, Clone)]
 pub struct Rotate {
     pub angle: f64,
@@ -578,15 +570,12 @@ impl Component for Rotate {
     }
 }
 
-inventory::submit!(VTable::new::<Rotate>());
-
 
 }
 
 pub mod improbable {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
-use spatialos_sdk::worker::vtable::VTable;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::generated as generated;
@@ -954,8 +943,6 @@ impl Component for EntityAcl {
     }
 }
 
-inventory::submit!(VTable::new::<EntityAcl>());
-
 #[derive(Debug, Clone)]
 pub struct Interest {
     pub component_interest: BTreeMap<u32, generated::improbable::ComponentInterest>,
@@ -1055,8 +1042,6 @@ impl Component for Interest {
         }
     }
 }
-
-inventory::submit!(VTable::new::<Interest>());
 
 #[derive(Debug, Clone)]
 pub struct Metadata {
@@ -1158,8 +1143,6 @@ impl Component for Metadata {
     }
 }
 
-inventory::submit!(VTable::new::<Metadata>());
-
 #[derive(Debug, Clone)]
 pub struct Persistence {
 }
@@ -1251,8 +1234,6 @@ impl Component for Persistence {
         }
     }
 }
-
-inventory::submit!(VTable::new::<Persistence>());
 
 #[derive(Debug, Clone)]
 pub struct Position {
@@ -1354,14 +1335,11 @@ impl Component for Position {
     }
 }
 
-inventory::submit!(VTable::new::<Position>());
-
 
 
 pub mod restricted {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
-use spatialos_sdk::worker::vtable::VTable;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::super::generated as generated;
@@ -1584,8 +1562,6 @@ impl Component for PlayerClient {
     }
 }
 
-inventory::submit!(VTable::new::<PlayerClient>());
-
 #[derive(Debug, Clone)]
 pub struct System {
 }
@@ -1677,8 +1653,6 @@ impl Component for System {
         }
     }
 }
-
-inventory::submit!(VTable::new::<System>());
 
 #[derive(Debug, Clone)]
 pub struct Worker {
@@ -1813,8 +1787,6 @@ impl Component for Worker {
         }
     }
 }
-
-inventory::submit!(VTable::new::<Worker>());
 
 
 }
