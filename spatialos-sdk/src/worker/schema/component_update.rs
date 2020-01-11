@@ -1,5 +1,5 @@
 use crate::worker::{
-    component::{Component, Update},
+    component::Update,
     schema::{DataPointer, Field, FieldId, Owned, OwnedPointer, Result, SchemaObject},
 };
 use spatialos_sdk_sys::worker::*;
@@ -19,8 +19,8 @@ impl SchemaComponentUpdate {
         result
     }
 
-    pub fn deserialize<C: Component>(&self) -> Result<C::Update> {
-        C::Update::from_schema(&self)
+    pub fn deserialize<U: Update>(&self) -> Result<U> {
+        U::from_schema(&self)
     }
 
     pub fn fields(&self) -> &SchemaObject {

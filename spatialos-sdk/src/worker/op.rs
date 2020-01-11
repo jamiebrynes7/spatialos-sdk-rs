@@ -10,7 +10,7 @@ use crate::worker::{
     {Authority, EntityId, LogLevel, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
-use std::{borrow::Cow, collections::HashMap, slice};
+use std::{collections::HashMap, slice};
 
 pub struct OpList {
     raw: *mut Worker_OpList,
@@ -539,7 +539,7 @@ pub struct AddComponentOp<'a> {
 }
 
 impl<'a> AddComponentOp<'a> {
-    pub fn get<C>(&self) -> Option<schema::Result<Cow<'_, C>>>
+    pub fn get<C>(&self) -> Option<schema::Result<C>>
     where
         C: Component,
     {
@@ -568,7 +568,7 @@ pub struct ComponentUpdateOp<'a> {
 }
 
 impl<'a> ComponentUpdateOp<'a> {
-    pub fn get<C>(&self) -> Option<schema::Result<Cow<'_, C::Update>>>
+    pub fn get<C>(&self) -> Option<schema::Result<C::Update>>
     where
         C: Component,
     {
@@ -588,7 +588,7 @@ pub struct CommandRequestOp<'a> {
 }
 
 impl<'a> CommandRequestOp<'a> {
-    pub fn get<C>(&self) -> Option<schema::Result<Cow<'_, C::CommandRequest>>>
+    pub fn get<C>(&self) -> Option<schema::Result<C::CommandRequest>>
     where
         C: Component,
         C::CommandRequest: ObjectField,
