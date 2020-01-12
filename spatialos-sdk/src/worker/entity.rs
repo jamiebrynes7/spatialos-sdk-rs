@@ -5,7 +5,6 @@ use crate::worker::{
 };
 use spatialos_sdk_sys::worker::{Worker_ComponentData, Worker_Entity};
 use std::collections::HashMap;
-use std::ptr;
 use std::result::Result;
 use std::slice;
 
@@ -66,14 +65,14 @@ impl Entity {
         self.components
             .iter_mut()
             .map(|(&component_id, data)| Worker_ComponentData {
-                reserved: ptr::null_mut(),
                 component_id,
 
                 // TODO: Why does this require a `*mut Schema_ComponentData`? Is there any actual
                 // chance that the underlying data will be mutated? Would it be safe for us to use
                 // `as_ptr` and cast it to a `*mut`?
                 schema_type: data.as_ptr_mut(),
-                user_handle: ptr::null_mut(),
+
+                ..Default::default()
             })
             .collect()
     }

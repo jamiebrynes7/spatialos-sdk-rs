@@ -22,17 +22,17 @@ pub fn writing_invalid_entity_returns_error() {
 pub fn create_and_read_snapshot() {
     let snapshot_path = env::temp_dir().join("test.snapshot");
 
-    let mut entity = get_test_entity().expect("Error");
+    let mut entity = get_test_entity();
 
     {
         SnapshotOutputStream::new(snapshot_path.clone())
-            .expect("Error")
+            .expect("Failed to create `SnapshotOutputStream`")
             .write_entity(EntityId::new(1), &mut entity)
-            .expect("Error");
+            .expect("Failed to write entity to snapshot");
     }
 
     {
-        let mut snapshot = SnapshotInputStream::new(snapshot_path).expect("Error");
+        let mut snapshot = SnapshotInputStream::new(snapshot_path).expect("Failed to create `SnapshotInputStream`");
 
         assert!(snapshot.has_next());
 
@@ -60,8 +60,8 @@ pub fn create_and_read_snapshot() {
     }
 }
 
-fn get_test_entity() -> Result<Entity, String> {
+fn get_test_entity() -> Entity {
     let mut builder = EntityBuilder::new(10.0, -10.0, 0.0, "RustWorker");
     builder.set_persistent("RustWorker");
-    builder.build()
+    builder.build().expect("Failed to build test entity")
 }

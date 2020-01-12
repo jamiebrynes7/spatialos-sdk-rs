@@ -33,13 +33,9 @@ impl SnapshotOutputStream {
     pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, SnapshotError> {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
-        let params = Worker_SnapshotParameters {
-            component_vtable_count: 0,
-            component_vtables: ptr::null(),
-            default_component_vtable: std::ptr::null(),
+        let stream_ptr = unsafe {
+            Worker_SnapshotOutputStream_Create(filename_cstr.as_ptr(), &Default::default())
         };
-        let stream_ptr =
-            unsafe { Worker_SnapshotOutputStream_Create(filename_cstr.as_ptr(), &params) };
 
         let state = unsafe { Worker_SnapshotOutputStream_GetState(stream_ptr) };
         match Worker_StreamState::from(state.stream_state) {

@@ -65,9 +65,10 @@ fn entity_acl_is_serialized_correctly() {
         .contains(&"position_acl".to_owned()));
 
     // Test that arbitrary components are correctly inserted.
-    let maybe_metadata_acl = acl.component_write_acl.get(&Metadata::ID);
-    assert!(maybe_metadata_acl.is_some());
-    let metadata_acl = maybe_metadata_acl.unwrap();
+    let metadata_acl = acl
+        .component_write_acl
+        .get(&Metadata::ID)
+        .expect("No entry for `Metadata` in `EntityAcl::component_write_acl`");
     assert_eq!(1, metadata_acl.attribute_set.len());
     assert!(metadata_acl.attribute_set[0]
         .attribute
