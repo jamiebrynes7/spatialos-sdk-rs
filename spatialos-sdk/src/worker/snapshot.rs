@@ -1,6 +1,6 @@
 use crate::worker::{entity::Entity, utils::cstr_to_string, EntityId};
 use spatialos_sdk_sys::worker::*;
-use std::{ffi::CString, path::Path, ptr};
+use std::{ffi::CString, path::Path};
 
 #[derive(Debug)]
 pub enum SnapshotError {

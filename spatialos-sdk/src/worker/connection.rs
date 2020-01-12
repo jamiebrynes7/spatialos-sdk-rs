@@ -644,6 +644,7 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
     type Output = Result<WorkerConnection, ConnectionStatusError>;
 
     fn start(&self) -> *mut Self::RawPointer {
+        let default_vtable = Default::default();
         match &self {
             WorkerConnectionFuture::Receptionist(hostname, worker_id, port, params) => {
                 let params = params.flatten();
@@ -652,13 +653,15 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
                         hostname.as_ptr(),
                         *port,
                         worker_id.as_ptr(),
-                        &params.as_raw(),
+                        &params.as_raw(&default_vtable),
                     )
                 }
             }
             WorkerConnectionFuture::Locator(locator, params) => {
                 let params = params.flatten();
-                unsafe { Worker_Locator_ConnectAsync(locator.locator, &params.as_raw()) }
+                unsafe {
+                    Worker_Locator_ConnectAsync(locator.locator, &params.as_raw(&default_vtable))
+                }
             }
         }
     }
