@@ -33,8 +33,15 @@ impl SnapshotOutputStream {
     pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, SnapshotError> {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
+        let default_vtables = Default::default();
         let stream_ptr = unsafe {
-            Worker_SnapshotOutputStream_Create(filename_cstr.as_ptr(), &Default::default())
+            Worker_SnapshotOutputStream_Create(
+                filename_cstr.as_ptr(),
+                &Worker_SnapshotParameters {
+                    default_component_vtable: &default_vtables,
+                    ..Default::default()
+                },
+            )
         };
 
         let state = unsafe { Worker_SnapshotOutputStream_GetState(stream_ptr) };
@@ -82,14 +89,16 @@ impl SnapshotInputStream {
     pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, SnapshotError> {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
-        let params = Worker_SnapshotParameters {
-            component_vtable_count: 0,
-            component_vtables: ptr::null(),
-            default_component_vtable: std::ptr::null(),
+        let default_vtable = Default::default();
+        let stream_ptr = unsafe {
+            Worker_SnapshotInputStream_Create(
+                filename_cstr.as_ptr(),
+                &Worker_SnapshotParameters {
+                    default_component_vtable: &default_vtable,
+                    ..Default::default()
+                },
+            )
         };
-
-        let stream_ptr =
-            unsafe { Worker_SnapshotInputStream_Create(filename_cstr.as_ptr(), &params) };
 
         let state = unsafe { Worker_SnapshotInputStream_GetState(stream_ptr) };
         match Worker_StreamState::from(state.stream_state) {

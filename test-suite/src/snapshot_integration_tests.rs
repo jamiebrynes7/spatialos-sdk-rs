@@ -32,11 +32,14 @@ pub fn create_and_read_snapshot() {
     }
 
     {
-        let mut snapshot = SnapshotInputStream::new(snapshot_path).expect("Failed to create `SnapshotInputStream`");
+        let mut snapshot = SnapshotInputStream::new(snapshot_path)
+            .expect("Failed to create `SnapshotInputStream`");
 
         assert!(snapshot.has_next());
 
-        let entity = snapshot.read_entity().expect("Error");
+        let entity = snapshot
+            .read_entity()
+            .expect("Failed to read entity from snapshot");
 
         let position = entity
             .get::<Position>()
