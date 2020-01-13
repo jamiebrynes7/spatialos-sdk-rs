@@ -10,7 +10,7 @@
 </div>
 
 
-> This is an **unofficial**, **unsupported**, and **untested** integration of the [SpatialOS SDK C API bindings](https://docs.improbable.io/reference/13.3/capi/introduction) with Rust. Improbable does not officially support Rust as a worker language.
+> **Note**: This is an **unofficial** integration of the [SpatialOS C API ](https://docs.improbable.io/reference/latest/capi/introduction) with Rust. Improbable does not officially support Rust as a worker language.
 
 # Quick start
 
