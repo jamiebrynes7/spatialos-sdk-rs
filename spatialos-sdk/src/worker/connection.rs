@@ -425,8 +425,6 @@ impl Connection for WorkerConnection {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             command_index,
-            // TODO: Do we need to free the `Schema_CommandRequest` object at this point? Or will
-            // the SDK handle that for us?
             schema_type: C::to_request(&request).into_raw(),
             user_handle: ptr::null_mut(),
         };
@@ -453,8 +451,6 @@ impl Connection for WorkerConnection {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             command_index: C::get_response_command_index(response),
-            // TODO: Do we need to free the `Schema_CommandResponse` object at this point? Or
-            // will the SDK handle that for us?
             schema_type: C::to_response(response).into_raw(),
             user_handle: ptr::null_mut(),
         };
@@ -494,8 +490,6 @@ impl Connection for WorkerConnection {
         let mut component_update = Worker_ComponentUpdate {
             reserved: ptr::null_mut(),
             component_id: C::ID,
-            // TODO: Do we need to free the `Schema_ComponentUpdate` object at this point? Or
-            // will the SDK handle that for us?
             schema_type: SchemaComponentUpdate::from_update(update).into_raw(),
             user_handle: ptr::null_mut(),
         };
