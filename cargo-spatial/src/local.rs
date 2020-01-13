@@ -1,5 +1,5 @@
 use crate::config::{BuildProfile, Config};
-use crate::errors::WrappedError;
+use crate::errors::Error;
 use crate::format_arg;
 use crate::opt::*;
 use serde::export::Formatter;
@@ -29,14 +29,14 @@ impl Display for ErrorKind {
 /// Before launching the deployment, this will first run code generation and build
 /// workers in the project. Assumes that the current working directory is the root
 /// directory of the project, i.e. the directory that has the `Spatial.toml` file.
-pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), WrappedError<ErrorKind>> {
+pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Error<ErrorKind>> {
     assert!(
         crate::current_dir_is_root(),
         "Current directory should be the project root"
     );
 
     // Run codegen and such.
-    crate::codegen::run_codegen(config).map_err(|e| WrappedError {
+    crate::codegen::run_codegen(config).map_err(|e| Error {
         kind: ErrorKind::Codegen,
         msg: "Failed to generate code".into(),
         inner: Some(Box::new(e)),
@@ -68,14 +68,14 @@ pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), WrappedError<
                 command.arg("--debug");
             }
 
-            let status = command.status().map_err(|e| WrappedError {
+            let status = command.status().map_err(|e| Error {
                 kind: ErrorKind::Build,
                 msg: "Failed to execute 'cargo install'.".into(),
                 inner: Some(Box::new(e)),
             })?;
 
             if !status.success() {
-                return Err(WrappedError {
+                return Err(Error {
                     kind: ErrorKind::Build,
                     msg: "Failed to build worker.".into(),
                     inner: None,
@@ -91,7 +91,7 @@ pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), WrappedError<
         command.arg(&format_arg("launch_config", launch_config));
     }
 
-    command.status().map_err(|err| WrappedError {
+    command.status().map_err(|err| Error {
         kind: ErrorKind::Launch,
         msg: "Failed to launch deployment.".into(),
         inner: Some(Box::new(err)),

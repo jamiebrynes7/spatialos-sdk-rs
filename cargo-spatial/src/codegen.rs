@@ -1,4 +1,4 @@
-use crate::{config::Config, errors::WrappedError, format_arg};
+use crate::{config::Config, errors::Error, format_arg};
 use log::*;
 use spatialos_sdk_code_generator::{generator, schema_bundle};
 use std::{
@@ -32,9 +32,9 @@ impl Display for ErrorKind {
 ///
 /// Assumes that the current working directory is the root directory of the project,
 /// i.e. the directory that has the `Spatial.toml` file.
-pub fn run_codegen(config: &Config) -> Result<(), WrappedError<ErrorKind>> {
+pub fn run_codegen(config: &Config) -> Result<(), Error<ErrorKind>> {
     if !crate::current_dir_is_root() {
-        return Err(WrappedError {
+        return Err(Error {
             msg: "Current directory should be the project root.".into(),
             kind: ErrorKind::BadConfig,
             inner: None,
@@ -44,7 +44,7 @@ pub fn run_codegen(config: &Config) -> Result<(), WrappedError<ErrorKind>> {
     // Ensure that the path to the Spatial SDK has been specified.
     let spatial_lib_dir = config.spatial_lib_dir()
         .map(PathBuf::from)
-        .ok_or(WrappedError {
+        .ok_or(Error {
             msg: "spatial_lib_dir value must be set in the config, or the SPATIAL_LIB_DIR environment variable must be set.".into(),
             kind: ErrorKind::BadConfig,
             inner: None})?;
@@ -62,7 +62,7 @@ pub fn run_codegen(config: &Config) -> Result<(), WrappedError<ErrorKind>> {
     // Create the output directory if it doesn't already exist.
     fs::create_dir_all(&output_dir).map_err(|e| {
         let msg = format!("Failed to create {}", output_dir.display());
-        WrappedError {
+        Error {
             msg,
             kind: ErrorKind::IO,
             inner: Some(Box::new(e)),
@@ -94,14 +94,14 @@ pub fn run_codegen(config: &Config) -> Result<(), WrappedError<ErrorKind>> {
     }
 
     trace!("{:#?}", command);
-    let status = command.status().map_err(|e| WrappedError {
+    let status = command.status().map_err(|e| Error {
         msg: "Failed to compile schema files".into(),
         kind: ErrorKind::SchemaCompiler,
         inner: Some(Box::new(e)),
     })?;
 
     if !status.success() {
-        return Err(WrappedError {
+        return Err(Error {
             msg: "Failed to run schema compilation".into(),
             kind: ErrorKind::SchemaCompiler,
             inner: None,
@@ -109,7 +109,7 @@ pub fn run_codegen(config: &Config) -> Result<(), WrappedError<ErrorKind>> {
     }
 
     // Load bundle.json, which describes the schema definitions for all components.
-    let mut input_file = File::open(&bundle_json_path).map_err(|e| WrappedError {
+    let mut input_file = File::open(&bundle_json_path).map_err(|e| Error {
         msg: "Failed to open bundle.json".into(),
         kind: ErrorKind::SchemaCompiler,
         inner: Some(Box::new(e)),
@@ -118,14 +118,14 @@ pub fn run_codegen(config: &Config) -> Result<(), WrappedError<ErrorKind>> {
     let mut contents = String::new();
     input_file
         .read_to_string(&mut contents)
-        .map_err(|e| WrappedError {
+        .map_err(|e| Error {
             msg: "Failed to read contents of bundle.json".into(),
             kind: ErrorKind::IO,
             inner: Some(Box::new(e)),
         })?;
 
     // Run code generation.
-    let bundle = schema_bundle::load_bundle(&contents).map_err(|e| WrappedError {
+    let bundle = schema_bundle::load_bundle(&contents).map_err(|e| Error {
         msg: "Failed to parse contents of bundle.json".into(),
         kind: ErrorKind::InvalidBundle,
         inner: Some(Box::new(e)),
@@ -134,13 +134,13 @@ pub fn run_codegen(config: &Config) -> Result<(), WrappedError<ErrorKind>> {
 
     // Write the generated code to the output file.
     File::create(&config.codegen_out)
-        .map_err(|e| WrappedError {
+        .map_err(|e| Error {
             msg: "Unable to create codegen output file".into(),
             kind: ErrorKind::IO,
             inner: Some(Box::new(e)),
         })?
         .write_all(generated_file.as_bytes())
-        .map_err(|e| WrappedError {
+        .map_err(|e| Error {
             msg: "Failed to write generated code to file".into(),
             kind: ErrorKind::IO,
             inner: Some(Box::new(e)),

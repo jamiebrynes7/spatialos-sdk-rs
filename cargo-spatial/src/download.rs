@@ -6,7 +6,7 @@ pub use self::macos::*;
 #[cfg(target_os = "windows")]
 pub use self::windows::*;
 
-use crate::{config::Config, errors::WrappedError, opt::DownloadSdk};
+use crate::{config::Config, errors::Error, opt::DownloadSdk};
 use log::*;
 use std::{
     fmt::{Display, Formatter},
@@ -172,11 +172,11 @@ impl Display for ErrorKind {
 pub fn download_sdk(
     config: Result<Config, Box<dyn std::error::Error>>,
     options: &DownloadSdk,
-) -> Result<(), WrappedError<ErrorKind>> {
+) -> Result<(), Error<ErrorKind>> {
     let spatial_lib_dir = match config {
         Ok(ref config) => config.spatial_lib_dir(),
         Err(_) => ::std::env::var("SPATIAL_LIB_DIR").ok()
-    }.ok_or(WrappedError {
+    }.ok_or(Error {
         kind: ErrorKind::BadConfig,
         msg: "'spatial_lib_dir' value must be set in the config, or the 'SPATIAL_LIB_DIR' environment variable must be set".into(),
         inner: None
@@ -190,7 +190,7 @@ pub fn download_sdk(
             |ref v| Ok(v.to_string()),
         )
         .map_err(|e| {
-            WrappedError {
+            Error {
             kind: ErrorKind::BadConfig,
             msg:
             "'spatial_sdk_version' must be set in the config, or provided as a command line argument"
@@ -203,14 +203,14 @@ pub fn download_sdk(
 
     // Clean existing directory.
     if Path::new(&spatial_lib_dir).exists() {
-        fs::remove_dir_all(&spatial_lib_dir).map_err(|e| WrappedError {
+        fs::remove_dir_all(&spatial_lib_dir).map_err(|e| Error {
             kind: ErrorKind::IO,
             msg: format!("Failed to remove directory {}.", &spatial_lib_dir),
             inner: Some(Box::new(e)),
         })?;
     }
 
-    fs::create_dir_all(&spatial_lib_dir).map_err(|e| WrappedError {
+    fs::create_dir_all(&spatial_lib_dir).map_err(|e| Error {
         kind: ErrorKind::IO,
         msg: format!("Failed to create directory {}.", &spatial_lib_dir),
         inner: Some(Box::new(e)),
@@ -240,7 +240,7 @@ fn download_package(
     package_source: SpatialPackageSource,
     sdk_version: &str,
     spatial_lib_dir: &str,
-) -> Result<(), WrappedError<ErrorKind>> {
+) -> Result<(), Error<ErrorKind>> {
     info!("Downloading {}", package_source.package_name().join(" "));
 
     let mut output_path = PathBuf::new();
@@ -259,7 +259,7 @@ fn download_package(
     let process = process::Command::new("spatial")
         .args(args)
         .output()
-        .map_err(|e| WrappedError {
+        .map_err(|e| Error {
             kind: ErrorKind::FailedDownload,
             msg: "Failed to run 'spatial'.".into(),
             inner: Some(Box::new(e)),
@@ -273,12 +273,12 @@ fn download_package(
         }
 
         return Err(match String::from_utf8(process.stderr) {
-            Ok(err) => WrappedError {
+            Ok(err) => Error {
                 kind: ErrorKind::FailedDownload,
                 msg: err,
                 inner: None,
             },
-            Err(e) => WrappedError {
+            Err(e) => Error {
                 kind: ErrorKind::FailedDownload,
                 msg: "Package download failed and stderr is not utf-8 compliant.".into(),
                 inner: Some(Box::new(e)),
