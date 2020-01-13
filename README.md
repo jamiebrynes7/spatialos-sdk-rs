@@ -110,7 +110,7 @@ To display Rusts auto-generated debug representation of the schema bundle, run t
 $ cargo test -p spatialos-sdk-code-generator -- --nocapture
 ```
 
-### Updating Rust bindings
+## Updating Rust bindings
 
 To update the Rust bindings found in `spatialos-sdk-sys` run the following command from the root of the repository:
 
