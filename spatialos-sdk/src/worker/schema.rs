@@ -384,6 +384,13 @@ impl Error {
             },
         }
     }
+
+    pub fn schema_error<T>(msg: String) -> Self {
+        Self {
+            type_name: std::any::type_name::<T>(),
+            kind: ErrorKind::SchemaError(msg),
+        }
+    }
 }
 
 impl Display for Error {
@@ -426,6 +433,8 @@ impl Display for Error {
                     field, self.type_name, error
                 ),
             },
+
+            ErrorKind::SchemaError(msg) => write!(f, "Generic schema error {}", msg),
         }
     }
 }
@@ -463,4 +472,5 @@ pub enum ErrorKind {
         index: Option<usize>,
         error: Box<Error>,
     },
+    SchemaError(String),
 }
