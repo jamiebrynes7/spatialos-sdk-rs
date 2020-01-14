@@ -1,4 +1,5 @@
 use crate::worker::schema::{DataPointer, Field, FieldId, IndexedField, Result};
+use crate::worker::utils::cstr_to_string;
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -60,6 +61,26 @@ impl SchemaObject {
             Schema_GetUniqueFieldIds(self.as_ptr(), buffer.as_mut_ptr());
             buffer
         }
+    }
+
+    pub fn copy_from(&mut self, other: &SchemaObject) -> std::result::Result<(), String> {
+        unsafe {
+            let length = Schema_GetWriteBufferLength(other.as_ptr());
+            let buffer = Schema_AllocateBuffer(self.as_ptr_mut(), length);
+            let result = Schema_SerializeToBuffer(other.as_ptr(), buffer, length);
+
+            if result == 0 {
+                return Err(cstr_to_string(Schema_GetError(other.as_ptr())));
+            }
+
+            let result = Schema_MergeFromBuffer(self.as_ptr_mut(), buffer, length);
+
+            if result == 0 {
+                return Err(cstr_to_string(Schema_GetError(self.as_ptr())));
+            }
+        }
+
+        Ok(())
     }
 }
 
