@@ -36,6 +36,35 @@ impl Entity {
         Ok(entity)
     }
 
+    pub(crate) fn from_schema_field(object: &SchemaObject) -> Result<Self, schema::Error> {
+        let field_ids = object.unique_field_ids();
+        let mut entity = Entity::new();
+
+        for field_id in field_ids {
+            entity
+                .pre_add_check(field_id)
+                .map_err(Error::schema_error::<Self>)?;
+
+            let component = object.get_object(field_id);
+            let mut owned = SchemaComponentData::new();
+            owned
+                .fields_mut()
+                .copy_from(component)
+                .map_err(Error::schema_error::<Self>)?;
+
+            entity.components.insert(field_id, owned);
+        }
+
+        Ok(entity)
+    }
+
+    pub(crate) fn to_schema_field(&self, object: &mut SchemaObject) {
+        for (component_id, data) in &self.components {
+            let component_field = object.add_object(*component_id);
+            component_field.copy_from(data.fields()).unwrap(); // TODO: Get rid of unwrap.
+        }
+    }
+
     pub(crate) fn add<C: Component>(&mut self, component: &C) -> Result<(), String> {
         self.pre_add_check(C::ID)?;
 
