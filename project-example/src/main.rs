@@ -67,7 +67,7 @@ fn logic_loop(c: &mut WorkerConnection) {
     builder.set_metadata("Rotator", "rusty");
     builder.set_entity_acl_write_access("rusty");
 
-    let mut entity = builder.build().unwrap();
+    let entity = builder.build().unwrap();
 
     let create_request_id = c.send_create_entity_request(&entity, None, None);
     println!("Create entity request ID: {:?}", create_request_id);

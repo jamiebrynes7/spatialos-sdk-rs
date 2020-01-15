@@ -9,7 +9,7 @@ use spatialos_sdk::worker::entity_builder::EntityBuilder;
 pub fn writing_invalid_entity_returns_error() {
     let snapshot_path = env::temp_dir().join("test2.snapshot");
 
-    let mut entity = Entity::new();
+    let entity = Entity::new();
 
     let error = SnapshotOutputStream::new(snapshot_path)
         .expect("Error")
@@ -22,7 +22,7 @@ pub fn writing_invalid_entity_returns_error() {
 pub fn create_and_read_snapshot() {
     let snapshot_path = env::temp_dir().join("test.snapshot");
 
-    let mut entity = get_test_entity();
+    let entity = get_test_entity();
 
     {
         SnapshotOutputStream::new(snapshot_path.clone())
