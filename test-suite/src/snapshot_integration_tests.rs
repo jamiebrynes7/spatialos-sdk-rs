@@ -13,7 +13,7 @@ pub fn writing_invalid_entity_returns_error() {
 
     let error = SnapshotOutputStream::new(snapshot_path)
         .expect("Error")
-        .write_entity(EntityId::new(1), &mut entity);
+        .write_entity(EntityId::new(1), &entity);
 
     assert!(error.is_err());
 }
@@ -27,7 +27,7 @@ pub fn create_and_read_snapshot() {
     {
         SnapshotOutputStream::new(snapshot_path.clone())
             .expect("Failed to create `SnapshotOutputStream`")
-            .write_entity(EntityId::new(1), &mut entity)
+            .write_entity(EntityId::new(1), &entity)
             .expect("Failed to write entity to snapshot");
     }
 

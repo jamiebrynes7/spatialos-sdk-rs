@@ -150,7 +150,7 @@ pub trait Connection {
     ) -> RequestId<ReserveEntityIdsRequest>;
     fn send_create_entity_request(
         &mut self,
-        entity: &mut Entity,
+        entity: &Entity,
         entity_id: Option<EntityId>,
         timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest>;
@@ -341,7 +341,7 @@ impl Connection for WorkerConnection {
 
     fn send_create_entity_request(
         &mut self,
-        entity: &mut Entity,
+        entity: &Entity,
         entity_id: Option<EntityId>,
         timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest> {

@@ -69,7 +69,7 @@ fn logic_loop(c: &mut WorkerConnection) {
 
     let mut entity = builder.build().unwrap();
 
-    let create_request_id = c.send_create_entity_request(&mut entity, None, None);
+    let create_request_id = c.send_create_entity_request(&entity, None, None);
     println!("Create entity request ID: {:?}", create_request_id);
 
     loop {

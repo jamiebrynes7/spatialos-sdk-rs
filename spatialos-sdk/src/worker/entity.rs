@@ -61,16 +61,30 @@ impl Entity {
         self.components.get(&C::ID).map(|data| data.deserialize())
     }
 
-    pub(crate) fn raw_component_data(&mut self) -> Vec<Worker_ComponentData> {
+    /// Converts the entity's contents into a format that can be used with the C API.
+    ///
+    /// In cases where the C API takes an entity as a parameter, it does so by taking an array of
+    /// `Worker_ComponentData` structs. This method gathers the serialized component data and
+    /// returns a `Vec<Worker_ComponentData>` that can be used to pass data to the C API.
+    ///
+    /// # Safety
+    ///
+    /// * The returned `Worker_ComponentData` objects borrow the serialized schema data from the
+    ///   `Entity`, and so cannot be used safely once the `Entity` is dropped.
+    /// * The returned `Worker_ComponentData` objects should only be used with C API functions that
+    ///   will not mutate the objects pointed to by the `schema_type` fields. In particular, this
+    ///   should be safe to use with `Worker_Connection_SendCreateEntityRequest` and
+    ///   `Worker_SnapshotOutputStream_WriteEntity`.
+    pub(crate) fn raw_component_data(&self) -> Vec<Worker_ComponentData> {
         self.components
-            .iter_mut()
+            .iter()
             .map(|(&component_id, data)| Worker_ComponentData {
                 component_id,
 
-                // TODO: Why does this require a `*mut Schema_ComponentData`? Is there any actual
-                // chance that the underlying data will be mutated? Would it be safe for us to use
-                // `as_ptr` and cast it to a `*mut`?
-                schema_type: data.as_ptr_mut(),
+                // SAFETY: The `schema_type` field is a `*mut Schema_ComponentData`, but the cases
+                // where we access the raw component data for an entity (e.g. writing to a snapshot
+                // or creating a new entity in the world) won't actually mutate the data.
+                schema_type: data.as_ptr() as *mut _,
 
                 ..Default::default()
             })
