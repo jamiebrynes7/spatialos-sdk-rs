@@ -1,9 +1,7 @@
-use crate::config::Config;
-use crate::format_arg;
+use crate::{config::Config, errors::Error, format_arg};
 use log::*;
 use spatialos_sdk_code_generator::{generator, schema_bundle};
 use std::{
-    error::Error,
     fmt::{Display, Formatter},
     fs::{self, File},
     io::prelude::*,
@@ -12,46 +10,21 @@ use std::{
 };
 
 #[derive(Debug)]
-pub enum CodegenErrorKind {
+pub enum ErrorKind {
     BadConfig,
     SchemaCompiler,
     InvalidBundle,
     IO,
 }
 
-impl Display for CodegenErrorKind {
+impl Display for ErrorKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
-            CodegenErrorKind::BadConfig => f.write_str("Bad Config"),
-            CodegenErrorKind::SchemaCompiler => f.write_str("Schema Compiler Error"),
-            CodegenErrorKind::InvalidBundle => f.write_str("Invalid Schema Bundle"),
-            CodegenErrorKind::IO => f.write_str("IO Error"),
+            ErrorKind::BadConfig => f.write_str("Bad Config"),
+            ErrorKind::SchemaCompiler => f.write_str("Schema Compiler Error"),
+            ErrorKind::InvalidBundle => f.write_str("Invalid Schema Bundle"),
+            ErrorKind::IO => f.write_str("IO Error"),
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct CodegenError {
-    kind: CodegenErrorKind,
-    msg: String,
-    inner: Option<Box<dyn Error>>,
-}
-
-impl Display for CodegenError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-        let mut msg = format!("{}: {}", self.kind, self.msg);
-
-        if let Some(ref inner) = self.inner {
-            msg = format!("{}\nInner error: {}", msg, inner);
-        }
-
-        f.write_str(&msg)
-    }
-}
-
-impl Error for CodegenError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        self.inner.as_ref().map(|e| e.as_ref())
     }
 }
 
@@ -59,11 +32,11 @@ impl Error for CodegenError {
 ///
 /// Assumes that the current working directory is the root directory of the project,
 /// i.e. the directory that has the `Spatial.toml` file.
-pub fn run_codegen(config: &Config) -> Result<(), CodegenError> {
+pub fn run_codegen(config: &Config) -> Result<(), Error<ErrorKind>> {
     if !crate::current_dir_is_root() {
-        return Err(CodegenError {
+        return Err(Error {
             msg: "Current directory should be the project root.".into(),
-            kind: CodegenErrorKind::BadConfig,
+            kind: ErrorKind::BadConfig,
             inner: None,
         });
     }
@@ -71,9 +44,9 @@ pub fn run_codegen(config: &Config) -> Result<(), CodegenError> {
     // Ensure that the path to the Spatial SDK has been specified.
     let spatial_lib_dir = config.spatial_lib_dir()
         .map(PathBuf::from)
-        .ok_or(CodegenError {
+        .ok_or(Error {
             msg: "spatial_lib_dir value must be set in the config, or the SPATIAL_LIB_DIR environment variable must be set.".into(),
-            kind: CodegenErrorKind::BadConfig,
+            kind: ErrorKind::BadConfig,
             inner: None})?;
 
     // Determine the paths the the schema compiler and protoc relative the the lib
@@ -89,9 +62,9 @@ pub fn run_codegen(config: &Config) -> Result<(), CodegenError> {
     // Create the output directory if it doesn't already exist.
     fs::create_dir_all(&output_dir).map_err(|e| {
         let msg = format!("Failed to create {}", output_dir.display());
-        CodegenError {
+        Error {
             msg,
-            kind: CodegenErrorKind::IO,
+            kind: ErrorKind::IO,
             inner: Some(Box::new(e)),
         }
     })?;
@@ -121,55 +94,55 @@ pub fn run_codegen(config: &Config) -> Result<(), CodegenError> {
     }
 
     trace!("{:#?}", command);
-    let status = command.status().map_err(|e| CodegenError {
+    let status = command.status().map_err(|e| Error {
         msg: "Failed to compile schema files".into(),
-        kind: CodegenErrorKind::SchemaCompiler,
+        kind: ErrorKind::SchemaCompiler,
         inner: Some(Box::new(e)),
     })?;
 
     if !status.success() {
-        return Err(CodegenError {
+        return Err(Error {
             msg: "Failed to run schema compilation".into(),
-            kind: CodegenErrorKind::SchemaCompiler,
+            kind: ErrorKind::SchemaCompiler,
             inner: None,
         });
     }
 
     // Load bundle.json, which describes the schema definitions for all components.
-    let mut input_file = File::open(&bundle_json_path).map_err(|e| CodegenError {
+    let mut input_file = File::open(&bundle_json_path).map_err(|e| Error {
         msg: "Failed to open bundle.json".into(),
-        kind: CodegenErrorKind::SchemaCompiler,
+        kind: ErrorKind::SchemaCompiler,
         inner: Some(Box::new(e)),
     })?;
 
     let mut contents = String::new();
     input_file
         .read_to_string(&mut contents)
-        .map_err(|e| CodegenError {
+        .map_err(|e| Error {
             msg: "Failed to read contents of bundle.json".into(),
-            kind: CodegenErrorKind::IO,
+            kind: ErrorKind::IO,
             inner: Some(Box::new(e)),
         })?;
 
     // Run code generation.
-    let bundle = schema_bundle::load_bundle(&contents).map_err(|e| CodegenError {
+    let bundle = schema_bundle::load_bundle(&contents).map_err(|e| Error {
         msg: "Failed to parse contents of bundle.json".into(),
-        kind: CodegenErrorKind::InvalidBundle,
+        kind: ErrorKind::InvalidBundle,
         inner: Some(Box::new(e)),
     })?;
     let generated_file = generator::generate_code(bundle);
 
     // Write the generated code to the output file.
     File::create(&config.codegen_out)
-        .map_err(|e| CodegenError {
+        .map_err(|e| Error {
             msg: "Unable to create codegen output file".into(),
-            kind: CodegenErrorKind::IO,
+            kind: ErrorKind::IO,
             inner: Some(Box::new(e)),
         })?
         .write_all(generated_file.as_bytes())
-        .map_err(|e| CodegenError {
+        .map_err(|e| Error {
             msg: "Failed to write generated code to file".into(),
-            kind: CodegenErrorKind::IO,
+            kind: ErrorKind::IO,
             inner: Some(Box::new(e)),
         })?;
 
