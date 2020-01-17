@@ -150,7 +150,7 @@ pub trait Connection {
     ) -> RequestId<ReserveEntityIdsRequest>;
     fn send_create_entity_request(
         &mut self,
-        entity: &Entity,
+        entity: Entity,
         entity_id: Option<EntityId>,
         timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest>;
@@ -341,7 +341,7 @@ impl Connection for WorkerConnection {
 
     fn send_create_entity_request(
         &mut self,
-        entity: &Entity,
+        entity: Entity,
         entity_id: Option<EntityId>,
         timeout_millis: Option<u32>,
     ) -> RequestId<CreateEntityRequest> {
@@ -353,7 +353,7 @@ impl Connection for WorkerConnection {
             Some(e) => &e.id,
             None => ptr::null(),
         };
-        let mut component_data = entity.raw_component_data();
+        let mut component_data = entity.into_raw();
         let id = unsafe {
             Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),

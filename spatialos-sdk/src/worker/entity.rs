@@ -67,24 +67,18 @@ impl Entity {
     /// `Worker_ComponentData` structs. This method gathers the serialized component data and
     /// returns a `Vec<Worker_ComponentData>` that can be used to pass data to the C API.
     ///
-    /// # Safety
-    ///
-    /// * The returned `Worker_ComponentData` objects borrow the serialized schema data from the
-    ///   `Entity`, and so cannot be used safely once the `Entity` is dropped.
-    /// * The returned `Worker_ComponentData` objects should only be used with C API functions that
-    ///   will not mutate the objects pointed to by the `schema_type` fields. In particular, this
-    ///   should be safe to use with `Worker_Connection_SendCreateEntityRequest` and
-    ///   `Worker_SnapshotOutputStream_WriteEntity`.
-    pub(crate) fn raw_component_data(&self) -> Vec<Worker_ComponentData> {
+    /// This method takes ownership of the data owned by the `Entity` so that it may be passed
+    /// to the C API. It is expected that ownership of the data will be taken by the C SDK and that
+    /// the C SKD will free any allocated data. For example, `Worker_Connection_SendCreateEntityRequest`
+    /// will take ownership of the underlying `Schema_ComponentData` and will free it when
+    /// appropriate. If the data is not passed to a similar function in the C SDK, then the data
+    /// owned by the `Entity` will leak.
+    pub(crate) fn into_raw(mut self) -> Vec<Worker_ComponentData> {
         self.components
-            .iter()
-            .map(|(&component_id, data)| Worker_ComponentData {
+            .drain()
+            .map(|(component_id, data)| Worker_ComponentData {
                 component_id,
-
-                // SAFETY: The `schema_type` field is a `*mut Schema_ComponentData`, but the cases
-                // where we access the raw component data for an entity (e.g. writing to a snapshot
-                // or creating a new entity in the world) won't actually mutate the data.
-                schema_type: data.as_ptr() as *mut _,
+                schema_type: data.into_raw(),
 
                 ..Default::default()
             })
