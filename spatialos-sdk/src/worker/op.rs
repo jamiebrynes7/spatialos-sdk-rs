@@ -535,7 +535,7 @@ pub struct EntityQueryResponseOp {
 pub struct AddComponentOp<'a> {
     pub entity_id: EntityId,
     pub component_id: ComponentId,
-    component_data: component::ComponentDataRef<'a>,
+    pub component_data: component::ComponentDataRef<'a>,
 }
 
 impl<'a> AddComponentOp<'a> {
@@ -564,7 +564,7 @@ pub struct AuthorityChangeOp {
 pub struct ComponentUpdateOp<'a> {
     pub entity_id: EntityId,
     pub component_id: ComponentId,
-    component_update: ComponentUpdateRef<'a>,
+    pub component_update: ComponentUpdateRef<'a>,
 }
 
 impl<'a> ComponentUpdateOp<'a> {
@@ -584,7 +584,7 @@ pub struct CommandRequestOp<'a> {
     pub caller_worker_id: String,
     pub caller_attribute_set: Vec<String>,
     pub component_id: ComponentId,
-    request: CommandRequestRef<'a>,
+    pub request: CommandRequestRef<'a>,
 }
 
 impl<'a> CommandRequestOp<'a> {
