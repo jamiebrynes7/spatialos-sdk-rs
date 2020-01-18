@@ -1,4 +1,8 @@
-use crate::worker::schema::{DataPointer, Owned, OwnedPointer, SchemaObject};
+use crate::worker::{
+    component::{CommandIndex, Request},
+    schema,
+    schema::{DataPointer, Owned, OwnedPointer, SchemaObject},
+};
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 
@@ -8,6 +12,16 @@ pub struct SchemaCommandRequest(PhantomData<*mut Schema_CommandRequest>);
 impl SchemaCommandRequest {
     pub fn new() -> Owned<SchemaCommandRequest> {
         Owned::new()
+    }
+
+    pub fn from_request<R: Request>(request: &R) -> (Owned<Self>, CommandIndex) {
+        let mut result = Self::new();
+        let index = request.into_schema(&mut result);
+        (result, index)
+    }
+
+    pub fn deserialize<R: Request>(&self, index: CommandIndex) -> schema::Result<R> {
+        R::from_schema(index, self)
     }
 
     pub fn object(&self) -> &SchemaObject {

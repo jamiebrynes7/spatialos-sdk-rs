@@ -7,35 +7,46 @@ pub type CommandIndex = Worker_CommandIndex;
 // A trait that's implemented by a component to convert to/from schema handle types.
 pub trait Component: ObjectField {
     type Update: Update<Component = Self>;
-    type CommandRequest;
-    type CommandResponse;
+    type CommandRequest: Request<Component = Self>;
+    type CommandResponse: Response<Component = Self>;
 
     const ID: ComponentId;
 
     fn merge_update(&mut self, update: Self::Update);
-
-    fn from_request(
-        command_index: CommandIndex,
-        request: &schema::SchemaCommandRequest,
-    ) -> schema::Result<Self::CommandRequest>;
-    fn from_response(
-        command_index: CommandIndex,
-        response: &schema::SchemaCommandResponse,
-    ) -> schema::Result<Self::CommandResponse>;
-
-    fn to_request(request: &Self::CommandRequest) -> Owned<SchemaCommandRequest>;
-    fn to_response(response: &Self::CommandResponse) -> Owned<SchemaCommandResponse>;
-
-    fn get_request_command_index(request: &Self::CommandRequest) -> u32;
-    fn get_response_command_index(response: &Self::CommandResponse) -> u32;
 }
 
 pub trait Update: Sized + Clone {
     type Component: Component<Update = Self>;
 
     fn from_schema(update: &SchemaComponentUpdate) -> schema::Result<Self>;
-    fn into_schema(&self, update: &mut SchemaComponentUpdate);
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) -> CommandIndex;
     fn merge(&mut self, other: Self);
+
+    fn serialize(&self) -> Owned<SchemaComponentUpdate> {
+        SchemaComponentUpdate::from_update(self)
+    }
+}
+
+pub trait Request: Sized + Clone {
+    type Component: Component<CommandRequest = Self>;
+
+    fn from_schema(index: CommandIndex, request: &SchemaCommandRequest) -> schema::Result<Self>;
+    fn into_schema(&self, request: &mut SchemaCommandRequest) -> CommandIndex;
+
+    fn serialize(&self) -> (Owned<SchemaCommandRequest>, CommandIndex) {
+        SchemaCommandRequest::from_request(self)
+    }
+}
+
+pub trait Response: Sized + Clone {
+    type Component: Component<CommandResponse = Self>;
+
+    fn from_schema(index: CommandIndex, response: &SchemaCommandResponse) -> schema::Result<Self>;
+    fn into_schema(&self, response: &mut SchemaCommandResponse) -> CommandIndex;
+
+    fn serialize(&self) -> (Owned<SchemaCommandResponse>, CommandIndex) {
+        SchemaCommandResponse::from_response(self)
+    }
 }
 
 /// Additional parameters for sending component updates.

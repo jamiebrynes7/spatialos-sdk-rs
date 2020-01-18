@@ -1,7 +1,7 @@
 use crate::ptr::MutPtr;
 use crate::worker::{
     commands::*,
-    component::{Component, UpdateParameters},
+    component::*,
     entity::Entity,
     locator::*,
     metrics::Metrics,
@@ -165,18 +165,18 @@ pub trait Connection {
         timeout_millis: Option<u32>,
     ) -> RequestId<EntityQueryRequest>;
 
-    fn send_command_request<C: Component>(
+    fn send_command_request<R: Request>(
         &mut self,
         entity_id: EntityId,
-        request: &C::CommandRequest,
+        request: &R,
         timeout_millis: Option<u32>,
         params: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest>;
 
-    fn send_command_response<C: Component>(
+    fn send_command_response<R: Response>(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
-        response: &C::CommandResponse,
+        response: &R,
     );
 
     fn send_command_failure(
@@ -407,25 +407,24 @@ impl Connection for WorkerConnection {
         }
     }
 
-    fn send_command_request<C: Component>(
+    fn send_command_request<R: Request>(
         &mut self,
         entity_id: EntityId,
-        request: &C::CommandRequest,
+        request: &R,
         timeout_millis: Option<u32>,
         params: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest> {
-        let command_index = C::get_request_command_index(&request);
-
         let timeout = match timeout_millis {
             Some(c) => &c,
             None => ptr::null(),
         };
 
+        let (schema_data, index) = request.serialize();
         let mut command_request = Worker_CommandRequest {
             reserved: ptr::null_mut(),
-            component_id: C::ID,
-            command_index,
-            schema_type: C::to_request(&request).into_raw(),
+            component_id: R::Component::ID,
+            command_index: index,
+            schema_type: schema_data.into_raw(),
             user_handle: ptr::null_mut(),
         };
 
@@ -442,16 +441,17 @@ impl Connection for WorkerConnection {
         RequestId::new(request_id)
     }
 
-    fn send_command_response<C: Component>(
+    fn send_command_response<R: Response>(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
-        response: &C::CommandResponse,
+        response: &R,
     ) {
+        let (schema_data, index) = response.serialize();
         let mut raw_response = Worker_CommandResponse {
             reserved: ptr::null_mut(),
-            component_id: C::ID,
-            command_index: C::get_response_command_index(response),
-            schema_type: C::to_response(response).into_raw(),
+            component_id: R::Component::ID,
+            command_index: index,
+            schema_type: schema_data.into_raw(),
             user_handle: ptr::null_mut(),
         };
 
