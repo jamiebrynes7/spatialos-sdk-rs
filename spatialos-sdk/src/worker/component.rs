@@ -1,8 +1,10 @@
-use crate::worker::schema::{self, *};
+use crate::worker::{
+    commands::*,
+    schema::{self, *},
+};
 use spatialos_sdk_sys::worker::*;
 
 pub type ComponentId = Worker_ComponentId;
-pub type CommandIndex = Worker_CommandIndex;
 
 // A trait that's implemented by a component to convert to/from schema handle types.
 pub trait Component: ObjectField {
@@ -24,28 +26,6 @@ pub trait Update: Sized + Clone {
 
     fn serialize(&self) -> Owned<SchemaComponentUpdate> {
         SchemaComponentUpdate::from_update(self)
-    }
-}
-
-pub trait Request: Sized + Clone {
-    type Component: Component<CommandRequest = Self>;
-
-    fn from_schema(index: CommandIndex, request: &SchemaCommandRequest) -> schema::Result<Self>;
-    fn into_schema(&self, request: &mut SchemaCommandRequest) -> CommandIndex;
-
-    fn serialize(&self) -> (Owned<SchemaCommandRequest>, CommandIndex) {
-        SchemaCommandRequest::from_request(self)
-    }
-}
-
-pub trait Response: Sized + Clone {
-    type Component: Component<CommandResponse = Self>;
-
-    fn from_schema(index: CommandIndex, response: &SchemaCommandResponse) -> schema::Result<Self>;
-    fn into_schema(&self, response: &mut SchemaCommandResponse) -> CommandIndex;
-
-    fn serialize(&self) -> (Owned<SchemaCommandResponse>, CommandIndex) {
-        SchemaCommandResponse::from_response(self)
     }
 }
 

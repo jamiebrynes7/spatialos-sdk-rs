@@ -1,6 +1,29 @@
-use crate::worker::query::EntityQuery;
-use crate::worker::EntityId;
-use spatialos_sdk_sys::worker::Worker_CommandParameters;
+use crate::worker::{component::Component, query::EntityQuery, schema, schema::*, EntityId};
+use spatialos_sdk_sys::worker::*;
+
+pub type CommandIndex = Worker_CommandIndex;
+
+pub trait Request: Sized + Clone {
+    type Component: Component<CommandRequest = Self>;
+
+    fn from_schema(index: CommandIndex, request: &SchemaCommandRequest) -> schema::Result<Self>;
+    fn into_schema(&self, request: &mut SchemaCommandRequest) -> CommandIndex;
+
+    fn serialize(&self) -> (Owned<SchemaCommandRequest>, CommandIndex) {
+        SchemaCommandRequest::from_request(self)
+    }
+}
+
+pub trait Response: Sized + Clone {
+    type Component: Component<CommandResponse = Self>;
+
+    fn from_schema(index: CommandIndex, response: &SchemaCommandResponse) -> schema::Result<Self>;
+    fn into_schema(&self, response: &mut SchemaCommandResponse) -> CommandIndex;
+
+    fn serialize(&self) -> (Owned<SchemaCommandResponse>, CommandIndex) {
+        SchemaCommandResponse::from_response(self)
+    }
+}
 
 /// Additional parameters for sending command requests.
 ///
