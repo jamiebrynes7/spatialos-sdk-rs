@@ -151,3 +151,9 @@ jobs:
 
       - name: Generate test coverage report
         uses: actions-rs/grcov@v0.1
+
+      - name: Upload coverage to codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} #required
+          file: ./codecov.info
