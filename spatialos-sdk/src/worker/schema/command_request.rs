@@ -1,5 +1,5 @@
 use crate::worker::{
-    component::{CommandIndex, Request},
+    commands::{CommandIndex, Request},
     schema,
     schema::{DataPointer, Owned, OwnedPointer, SchemaObject},
 };

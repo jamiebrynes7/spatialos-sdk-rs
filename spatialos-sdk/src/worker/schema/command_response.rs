@@ -1,5 +1,5 @@
 use crate::worker::{
-    component::{CommandIndex, Response},
+    commands::{CommandIndex, Response},
     schema::{DataPointer, Owned, OwnedPointer, SchemaObject},
 };
 use spatialos_sdk_sys::worker::*;
