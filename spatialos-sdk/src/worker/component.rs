@@ -1,5 +1,6 @@
 use crate::worker::schema::{self, *};
 use spatialos_sdk_sys::worker::*;
+use std::ops::DerefMut;
 
 pub type ComponentId = Worker_ComponentId;
 pub type CommandIndex = Worker_CommandIndex;
@@ -36,6 +37,23 @@ pub trait Update: Sized + Clone {
     fn from_schema(update: &SchemaComponentUpdate) -> schema::Result<Self>;
     fn into_schema(&self, update: &mut SchemaComponentUpdate);
     fn merge(&mut self, other: Self);
+}
+
+pub struct ComponentUpdate {
+    pub schema_data: Owned<SchemaComponentUpdate>,
+    pub component_id: ComponentId,
+}
+
+impl<U: Update> From<&U> for ComponentUpdate {
+    fn from(update: &U) -> Self {
+        let mut schema_update = SchemaComponentUpdate::new();
+        update.into_schema(schema_update.deref_mut());
+
+        ComponentUpdate {
+            schema_data: schema_update,
+            component_id: U::Component::ID,
+        }
+    }
 }
 
 /// Additional parameters for sending component updates.
