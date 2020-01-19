@@ -101,9 +101,9 @@ impl UpdateParameters {
 }
 
 #[derive(Debug)]
-pub(crate) struct ComponentDataRef<'a> {
-    component_id: ComponentId,
-    schema_type: &'a SchemaComponentData,
+pub struct ComponentDataRef<'a> {
+    pub component_id: ComponentId,
+    pub schema_type: &'a SchemaComponentData,
 }
 
 impl<'a> ComponentDataRef<'a> {
@@ -124,9 +124,9 @@ impl<'a> ComponentDataRef<'a> {
 }
 
 #[derive(Debug)]
-pub(crate) struct ComponentUpdateRef<'a> {
-    component_id: ComponentId,
-    schema_type: &'a SchemaComponentUpdate,
+pub struct ComponentUpdateRef<'a> {
+    pub component_id: ComponentId,
+    pub schema_type: &'a SchemaComponentUpdate,
 }
 
 impl<'a> ComponentUpdateRef<'a> {
@@ -147,10 +147,10 @@ impl<'a> ComponentUpdateRef<'a> {
 }
 
 #[derive(Debug)]
-pub(crate) struct CommandRequestRef<'a> {
-    component_id: ComponentId,
-    command_index: FieldId,
-    schema_type: &'a SchemaCommandRequest,
+pub struct CommandRequestRef<'a> {
+    pub component_id: ComponentId,
+    pub command_index: FieldId,
+    pub schema_type: &'a SchemaCommandRequest,
 }
 
 impl<'a> CommandRequestRef<'a> {
@@ -181,9 +181,9 @@ impl<'a> CommandRequestRef<'a> {
 
 #[derive(Debug)]
 pub struct CommandResponseRef<'a> {
-    component_id: ComponentId,
-    command_index: FieldId,
-    schema_type: &'a SchemaCommandResponse,
+    pub component_id: ComponentId,
+    pub command_index: FieldId,
+    pub schema_type: &'a SchemaCommandResponse,
 }
 
 impl<'a> CommandResponseRef<'a> {
