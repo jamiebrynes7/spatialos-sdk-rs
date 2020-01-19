@@ -14,11 +14,8 @@ pub(crate) mod utils;
 pub mod worker_future;
 
 use component::ComponentId;
-use derivative::Derivative;
 use spatialos_sdk_sys::worker::Worker_InterestOverride;
-use std::cmp::Ordering;
 use std::fmt::{Display, Error, Formatter};
-use std::marker::PhantomData;
 
 // NOTE: This must be `repr(transparent)` in order for it to be ABI-compatible with
 // the C API, which uses a raw `i64` to represent an entity ID. See the comment on
@@ -45,45 +42,7 @@ impl Display for EntityId {
     }
 }
 
-#[derive(Derivative)]
-#[derivative(
-    Debug(bound = ""),
-    Copy(bound = ""),
-    Clone(bound = ""),
-    PartialEq(bound = ""),
-    Eq(bound = ""),
-    Hash(bound = "")
-)]
-pub struct RequestId<T> {
-    id: i64,
-    _type: PhantomData<*const T>,
-}
-
-impl<T> Ord for RequestId<T> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.id.cmp(&other.id)
-    }
-}
-
-impl<T> PartialOrd for RequestId<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-// SAFE: `RequestId<T>` is a type-safe wrapper around a single integer value, and is
-// therefore completely thread-safe.
-unsafe impl<T> Send for RequestId<T> {}
-unsafe impl<T> Sync for RequestId<T> {}
-
-impl<T> RequestId<T> {
-    pub fn new(id: i64) -> RequestId<T> {
-        RequestId {
-            id,
-            _type: PhantomData,
-        }
-    }
-}
+type RequestId = i64;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Authority {
