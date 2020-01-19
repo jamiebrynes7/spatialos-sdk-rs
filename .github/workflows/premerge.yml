@@ -90,3 +90,63 @@ jobs:
           args: --examples
         env:
           SPATIAL_LIB_DIR: "dependencies"
+  code-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@master
+    
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+
+      - name: Install spatial
+        uses: jamiebrynes7/get-spatial-cli-action@v1.1
+        with:
+          version: 20190416.094616.a865bb5b54
+          oauth_token: ${{ secrets.SPATIAL_OAUTH_TOKEN }}
+
+      - name: Install cargo-spatial
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --path ./cargo-spatial --force --debug
+
+      - name: Install SpatialOS C API dependencies
+        uses: actions-rs/cargo@v1
+        with:
+          command: spatial
+          args: --verbose download sdk --sdk-version 14.0.0
+        env:
+          SPATIAL_LIB_DIR: "dependencies"
+
+      - name: Generate project-example code
+        run: pushd project-example && cargo spatial --verbose codegen && popd
+        shell: bash
+        env:
+          SPATIAL_LIB_DIR: "../dependencies"
+
+      - name: Generate test-suite code
+        run: pushd test-suite && cargo spatial --verbose codegen && popd
+        shell: bash
+        env:
+          SPATIAL_LIB_DIR: "../dependencies"
+
+      - name: Run cargo clean
+        uses: actions-rs/cargo@v1
+        with:
+          command: clean
+
+      - name: Run all tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features --no-fail-fast
+        env:
+          CARGO_INCREMENTAL: '0'
+          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zno-landing-pads'
+
+      - name: Generate test coverage report
+        uses: actions-rs/grcov@v0.1
