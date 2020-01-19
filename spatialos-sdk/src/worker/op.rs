@@ -1,7 +1,6 @@
 #![allow(non_upper_case_globals)]
 
 use crate::worker::{
-    commands::*,
     component::{self, *},
     entity::Entity,
     metrics::Metrics,
@@ -214,7 +213,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     );
 
                     let command_request_op = CommandRequestOp {
-                        request_id: RequestId::new(op.request_id),
+                        request_id: op.request_id,
                         entity_id: EntityId::new(op.entity_id),
                         timeout_millis: op.timeout_millis,
                         caller_worker_id: cstr_to_string(op.caller_worker_id),
@@ -256,7 +255,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
 
                     let command_response_op = CommandResponseOp {
                         entity_id: EntityId::new(op.entity_id),
-                        request_id: RequestId::new(op.request_id),
+                        request_id: op.request_id,
                         component_id: op.response.component_id,
                         response: status_code,
                     };
@@ -293,7 +292,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     };
 
                     let reserve_entity_ids_response_op = ReserveEntityIdsResponseOp {
-                        request_id: RequestId::new(op.request_id),
+                        request_id: op.request_id,
                         status_code,
                     };
                     WorkerOp::ReserveEntityIdsResponse(reserve_entity_ids_response_op)
@@ -329,7 +328,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     };
 
                     let create_entity_response_op = CreateEntityResponseOp {
-                        request_id: RequestId::new(op.request_id),
+                        request_id: op.request_id,
                         status_code,
                     };
                     WorkerOp::CreateEntityResponse(create_entity_response_op)
@@ -363,7 +362,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     };
 
                     let delete_entity_response_op = DeleteEntityResponseOp {
-                        request_id: RequestId::new(op.request_id),
+                        request_id: op.request_id,
                         entity_id: EntityId::new(op.entity_id),
                         status_code,
                     };
@@ -416,7 +415,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     };
 
                     let entity_query_response_op = EntityQueryResponseOp {
-                        request_id: RequestId::new(op.request_id),
+                        request_id: op.request_id,
                         status_code,
                     };
 
@@ -467,7 +466,7 @@ pub struct RemoveEntityOp {
 
 #[derive(Debug)]
 pub struct ReserveEntityIdsResponseOp {
-    pub request_id: RequestId<ReserveEntityIdsRequest>,
+    pub request_id: RequestId,
     pub status_code: StatusCode<ReservedEntityIdRange>,
 }
 
@@ -508,13 +507,13 @@ impl Iterator for ReservedEntityIdRange {
 
 #[derive(Debug)]
 pub struct CreateEntityResponseOp {
-    pub request_id: RequestId<CreateEntityRequest>,
+    pub request_id: RequestId,
     pub status_code: StatusCode<EntityId>,
 }
 
 #[derive(Debug)]
 pub struct DeleteEntityResponseOp {
-    pub request_id: RequestId<DeleteEntityRequest>,
+    pub request_id: RequestId,
     pub entity_id: EntityId,
     pub status_code: StatusCode<()>,
 }
@@ -527,7 +526,7 @@ pub enum QueryResponse {
 
 #[derive(Debug)]
 pub struct EntityQueryResponseOp {
-    pub request_id: RequestId<EntityQueryRequest>,
+    pub request_id: RequestId,
     pub status_code: StatusCode<QueryResponse>,
 }
 
@@ -578,7 +577,7 @@ impl<'a> ComponentUpdateOp<'a> {
 
 #[derive(Debug)]
 pub struct CommandRequestOp<'a> {
-    pub request_id: RequestId<IncomingCommandRequest>,
+    pub request_id: RequestId,
     pub entity_id: EntityId,
     pub timeout_millis: u32,
     pub caller_worker_id: String,
@@ -599,7 +598,7 @@ impl<'a> CommandRequestOp<'a> {
 
 #[derive(Debug)]
 pub struct CommandResponseOp<'a> {
-    pub request_id: RequestId<OutgoingCommandRequest>,
+    pub request_id: RequestId,
     pub entity_id: EntityId,
     pub component_id: ComponentId,
     pub response: StatusCode<CommandResponseRef<'a>>,
