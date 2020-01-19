@@ -26,6 +26,8 @@ unsafe impl DataPointer for SchemaCommandRequest {
 unsafe impl OwnedPointer for SchemaCommandRequest {
     const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw = Schema_CreateCommandRequest;
     const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw) = Schema_DestroyCommandRequest;
+    const COPY_FN: unsafe extern "C" fn(*const Self::Raw) -> *mut Self::Raw =
+        Schema_CopyCommandRequest;
 }
 
 // SAFETY: It should be safe to send a `SchemaCommandRequest` between threads, so long as
@@ -33,6 +35,14 @@ unsafe impl OwnedPointer for SchemaCommandRequest {
 // mutability (when getting an object field, it will automatically add a new object
 // if one doesn't already exist), so it cannot be `Sync`.
 unsafe impl Send for SchemaCommandRequest {}
+
+impl ToOwned for SchemaCommandRequest {
+    type Owned = Owned<Self>;
+
+    fn to_owned(&self) -> Self::Owned {
+        Owned::from(self)
+    }
+}
 
 #[cfg(test)]
 mod tests {

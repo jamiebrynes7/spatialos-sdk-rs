@@ -1,6 +1,5 @@
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
-use spatialos_sdk::worker::vtable::VTable;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use <#= vec!["super".to_string(); self.depth() + 1].join("::") #>::generated as generated;
@@ -222,6 +221,4 @@ impl Component for <#= component_name #> {
         }
     }
 }
-
-inventory::submit!(VTable::new::<<#= component_name #>>());
 <# } #>

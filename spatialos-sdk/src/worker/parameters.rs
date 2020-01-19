@@ -1,4 +1,3 @@
-use crate::worker::vtable::{self, DATABASE};
 use spatialos_sdk_sys::worker::*;
 use std::{
     ffi::{CStr, CString},
@@ -428,7 +427,10 @@ pub(crate) struct IntermediateConnectionParameters<'a> {
 }
 
 impl<'a> IntermediateConnectionParameters<'a> {
-    pub(crate) fn as_raw(&self) -> Worker_ConnectionParameters {
+    pub(crate) fn as_raw(
+        &self,
+        default_vtable: &Worker_ComponentVtable,
+    ) -> Worker_ConnectionParameters {
         let partial_network_params = Worker_NetworkParameters {
             use_external_ip: self.params.network.use_external_ip as u8,
             connection_timeout_millis: self.params.network.connection_timeout_millis,
@@ -513,23 +515,9 @@ impl<'a> IntermediateConnectionParameters<'a> {
             enable_dynamic_components: 0,
             thread_affinity: self.params.thread_affinity.to_worker_sdk(),
 
-            component_vtable_count: if self.params.use_internal_serialization {
-                DATABASE.len() as u32
-            } else {
-                0
-            },
-
-            component_vtables: if self.params.use_internal_serialization {
-                DATABASE.to_worker_sdk()
-            } else {
-                ptr::null()
-            },
-
-            default_component_vtable: if self.params.use_internal_serialization {
-                ptr::null()
-            } else {
-                &vtable::PASSTHROUGH_VTABLE
-            },
+            component_vtable_count: 0,
+            component_vtables: ptr::null(),
+            default_component_vtable: default_vtable,
         }
     }
 }

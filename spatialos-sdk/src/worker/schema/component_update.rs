@@ -1,5 +1,5 @@
 use crate::worker::{
-    component::{Component, Update},
+    component::Update,
     schema::{DataPointer, Field, FieldId, Owned, OwnedPointer, Result, SchemaObject},
 };
 use spatialos_sdk_sys::worker::*;
@@ -19,8 +19,8 @@ impl SchemaComponentUpdate {
         result
     }
 
-    pub fn deserialize<C: Component>(&self) -> Result<C::Update> {
-        C::Update::from_schema(&self)
+    pub fn deserialize<U: Update>(&self) -> Result<U> {
+        U::from_schema(&self)
     }
 
     pub fn fields(&self) -> &SchemaObject {
@@ -71,6 +71,8 @@ unsafe impl DataPointer for SchemaComponentUpdate {
 unsafe impl OwnedPointer for SchemaComponentUpdate {
     const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw = Schema_CreateComponentUpdate;
     const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw) = Schema_DestroyComponentUpdate;
+    const COPY_FN: unsafe extern "C" fn(*const Self::Raw) -> *mut Self::Raw =
+        Schema_CopyComponentUpdate;
 }
 
 // SAFETY: It should be safe to send a `SchemaComponentUpdate` between threads, so long as
@@ -78,6 +80,14 @@ unsafe impl OwnedPointer for SchemaComponentUpdate {
 // mutability (when getting an object field, it will automatically add a new object
 // if one doesn't already exist), so it cannot be `Sync`.
 unsafe impl Send for SchemaComponentUpdate {}
+
+impl ToOwned for SchemaComponentUpdate {
+    type Owned = Owned<Self>;
+
+    fn to_owned(&self) -> Self::Owned {
+        Owned::from(self)
+    }
+}
 
 #[cfg(test)]
 mod tests {

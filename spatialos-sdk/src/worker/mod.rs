@@ -11,7 +11,6 @@ pub mod query;
 pub mod schema;
 pub mod snapshot;
 pub(crate) mod utils;
-pub mod vtable;
 pub mod worker_future;
 
 use component::ComponentId;

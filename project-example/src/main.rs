@@ -110,7 +110,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                         let entity_state = world
                             .get_mut(&add_component.entity_id)
                             .expect("Entity wasn't present in local world");
-                        entity_state.rotate = Some(rotate.into_owned());
+                        entity_state.rotate = Some(rotate);
                     }
                     id => println!("Received unknown component: {}", id),
                 },
@@ -139,7 +139,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                         let component_update = update.get::<example::Rotate>().unwrap().unwrap();
                         let state = world.get_mut(&update.entity_id).unwrap();
                         let rotate = state.rotate.as_mut().unwrap();
-                        rotate.merge_update(component_update.into_owned());
+                        rotate.merge_update(component_update);
                     }
                     id => println!("Received unknown component: {}", id),
                 },
@@ -175,7 +175,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                 // state.
                 c.send_component_update::<example::Rotate>(
                     entity_id,
-                    example::RotateUpdate {
+                    &example::RotateUpdate {
                         angle: Some(rotate.angle),
                         ..Default::default()
                     },
@@ -186,7 +186,7 @@ fn logic_loop(c: &mut WorkerConnection) {
                 // component.
                 c.send_component_update::<improbable::Position>(
                     entity_id,
-                    improbable::PositionUpdate {
+                    &improbable::PositionUpdate {
                         coords: Some(improbable::Coordinates {
                             x: rotate.angle.sin() * rotate.radius + rotate.center.x,
                             y: rotate.center.x,

@@ -1,6 +1,6 @@
 use crate::worker::{component::Component, component::ComponentId, entity::Entity, schema::*};
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, HashSet},
     result::Result,
 };
 
@@ -16,7 +16,7 @@ pub struct EntityBuilder {
     is_persistent: bool,
     metadata: Option<String>,
 
-    write_permissions: HashMap<ComponentId, String>,
+    write_permissions: BTreeMap<ComponentId, String>,
     read_permissions: HashSet<String>,
 
     error: Option<String>,
@@ -29,8 +29,8 @@ impl EntityBuilder {
             is_persistent: false,
             metadata: None,
             position: (x, y, z),
-            write_permissions: HashMap::new(),
-            read_permissions: HashSet::new(),
+            write_permissions: Default::default(),
+            read_permissions: Default::default(),
             error: None,
         };
 
@@ -39,7 +39,7 @@ impl EntityBuilder {
     }
 
     pub fn add_component<C: Component, T: Into<String>>(&mut self, data: C, write_layer: T) {
-        if let Err(e) = self.entity.add(data) {
+        if let Err(e) = self.entity.add(&data) {
             self.error = Some(e);
         };
 
@@ -136,14 +136,14 @@ impl EntityBuilder {
             attribute_set.add::<SchemaString>(1, layer);
         }
 
-        for pair in &self.write_permissions {
+        for (component_id, layer) in &self.write_permissions {
             let map_obj = acl_fields.add_object(2);
-            map_obj.add::<SchemaUint32>(1, pair.0);
+            map_obj.add::<SchemaUint32>(1, component_id);
 
             map_obj
                 .add_object(2)
                 .add_object(1)
-                .add::<SchemaString>(1, pair.1);
+                .add::<SchemaString>(1, layer);
         }
 
         acl_schema

@@ -1,4 +1,4 @@
-use crate::worker::{entity::Entity, utils::cstr_to_string, vtable::DATABASE, EntityId};
+use crate::worker::{entity::Entity, utils::cstr_to_string, EntityId};
 use spatialos_sdk_sys::worker::*;
 use std::{ffi::CString, path::Path};
 
@@ -33,13 +33,16 @@ impl SnapshotOutputStream {
     pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, SnapshotError> {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
-        let params = Worker_SnapshotParameters {
-            component_vtable_count: DATABASE.len() as u32,
-            component_vtables: DATABASE.to_worker_sdk(),
-            default_component_vtable: std::ptr::null(),
+        let default_vtables = Default::default();
+        let stream_ptr = unsafe {
+            Worker_SnapshotOutputStream_Create(
+                filename_cstr.as_ptr(),
+                &Worker_SnapshotParameters {
+                    default_component_vtable: &default_vtables,
+                    ..Default::default()
+                },
+            )
         };
-        let stream_ptr =
-            unsafe { Worker_SnapshotOutputStream_Create(filename_cstr.as_ptr(), &params) };
 
         let state = unsafe { Worker_SnapshotOutputStream_GetState(stream_ptr) };
         match Worker_StreamState::from(state.stream_state) {
@@ -53,12 +56,12 @@ impl SnapshotOutputStream {
         }
     }
 
-    pub fn write_entity(&mut self, id: EntityId, entity: &Entity) -> Result<(), SnapshotError> {
-        let components = entity.raw_component_data();
+    pub fn write_entity(&mut self, id: EntityId, entity: Entity) -> Result<(), SnapshotError> {
+        let components = entity.into_raw();
         let wrk_entity = Worker_Entity {
             entity_id: id.id,
-            components: components.components.as_ptr(),
-            component_count: components.components.len() as u32,
+            components: components.as_ptr(),
+            component_count: components.len() as u32,
         };
 
         let state = unsafe {
@@ -86,14 +89,16 @@ impl SnapshotInputStream {
     pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, SnapshotError> {
         let filename_cstr = CString::new(filename.as_ref().to_str().unwrap()).unwrap();
 
-        let params = Worker_SnapshotParameters {
-            component_vtable_count: DATABASE.len() as u32,
-            component_vtables: DATABASE.to_worker_sdk(),
-            default_component_vtable: std::ptr::null(),
+        let default_vtable = Default::default();
+        let stream_ptr = unsafe {
+            Worker_SnapshotInputStream_Create(
+                filename_cstr.as_ptr(),
+                &Worker_SnapshotParameters {
+                    default_component_vtable: &default_vtable,
+                    ..Default::default()
+                },
+            )
         };
-
-        let stream_ptr =
-            unsafe { Worker_SnapshotInputStream_Create(filename_cstr.as_ptr(), &params) };
 
         let state = unsafe { Worker_SnapshotInputStream_GetState(stream_ptr) };
         match Worker_StreamState::from(state.stream_state) {

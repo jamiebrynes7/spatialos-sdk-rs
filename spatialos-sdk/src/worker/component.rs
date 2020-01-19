@@ -1,10 +1,5 @@
 use crate::worker::schema::{self, *};
 use spatialos_sdk_sys::worker::*;
-use std::{borrow::Cow, ptr::NonNull};
-
-// Re-export inventory so generated code doesn't require the user to add inventory to their
-// Cargo.toml
-pub use inventory;
 
 pub type ComponentId = Worker_ComponentId;
 pub type CommandIndex = Worker_CommandIndex;
@@ -109,7 +104,6 @@ impl UpdateParameters {
 pub(crate) struct ComponentDataRef<'a> {
     component_id: ComponentId,
     schema_type: &'a SchemaComponentData,
-    user_handle: Option<NonNull<Worker_ComponentDataHandle>>,
 }
 
 impl<'a> ComponentDataRef<'a> {
@@ -117,22 +111,15 @@ impl<'a> ComponentDataRef<'a> {
         Self {
             component_id: data.component_id,
             schema_type: SchemaComponentData::from_raw(data.schema_type),
-            user_handle: NonNull::new(data.user_handle),
         }
     }
 
-    pub fn get<C: Component>(&self) -> Option<schema::Result<Cow<'_, C>>> {
+    pub fn get<C: Component>(&self) -> Option<schema::Result<C>> {
         if C::ID != self.component_id {
             return None;
         }
 
-        let cow = if let Some(user_handle) = &self.user_handle {
-            Ok(Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() }))
-        } else {
-            ObjectField::from_object(self.schema_type.fields()).map(Cow::Owned)
-        };
-
-        Some(cow)
+        Some(self.schema_type.deserialize())
     }
 }
 
@@ -140,7 +127,6 @@ impl<'a> ComponentDataRef<'a> {
 pub(crate) struct ComponentUpdateRef<'a> {
     component_id: ComponentId,
     schema_type: &'a SchemaComponentUpdate,
-    user_handle: Option<NonNull<Worker_ComponentUpdateHandle>>,
 }
 
 impl<'a> ComponentUpdateRef<'a> {
@@ -148,22 +134,15 @@ impl<'a> ComponentUpdateRef<'a> {
         Self {
             component_id: update.component_id,
             schema_type: SchemaComponentUpdate::from_raw(update.schema_type),
-            user_handle: NonNull::new(update.user_handle),
         }
     }
 
-    pub(crate) fn get<C: Component>(&self) -> Option<schema::Result<Cow<'_, C::Update>>> {
+    pub(crate) fn get<C: Component>(&self) -> Option<schema::Result<C::Update>> {
         if C::ID != self.component_id {
             return None;
         }
 
-        let cow = if let Some(user_handle) = &self.user_handle {
-            Ok(Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() }))
-        } else {
-            Update::from_schema(&self.schema_type).map(Cow::Owned)
-        };
-
-        Some(cow)
+        Some(self.schema_type.deserialize())
     }
 }
 
@@ -172,7 +151,6 @@ pub(crate) struct CommandRequestRef<'a> {
     component_id: ComponentId,
     command_index: FieldId,
     schema_type: &'a SchemaCommandRequest,
-    user_handle: Option<NonNull<Worker_CommandRequestHandle>>,
 }
 
 impl<'a> CommandRequestRef<'a> {
@@ -181,7 +159,6 @@ impl<'a> CommandRequestRef<'a> {
             component_id: request.component_id,
             command_index: request.command_index,
             schema_type: SchemaCommandRequest::from_raw(request.schema_type),
-            user_handle: NonNull::new(request.user_handle),
         }
     }
 
@@ -189,7 +166,7 @@ impl<'a> CommandRequestRef<'a> {
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
-    pub(crate) fn get<C>(&self) -> Option<schema::Result<Cow<'_, C::CommandRequest>>>
+    pub(crate) fn get<C>(&self) -> Option<schema::Result<C::CommandRequest>>
     where
         C: Component,
         C::CommandRequest: ObjectField,
@@ -198,13 +175,7 @@ impl<'a> CommandRequestRef<'a> {
             return None;
         }
 
-        let cow = if let Some(user_handle) = &self.user_handle {
-            Ok(Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() }))
-        } else {
-            ObjectField::from_object(self.schema_type.object()).map(Cow::Owned)
-        };
-
-        Some(cow)
+        Some(ObjectField::from_object(self.schema_type.object()))
     }
 }
 
@@ -213,7 +184,6 @@ pub struct CommandResponseRef<'a> {
     component_id: ComponentId,
     command_index: FieldId,
     schema_type: &'a SchemaCommandResponse,
-    user_handle: Option<NonNull<Worker_CommandResponseHandle>>,
 }
 
 impl<'a> CommandResponseRef<'a> {
@@ -222,7 +192,6 @@ impl<'a> CommandResponseRef<'a> {
             component_id: response.component_id,
             command_index: response.command_index,
             schema_type: SchemaCommandResponse::from_raw(response.schema_type),
-            user_handle: NonNull::new(response.user_handle),
         }
     }
 
@@ -230,7 +199,7 @@ impl<'a> CommandResponseRef<'a> {
     // here, but in practice this will always be true for all component types. Future
     // iterations should clean this up such that the `Component` trait can imply these
     // other bounds automatically (i.e. by making them super traits of `Component`).
-    pub fn get<C>(&self) -> Option<schema::Result<Cow<'_, C::CommandResponse>>>
+    pub fn get<C>(&self) -> Option<schema::Result<C::CommandResponse>>
     where
         C: Component,
         C::CommandResponse: ObjectField,
@@ -239,12 +208,6 @@ impl<'a> CommandResponseRef<'a> {
             return None;
         }
 
-        let cow = if let Some(user_handle) = &self.user_handle {
-            Ok(Cow::Borrowed(unsafe { &*user_handle.cast().as_ptr() }))
-        } else {
-            ObjectField::from_object(self.schema_type.object()).map(Cow::Owned)
-        };
-
-        Some(cow)
+        Some(ObjectField::from_object(self.schema_type.object()))
     }
 }

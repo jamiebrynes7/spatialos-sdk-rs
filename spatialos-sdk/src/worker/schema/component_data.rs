@@ -45,6 +45,8 @@ unsafe impl DataPointer for SchemaComponentData {
 unsafe impl OwnedPointer for SchemaComponentData {
     const CREATE_FN: unsafe extern "C" fn() -> *mut Self::Raw = Schema_CreateComponentData;
     const DESTROY_FN: unsafe extern "C" fn(*mut Self::Raw) = Schema_DestroyComponentData;
+    const COPY_FN: unsafe extern "C" fn(*const Self::Raw) -> *mut Self::Raw =
+        Schema_CopyComponentData;
 }
 
 // SAFETY: It should be safe to send a `SchemaComponentData` between threads, so long as
@@ -52,6 +54,14 @@ unsafe impl OwnedPointer for SchemaComponentData {
 // mutability (when getting an object field, it will automatically add a new object
 // if one doesn't already exist), so it cannot be `Sync`.
 unsafe impl Send for SchemaComponentData {}
+
+impl ToOwned for SchemaComponentData {
+    type Owned = Owned<Self>;
+
+    fn to_owned(&self) -> Self::Owned {
+        Owned::from(self)
+    }
+}
 
 #[cfg(test)]
 mod test {

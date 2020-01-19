@@ -1,17 +1,16 @@
 use crate::worker::{
     component::{Component, ComponentId},
+    schema,
     schema::*,
-    vtable::{self, DATABASE},
 };
 use spatialos_sdk_sys::worker::{Worker_ComponentData, Worker_Entity};
 use std::collections::HashMap;
-use std::ptr;
 use std::result::Result;
 use std::slice;
 
-#[derive(Debug)]
+#[derive(Debug, Default, Clone)]
 pub struct Entity {
-    components: HashMap<ComponentId, Worker_ComponentData>,
+    components: HashMap<ComponentId, Owned<SchemaComponentData>>,
 }
 
 impl Entity {
@@ -26,53 +25,22 @@ impl Entity {
             slice::from_raw_parts(raw_entity.components, raw_entity.component_count as usize);
 
         for data in component_data {
-            entity.add_raw(data)?;
+            entity.pre_add_check(data.component_id)?;
+
+            entity.components.insert(
+                data.component_id,
+                SchemaComponentData::from_raw(data.schema_type).to_owned(),
+            );
         }
 
         Ok(entity)
     }
 
-    pub(crate) fn add<C: Component>(&mut self, component: C) -> Result<(), String> {
+    pub(crate) fn add<C: Component>(&mut self, component: &C) -> Result<(), String> {
         self.pre_add_check(C::ID)?;
 
-        let data_ptr = vtable::handle_allocate(component);
-        let raw_data = Worker_ComponentData {
-            reserved: ptr::null_mut(),
-            component_id: C::ID,
-            schema_type: ptr::null_mut(),
-            user_handle: data_ptr as *mut _,
-        };
-
-        self.components.insert(C::ID, raw_data);
-
-        Ok(())
-    }
-
-    pub(crate) unsafe fn add_raw(
-        &mut self,
-        component: &Worker_ComponentData,
-    ) -> Result<(), String> {
-        let id = component.component_id;
-
-        self.pre_add_check(id)?;
-
-        // Call copy on the component data. We don't own this Worker_ComponentData.
-        let vtable = DATABASE.get_vtable(id).unwrap();
-        let copy_data_func = vtable
-            .worker_vtable
-            .component_data_copy
-            .unwrap_or_else(|| panic!("No component_data_free method defined for {}", id));
-        copy_data_func(id, ptr::null_mut(), component.user_handle);
-
-        self.components.insert(
-            id,
-            Worker_ComponentData {
-                reserved: ptr::null_mut(),
-                component_id: id,
-                schema_type: ptr::null_mut(),
-                user_handle: component.user_handle,
-            },
-        );
+        self.components
+            .insert(C::ID, SchemaComponentData::from_component(component));
 
         Ok(())
     }
@@ -80,60 +48,41 @@ impl Entity {
     pub(crate) unsafe fn add_serialized(
         &mut self,
         component_id: ComponentId,
-        mut component: Owned<SchemaComponentData>,
+        component: Owned<SchemaComponentData>,
     ) -> Result<(), String> {
-        let vtable = DATABASE.get_vtable(component_id).unwrap();
-        let deserialize_func = vtable
-            .worker_vtable
-            .component_data_deserialize
-            .unwrap_or_else(|| {
-                panic!(
-                    "No component_data_deserialize method defined for {}",
-                    component_id
-                )
-            });
+        self.pre_add_check(component_id)?;
 
-        // Create the **void that the C API requires. We need to then clean this up later.
-        // The value pointed to by handle_out_ptr is written to during the deserialize method.
-        let placeholder_ptr = Box::into_raw(Box::new(0)) as *mut ::std::os::raw::c_void;
-        let handle_out_ptr = Box::into_raw(Box::new(placeholder_ptr));
+        self.components.insert(component_id, component);
 
-        let deserialize_result = deserialize_func(
-            component_id,
-            ptr::null_mut(),
-            component.as_ptr_mut(),
-            handle_out_ptr,
-        );
-
-        match deserialize_result {
-            1 => {},
-            0 => return Err("Error deserializing serialized data. Is the SchemaComponentData malformed?".to_owned()),
-            _ => panic!("Unexpected return value from deserialize function. Expected true or false. Received other.")
-        };
-
-        let component_data = Worker_ComponentData {
-            reserved: ptr::null_mut(),
-            component_id,
-            schema_type: ptr::null_mut(),
-            user_handle: *handle_out_ptr,
-        };
-
-        // Reconstruct these objects so they can be de-alloc'ed. We have pulled the data required
-        // from them by de-referencing handle_out_ptr above.
-        Box::from_raw(placeholder_ptr);
-        Box::from_raw(handle_out_ptr);
-
-        self.add_raw(&component_data)
+        Ok(())
     }
 
-    pub fn get<C: Component>(&self) -> Option<&C> {
+    pub fn get<C: Component>(&self) -> Option<schema::Result<C>> {
+        self.components.get(&C::ID).map(|data| data.deserialize())
+    }
+
+    /// Converts the entity's contents into a format that can be used with the C API.
+    ///
+    /// In cases where the C API takes an entity as a parameter, it does so by taking an array of
+    /// `Worker_ComponentData` structs. This method gathers the serialized component data and
+    /// returns a `Vec<Worker_ComponentData>` that can be used to pass data to the C API.
+    ///
+    /// This method takes ownership of the data owned by the `Entity` so that it may be passed
+    /// to the C API. It is expected that ownership of the data will be taken by the C SDK and that
+    /// the C SKD will free any allocated data. For example, `Worker_Connection_SendCreateEntityRequest`
+    /// will take ownership of the underlying `Schema_ComponentData` and will free it when
+    /// appropriate. If the data is not passed to a similar function in the C SDK, then the data
+    /// owned by the `Entity` will leak.
+    pub(crate) fn into_raw(mut self) -> Vec<Worker_ComponentData> {
         self.components
-            .get(&C::ID)
-            .map(|data| unsafe { &*(data.user_handle as *const _) })
-    }
+            .drain()
+            .map(|(component_id, data)| Worker_ComponentData {
+                component_id,
+                schema_type: data.into_raw(),
 
-    pub(crate) fn raw_component_data(&self) -> RawEntity {
-        RawEntity::new(self.components.values())
+                ..Default::default()
+            })
+            .collect()
     }
 
     fn pre_add_check(&self, id: ComponentId) -> Result<(), String> {
@@ -144,97 +93,6 @@ impl Entity {
             ));
         }
 
-        if !DATABASE.has_vtable(id) {
-            panic!(format!(
-                "Could not find a vtable implementation for component {}",
-                id
-            ));
-        }
-
         Ok(())
-    }
-}
-
-impl Default for Entity {
-    fn default() -> Self {
-        Entity {
-            components: HashMap::new(),
-        }
-    }
-}
-
-impl Drop for Entity {
-    fn drop(&mut self) {
-        for component_data in self.components.values() {
-            let id = component_data.component_id;
-
-            let vtable = DATABASE.get_vtable(id).unwrap();
-
-            let free_data_func = vtable
-                .worker_vtable
-                .component_data_free
-                .unwrap_or_else(|| panic!("No component_data_free method defined for {}", id));
-
-            unsafe { free_data_func(id, ptr::null_mut(), component_data.user_handle) };
-        }
-    }
-}
-
-// Required for when we call Entity::raw_component_data() and want a Vec<Worker_ComponentData> rather
-// than a Vec<&Worker_ComponentData> which most callers *will* want due to how Worker_Entity is structured.
-pub(crate) struct RawEntity {
-    pub components: Vec<Worker_ComponentData>,
-}
-
-impl RawEntity {
-    pub fn new<'a, I>(original_data: I) -> Self
-    where
-        I: Iterator<Item = &'a Worker_ComponentData>,
-    {
-        // Go through each Worker_ComponentData object, make a copy and call handle_copy using the vtable.
-        let new_data = original_data
-            .map(|original_component_data| {
-                let new_component_data = *original_component_data; // Is a copy operation.
-                let id = original_component_data.component_id;
-
-                let vtable = DATABASE.get_vtable(id).unwrap();
-
-                let copy_data_func = vtable
-                    .worker_vtable
-                    .component_data_copy
-                    .unwrap_or_else(|| panic!("No component_data_copy method defined for {}", id));
-
-                unsafe { copy_data_func(id, ptr::null_mut(), original_component_data.user_handle) };
-
-                new_component_data
-            })
-            .collect();
-
-        RawEntity {
-            components: new_data,
-        }
-    }
-}
-
-impl Drop for RawEntity {
-    fn drop(&mut self) {
-        for component_data in &self.components {
-            let vtable = DATABASE.get_vtable(component_data.component_id).unwrap();
-
-            let free_data_func = vtable.worker_vtable.component_data_free.unwrap_or_else(|| {
-                panic!(
-                    "No component_data_free method defined for {}",
-                    component_data.component_id
-                )
-            });
-
-            unsafe {
-                free_data_func(
-                    component_data.component_id,
-                    ptr::null_mut(),
-                    component_data.user_handle,
-                )
-            };
-        }
     }
 }

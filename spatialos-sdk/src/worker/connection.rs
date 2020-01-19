@@ -7,8 +7,8 @@ use crate::worker::{
     metrics::Metrics,
     op::OpList,
     parameters::ConnectionParameters,
+    schema::*,
     utils::cstr_to_string,
-    vtable,
     worker_future::{WorkerFuture, WorkerSdkFuture},
     {EntityId, InterestOverride, LogLevel, RequestId},
 };
@@ -18,6 +18,7 @@ use std::{
     ffi::{CStr, CString, NulError},
     fmt::{Display, Formatter},
     ptr,
+    result::Result,
 };
 
 pub type ConnectionStatus = Result<(), ConnectionStatusError>;
@@ -167,7 +168,7 @@ pub trait Connection {
     fn send_command_request<C: Component>(
         &mut self,
         entity_id: EntityId,
-        request: C::CommandRequest,
+        request: &C::CommandRequest,
         timeout_millis: Option<u32>,
         params: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest>;
@@ -175,7 +176,7 @@ pub trait Connection {
     fn send_command_response<C: Component>(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
-        response: C::CommandResponse,
+        response: &C::CommandResponse,
     );
 
     fn send_command_failure(
@@ -187,7 +188,7 @@ pub trait Connection {
     fn send_component_update<C: Component>(
         &mut self,
         entity_id: EntityId,
-        update: C::Update,
+        update: &C::Update,
         parameters: UpdateParameters,
     );
 
@@ -352,12 +353,12 @@ impl Connection for WorkerConnection {
             Some(e) => &e.id,
             None => ptr::null(),
         };
-        let mut component_data = entity.raw_component_data();
+        let mut component_data = entity.into_raw();
         let id = unsafe {
             Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),
-                component_data.components.len() as _,
-                component_data.components.as_mut_ptr(),
+                component_data.len() as _,
+                component_data.as_mut_ptr(),
                 entity_id,
                 timeout,
             )
@@ -409,7 +410,7 @@ impl Connection for WorkerConnection {
     fn send_command_request<C: Component>(
         &mut self,
         entity_id: EntityId,
-        request: C::CommandRequest,
+        request: &C::CommandRequest,
         timeout_millis: Option<u32>,
         params: CommandParameters,
     ) -> RequestId<OutgoingCommandRequest> {
@@ -424,8 +425,8 @@ impl Connection for WorkerConnection {
             reserved: ptr::null_mut(),
             component_id: C::ID,
             command_index,
-            schema_type: ptr::null_mut(),
-            user_handle: vtable::handle_allocate(request),
+            schema_type: C::to_request(&request).into_raw(),
+            user_handle: ptr::null_mut(),
         };
 
         let request_id = unsafe {
@@ -438,34 +439,28 @@ impl Connection for WorkerConnection {
             )
         };
 
-        unsafe {
-            vtable::handle_free::<C::CommandRequest>(command_request.user_handle);
-        }
-
         RequestId::new(request_id)
     }
 
     fn send_command_response<C: Component>(
         &mut self,
         request_id: RequestId<IncomingCommandRequest>,
-        response: C::CommandResponse,
+        response: &C::CommandResponse,
     ) {
-        unsafe {
-            let mut raw_response = Worker_CommandResponse {
-                reserved: ptr::null_mut(),
-                component_id: C::ID,
-                command_index: C::get_response_command_index(&response),
-                schema_type: ptr::null_mut(),
-                user_handle: vtable::handle_allocate(response),
-            };
+        let mut raw_response = Worker_CommandResponse {
+            reserved: ptr::null_mut(),
+            component_id: C::ID,
+            command_index: C::get_response_command_index(response),
+            schema_type: C::to_response(response).into_raw(),
+            user_handle: ptr::null_mut(),
+        };
 
+        unsafe {
             Worker_Connection_SendCommandResponse(
                 self.connection_ptr.get(),
                 request_id.id,
                 &mut raw_response,
             );
-
-            vtable::handle_free::<C::CommandResponse>(raw_response.user_handle);
         }
     }
 
@@ -489,14 +484,14 @@ impl Connection for WorkerConnection {
     fn send_component_update<C: Component>(
         &mut self,
         entity_id: EntityId,
-        update: C::Update,
+        update: &C::Update,
         parameters: UpdateParameters,
     ) {
         let mut component_update = Worker_ComponentUpdate {
             reserved: ptr::null_mut(),
             component_id: C::ID,
-            schema_type: ptr::null_mut(),
-            user_handle: vtable::handle_allocate(update),
+            schema_type: SchemaComponentUpdate::from_update(update).into_raw(),
+            user_handle: ptr::null_mut(),
         };
 
         let params = parameters.to_worker_sdk();
@@ -507,8 +502,6 @@ impl Connection for WorkerConnection {
                 &mut component_update,
                 &params,
             );
-
-            vtable::handle_free::<C::Update>(component_update.user_handle);
         }
     }
 
@@ -645,6 +638,7 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
     type Output = Result<WorkerConnection, ConnectionStatusError>;
 
     fn start(&self) -> *mut Self::RawPointer {
+        let default_vtable = Default::default();
         match &self {
             WorkerConnectionFuture::Receptionist(hostname, worker_id, port, params) => {
                 let params = params.flatten();
@@ -653,13 +647,15 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
                         hostname.as_ptr(),
                         *port,
                         worker_id.as_ptr(),
-                        &params.as_raw(),
+                        &params.as_raw(&default_vtable),
                     )
                 }
             }
             WorkerConnectionFuture::Locator(locator, params) => {
                 let params = params.flatten();
-                unsafe { Worker_Locator_ConnectAsync(locator.locator, &params.as_raw()) }
+                unsafe {
+                    Worker_Locator_ConnectAsync(locator.locator, &params.as_raw(&default_vtable))
+                }
             }
         }
     }
