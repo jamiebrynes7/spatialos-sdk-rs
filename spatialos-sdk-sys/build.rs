@@ -1,19 +1,10 @@
-#[macro_use]
-extern crate lazy_static;
-
 use std::env;
 use std::path::Path;
 
 #[cfg(windows)]
-lazy_static! {
-    static ref LIBS: Vec<&'static str> =
-        vec!["improbable_worker", "RakNetLibStatic", "ssl", "zlibstatic",];
-}
-
+const LIBS: [&str; 4] = ["improbable_worker", "RakNetLibStatic", "ssl", "zlibstatic"];
 #[cfg(unix)]
-lazy_static! {
-    static ref LIBS: Vec<&'static str> = vec!["improbable_worker", "RakNetLibStatic", "ssl", "z",];
-}
+const LIBS: [&str; 4] = ["improbable_worker", "RakNetLibStatic", "ssl", "z"];
 
 #[cfg(target_os = "linux")]
 static PACKAGE_DIR: &str = "linux";

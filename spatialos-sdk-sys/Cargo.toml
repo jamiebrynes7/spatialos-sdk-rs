@@ -10,6 +10,3 @@ links = "worker"
 build = "build.rs"
 
 [dependencies]
-
-[build-dependencies]
-lazy_static = "1.1.0"
