@@ -61,7 +61,9 @@ impl Entity {
     pub(crate) fn to_schema_field(&self, object: &mut SchemaObject) {
         for (component_id, data) in &self.components {
             let component_field = object.add_object(*component_id);
-            component_field.copy_from(data.fields()).unwrap(); // TODO: Get rid of unwrap.
+            component_field
+                .copy_from(data.fields())
+                .expect("Schema object copy failed unexpectedly.");
         }
     }
 
