@@ -38,11 +38,26 @@ impl EntityId {
 
 impl Display for EntityId {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        write!(f, "EntityId: {}", self.id)
+        write!(f, "Entity ID {}", self.id)
     }
 }
 
-type RequestId = i64;
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RequestId {
+    pub id: i64,
+}
+
+impl RequestId {
+    pub fn new(id: i64) -> Self {
+        RequestId { id }
+    }
+}
+
+impl Display for RequestId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(f, "Request ID {}", self.id)
+    }
+}
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Authority {

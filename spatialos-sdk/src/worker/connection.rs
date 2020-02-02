@@ -330,11 +330,11 @@ impl Connection for WorkerConnection {
                 Some(c) => &c,
                 None => ptr::null(),
             };
-            Worker_Connection_SendReserveEntityIdsRequest(
+            RequestId::new(Worker_Connection_SendReserveEntityIdsRequest(
                 self.connection_ptr.get(),
                 payload.0,
                 timeout,
-            )
+            ))
         }
     }
 
@@ -354,13 +354,13 @@ impl Connection for WorkerConnection {
         };
         let mut component_data = entity.into_raw();
         unsafe {
-            Worker_Connection_SendCreateEntityRequest(
+            RequestId::new(Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),
                 component_data.len() as _,
                 component_data.as_mut_ptr(),
                 entity_id,
                 timeout,
-            )
+            ))
         }
     }
 
@@ -374,11 +374,11 @@ impl Connection for WorkerConnection {
                 Some(c) => &c,
                 None => ptr::null(),
             };
-            Worker_Connection_SendDeleteEntityRequest(
+            RequestId::new(Worker_Connection_SendDeleteEntityRequest(
                 self.connection_ptr.get(),
                 payload.0.id,
                 timeout,
-            )
+            ))
         }
     }
 
@@ -394,11 +394,11 @@ impl Connection for WorkerConnection {
             };
 
             let worker_query = payload.0.to_worker_sdk();
-            Worker_Connection_SendEntityQueryRequest(
+            RequestId::new(Worker_Connection_SendEntityQueryRequest(
                 self.connection_ptr.get(),
                 &worker_query.query,
                 timeout,
-            )
+            ))
         }
     }
 
@@ -425,13 +425,13 @@ impl Connection for WorkerConnection {
         };
 
         unsafe {
-            Worker_Connection_SendCommandRequest(
+            RequestId::new(Worker_Connection_SendCommandRequest(
                 self.connection_ptr.get(),
                 entity_id.id,
                 &mut command_request,
                 timeout,
                 &params.to_worker_sdk(),
-            )
+            ))
         }
     }
 
@@ -451,7 +451,7 @@ impl Connection for WorkerConnection {
         unsafe {
             Worker_Connection_SendCommandResponse(
                 self.connection_ptr.get(),
-                request_id,
+                request_id.id,
                 &mut raw_response,
             );
         }
@@ -466,7 +466,7 @@ impl Connection for WorkerConnection {
         unsafe {
             Worker_Connection_SendCommandFailure(
                 self.connection_ptr.get(),
-                request_id,
+                request_id.id,
                 message.as_ptr(),
             );
         }

@@ -213,7 +213,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     );
 
                     let command_request_op = CommandRequestOp {
-                        request_id: op.request_id,
+                        request_id: RequestId::new(op.request_id),
                         entity_id: EntityId::new(op.entity_id),
                         timeout_millis: op.timeout_millis,
                         caller_worker_id: cstr_to_string(op.caller_worker_id),
@@ -255,7 +255,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
 
                     let command_response_op = CommandResponseOp {
                         entity_id: EntityId::new(op.entity_id),
-                        request_id: op.request_id,
+                        request_id: RequestId::new(op.request_id),
                         component_id: op.response.component_id,
                         response: status_code,
                     };
@@ -292,7 +292,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     };
 
                     let reserve_entity_ids_response_op = ReserveEntityIdsResponseOp {
-                        request_id: op.request_id,
+                        request_id: RequestId::new(op.request_id),
                         status_code,
                     };
                     WorkerOp::ReserveEntityIdsResponse(reserve_entity_ids_response_op)
@@ -328,7 +328,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     };
 
                     let create_entity_response_op = CreateEntityResponseOp {
-                        request_id: op.request_id,
+                        request_id: RequestId::new(op.request_id),
                         status_code,
                     };
                     WorkerOp::CreateEntityResponse(create_entity_response_op)
@@ -362,7 +362,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     };
 
                     let delete_entity_response_op = DeleteEntityResponseOp {
-                        request_id: op.request_id,
+                        request_id: RequestId::new(op.request_id),
                         entity_id: EntityId::new(op.entity_id),
                         status_code,
                     };
@@ -415,7 +415,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     };
 
                     let entity_query_response_op = EntityQueryResponseOp {
-                        request_id: op.request_id,
+                        request_id: RequestId::new(op.request_id),
                         status_code,
                     };
 
