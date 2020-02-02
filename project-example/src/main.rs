@@ -67,6 +67,21 @@ fn logic_loop(c: &mut WorkerConnection) {
     builder.set_metadata("Rotator", "rusty");
     builder.set_entity_acl_write_access("rusty");
 
+    let mut inner_builder = EntityBuilder::new(0.0, 0.0, 0.0, "rusty");
+    inner_builder.add_component(
+        example::EntityIdTest {
+            eid: EntityId { id: 10 },
+        },
+        "rusty",
+    );
+
+    builder.add_component(
+        example::EntityTest {
+            entity: inner_builder.build().unwrap(),
+        },
+        "rusty",
+    );
+
     let entity = builder.build().unwrap();
 
     let create_request_id = c.send_create_entity_request(entity, None, None);
