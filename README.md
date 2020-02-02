@@ -37,7 +37,7 @@ To develop in this repository you'll need:
 4. Download the C API dependencies.
    
    ```
-   $ cargo spatial download sdk --sdk-version 14.1.0
+   $ cargo spatial download sdk --sdk-version 14.1.0 --with-test-schema
    ```
 5. Build the `spatialos-sdk` crate.
    
