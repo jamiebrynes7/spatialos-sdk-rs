@@ -60,3 +60,8 @@ component EntityTest {
 
     Entity entity = 1;
 }
+
+// TODO: Remove when https://github.com/jamiebrynes7/spatialos-sdk-rs/pull/153 is merged.
+type Recursive {
+    option<Recursive> opt = 1;
+}
