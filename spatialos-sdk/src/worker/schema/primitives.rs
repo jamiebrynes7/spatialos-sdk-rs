@@ -1,3 +1,4 @@
+use crate::worker::entity::Entity;
 use crate::worker::{
     schema::{
         DataPointer, Error, Field, FieldId, IndexedField, Result, SchemaComponentUpdate,
@@ -263,6 +264,8 @@ impl_primitive_field!(
 pub struct SchemaBytes;
 #[derive(Debug)]
 pub struct SchemaString;
+#[derive(Debug)]
+pub struct SchemaEntity;
 
 impl Field for SchemaString {
     type RustType = String;
@@ -376,5 +379,46 @@ fn copy_to_buffer<'a, T: Sized + Copy>(object: &'a mut SchemaObject, data: &[T])
         ptr::copy_nonoverlapping(data.as_ptr(), result_ptr, len);
 
         slice::from_raw_parts_mut(result_ptr, len)
+    }
+}
+
+impl Field for SchemaEntity {
+    type RustType = Entity;
+
+    fn get(object: &SchemaObject, field: u32) -> Result<Entity> {
+        if Self::count(object, field) > 0 {
+            Entity::from_schema_field(object.get_object(field))
+                .map_err(Error::at_field::<Self>(field))
+        } else {
+            Err(Error::missing_field::<Self>())
+        }
+    }
+
+    fn add(object: &mut SchemaObject, field: u32, value: &Entity) {
+        let obj = object.add_object(field);
+        value.to_schema_field(obj);
+    }
+
+    fn has_update(update: &SchemaComponentUpdate, field: u32) -> bool {
+        Self::count(update.fields(), field) > 0
+    }
+}
+
+impl IndexedField for SchemaEntity {
+    fn count(object: &SchemaObject, field: u32) -> usize {
+        unsafe { Schema_GetObjectCount(object.as_ptr(), field) as usize }
+    }
+
+    fn index(object: &SchemaObject, field: u32, index: usize) -> Result<Entity> {
+        let count = Self::count(object, field);
+        if count > index {
+            Entity::from_schema_field(object.index_object(field, index)).map_err(Error::at_field::<
+                Self,
+            >(
+                field
+            ))
+        } else {
+            Err(Error::index_out_of_bounds::<Self>(index, count))
+        }
     }
 }
