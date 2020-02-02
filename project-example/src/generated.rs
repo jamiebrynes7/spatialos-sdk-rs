@@ -85,6 +85,21 @@ impl ObjectField for CommandData {
 }
 
 #[derive(Debug, Clone)]
+pub struct Recursive {
+    pub opt: Option<Box<generated::example::Recursive>>,
+}
+impl ObjectField for Recursive {
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            opt: input.get::<RecursiveOptional<generated::example::Recursive>>(1).map_err(Error::at_field::<Self>(1))?,
+        })
+    }
+    fn into_object(&self, output: &mut SchemaObject) {
+        output.add::<RecursiveOptional<generated::example::Recursive>>(1, &self.opt);
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct TestType {
     pub value: i32,
 }
