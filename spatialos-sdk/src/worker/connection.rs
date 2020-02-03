@@ -1,4 +1,5 @@
 use crate::ptr::MutPtr;
+use crate::worker::component::ComponentUpdate;
 use crate::worker::{
     commands::*,
     component::{Component, UpdateParameters},
@@ -7,7 +8,6 @@ use crate::worker::{
     metrics::Metrics,
     op::OpList,
     parameters::ConnectionParameters,
-    schema::*,
     utils::cstr_to_string,
     worker_future::{WorkerFuture, WorkerSdkFuture},
     {EntityId, InterestOverride, LogLevel, RequestId},
@@ -185,10 +185,10 @@ pub trait Connection {
         message: &str,
     ) -> Result<(), NulError>;
 
-    fn send_component_update<C: Component>(
+    fn send_component_update<T: Into<ComponentUpdate>>(
         &mut self,
         entity_id: EntityId,
-        update: &C::Update,
+        update: T,
         parameters: UpdateParameters,
     );
 
@@ -474,16 +474,17 @@ impl Connection for WorkerConnection {
         Ok(())
     }
 
-    fn send_component_update<C: Component>(
+    fn send_component_update<T: Into<ComponentUpdate>>(
         &mut self,
         entity_id: EntityId,
-        update: &C::Update,
+        update: T,
         parameters: UpdateParameters,
     ) {
+        let update = update.into();
         let mut component_update = Worker_ComponentUpdate {
             reserved: ptr::null_mut(),
-            component_id: C::ID,
-            schema_type: SchemaComponentUpdate::from_update(update).into_raw(),
+            component_id: update.component_id,
+            schema_type: update.schema_data.into_raw(),
             user_handle: ptr::null_mut(),
         };
 

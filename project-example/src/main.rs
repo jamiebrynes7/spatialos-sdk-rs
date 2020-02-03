@@ -188,7 +188,7 @@ fn logic_loop(c: &mut WorkerConnection) {
 
                 // Send an update to SpatialOS to apply the same update to the official component
                 // state.
-                c.send_component_update::<example::Rotate>(
+                c.send_component_update(
                     entity_id,
                     &example::RotateUpdate {
                         angle: Some(rotate.angle),
@@ -199,7 +199,7 @@ fn logic_loop(c: &mut WorkerConnection) {
 
                 // Update the entity's position based on the current state of the `Rotate`
                 // component.
-                c.send_component_update::<improbable::Position>(
+                c.send_component_update(
                     entity_id,
                     &improbable::PositionUpdate {
                         coords: Some(improbable::Coordinates {
