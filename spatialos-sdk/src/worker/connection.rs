@@ -1,4 +1,5 @@
 use crate::ptr::MutPtr;
+use crate::worker::component::ComponentUpdate;
 use crate::worker::{
     commands::*,
     component::{Component, UpdateParameters},
@@ -7,7 +8,6 @@ use crate::worker::{
     metrics::Metrics,
     op::OpList,
     parameters::ConnectionParameters,
-    schema::*,
     utils::cstr_to_string,
     worker_future::{WorkerFuture, WorkerSdkFuture},
     {EntityId, InterestOverride, LogLevel, RequestId},
@@ -147,23 +147,23 @@ pub trait Connection {
         &mut self,
         payload: ReserveEntityIdsRequest,
         timeout_millis: Option<u32>,
-    ) -> RequestId<ReserveEntityIdsRequest>;
+    ) -> RequestId;
     fn send_create_entity_request(
         &mut self,
         entity: Entity,
         entity_id: Option<EntityId>,
         timeout_millis: Option<u32>,
-    ) -> RequestId<CreateEntityRequest>;
+    ) -> RequestId;
     fn send_delete_entity_request(
         &mut self,
         payload: DeleteEntityRequest,
         timeout_millis: Option<u32>,
-    ) -> RequestId<DeleteEntityRequest>;
+    ) -> RequestId;
     fn send_entity_query_request(
         &mut self,
         payload: EntityQueryRequest,
         timeout_millis: Option<u32>,
-    ) -> RequestId<EntityQueryRequest>;
+    ) -> RequestId;
 
     fn send_command_request<C: Component>(
         &mut self,
@@ -171,24 +171,24 @@ pub trait Connection {
         request: &C::CommandRequest,
         timeout_millis: Option<u32>,
         params: CommandParameters,
-    ) -> RequestId<OutgoingCommandRequest>;
+    ) -> RequestId;
 
     fn send_command_response<C: Component>(
         &mut self,
-        request_id: RequestId<IncomingCommandRequest>,
+        request_id: RequestId,
         response: &C::CommandResponse,
     );
 
     fn send_command_failure(
         &mut self,
-        request_id: RequestId<IncomingCommandRequest>,
+        request_id: RequestId,
         message: &str,
     ) -> Result<(), NulError>;
 
-    fn send_component_update<C: Component>(
+    fn send_component_update<T: Into<ComponentUpdate>>(
         &mut self,
         entity_id: EntityId,
-        update: &C::Update,
+        update: T,
         parameters: UpdateParameters,
     );
 
@@ -324,18 +324,17 @@ impl Connection for WorkerConnection {
         &mut self,
         payload: ReserveEntityIdsRequest,
         timeout_millis: Option<u32>,
-    ) -> RequestId<ReserveEntityIdsRequest> {
+    ) -> RequestId {
         unsafe {
             let timeout = match timeout_millis {
                 Some(c) => &c,
                 None => ptr::null(),
             };
-            let id = Worker_Connection_SendReserveEntityIdsRequest(
+            RequestId::new(Worker_Connection_SendReserveEntityIdsRequest(
                 self.connection_ptr.get(),
                 payload.0,
                 timeout,
-            );
-            RequestId::new(id)
+            ))
         }
     }
 
@@ -344,7 +343,7 @@ impl Connection for WorkerConnection {
         entity: Entity,
         entity_id: Option<EntityId>,
         timeout_millis: Option<u32>,
-    ) -> RequestId<CreateEntityRequest> {
+    ) -> RequestId {
         let timeout = match timeout_millis {
             Some(c) => &c,
             None => ptr::null(),
@@ -354,35 +353,32 @@ impl Connection for WorkerConnection {
             None => ptr::null(),
         };
         let mut component_data = entity.into_raw();
-        let id = unsafe {
-            Worker_Connection_SendCreateEntityRequest(
+        unsafe {
+            RequestId::new(Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),
                 component_data.len() as _,
                 component_data.as_mut_ptr(),
                 entity_id,
                 timeout,
-            )
-        };
-
-        RequestId::new(id)
+            ))
+        }
     }
 
     fn send_delete_entity_request(
         &mut self,
         payload: DeleteEntityRequest,
         timeout_millis: Option<u32>,
-    ) -> RequestId<DeleteEntityRequest> {
+    ) -> RequestId {
         unsafe {
             let timeout = match timeout_millis {
                 Some(c) => &c,
                 None => ptr::null(),
             };
-            let id = Worker_Connection_SendDeleteEntityRequest(
+            RequestId::new(Worker_Connection_SendDeleteEntityRequest(
                 self.connection_ptr.get(),
                 payload.0.id,
                 timeout,
-            );
-            RequestId::new(id)
+            ))
         }
     }
 
@@ -390,7 +386,7 @@ impl Connection for WorkerConnection {
         &mut self,
         payload: EntityQueryRequest,
         timeout_millis: Option<u32>,
-    ) -> RequestId<EntityQueryRequest> {
+    ) -> RequestId {
         unsafe {
             let timeout = match timeout_millis {
                 Some(c) => &c,
@@ -398,12 +394,11 @@ impl Connection for WorkerConnection {
             };
 
             let worker_query = payload.0.to_worker_sdk();
-            let id = Worker_Connection_SendEntityQueryRequest(
+            RequestId::new(Worker_Connection_SendEntityQueryRequest(
                 self.connection_ptr.get(),
                 &worker_query.query,
                 timeout,
-            );
-            RequestId::new(id)
+            ))
         }
     }
 
@@ -413,7 +408,7 @@ impl Connection for WorkerConnection {
         request: &C::CommandRequest,
         timeout_millis: Option<u32>,
         params: CommandParameters,
-    ) -> RequestId<OutgoingCommandRequest> {
+    ) -> RequestId {
         let command_index = C::get_request_command_index(&request);
 
         let timeout = match timeout_millis {
@@ -429,22 +424,20 @@ impl Connection for WorkerConnection {
             user_handle: ptr::null_mut(),
         };
 
-        let request_id = unsafe {
-            Worker_Connection_SendCommandRequest(
+        unsafe {
+            RequestId::new(Worker_Connection_SendCommandRequest(
                 self.connection_ptr.get(),
                 entity_id.id,
                 &mut command_request,
                 timeout,
                 &params.to_worker_sdk(),
-            )
-        };
-
-        RequestId::new(request_id)
+            ))
+        }
     }
 
     fn send_command_response<C: Component>(
         &mut self,
-        request_id: RequestId<IncomingCommandRequest>,
+        request_id: RequestId,
         response: &C::CommandResponse,
     ) {
         let mut raw_response = Worker_CommandResponse {
@@ -466,7 +459,7 @@ impl Connection for WorkerConnection {
 
     fn send_command_failure(
         &mut self,
-        request_id: RequestId<IncomingCommandRequest>,
+        request_id: RequestId,
         message: &str,
     ) -> Result<(), NulError> {
         let message = CString::new(message)?;
@@ -481,16 +474,17 @@ impl Connection for WorkerConnection {
         Ok(())
     }
 
-    fn send_component_update<C: Component>(
+    fn send_component_update<T: Into<ComponentUpdate>>(
         &mut self,
         entity_id: EntityId,
-        update: &C::Update,
+        update: T,
         parameters: UpdateParameters,
     ) {
+        let update = update.into();
         let mut component_update = Worker_ComponentUpdate {
             reserved: ptr::null_mut(),
-            component_id: C::ID,
-            schema_type: SchemaComponentUpdate::from_update(update).into_raw(),
+            component_id: update.component_id,
+            schema_type: update.schema_data.into_raw(),
             user_handle: ptr::null_mut(),
         };
 

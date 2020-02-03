@@ -1,7 +1,6 @@
 #![allow(non_upper_case_globals)]
 
 use crate::worker::{
-    commands::*,
     component::{self, *},
     entity::Entity,
     metrics::Metrics,
@@ -467,7 +466,7 @@ pub struct RemoveEntityOp {
 
 #[derive(Debug)]
 pub struct ReserveEntityIdsResponseOp {
-    pub request_id: RequestId<ReserveEntityIdsRequest>,
+    pub request_id: RequestId,
     pub status_code: StatusCode<ReservedEntityIdRange>,
 }
 
@@ -508,13 +507,13 @@ impl Iterator for ReservedEntityIdRange {
 
 #[derive(Debug)]
 pub struct CreateEntityResponseOp {
-    pub request_id: RequestId<CreateEntityRequest>,
+    pub request_id: RequestId,
     pub status_code: StatusCode<EntityId>,
 }
 
 #[derive(Debug)]
 pub struct DeleteEntityResponseOp {
-    pub request_id: RequestId<DeleteEntityRequest>,
+    pub request_id: RequestId,
     pub entity_id: EntityId,
     pub status_code: StatusCode<()>,
 }
@@ -527,7 +526,7 @@ pub enum QueryResponse {
 
 #[derive(Debug)]
 pub struct EntityQueryResponseOp {
-    pub request_id: RequestId<EntityQueryRequest>,
+    pub request_id: RequestId,
     pub status_code: StatusCode<QueryResponse>,
 }
 
@@ -578,7 +577,7 @@ impl<'a> ComponentUpdateOp<'a> {
 
 #[derive(Debug)]
 pub struct CommandRequestOp<'a> {
-    pub request_id: RequestId<IncomingCommandRequest>,
+    pub request_id: RequestId,
     pub entity_id: EntityId,
     pub timeout_millis: u32,
     pub caller_worker_id: String,
@@ -599,7 +598,7 @@ impl<'a> CommandRequestOp<'a> {
 
 #[derive(Debug)]
 pub struct CommandResponseOp<'a> {
-    pub request_id: RequestId<OutgoingCommandRequest>,
+    pub request_id: RequestId,
     pub entity_id: EntityId,
     pub component_id: ComponentId,
     pub response: StatusCode<CommandResponseRef<'a>>,
