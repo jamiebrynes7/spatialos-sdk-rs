@@ -1,5 +1,5 @@
 use crate::worker::schema::{
-    Error, Field, FieldId, IndexedField, Result, SchemaComponentUpdate, SchemaObject,
+    Error, Field, FieldId, IndexedField, ObjectField, Result, SchemaComponentUpdate, SchemaObject,
 };
 use spatialos_sdk_sys::worker::*;
 use std::{collections::BTreeMap, marker::PhantomData};
@@ -26,6 +26,60 @@ where
     fn get(object: &SchemaObject, field: FieldId) -> Result<Self::RustType> {
         if T::count(object, field) > 0 {
             object.get::<T>(field).map(Some)
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn add(object: &mut SchemaObject, field: FieldId, value: &Self::RustType) {
+        if let Some(value) = value {
+            object.add::<T>(field, value);
+        }
+    }
+
+    fn has_update(update: &SchemaComponentUpdate, field: FieldId) -> bool {
+        T::count(update.fields(), field) > 0 || update.is_field_cleared(field)
+    }
+
+    fn get_update(
+        update: &SchemaComponentUpdate,
+        field: FieldId,
+    ) -> Result<Option<Self::RustType>> {
+        if update.is_field_cleared(field) {
+            Ok(Some(None))
+        } else {
+            Self::get(update.fields(), field).map(Some)
+        }
+    }
+
+    fn add_update(
+        update: &mut SchemaComponentUpdate,
+        field: FieldId,
+        value: &Option<Self::RustType>,
+    ) {
+        match value {
+            Some(Some(value)) => {
+                update.fields_mut().add::<T>(field, value);
+            }
+
+            Some(None) => update.add_cleared(field),
+
+            None => {}
+        }
+    }
+}
+
+pub struct RecursiveOptional<T>(PhantomData<T>);
+
+impl<T> Field for RecursiveOptional<T>
+where
+    T: ObjectField + IndexedField,
+{
+    type RustType = Option<Box<T::RustType>>;
+
+    fn get(object: &SchemaObject, field: FieldId) -> Result<Self::RustType> {
+        if T::count(object, field) > 0 {
+            object.get::<T>(field).map(Box::new).map(Some)
         } else {
             Ok(None)
         }

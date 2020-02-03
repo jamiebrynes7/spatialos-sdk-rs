@@ -2,7 +2,7 @@ use crate::schema_bundle::*;
 use heck::CamelCase;
 use std::borrow::Cow;
 use std::cell::RefCell;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::rc::Rc;
 
 fn primitive_type_name(primitive_type: &PrimitiveType) -> &'static str {
@@ -94,7 +94,11 @@ impl Package {
             }
 
             FieldDefinition_FieldType::Option { inner_type } => {
-                format!("Optional<{}>", self.schema_type_name(inner_type)).into()
+                if self.is_type_recursive(inner_type) {
+                    format!("RecursiveOptional<{}>", self.schema_type_name(inner_type)).into()
+                } else {
+                    format!("Optional<{}>", self.schema_type_name(inner_type)).into()
+                }
             }
 
             FieldDefinition_FieldType::List { inner_type } => {
@@ -195,7 +199,11 @@ impl Package {
                 self.generate_rust_type_name(type_reference)
             }
             FieldDefinition_FieldType::Option { ref inner_type } => {
-                format!("Option<{}>", self.generate_rust_type_name(inner_type))
+                if self.is_type_recursive(inner_type) {
+                    format!("Option<Box<{}>>", self.generate_rust_type_name(inner_type))
+                } else {
+                    format!("Option<{}>", self.generate_rust_type_name(inner_type))
+                }
             }
             FieldDefinition_FieldType::List { ref inner_type } => {
                 format!("Vec<{}>", self.generate_rust_type_name(inner_type))
@@ -209,6 +217,72 @@ impl Package {
                 self.generate_rust_type_name(value_type)
             ),
         }
+    }
+
+    fn is_type_recursive(&self, type_ref: &TypeReference) -> bool {
+        fn is_recursive(
+            gen_code: Rc<RefCell<GeneratedCode>>,
+            type_name: &str,
+            mut parent_types: HashSet<String>,
+        ) -> bool {
+            let type_def = gen_code.borrow().resolve_type_reference(type_name).clone();
+
+            let direct_child_types: Vec<String> = type_def
+                .fields
+                .iter()
+                .filter_map(|f| {
+                    if let FieldDefinition_FieldType::Singular { type_reference } = &f.field_type {
+                        if let TypeReference::Type(name) = type_reference {
+                            return Some(name.clone());
+                        }
+                    }
+
+                    None
+                })
+                .collect();
+
+            let option_child_types: Vec<String> = type_def
+                .fields
+                .iter()
+                .filter_map(|f| {
+                    if let FieldDefinition_FieldType::Option { inner_type } = &f.field_type {
+                        if let TypeReference::Type(name) = inner_type {
+                            return Some(name.clone());
+                        }
+                    }
+
+                    None
+                })
+                .collect();
+
+            let found_recursive_field = direct_child_types
+                .iter()
+                .any(|name| parent_types.contains(name))
+                || option_child_types
+                    .iter()
+                    .any(|name| parent_types.contains(name));
+
+            if found_recursive_field {
+                return true;
+            }
+
+            parent_types.insert(type_name.to_owned());
+
+            direct_child_types
+                .iter()
+                .any(|name| is_recursive(gen_code.clone(), name, parent_types.clone()))
+                || option_child_types
+                    .iter()
+                    .any(|name| is_recursive(gen_code.clone(), name, parent_types.clone()))
+        }
+
+        if let TypeReference::Type(type_name) = type_ref {
+            let mut parents = HashSet::new();
+            parents.insert(type_name.to_owned());
+            return is_recursive(self.generated_code.clone(), type_name, parents);
+        }
+
+        false
     }
 
     // Generates an expression which serializes a field from an expression into a schema object. The generated
