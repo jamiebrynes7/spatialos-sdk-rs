@@ -237,6 +237,106 @@ impl Component for EntityIdTest {
 }
 
 #[derive(Debug, Clone)]
+pub struct EntityTest {
+    pub entity: spatialos_sdk::worker::entity::Entity,
+}
+
+impl ObjectField for EntityTest {
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            entity: input.get::<SchemaEntity>(1).map_err(Error::at_field::<Self>(1))?,
+        })
+    }
+
+    fn into_object(&self, output: &mut SchemaObject) {
+        output.add::<SchemaEntity>(1, &self.entity);
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct EntityTestUpdate {
+    pub entity: Option<spatialos_sdk::worker::entity::Entity>,
+}
+
+impl Update for EntityTestUpdate {
+    type Component = EntityTest;
+
+    fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
+        Ok(Self {
+            entity: update.get_field::<SchemaEntity>(1).map_err(Error::at_field::<Self>(1))?,
+        })
+    }
+
+    fn into_schema(&self, update: &mut SchemaComponentUpdate) {
+        update.add_field::<SchemaEntity>(1, &self.entity);
+    }
+
+    fn merge(&mut self, update: Self) {
+        if update.entity.is_some() { self.entity = update.entity; }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum EntityTestCommandRequest {
+}
+
+#[derive(Debug, Clone)]
+pub enum EntityTestCommandResponse {
+}
+
+impl Component for EntityTest {
+    type Update = EntityTestUpdate;
+    type CommandRequest = generated::example::EntityTestCommandRequest;
+    type CommandResponse = generated::example::EntityTestCommandResponse;
+
+    const ID: ComponentId = 2003;
+
+    fn merge_update(&mut self, update: Self::Update) {
+        if let Some(value) = update.entity { self.entity = value; }
+    }
+
+    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EntityTestCommandRequest> {
+        match command_index {
+            _ => Err(Error::unknown_command::<Self>(command_index))
+        }
+    }
+
+    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::EntityTestCommandResponse> {
+        match command_index {
+            _ => Err(Error::unknown_command::<Self>(command_index))
+        }
+    }
+
+    fn to_request(request: &generated::example::EntityTestCommandRequest) -> Owned<SchemaCommandRequest> {
+        let mut serialized_request = SchemaCommandRequest::new();
+        match request {
+            _ => unreachable!()
+        }
+        serialized_request
+    }
+
+    fn to_response(response: &generated::example::EntityTestCommandResponse) -> Owned<SchemaCommandResponse> {
+        let mut serialized_response = SchemaCommandResponse::new();
+        match response {
+            _ => unreachable!()
+        }
+        serialized_response
+    }
+
+    fn get_request_command_index(request: &generated::example::EntityTestCommandRequest) -> u32 {
+        match request {
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_response_command_index(response: &generated::example::EntityTestCommandResponse) -> u32 {
+        match response {
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct EnumTestComponent {
     pub test: generated::example::TestEnum,
 }
