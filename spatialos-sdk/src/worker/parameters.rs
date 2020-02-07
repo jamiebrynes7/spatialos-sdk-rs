@@ -95,6 +95,8 @@ impl ConnectionParameters {
                     .flow_control
                     .as_ref()
                     .map(FlowControlParameters::to_worker_sdk),
+
+                compression: Some(Worker_Alpha_CompressionParameters { place_holder: 0 }),
             },
         };
 
@@ -165,10 +167,6 @@ pub enum SecurityType {
 }
 
 impl SecurityType {
-    pub fn default() -> Self {
-        SecurityType::Insecure
-    }
-
     pub(crate) fn to_worker_sdk(&self) -> u8 {
         (match self {
             SecurityType::Insecure => {
@@ -176,6 +174,12 @@ impl SecurityType {
             }
             SecurityType::DTLS => Worker_NetworkSecurityType_WORKER_NETWORK_SECURITY_TYPE_DTLS,
         }) as u8
+    }
+}
+
+impl Default for SecurityType {
+    fn default() -> Self {
+        SecurityType::Insecure
     }
 }
 
@@ -447,6 +451,7 @@ impl<'a> IntermediateConnectionParameters<'a> {
                 erasure_codec,
                 heartbeat,
                 flow_control,
+                compression,
             } => {
                 let kcp = kcp
                     .as_ref()
@@ -468,6 +473,11 @@ impl<'a> IntermediateConnectionParameters<'a> {
                     .map(|param| param as *const _)
                     .unwrap_or(ptr::null());
 
+                let compression = compression
+                    .as_ref()
+                    .map(|param| param as *const _)
+                    .unwrap_or(ptr::null());
+
                 Worker_NetworkParameters {
                     connection_type:
                         Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_UDP
@@ -484,6 +494,9 @@ impl<'a> IntermediateConnectionParameters<'a> {
 
                         downstream_heartbeat: heartbeat,
                         upstream_heartbeat: heartbeat,
+
+                        downstream_compression: compression,
+                        upstream_compression: compression,
 
                         flow_control,
                     },
@@ -524,5 +537,6 @@ enum IntermediateProtocolType {
         erasure_codec: Option<Worker_ErasureCodecParameters>,
         heartbeat: Option<Worker_HeartbeatParameters>,
         flow_control: Option<Worker_Alpha_FlowControlParameters>,
+        compression: Option<Worker_Alpha_CompressionParameters>,
     },
 }
