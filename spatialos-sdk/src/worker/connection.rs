@@ -204,6 +204,8 @@ pub trait Connection {
         component_id: u32,
     );
 
+    fn flush(&mut self);
+
     fn set_protocol_logging_enabled(&mut self, enabled: bool);
 
     fn get_connection_status(&mut self) -> ConnectionStatus;
@@ -534,6 +536,11 @@ impl Connection for WorkerConnection {
                 component_id,
             );
         }
+    }
+
+    fn flush(&mut self) {
+        assert!(!self.connection_ptr.is_null());
+        unsafe { Worker_Connection_Alpha_Flush(self.connection_ptr.get()) }
     }
 
     fn set_protocol_logging_enabled(&mut self, enabled: bool) {
