@@ -75,6 +75,7 @@ mod command_request;
 mod command_response;
 mod component_data;
 mod component_update;
+mod generic_data;
 mod object;
 mod primitives;
 mod ptr;
@@ -83,7 +84,7 @@ pub mod owned;
 
 pub use self::{
     collections::*, command_request::*, command_response::*, component_data::*,
-    component_update::*, object::*, owned::Owned, primitives::*,
+    component_update::*, generic_data::*, object::*, owned::Owned, primitives::*,
 };
 #[doc(inline)]
 pub use crate::impl_field_for_enum_field;
