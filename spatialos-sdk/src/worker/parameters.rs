@@ -14,7 +14,6 @@ pub struct ConnectionParameters {
     pub protocol_logging: ProtocolLoggingParameters,
     pub enable_protocol_logging_at_startup: bool,
     pub thread_affinity: ThreadAffinityParameters,
-    use_internal_serialization: bool,
 }
 
 impl ConnectionParameters {
@@ -60,11 +59,6 @@ impl ConnectionParameters {
         self
     }
 
-    pub fn enable_internal_serialization(mut self) -> Self {
-        self.use_internal_serialization = true;
-        self
-    }
-
     pub fn default() -> Self {
         ConnectionParameters {
             worker_type: CString::new("").unwrap(),
@@ -77,7 +71,6 @@ impl ConnectionParameters {
             protocol_logging: ProtocolLoggingParameters::default(),
             enable_protocol_logging_at_startup: false,
             thread_affinity: ThreadAffinityParameters::default(),
-            use_internal_serialization: false,
         }
     }
 
