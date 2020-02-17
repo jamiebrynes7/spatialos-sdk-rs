@@ -36,7 +36,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: spatial
-          args: --verbose download sdk --sdk-version 14.0.0
+          args: --verbose download sdk --sdk-version 14.1.0
         env:
           SPATIAL_LIB_DIR: "dependencies"
 
@@ -118,7 +118,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: spatial
-          args: --verbose download sdk --sdk-version 14.0.0
+          args: --verbose download sdk --sdk-version 14.1.0
         env:
           SPATIAL_LIB_DIR: "dependencies"
 

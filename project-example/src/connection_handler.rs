@@ -27,8 +27,7 @@ pub async fn get_connection(opt: Opt) -> Result<WorkerConnection, Box<dyn Error>
         } => {
             let params = ConnectionParameters::new(worker_type)
                 .using_udp()
-                .using_external_ip(connect_with_external_ip)
-                .enable_internal_serialization();
+                .using_external_ip(connect_with_external_ip);
             WorkerConnection::connect_receptionist(
                 &worker_id,
                 &host.unwrap_or_else(|| "127.0.0.1".into()),
@@ -53,8 +52,7 @@ pub async fn get_connection(opt: Opt) -> Result<WorkerConnection, Box<dyn Error>
                 locator,
                 ConnectionParameters::new(worker_type)
                     .using_tcp()
-                    .using_external_ip(true)
-                    .enable_internal_serialization(),
+                    .using_external_ip(true),
             )
         }
 
@@ -90,8 +88,7 @@ pub async fn get_connection(opt: Opt) -> Result<WorkerConnection, Box<dyn Error>
                 locator,
                 ConnectionParameters::new(worker_type)
                     .using_tcp()
-                    .using_external_ip(true)
-                    .enable_internal_serialization(),
+                    .using_external_ip(true),
             )
         }
     };
