@@ -157,3 +157,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }} #required
           file: ./codecov.info
+          yml: ./codecov.yml
