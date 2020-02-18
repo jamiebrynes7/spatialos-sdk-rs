@@ -73,4 +73,5 @@ enum SomeEnum {
 
 type MapTypes {
     map<SomeEnum, int32> first = 1;
+    map<Entity, int32> second = 2;
 }

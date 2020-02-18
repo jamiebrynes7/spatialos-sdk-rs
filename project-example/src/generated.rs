@@ -130,15 +130,18 @@ impl ObjectField for CommandData {
 #[derive(Debug, Clone)]
 pub struct MapTypes {
     pub first: BTreeMap<generated::example::SomeEnum, i32>,
+    pub second: BTreeMap<spatialos_sdk::worker::entity::Entity, i32>,
 }
 impl ObjectField for MapTypes {
     fn from_object(input: &SchemaObject) -> Result<Self> {
         Ok(Self {
             first: input.get::<Map<generated::example::SomeEnum, SchemaInt32>>(1).map_err(Error::at_field::<Self>(1))?,
+            second: input.get::<Map<SchemaEntity, SchemaInt32>>(2).map_err(Error::at_field::<Self>(2))?,
         })
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<Map<generated::example::SomeEnum, SchemaInt32>>(1, &self.first);
+        output.add::<Map<SchemaEntity, SchemaInt32>>(2, &self.second);
     }
 }
 

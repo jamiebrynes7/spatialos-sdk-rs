@@ -15,6 +15,7 @@
 //! [`Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 
 use crate::worker::schema::OwnedPointer;
+use std::cmp::Ordering;
 use std::{
     borrow::Borrow,
     mem,
@@ -90,6 +91,26 @@ impl<T: Ownable> Borrow<T> for Owned<T> {
 impl<T: Ownable> DerefMut for Owned<T> {
     fn deref_mut(&mut self) -> &mut T {
         unsafe { &mut *self.0.cast().as_ptr() }
+    }
+}
+
+impl<T: Ownable> PartialEq for Owned<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(&other.0)
+    }
+}
+
+impl<T: Ownable> Eq for Owned<T> {}
+
+impl<T: Ownable> PartialOrd for Owned<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl<T: Ownable> Ord for Owned<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.cmp(&other.0)
     }
 }
 
