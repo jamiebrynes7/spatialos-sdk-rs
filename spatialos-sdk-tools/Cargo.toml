@@ -11,4 +11,4 @@ path = "src/generate_bindings/main.rs"
 [dependencies]
 clap = "2.32.0"
 glob = "0.3"
-bindgen = "0.52.0"
+bindgen = "0.53.1"
