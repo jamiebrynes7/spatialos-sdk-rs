@@ -61,7 +61,17 @@ component EntityTest {
     Entity entity = 1;
 }
 
-// TODO: Remove when https://github.com/jamiebrynes7/spatialos-sdk-rs/pull/153 is merged.
+// TODO: Remove the below when https://github.com/jamiebrynes7/spatialos-sdk-rs/pull/153 is merged.
 type Recursive {
     option<Recursive> opt = 1;
+}
+
+enum SomeEnum {
+    FIRST = 0;
+    SECOND = 1;
+}
+
+type MapTypes {
+    map<SomeEnum, int32> first = 1;
+    map<Entity, int32> second = 2;
 }

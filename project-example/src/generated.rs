@@ -25,7 +25,50 @@ use std::{collections::BTreeMap, convert::TryFrom};
 use super::super::generated as generated;
 
 /* Enums. */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum SomeEnum {
+
+    FIRST,
+    SECOND,
+}
+
+impl EnumField for SomeEnum {}
+
+impl Default for SomeEnum {
+    fn default() -> Self {
+        SomeEnum::FIRST
+    }
+}
+
+impl TryFrom<u32> for SomeEnum {
+    type Error = UnknownDiscriminantError;
+
+    fn try_from(value: u32) -> std::result::Result<Self, Self::Error> {
+        match value {
+            
+            0 => Ok(SomeEnum::FIRST), 
+            1 => Ok(SomeEnum::SECOND), 
+            _ => Err(UnknownDiscriminantError {
+                type_name: std::any::type_name::<Self>(),
+                value,
+            }),
+        }
+    }
+}
+
+impl Into<u32> for SomeEnum {
+    fn into(self) -> u32 {
+        match self {
+            
+            SomeEnum::FIRST => 0, 
+            SomeEnum::SECOND => 1, 
+        }
+    }
+}
+
+impl_field_for_enum_field!(SomeEnum);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum TestEnum {
 
     FIRST,
@@ -81,6 +124,24 @@ impl ObjectField for CommandData {
     }
     fn into_object(&self, output: &mut SchemaObject) {
         output.add::<SchemaInt32>(1, &self.value);
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct MapTypes {
+    pub first: BTreeMap<generated::example::SomeEnum, i32>,
+    pub second: BTreeMap<spatialos_sdk::worker::entity::Entity, i32>,
+}
+impl ObjectField for MapTypes {
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+            first: input.get::<Map<generated::example::SomeEnum, SchemaInt32>>(1).map_err(Error::at_field::<Self>(1))?,
+            second: input.get::<Map<SchemaEntity, SchemaInt32>>(2).map_err(Error::at_field::<Self>(2))?,
+        })
+    }
+    fn into_object(&self, output: &mut SchemaObject) {
+        output.add::<Map<generated::example::SomeEnum, SchemaInt32>>(1, &self.first);
+        output.add::<Map<SchemaEntity, SchemaInt32>>(2, &self.second);
     }
 }
 
@@ -1460,7 +1521,7 @@ use std::{collections::BTreeMap, convert::TryFrom};
 use super::super::super::generated as generated;
 
 /* Enums. */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Connection_ConnectionStatus {
 
     UNKNOWN,

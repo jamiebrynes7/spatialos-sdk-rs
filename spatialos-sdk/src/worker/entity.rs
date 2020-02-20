@@ -4,13 +4,13 @@ use crate::worker::{
     schema::*,
 };
 use spatialos_sdk_sys::worker::{Worker_ComponentData, Worker_Entity};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::result::Result;
 use std::slice;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Entity {
-    components: HashMap<ComponentId, Owned<SchemaComponentData>>,
+    components: BTreeMap<ComponentId, Owned<SchemaComponentData>>,
 }
 
 impl Entity {
@@ -104,9 +104,9 @@ impl Entity {
     /// will take ownership of the underlying `Schema_ComponentData` and will free it when
     /// appropriate. If the data is not passed to a similar function in the C SDK, then the data
     /// owned by the `Entity` will leak.
-    pub(crate) fn into_raw(mut self) -> Vec<Worker_ComponentData> {
+    pub(crate) fn into_raw(self) -> Vec<Worker_ComponentData> {
         self.components
-            .drain()
+            .into_iter()
             .map(|(component_id, data)| Worker_ComponentData {
                 component_id,
                 schema_type: data.into_raw(),
