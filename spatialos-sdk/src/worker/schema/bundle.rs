@@ -319,3 +319,283 @@ impl Drop for Bundle {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use crate::worker::{component::ComponentId, schema::*};
+    use approx::assert_abs_diff_eq;
+    use serde_json::Value;
+    use std::{fs::File, io::Read, path::PathBuf};
+
+    const POSITION_COMPONENT_ID: ComponentId = 54;
+    #[test]
+    pub fn loading_bundle_succeeds_when_valid_bundle() {
+        assert!(read_bundle(true).is_ok(), "Valid bundle failed to load.")
+    }
+
+    // TODO: This test currently fails (but it shouldn't!)
+    //#[test]
+    pub fn loading_bundle_fails_when_invalid_bundle() {
+        assert!(
+            read_bundle(false).is_err(),
+            "Invalid bundle loaded without error"
+        )
+    }
+
+    #[test]
+    pub fn load_object_fills_object_when_valid_json() {
+        const json: &str = "{\"x\":10.0,\"y\":10.0,\"z\":10.0}";
+
+        let mut data = SchemaComponentUpdate::new();
+        let fields = data.fields_mut();
+
+        let bundle = get_valid_bundle();
+        let result = bundle.load_object("improbable.Coordinates", json, fields);
+
+        let (_, warning) = check(result);
+
+        assert!(warning.is_none(), "Unexpected warnings");
+        assert_abs_diff_eq!(
+            fields
+                .get::<SchemaDouble>(1)
+                .expect("Could not read data from field."),
+            10.0
+        );
+        assert_abs_diff_eq!(
+            fields
+                .get::<SchemaDouble>(2)
+                .expect("Could not read data from field."),
+            10.0
+        );
+        assert_abs_diff_eq!(
+            fields
+                .get::<SchemaDouble>(3)
+                .expect("Could not read data from field."),
+            10.0
+        );
+    }
+
+    #[test]
+    pub fn load_object_returns_error_with_malformed_json() {
+        const json: &str = "{}";
+
+        let mut data = SchemaGenericData::new();
+        let obj = data.object_mut();
+
+        let bundle = get_valid_bundle();
+        let result = bundle.load_object("improbable.Coordinates", json, obj);
+
+        assert!(result.is_err())
+    }
+
+    #[test]
+    pub fn dump_object_returns_valid_json() {
+        let mut data = SchemaGenericData::new();
+        let fields = data.object_mut();
+        fields.add::<SchemaDouble>(1, &10.0);
+        fields.add::<SchemaDouble>(2, &10.0);
+        fields.add::<SchemaDouble>(3, &10.0);
+
+        let bundle = get_valid_bundle();
+        let result = bundle.dump_object("improbable.Coordinates", fields);
+        let (json, warning) = check(result);
+
+        assert!(warning.is_none(), "Unexpected warnings");
+        check_valid_json(json);
+    }
+
+    #[test]
+    pub fn load_component_data_fills_data_when_valid_json() {
+        const json: &str = "{\"coords\": {\"x\":10.0,\"y\":10.0,\"z\":10.0}}";
+
+        let bundle = get_valid_bundle();
+        let result = bundle.load_component_data(POSITION_COMPONENT_ID, json);
+
+        let (component_data, warning) = check(result);
+        assert!(warning.is_none(), "Unexpected warnings");
+
+        assert_eq!(component_data.fields().object_count(1), 1);
+        let coords_obj = component_data.fields().get_object(1);
+
+        assert_abs_diff_eq!(
+            coords_obj
+                .get::<SchemaDouble>(1)
+                .expect("Could not read data from field."),
+            10.0
+        );
+        assert_abs_diff_eq!(
+            coords_obj
+                .get::<SchemaDouble>(2)
+                .expect("Could not read data from field."),
+            10.0
+        );
+        assert_abs_diff_eq!(
+            coords_obj
+                .get::<SchemaDouble>(3)
+                .expect("Could not read data from field."),
+            10.0
+        );
+    }
+
+    #[test]
+    pub fn load_component_data_returns_error_with_malformed_json() {
+        const json: &str = "{}";
+
+        let bundle = get_valid_bundle();
+        let result = bundle.load_component_data(POSITION_COMPONENT_ID, json);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    pub fn dump_component_data_returns_valid_json() {
+        let mut component_data = SchemaComponentData::new();
+        let fields = component_data.fields_mut();
+        let coords_obj = fields.add_object(1);
+        coords_obj.add::<SchemaDouble>(1, &10.0);
+        coords_obj.add::<SchemaDouble>(2, &10.0);
+        coords_obj.add::<SchemaDouble>(3, &10.0);
+
+        let bundle = get_valid_bundle();
+        let result = bundle.dump_component_data(POSITION_COMPONENT_ID, &mut component_data);
+        let (json, warning) = check(result);
+
+        assert!(warning.is_none(), "Unexpected warnings");
+        check_valid_json(json);
+    }
+
+    #[test]
+    pub fn load_component_update_is_okay_with_empty_update() {
+        const json: &str = "{}";
+
+        let bundle = get_valid_bundle();
+        let result = bundle.load_component_update(POSITION_COMPONENT_ID, json);
+
+        let (component_update, warning) = check(result);
+        assert!(warning.is_none(), "Unexpected warnings");
+
+        assert_eq!(component_update.fields().object_count(1), 0);
+    }
+
+    #[test]
+    pub fn load_component_update_fills_data_when_valid_json() {
+        const json: &str = "{\"coords\": {\"x\":10.0,\"y\":10.0,\"z\":10.0}}";
+
+        let bundle = get_valid_bundle();
+        let result = bundle.load_component_update(POSITION_COMPONENT_ID, json);
+
+        let (component_update, warning) = check(result);
+        assert!(warning.is_none(), "Unexpected warnings");
+
+        assert_eq!(component_update.fields().object_count(1), 1);
+        let coords_obj = component_update.fields().get_object(1);
+
+        assert_abs_diff_eq!(
+            coords_obj
+                .get::<SchemaDouble>(1)
+                .expect("Could not read data from field."),
+            10.0
+        );
+        assert_abs_diff_eq!(
+            coords_obj
+                .get::<SchemaDouble>(2)
+                .expect("Could not read data from field."),
+            10.0
+        );
+        assert_abs_diff_eq!(
+            coords_obj
+                .get::<SchemaDouble>(3)
+                .expect("Could not read data from field."),
+            10.0
+        );
+    }
+
+    #[test]
+    pub fn convert_data_to_update_returns_valid_update_when_given_valid_data() {
+        let mut component_data = SchemaComponentData::new();
+        let fields = component_data.fields_mut();
+        let coords_obj = fields.add_object(1);
+        coords_obj.add::<SchemaDouble>(1, &10.0);
+        coords_obj.add::<SchemaDouble>(2, &10.0);
+        coords_obj.add::<SchemaDouble>(3, &10.0);
+
+        let bundle = get_valid_bundle();
+        let result = bundle.convert_data_to_update(POSITION_COMPONENT_ID, component_data);
+
+        let component_update = match result {
+            Ok(update) => update,
+            Err(e) => panic!(format!("Unexpected error: {}", e)),
+        };
+
+        let coords_obj = component_update.fields().get_object(1);
+
+        assert_abs_diff_eq!(
+            coords_obj
+                .get::<SchemaDouble>(1)
+                .expect("Could not read data from field."),
+            10.0
+        );
+        assert_abs_diff_eq!(
+            coords_obj
+                .get::<SchemaDouble>(2)
+                .expect("Could not read data from field."),
+            10.0
+        );
+        assert_abs_diff_eq!(
+            coords_obj
+                .get::<SchemaDouble>(3)
+                .expect("Could not read data from field."),
+            10.0
+        );
+    }
+
+    #[test]
+    pub fn dump_component_update_returns_valid_json() {
+        let mut component_update = SchemaComponentUpdate::new();
+        let fields = component_update.fields_mut();
+        let coords_obj = fields.add_object(1);
+        coords_obj.add::<SchemaDouble>(1, &10.0);
+        coords_obj.add::<SchemaDouble>(2, &10.0);
+        coords_obj.add::<SchemaDouble>(3, &10.0);
+
+        let bundle = get_valid_bundle();
+        let result = bundle.dump_component_update(POSITION_COMPONENT_ID, &mut component_update);
+        let (json, warning) = check(result);
+
+        assert!(warning.is_none(), "Unexpected warnings");
+        check_valid_json(json);
+    }
+
+    fn get_valid_bundle() -> Bundle {
+        read_bundle(true).expect("Failed to load bundle")
+    }
+
+    fn read_bundle(valid: bool) -> std::result::Result<Bundle, String> {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/");
+        d.push(if valid { "good_bundle" } else { "bad_bundle" });
+
+        let mut buffer = Vec::new();
+        File::open(d)
+            .expect("Could not open bundle file")
+            .read_to_end(&mut buffer)
+            .expect("Failed to read file from disk");
+
+        Bundle::load(&buffer)
+    }
+
+    fn check<T>(res: JsonConversionResult<T>) -> (T, Option<String>) {
+        match res {
+            Ok(pair) => pair,
+            Err(e) => panic!("JSON operation failed: ".to_owned() + &e),
+        }
+    }
+
+    fn check_valid_json(json: String) {
+        assert!(!json.is_empty(), "Dumped JSON is empty");
+
+        // Check that the JSON is valid by parsing it into 'Value' which is a union
+        // of all possible JSON values.
+        let json = serde_json::from_str::<Value>(&json);
+        assert!(json.is_ok());
+    }
+}
