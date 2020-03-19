@@ -5,6 +5,10 @@ use std::marker::PhantomData;
 pub struct SchemaGenericData(PhantomData<*mut Schema_GenericData>);
 
 impl SchemaGenericData {
+    pub fn new() -> Owned<Self> {
+        Owned::new()
+    }
+
     pub fn object(&self) -> &SchemaObject {
         unsafe { SchemaObject::from_raw(Schema_GetGenericDataObject(self.as_ptr() as *mut _)) }
     }
