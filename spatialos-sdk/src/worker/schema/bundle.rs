@@ -64,17 +64,11 @@ impl Bundle {
             .map_err(|_| "Null byte found in 'qualified_type_name'".to_string())?;
 
         unsafe {
-            let json_ptr =
-                Schema_Json_DumpObject(self.ptr.as_ptr(), type_name.as_ptr(), src.as_ptr_mut());
-
-            if json_ptr.is_null() {
-                return Err(Bundle::get_last_error());
-            }
-
-            let json = cstr_to_string(Schema_Json_GetJsonString(json_ptr));
-            Schema_Json_Destroy(json_ptr);
-
-            Ok((json, Bundle::get_last_warning()))
+            self.dump_generic(Schema_Json_DumpObject(
+                self.ptr.as_ptr(),
+                type_name.as_ptr(),
+                src.as_ptr_mut(),
+            ))
         }
     }
 
@@ -87,9 +81,11 @@ impl Bundle {
             CString::new(json.as_ref()).map_err(|_| "Null byte found in 'json'".to_string())?;
 
         unsafe {
-            self.load_generic(move || {
-                Schema_Json_LoadComponentData(self.ptr.as_ptr(), component_id, json.as_ptr())
-            })
+            self.load_generic(Schema_Json_LoadComponentData(
+                self.ptr.as_ptr(),
+                component_id,
+                json.as_ptr(),
+            ))
         }
     }
 
@@ -99,9 +95,11 @@ impl Bundle {
         src: &mut SchemaComponentData,
     ) -> JsonConversionResult<String> {
         unsafe {
-            self.dump_generic(move || {
-                Schema_Json_DumpComponentData(self.ptr.as_ptr(), component_id, src.as_ptr_mut())
-            })
+            self.dump_generic(Schema_Json_DumpComponentData(
+                self.ptr.as_ptr(),
+                component_id,
+                src.as_ptr_mut(),
+            ))
         }
     }
 
@@ -114,9 +112,11 @@ impl Bundle {
             CString::new(json.as_ref()).map_err(|_| "Null byte found in 'json'".to_string())?;
 
         unsafe {
-            self.load_generic(move || {
-                Schema_Json_LoadComponentUpdate(self.ptr.as_ptr(), component_id, json.as_ptr())
-            })
+            self.load_generic(Schema_Json_LoadComponentUpdate(
+                self.ptr.as_ptr(),
+                component_id,
+                json.as_ptr(),
+            ))
         }
     }
 
@@ -126,9 +126,11 @@ impl Bundle {
         src: &mut SchemaComponentUpdate,
     ) -> JsonConversionResult<String> {
         unsafe {
-            self.dump_generic(move || {
-                Schema_Json_DumpComponentUpdate(self.ptr.as_ptr(), component_id, src.as_ptr_mut())
-            })
+            self.dump_generic(Schema_Json_DumpComponentUpdate(
+                self.ptr.as_ptr(),
+                component_id,
+                src.as_ptr_mut(),
+            ))
         }
     }
 
@@ -142,14 +144,12 @@ impl Bundle {
             CString::new(json.as_ref()).map_err(|_| "Null byte found in 'json'".to_string())?;
 
         unsafe {
-            self.load_generic(move || {
-                Schema_Json_LoadCommandRequest(
-                    self.ptr.as_ptr(),
-                    component_id,
-                    command_index,
-                    json.as_ptr(),
-                )
-            })
+            self.load_generic(Schema_Json_LoadCommandRequest(
+                self.ptr.as_ptr(),
+                component_id,
+                command_index,
+                json.as_ptr(),
+            ))
         }
     }
 
@@ -160,14 +160,12 @@ impl Bundle {
         src: &mut SchemaCommandRequest,
     ) -> JsonConversionResult<String> {
         unsafe {
-            self.dump_generic(move || {
-                Schema_Json_DumpCommandRequest(
-                    self.ptr.as_ptr(),
-                    component_id,
-                    command_index,
-                    src.as_ptr_mut(),
-                )
-            })
+            self.dump_generic(Schema_Json_DumpCommandRequest(
+                self.ptr.as_ptr(),
+                component_id,
+                command_index,
+                src.as_ptr_mut(),
+            ))
         }
     }
 
@@ -181,14 +179,12 @@ impl Bundle {
             CString::new(json.as_ref()).map_err(|_| "Null byte found in 'json'".to_string())?;
 
         unsafe {
-            self.load_generic(move || {
-                Schema_Json_LoadCommandResponse(
-                    self.ptr.as_ptr(),
-                    component_id,
-                    command_index,
-                    json.as_ptr(),
-                )
-            })
+            self.load_generic(Schema_Json_LoadCommandResponse(
+                self.ptr.as_ptr(),
+                component_id,
+                command_index,
+                json.as_ptr(),
+            ))
         }
     }
 
@@ -199,26 +195,19 @@ impl Bundle {
         src: &mut SchemaCommandResponse,
     ) -> JsonConversionResult<String> {
         unsafe {
-            self.dump_generic(move || {
-                Schema_Json_DumpCommandResponse(
-                    self.ptr.as_ptr(),
-                    component_id,
-                    command_index,
-                    src.as_ptr_mut(),
-                )
-            })
+            self.dump_generic(Schema_Json_DumpCommandResponse(
+                self.ptr.as_ptr(),
+                component_id,
+                command_index,
+                src.as_ptr_mut(),
+            ))
         }
     }
 
-    unsafe fn load_generic<
-        T: OwnedPointer + ToOwned<Owned = Owned<T>>,
-        F: FnOnce() -> *mut T::Raw,
-    >(
+    unsafe fn load_generic<T: OwnedPointer + ToOwned<Owned = Owned<T>>>(
         &self,
-        load: F,
+        data: *mut T::Raw,
     ) -> JsonConversionResult<Owned<T>> {
-        let data = load();
-
         if data.is_null() {
             return Err(Bundle::get_last_error());
         }
@@ -228,12 +217,7 @@ impl Bundle {
         Ok((concrete, Bundle::get_last_warning()))
     }
 
-    unsafe fn dump_generic<F: FnOnce() -> *mut Schema_Json>(
-        &self,
-        dump: F,
-    ) -> JsonConversionResult<String> {
-        let json_ptr = dump();
-
+    unsafe fn dump_generic(&self, json_ptr: *mut Schema_Json) -> JsonConversionResult<String> {
         if json_ptr.is_null() {
             return Err(Bundle::get_last_error());
         }
@@ -332,7 +316,8 @@ mod tests {
         assert!(read_bundle(true).is_ok(), "Valid bundle failed to load.")
     }
 
-    // TODO: This test currently fails (but it shouldn't!)
+    // TODO: This test current fails due to a bug in the Worker SDK.
+    // Uncomment the below line when upgrading to 14.5.0.
     //#[test]
     pub fn loading_bundle_fails_when_invalid_bundle() {
         assert!(
