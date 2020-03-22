@@ -1,7 +1,7 @@
 use crate::worker::entity::Entity;
 use crate::worker::{
     schema::{
-        DataPointer, Error, Field, FieldId, IndexedField, Result, SchemaComponentUpdate,
+        FloatOrd, DataPointer, Error, Field, FieldId, IndexedField, Result, SchemaComponentUpdate,
         SchemaObject,
     },
     EntityId,
@@ -111,7 +111,7 @@ macro_rules! impl_primitive_field {
 }
 
 impl_primitive_field!(
-    f32,
+    FloatOrd<f32>,
     SchemaFloat,
     Schema_GetFloat,
     Schema_IndexFloat,
@@ -122,7 +122,7 @@ impl_primitive_field!(
     0.0
 );
 impl_primitive_field!(
-    f64,
+    FloatOrd<f64>,
     SchemaDouble,
     Schema_GetDouble,
     Schema_IndexDouble,
