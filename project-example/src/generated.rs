@@ -177,7 +177,7 @@ impl ObjectField for TestType {
 
 #[derive(Debug, Clone)]
 pub struct TestType_Inner {
-    pub number: f32,
+    pub number: FloatOrd<f32>,
 }
 impl ObjectField for TestType_Inner {
     fn from_object(input: &SchemaObject) -> Result<Self> {
@@ -192,9 +192,9 @@ impl ObjectField for TestType_Inner {
 
 #[derive(Debug, Clone)]
 pub struct Vector3d {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
+    pub x: FloatOrd<f64>,
+    pub y: FloatOrd<f64>,
+    pub z: FloatOrd<f64>,
 }
 impl ObjectField for Vector3d {
     fn from_object(input: &SchemaObject) -> Result<Self> {
@@ -514,7 +514,7 @@ impl Component for EnumTestComponent {
 
 #[derive(Debug, Clone)]
 pub struct Example {
-    pub x: f32,
+    pub x: FloatOrd<f32>,
 }
 
 impl ObjectField for Example {
@@ -531,7 +531,7 @@ impl ObjectField for Example {
 
 #[derive(Debug, Clone, Default)]
 pub struct ExampleUpdate {
-    pub x: Option<f32>,
+    pub x: Option<FloatOrd<f32>>,
 }
 
 impl Update for ExampleUpdate {
@@ -632,9 +632,9 @@ impl Component for Example {
 
 #[derive(Debug, Clone)]
 pub struct Rotate {
-    pub angle: f64,
+    pub angle: FloatOrd<f64>,
     pub center: generated::example::Vector3d,
-    pub radius: f64,
+    pub radius: FloatOrd<f64>,
 }
 
 impl ObjectField for Rotate {
@@ -655,9 +655,9 @@ impl ObjectField for Rotate {
 
 #[derive(Debug, Clone, Default)]
 pub struct RotateUpdate {
-    pub angle: Option<f64>,
+    pub angle: Option<FloatOrd<f64>>,
     pub center: Option<generated::example::Vector3d>,
-    pub radius: Option<f64>,
+    pub radius: Option<FloatOrd<f64>>,
 }
 
 impl Update for RotateUpdate {
@@ -794,7 +794,7 @@ impl ObjectField for ComponentInterest_BoxConstraint {
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_CylinderConstraint {
     pub center: generated::improbable::Coordinates,
-    pub radius: f64,
+    pub radius: FloatOrd<f64>,
 }
 impl ObjectField for ComponentInterest_CylinderConstraint {
     fn from_object(input: &SchemaObject) -> Result<Self> {
@@ -814,7 +814,7 @@ pub struct ComponentInterest_Query {
     pub constraint: generated::improbable::ComponentInterest_QueryConstraint,
     pub full_snapshot_result: Option<bool>,
     pub result_component_id: Vec<u32>,
-    pub frequency: Option<f32>,
+    pub frequency: Option<FloatOrd<f32>>,
 }
 impl ObjectField for ComponentInterest_Query {
     fn from_object(input: &SchemaObject) -> Result<Self> {
@@ -892,7 +892,7 @@ impl ObjectField for ComponentInterest_RelativeBoxConstraint {
 
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_RelativeCylinderConstraint {
-    pub radius: f64,
+    pub radius: FloatOrd<f64>,
 }
 impl ObjectField for ComponentInterest_RelativeCylinderConstraint {
     fn from_object(input: &SchemaObject) -> Result<Self> {
@@ -907,7 +907,7 @@ impl ObjectField for ComponentInterest_RelativeCylinderConstraint {
 
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_RelativeSphereConstraint {
-    pub radius: f64,
+    pub radius: FloatOrd<f64>,
 }
 impl ObjectField for ComponentInterest_RelativeSphereConstraint {
     fn from_object(input: &SchemaObject) -> Result<Self> {
@@ -923,7 +923,7 @@ impl ObjectField for ComponentInterest_RelativeSphereConstraint {
 #[derive(Debug, Clone)]
 pub struct ComponentInterest_SphereConstraint {
     pub center: generated::improbable::Coordinates,
-    pub radius: f64,
+    pub radius: FloatOrd<f64>,
 }
 impl ObjectField for ComponentInterest_SphereConstraint {
     fn from_object(input: &SchemaObject) -> Result<Self> {
@@ -940,9 +940,9 @@ impl ObjectField for ComponentInterest_SphereConstraint {
 
 #[derive(Debug, Clone)]
 pub struct Coordinates {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
+    pub x: FloatOrd<f64>,
+    pub y: FloatOrd<f64>,
+    pub z: FloatOrd<f64>,
 }
 impl ObjectField for Coordinates {
     fn from_object(input: &SchemaObject) -> Result<Self> {
@@ -961,9 +961,9 @@ impl ObjectField for Coordinates {
 
 #[derive(Debug, Clone)]
 pub struct EdgeLength {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
+    pub x: FloatOrd<f64>,
+    pub y: FloatOrd<f64>,
+    pub z: FloatOrd<f64>,
 }
 impl ObjectField for EdgeLength {
     fn from_object(input: &SchemaObject) -> Result<Self> {
