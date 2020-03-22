@@ -54,12 +54,12 @@ fn logic_loop(c: &mut WorkerConnection) {
 
     builder.add_component(
         example::Rotate {
-            angle: rng.gen_range(0.0, 2.0 * f64::consts::PI),
-            radius: rng.gen_range(20.0, 100.0),
+            angle: rng.gen_range(0.0, 2.0 * f64::consts::PI).into(),
+            radius: rng.gen_range(20.0, 100.0).into(),
             center: example::Vector3d {
-                x: rng.gen_range(-50.0, 50.0),
-                y: 0.0,
-                z: rng.gen_range(-50.0, 50.0),
+                x: rng.gen_range(-50.0, 50.0).into(),
+                y: 0.0.into(),
+                z: rng.gen_range(-50.0, 50.0).into(),
             },
         },
         "rusty",
