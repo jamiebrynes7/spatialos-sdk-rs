@@ -34,6 +34,7 @@ macro_rules! impl_primitive_field {
         $schema_add:ident,
         $schema_add_list:ident,
         $schema_get_list:ident,
+        $schema_default: expr
     ) => {
         #[derive(Debug)]
         pub struct $schema_type;
@@ -46,7 +47,7 @@ macro_rules! impl_primitive_field {
                 if Self::count(object, field) > 0 {
                     Ok(unsafe { mem::transmute($schema_get(object.as_ptr(), field)) })
                 } else {
-                    Err(Error::missing_field::<Self>())
+                    Ok($schema_default)
                 }
             }
 
@@ -118,6 +119,7 @@ impl_primitive_field!(
     Schema_AddFloat,
     Schema_AddFloatList,
     Schema_GetFloatList,
+    0.0
 );
 impl_primitive_field!(
     f64,
@@ -128,6 +130,7 @@ impl_primitive_field!(
     Schema_AddDouble,
     Schema_AddDoubleList,
     Schema_GetDoubleList,
+    0.0
 );
 impl_primitive_field!(
     i32,
@@ -138,6 +141,7 @@ impl_primitive_field!(
     Schema_AddInt32,
     Schema_AddInt32List,
     Schema_GetInt32List,
+    0
 );
 impl_primitive_field!(
     i64,
@@ -148,6 +152,7 @@ impl_primitive_field!(
     Schema_AddInt64,
     Schema_AddInt64List,
     Schema_GetInt64List,
+    0
 );
 impl_primitive_field!(
     u32,
@@ -158,6 +163,7 @@ impl_primitive_field!(
     Schema_AddUint32,
     Schema_AddUint32List,
     Schema_GetUint32List,
+    0
 );
 impl_primitive_field!(
     u64,
@@ -168,6 +174,7 @@ impl_primitive_field!(
     Schema_AddUint64,
     Schema_AddUint64List,
     Schema_GetUint64List,
+    0
 );
 impl_primitive_field!(
     i32,
@@ -178,6 +185,7 @@ impl_primitive_field!(
     Schema_AddSint32,
     Schema_AddSint32List,
     Schema_GetSint32List,
+    0
 );
 impl_primitive_field!(
     i64,
@@ -188,6 +196,7 @@ impl_primitive_field!(
     Schema_AddSint64,
     Schema_AddSint64List,
     Schema_GetSint64List,
+    0
 );
 impl_primitive_field!(
     u32,
@@ -198,6 +207,7 @@ impl_primitive_field!(
     Schema_AddFixed32,
     Schema_AddFixed32List,
     Schema_GetFixed32List,
+    0
 );
 impl_primitive_field!(
     u64,
@@ -208,6 +218,7 @@ impl_primitive_field!(
     Schema_AddFixed64,
     Schema_AddFixed64List,
     Schema_GetFixed64List,
+    0
 );
 impl_primitive_field!(
     i32,
@@ -218,6 +229,7 @@ impl_primitive_field!(
     Schema_AddSfixed32,
     Schema_AddSfixed32List,
     Schema_GetSfixed32List,
+    0
 );
 impl_primitive_field!(
     i64,
@@ -228,6 +240,7 @@ impl_primitive_field!(
     Schema_AddSfixed64,
     Schema_AddSfixed64List,
     Schema_GetSfixed64List,
+    0
 );
 impl_primitive_field!(
     u32,
@@ -238,6 +251,7 @@ impl_primitive_field!(
     Schema_AddEnum,
     Schema_AddEnumList,
     Schema_GetEnumList,
+    0
 );
 impl_primitive_field!(
     EntityId,
@@ -248,6 +262,7 @@ impl_primitive_field!(
     Schema_AddEntityId,
     Schema_AddEntityIdList,
     Schema_GetEntityIdList,
+    EntityId { id: 0 }
 );
 impl_primitive_field!(
     bool,
@@ -258,6 +273,7 @@ impl_primitive_field!(
     Schema_AddBool,
     Schema_AddBoolList,
     Schema_GetBoolList,
+    false
 );
 
 #[derive(Debug)]
