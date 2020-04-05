@@ -13,6 +13,8 @@ futures = "0.3.1"
 spatialos-sdk-sys = { path = "../spatialos-sdk-sys"}
 
 [dev-dependencies]
+approx = "0.3"
 static_assertions = "1.1.0"
 structopt = "0.3"
 tap="0.4"
+serde_json = "1.0.48"

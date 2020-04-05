@@ -70,6 +70,7 @@ use std::{
 #[macro_use]
 mod macros;
 
+mod bundle;
 mod collections;
 mod command_request;
 mod command_response;
@@ -83,7 +84,7 @@ mod ptr;
 pub mod owned;
 
 pub use self::{
-    collections::*, command_request::*, command_response::*, component_data::*,
+    bundle::*, collections::*, command_request::*, command_response::*, component_data::*,
     component_update::*, generic_data::*, object::*, owned::Owned, primitives::*,
 };
 #[doc(inline)]
