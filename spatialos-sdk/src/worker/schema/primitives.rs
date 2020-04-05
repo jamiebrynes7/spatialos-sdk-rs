@@ -1,7 +1,7 @@
 use crate::worker::entity::Entity;
 use crate::worker::{
     schema::{
-        FloatOrd, DataPointer, Error, Field, FieldId, IndexedField, Result, SchemaComponentUpdate,
+        DataPointer, Error, Field, FieldId, FloatOrd, IndexedField, Result, SchemaComponentUpdate,
         SchemaObject,
     },
     EntityId,
@@ -119,7 +119,7 @@ impl_primitive_field!(
     Schema_AddFloat,
     Schema_AddFloatList,
     Schema_GetFloatList,
-    0.0
+    FloatOrd(0.0)
 );
 impl_primitive_field!(
     FloatOrd<f64>,
@@ -130,7 +130,7 @@ impl_primitive_field!(
     Schema_AddDouble,
     Schema_AddDoubleList,
     Schema_GetDoubleList,
-    0.0
+    FloatOrd(0.0)
 );
 impl_primitive_field!(
     i32,

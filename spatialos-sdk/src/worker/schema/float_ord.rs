@@ -5,7 +5,6 @@
 
 use core::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 use core::hash::{Hash, Hasher};
-use core::mem::transmute;
 use core::ops::{Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 /// A wrapper for floats, that implements total equality and ordering
@@ -17,7 +16,7 @@ macro_rules! float_ord_impl {
     ($f:ident, $i:ident, $n:expr) => {
         impl FloatOrd<$f> {
             fn convert(self) -> $i {
-                let u = unsafe { transmute::<$f, $i>(self.0) };
+                let u: $i = self.0.to_bits();
                 let bit = 1 << ($n - 1);
                 if u & bit == 0 {
                     u | bit
@@ -240,7 +239,7 @@ macro_rules! float_ord_impl {
                 *self -= other.0;
             }
         }
-    }
+    };
 }
 
 float_ord_impl!(f32, u32, 32);
@@ -249,12 +248,12 @@ float_ord_impl!(f64, u64, 64);
 #[cfg(test)]
 mod tests {
 
-    use rand::{Rng, thread_rng};
-    use std::iter;
-    use std::prelude::v1::*;
+    use super::FloatOrd;
+    use rand::{thread_rng, Rng};
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
-    use super::FloatOrd;
+    use std::iter;
+    use std::prelude::v1::*;
 
     #[test]
     fn test_ord() {
@@ -281,11 +280,14 @@ mod tests {
         let mut rng = thread_rng();
         for n in 0..16 {
             for l in 0..16 {
-                let v = iter::repeat(()).map(|()| rng.gen())
+                let v = iter::repeat(())
+                    .map(|()| rng.gen())
                     .map(|x: f64| x % (1 << l) as i64 as f64)
-                    .take((1 << n))
+                    .take(1 << n)
                     .collect::<Vec<_>>();
-                assert!(v.windows(2).all(|w| (w[0] <= w[1]) == (FloatOrd(w[0]) <= FloatOrd(w[1]))));
+                assert!(v
+                    .windows(2)
+                    .all(|w| (w[0] <= w[1]) == (FloatOrd(w[0]) <= FloatOrd(w[1]))));
             }
         }
     }
@@ -302,9 +304,21 @@ mod tests {
         assert_ne!(hash(FloatOrd(0.0f32)), hash(FloatOrd(-0.0f32)));
         assert_eq!(hash(FloatOrd(-0.0f64)), hash(FloatOrd(-0.0f64)));
         assert_eq!(hash(FloatOrd(0.0f32)), hash(FloatOrd(0.0f32)));
-        assert_ne!(hash(FloatOrd(::core::f64::NAN)), hash(FloatOrd(-::core::f64::NAN)));
-        assert_ne!(hash(FloatOrd(::core::f32::NAN)), hash(FloatOrd(-::core::f32::NAN)));
-        assert_eq!(hash(FloatOrd(::core::f64::NAN)), hash(FloatOrd(::core::f64::NAN)));
-        assert_eq!(hash(FloatOrd(-::core::f32::NAN)), hash(FloatOrd(-::core::f32::NAN)));
+        assert_ne!(
+            hash(FloatOrd(::core::f64::NAN)),
+            hash(FloatOrd(-::core::f64::NAN))
+        );
+        assert_ne!(
+            hash(FloatOrd(::core::f32::NAN)),
+            hash(FloatOrd(-::core::f32::NAN))
+        );
+        assert_eq!(
+            hash(FloatOrd(::core::f64::NAN)),
+            hash(FloatOrd(::core::f64::NAN))
+        );
+        assert_eq!(
+            hash(FloatOrd(-::core::f32::NAN)),
+            hash(FloatOrd(-::core::f32::NAN))
+        );
     }
 }

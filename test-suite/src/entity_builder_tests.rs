@@ -13,9 +13,9 @@ fn position_is_serialized_correctly() {
         .expect("No `Position` component found")
         .expect("Failed to deserialize `Position`");
 
-    approx::abs_diff_eq!(10.0, position.coords.x);
-    approx::abs_diff_eq!(-10.0, position.coords.y);
-    approx::abs_diff_eq!(7.5, position.coords.z);
+    approx::abs_diff_eq!(10.0, position.coords.x.0);
+    approx::abs_diff_eq!(-10.0, position.coords.y.0);
+    approx::abs_diff_eq!(7.5, position.coords.z.0);
 }
 
 #[test]
@@ -113,9 +113,9 @@ fn error_is_returned_if_invalid_entity() {
     builder.add_component(
         Position {
             coords: Coordinates {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
+                x: 0.0.into(),
+                y: 0.0.into(),
+                z: 0.0.into(),
             },
         },
         "rusty",

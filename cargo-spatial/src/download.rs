@@ -187,7 +187,7 @@ pub fn download_sdk(
         .as_ref()
         .map_or_else(
             || config.map(|c| c.spatial_sdk_version),
-            |ref v| Ok(v.to_string()),
+            |ref v| Ok((*v).to_string()),
         )
         .map_err(|e| {
             Error {
