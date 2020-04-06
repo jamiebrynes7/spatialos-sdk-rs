@@ -112,7 +112,7 @@ impl Into<u32> for TestEnum {
 impl_field_for_enum_field!(TestEnum);
 
 /* Types. */
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CommandData {
     pub value: i32,
 }
@@ -127,7 +127,7 @@ impl ObjectField for CommandData {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct MapTypes {
     pub first: BTreeMap<generated::example::SomeEnum, i32>,
     pub second: BTreeMap<spatialos_sdk::worker::entity::Entity, i32>,
@@ -145,7 +145,7 @@ impl ObjectField for MapTypes {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Recursive {
     pub opt: Option<Box<generated::example::Recursive>>,
 }
@@ -160,7 +160,7 @@ impl ObjectField for Recursive {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TestType {
     pub value: i32,
 }
@@ -175,7 +175,7 @@ impl ObjectField for TestType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TestType_Inner {
     pub number: FloatOrd<f32>,
 }
@@ -190,7 +190,7 @@ impl ObjectField for TestType_Inner {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Vector3d {
     pub x: FloatOrd<f64>,
     pub y: FloatOrd<f64>,
@@ -758,7 +758,7 @@ use super::super::generated as generated;
 
 /* Enums. */
 /* Types. */
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ComponentInterest {
     pub queries: Vec<generated::improbable::ComponentInterest_Query>,
 }
@@ -773,7 +773,7 @@ impl ObjectField for ComponentInterest {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ComponentInterest_BoxConstraint {
     pub center: generated::improbable::Coordinates,
     pub edge_length: generated::improbable::EdgeLength,
@@ -791,7 +791,7 @@ impl ObjectField for ComponentInterest_BoxConstraint {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ComponentInterest_CylinderConstraint {
     pub center: generated::improbable::Coordinates,
     pub radius: FloatOrd<f64>,
@@ -809,7 +809,7 @@ impl ObjectField for ComponentInterest_CylinderConstraint {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ComponentInterest_Query {
     pub constraint: generated::improbable::ComponentInterest_QueryConstraint,
     pub full_snapshot_result: Option<bool>,
@@ -833,7 +833,7 @@ impl ObjectField for ComponentInterest_Query {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ComponentInterest_QueryConstraint {
     pub sphere_constraint: Option<generated::improbable::ComponentInterest_SphereConstraint>,
     pub cylinder_constraint: Option<generated::improbable::ComponentInterest_CylinderConstraint>,
@@ -875,7 +875,7 @@ impl ObjectField for ComponentInterest_QueryConstraint {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ComponentInterest_RelativeBoxConstraint {
     pub edge_length: generated::improbable::EdgeLength,
 }
@@ -890,7 +890,7 @@ impl ObjectField for ComponentInterest_RelativeBoxConstraint {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ComponentInterest_RelativeCylinderConstraint {
     pub radius: FloatOrd<f64>,
 }
@@ -905,7 +905,7 @@ impl ObjectField for ComponentInterest_RelativeCylinderConstraint {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ComponentInterest_RelativeSphereConstraint {
     pub radius: FloatOrd<f64>,
 }
@@ -920,7 +920,7 @@ impl ObjectField for ComponentInterest_RelativeSphereConstraint {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ComponentInterest_SphereConstraint {
     pub center: generated::improbable::Coordinates,
     pub radius: FloatOrd<f64>,
@@ -938,7 +938,7 @@ impl ObjectField for ComponentInterest_SphereConstraint {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Coordinates {
     pub x: FloatOrd<f64>,
     pub y: FloatOrd<f64>,
@@ -959,7 +959,7 @@ impl ObjectField for Coordinates {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EdgeLength {
     pub x: FloatOrd<f64>,
     pub y: FloatOrd<f64>,
@@ -980,7 +980,7 @@ impl ObjectField for EdgeLength {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct WorkerAttributeSet {
     pub attribute: Vec<String>,
 }
@@ -995,7 +995,7 @@ impl ObjectField for WorkerAttributeSet {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct WorkerRequirementSet {
     pub attribute_set: Vec<generated::improbable::WorkerAttributeSet>,
 }
@@ -1571,7 +1571,7 @@ impl Into<u32> for Connection_ConnectionStatus {
 impl_field_for_enum_field!(Connection_ConnectionStatus);
 
 /* Types. */
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Connection {
     pub status: generated::improbable::restricted::Connection_ConnectionStatus,
     pub data_latency_ms: u32,
@@ -1592,7 +1592,7 @@ impl ObjectField for Connection {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DisconnectRequest {
 }
 impl ObjectField for DisconnectRequest {
@@ -1604,7 +1604,7 @@ impl ObjectField for DisconnectRequest {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DisconnectResponse {
 }
 impl ObjectField for DisconnectResponse {
@@ -1616,7 +1616,7 @@ impl ObjectField for DisconnectResponse {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PlayerIdentity {
     pub player_identifier: String,
     pub provider: String,
