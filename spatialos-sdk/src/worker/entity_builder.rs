@@ -119,9 +119,9 @@ impl EntityBuilder {
         let position_fields = position_schema.fields_mut();
 
         let coords_obj = position_fields.add_object(1);
-        coords_obj.add::<SchemaDouble>(1, &self.position.0);
-        coords_obj.add::<SchemaDouble>(2, &self.position.1);
-        coords_obj.add::<SchemaDouble>(3, &self.position.2);
+        coords_obj.add::<SchemaDouble>(1, &self.position.0.into());
+        coords_obj.add::<SchemaDouble>(2, &self.position.1.into());
+        coords_obj.add::<SchemaDouble>(3, &self.position.2.into());
 
         position_schema
     }

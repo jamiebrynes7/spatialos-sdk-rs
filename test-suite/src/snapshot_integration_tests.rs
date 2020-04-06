@@ -46,9 +46,9 @@ pub fn create_and_read_snapshot() {
             .expect("No `Position` component on entity")
             .expect("Failed to deserialize `Position`");
         let coords = &position.coords;
-        approx::abs_diff_eq!(10.0, coords.x);
-        approx::abs_diff_eq!(-10.0, coords.y);
-        approx::abs_diff_eq!(0.0, coords.z);
+        approx::abs_diff_eq!(10.0, coords.x.0);
+        approx::abs_diff_eq!(-10.0, coords.y.0);
+        approx::abs_diff_eq!(0.0, coords.z.0);
 
         let persistence = entity.get::<Persistence>();
         assert!(persistence.is_some());

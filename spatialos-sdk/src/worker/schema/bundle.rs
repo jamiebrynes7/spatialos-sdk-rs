@@ -342,19 +342,22 @@ mod tests {
         assert_abs_diff_eq!(
             fields
                 .get::<SchemaDouble>(1)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
         assert_abs_diff_eq!(
             fields
                 .get::<SchemaDouble>(2)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
         assert_abs_diff_eq!(
             fields
                 .get::<SchemaDouble>(3)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
     }
@@ -376,9 +379,9 @@ mod tests {
     pub fn dump_object_returns_valid_json() {
         let mut data = SchemaGenericData::new();
         let fields = data.object_mut();
-        fields.add::<SchemaDouble>(1, &10.0);
-        fields.add::<SchemaDouble>(2, &10.0);
-        fields.add::<SchemaDouble>(3, &10.0);
+        fields.add::<SchemaDouble>(1, &FloatOrd(10.0));
+        fields.add::<SchemaDouble>(2, &FloatOrd(10.0));
+        fields.add::<SchemaDouble>(3, &FloatOrd(10.0));
 
         let bundle = get_valid_bundle();
         let result = bundle.dump_object("improbable.Coordinates", fields);
@@ -404,19 +407,22 @@ mod tests {
         assert_abs_diff_eq!(
             coords_obj
                 .get::<SchemaDouble>(1)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
         assert_abs_diff_eq!(
             coords_obj
                 .get::<SchemaDouble>(2)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
         assert_abs_diff_eq!(
             coords_obj
                 .get::<SchemaDouble>(3)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
     }
@@ -436,9 +442,9 @@ mod tests {
         let mut component_data = SchemaComponentData::new();
         let fields = component_data.fields_mut();
         let coords_obj = fields.add_object(1);
-        coords_obj.add::<SchemaDouble>(1, &10.0);
-        coords_obj.add::<SchemaDouble>(2, &10.0);
-        coords_obj.add::<SchemaDouble>(3, &10.0);
+        coords_obj.add::<SchemaDouble>(1, &FloatOrd(10.0));
+        coords_obj.add::<SchemaDouble>(2, &FloatOrd(10.0));
+        coords_obj.add::<SchemaDouble>(3, &FloatOrd(10.0));
 
         let bundle = get_valid_bundle();
         let result = bundle.dump_component_data(POSITION_COMPONENT_ID, &mut component_data);
@@ -477,19 +483,22 @@ mod tests {
         assert_abs_diff_eq!(
             coords_obj
                 .get::<SchemaDouble>(1)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
         assert_abs_diff_eq!(
             coords_obj
                 .get::<SchemaDouble>(2)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
         assert_abs_diff_eq!(
             coords_obj
                 .get::<SchemaDouble>(3)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
     }
@@ -499,9 +508,9 @@ mod tests {
         let mut component_data = SchemaComponentData::new();
         let fields = component_data.fields_mut();
         let coords_obj = fields.add_object(1);
-        coords_obj.add::<SchemaDouble>(1, &10.0);
-        coords_obj.add::<SchemaDouble>(2, &10.0);
-        coords_obj.add::<SchemaDouble>(3, &10.0);
+        coords_obj.add::<SchemaDouble>(1, &FloatOrd(10.0));
+        coords_obj.add::<SchemaDouble>(2, &FloatOrd(10.0));
+        coords_obj.add::<SchemaDouble>(3, &FloatOrd(10.0));
 
         let bundle = get_valid_bundle();
         let result = bundle.convert_data_to_update(POSITION_COMPONENT_ID, component_data);
@@ -516,19 +525,22 @@ mod tests {
         assert_abs_diff_eq!(
             coords_obj
                 .get::<SchemaDouble>(1)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
         assert_abs_diff_eq!(
             coords_obj
                 .get::<SchemaDouble>(2)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
         assert_abs_diff_eq!(
             coords_obj
                 .get::<SchemaDouble>(3)
-                .expect("Could not read data from field."),
+                .expect("Could not read data from field.")
+                .0,
             10.0
         );
     }
@@ -538,9 +550,9 @@ mod tests {
         let mut component_update = SchemaComponentUpdate::new();
         let fields = component_update.fields_mut();
         let coords_obj = fields.add_object(1);
-        coords_obj.add::<SchemaDouble>(1, &10.0);
-        coords_obj.add::<SchemaDouble>(2, &10.0);
-        coords_obj.add::<SchemaDouble>(3, &10.0);
+        coords_obj.add::<SchemaDouble>(1, &FloatOrd(10.0));
+        coords_obj.add::<SchemaDouble>(2, &FloatOrd(10.0));
+        coords_obj.add::<SchemaDouble>(3, &FloatOrd(10.0));
 
         let bundle = get_valid_bundle();
         let result = bundle.dump_component_update(POSITION_COMPONENT_ID, &mut component_update);
