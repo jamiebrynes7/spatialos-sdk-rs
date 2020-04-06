@@ -49,7 +49,7 @@ impl Into<u32> for <#= enum_rust_name #> {
 impl_field_for_enum_field!(<#= enum_rust_name #>);
 <# } #>
 /* Types. */<# for type_name in &self.types { let type_def = self.get_type_definition(type_name); #>
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct <#= self.rust_name(&type_def.qualified_name) #> {<#
     for field in &type_def.fields {
     #>
