@@ -5,6 +5,8 @@
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 #![allow(unused_mut)]
+#![allow(clippy::unreadable_literal)]
+#![allow(clippy::option_option)]
 
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
