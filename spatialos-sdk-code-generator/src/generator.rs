@@ -416,7 +416,7 @@ fn generate_module(package: &Package) -> String {
             "#![allow(non_camel_case_types)]",
             "#![allow(unused_mut)]",
             "#![allow(clippy::unreadable_literal)]",
-            "#![allow(clippy::option_option)]"
+            "#![allow(clippy::option_option)]",
         ]
         .join("\n");
         format!("{}\n\n{}", allow_warnings, module_contents)
