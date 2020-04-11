@@ -1,7 +1,136 @@
-use crate::worker::entity::Entity;
-use crate::worker::query::EntityQuery;
-use crate::worker::EntityId;
-use spatialos_sdk_sys::worker::Worker_CommandParameters;
+use crate::worker::{
+    component::{Component, ComponentId},
+    entity::Entity,
+    query::EntityQuery,
+    schema::{self, DataPointer, FieldId, Owned, SchemaCommandRequest, SchemaCommandResponse},
+    EntityId,
+};
+use spatialos_sdk_sys::worker::*;
+use std::ops::DerefMut;
+
+pub type CommandIndex = Worker_CommandIndex;
+
+pub trait Commands: Sized + Clone {
+    type Component: Component;
+    type Request: Request<Commands = Self>;
+    type Response: Response<Commands = Self>;
+}
+
+pub trait Request: Sized + Clone {
+    type Commands: Commands<Request = Self>;
+
+    fn from_schema(index: CommandIndex, request: &SchemaCommandRequest) -> schema::Result<Self>;
+    fn into_schema(&self, request: &mut SchemaCommandRequest) -> CommandIndex;
+}
+
+pub struct CommandRequest {
+    pub schema_data: Owned<SchemaCommandRequest>,
+    pub component_id: ComponentId,
+    pub command_index: CommandIndex,
+}
+
+impl<U: Request> From<&U> for CommandRequest {
+    fn from(request: &U) -> Self {
+        let mut schema_request = SchemaCommandRequest::new();
+        let index = request.into_schema(schema_request.deref_mut());
+
+        CommandRequest {
+            schema_data: schema_request,
+            component_id: <<U as Request>::Commands as Commands>::Component::ID,
+            command_index: index,
+        }
+    }
+}
+
+pub trait Response: Sized + Clone {
+    type Commands: Commands<Response = Self>;
+
+    fn from_schema(index: CommandIndex, request: &SchemaCommandResponse) -> schema::Result<Self>;
+    fn into_schema(&self, request: &mut SchemaCommandResponse) -> CommandIndex;
+}
+
+pub struct CommandResponse {
+    pub schema_data: Owned<SchemaCommandResponse>,
+    pub component_id: ComponentId,
+    pub command_index: CommandIndex,
+}
+
+impl<U: Response> From<&U> for CommandResponse {
+    fn from(response: &U) -> Self {
+        let mut schema_response = SchemaCommandResponse::new();
+        let index = response.into_schema(schema_response.deref_mut());
+
+        CommandResponse {
+            schema_data: schema_response,
+            component_id: <<U as Response>::Commands as Commands>::Component::ID,
+            command_index: index,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct CommandRequestRef<'a> {
+    pub component_id: ComponentId,
+    pub command_index: FieldId,
+    pub schema_type: &'a SchemaCommandRequest,
+}
+
+impl<'a> CommandRequestRef<'a> {
+    pub(crate) unsafe fn from_raw(request: &Worker_CommandRequest) -> Self {
+        Self {
+            component_id: request.component_id,
+            command_index: request.command_index,
+            schema_type: SchemaCommandRequest::from_raw(request.schema_type),
+        }
+    }
+
+    // NOTE: We manually declare that the request impl `ObjectField`
+    // here, but in practice this will always be true for all component types. Future
+    // iterations should clean this up such that the `Component` trait can imply these
+    // other bounds automatically (i.e. by making them super traits of `Component`).
+    pub(crate) fn get<C: Commands>(&self) -> Option<schema::Result<C::Request>> {
+        if C::Component::ID != self.component_id {
+            return None;
+        }
+
+        Some(C::Request::from_schema(
+            self.command_index,
+            self.schema_type,
+        ))
+    }
+}
+
+#[derive(Debug)]
+pub struct CommandResponseRef<'a> {
+    pub component_id: ComponentId,
+    pub command_index: FieldId,
+    pub schema_type: &'a SchemaCommandResponse,
+}
+
+impl<'a> CommandResponseRef<'a> {
+    pub(crate) unsafe fn from_raw(response: &Worker_CommandResponse) -> Self {
+        Self {
+            component_id: response.component_id,
+            command_index: response.command_index,
+            schema_type: SchemaCommandResponse::from_raw(response.schema_type),
+        }
+    }
+
+    // NOTE: We manually declare that the response impl `ObjectField`
+    // here, but in practice this will always be true for all component types. Future
+    // iterations should clean this up such that the `Component` trait can imply these
+    // other bounds automatically (i.e. by making them super traits of `Component`).
+    pub fn get<C: Commands>(&self) -> Option<schema::Result<C::Response>> {
+        if C::Component::ID != self.component_id {
+            return None;
+        }
+
+        Some(C::Response::from_schema(
+            self.command_index,
+            self.schema_type,
+        ))
+    }
+}
 
 /// Additional parameters for sending command requests.
 ///
