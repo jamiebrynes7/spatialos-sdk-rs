@@ -3,32 +3,14 @@ use spatialos_sdk_sys::worker::*;
 use std::ops::DerefMut;
 
 pub type ComponentId = Worker_ComponentId;
-pub type CommandIndex = Worker_CommandIndex;
 
 // A trait that's implemented by a component to convert to/from schema handle types.
 pub trait Component: ObjectField {
     type Update: Update<Component = Self>;
-    type CommandRequest;
-    type CommandResponse;
 
     const ID: ComponentId;
 
     fn merge_update(&mut self, update: Self::Update);
-
-    fn from_request(
-        command_index: CommandIndex,
-        request: &schema::SchemaCommandRequest,
-    ) -> schema::Result<Self::CommandRequest>;
-    fn from_response(
-        command_index: CommandIndex,
-        response: &schema::SchemaCommandResponse,
-    ) -> schema::Result<Self::CommandResponse>;
-
-    fn to_request(request: &Self::CommandRequest) -> Owned<SchemaCommandRequest>;
-    fn to_response(response: &Self::CommandResponse) -> Owned<SchemaCommandResponse>;
-
-    fn get_request_command_index(request: &Self::CommandRequest) -> u32;
-    fn get_response_command_index(response: &Self::CommandResponse) -> u32;
 }
 
 pub trait Update: Sized + Clone {
@@ -161,71 +143,5 @@ impl<'a> ComponentUpdateRef<'a> {
         }
 
         Some(self.schema_type.deserialize())
-    }
-}
-
-#[derive(Debug)]
-pub struct CommandRequestRef<'a> {
-    pub component_id: ComponentId,
-    pub command_index: FieldId,
-    pub schema_type: &'a SchemaCommandRequest,
-}
-
-impl<'a> CommandRequestRef<'a> {
-    pub(crate) unsafe fn from_raw(request: &Worker_CommandRequest) -> Self {
-        Self {
-            component_id: request.component_id,
-            command_index: request.command_index,
-            schema_type: SchemaCommandRequest::from_raw(request.schema_type),
-        }
-    }
-
-    // NOTE: We manually declare that the request impl `ObjectField`
-    // here, but in practice this will always be true for all component types. Future
-    // iterations should clean this up such that the `Component` trait can imply these
-    // other bounds automatically (i.e. by making them super traits of `Component`).
-    pub(crate) fn get<C>(&self) -> Option<schema::Result<C::CommandRequest>>
-    where
-        C: Component,
-        C::CommandRequest: ObjectField,
-    {
-        if C::ID != self.component_id {
-            return None;
-        }
-
-        Some(ObjectField::from_object(self.schema_type.object()))
-    }
-}
-
-#[derive(Debug)]
-pub struct CommandResponseRef<'a> {
-    pub component_id: ComponentId,
-    pub command_index: FieldId,
-    pub schema_type: &'a SchemaCommandResponse,
-}
-
-impl<'a> CommandResponseRef<'a> {
-    pub(crate) unsafe fn from_raw(response: &Worker_CommandResponse) -> Self {
-        Self {
-            component_id: response.component_id,
-            command_index: response.command_index,
-            schema_type: SchemaCommandResponse::from_raw(response.schema_type),
-        }
-    }
-
-    // NOTE: We manually declare that the response impl `ObjectField`
-    // here, but in practice this will always be true for all component types. Future
-    // iterations should clean this up such that the `Component` trait can imply these
-    // other bounds automatically (i.e. by making them super traits of `Component`).
-    pub fn get<C>(&self) -> Option<schema::Result<C::CommandResponse>>
-    where
-        C: Component,
-        C::CommandResponse: ObjectField,
-    {
-        if C::ID != self.component_id {
-            return None;
-        }
-
-        Some(ObjectField::from_object(self.schema_type.object()))
     }
 }
