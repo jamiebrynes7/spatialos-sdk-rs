@@ -7,6 +7,7 @@ use crate::{connection_handler::*, opt::*};
 use futures::executor::block_on;
 use generated::{example, improbable};
 use rand::Rng;
+use spatialos_sdk::worker::commands::CreateEntityRequest;
 use spatialos_sdk::worker::{
     commands::{EntityQueryRequest, ReserveEntityIdsRequest},
     component::{Component, UpdateParameters},
@@ -84,7 +85,7 @@ fn logic_loop(c: &mut WorkerConnection) {
 
     let entity = builder.build().unwrap();
 
-    let create_request_id = c.send_create_entity_request(entity, None, None);
+    let create_request_id = c.send_create_entity_request(CreateEntityRequest(entity, None), None);
     println!("Create entity request ID: {:?}", create_request_id);
 
     loop {

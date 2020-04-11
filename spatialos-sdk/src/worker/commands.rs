@@ -1,3 +1,4 @@
+use crate::worker::entity::Entity;
 use crate::worker::query::EntityQuery;
 use crate::worker::EntityId;
 use spatialos_sdk_sys::worker::Worker_CommandParameters;
@@ -53,18 +54,12 @@ impl CommandParameters {
     }
 }
 
-#[derive(Debug)]
-pub struct IncomingCommandRequest {}
-
-#[derive(Debug)]
-pub struct OutgoingCommandRequest {}
-
 // =============================== World Commands =============================== //
 #[derive(Debug)]
 pub struct ReserveEntityIdsRequest(pub u32);
 
 #[derive(Debug)]
-pub struct CreateEntityRequest {}
+pub struct CreateEntityRequest(pub Entity, pub Option<EntityId>);
 
 #[derive(Debug)]
 pub struct DeleteEntityRequest(pub EntityId);

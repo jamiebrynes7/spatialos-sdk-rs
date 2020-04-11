@@ -3,7 +3,6 @@ use crate::worker::component::ComponentUpdate;
 use crate::worker::{
     commands::*,
     component::{Component, UpdateParameters},
-    entity::Entity,
     locator::*,
     metrics::Metrics,
     op::OpList,
@@ -150,8 +149,7 @@ pub trait Connection {
     ) -> RequestId;
     fn send_create_entity_request(
         &mut self,
-        entity: Entity,
-        entity_id: Option<EntityId>,
+        payload: CreateEntityRequest,
         timeout_millis: Option<u32>,
     ) -> RequestId;
     fn send_delete_entity_request(
@@ -342,19 +340,18 @@ impl Connection for WorkerConnection {
 
     fn send_create_entity_request(
         &mut self,
-        entity: Entity,
-        entity_id: Option<EntityId>,
+        payload: CreateEntityRequest,
         timeout_millis: Option<u32>,
     ) -> RequestId {
         let timeout = match timeout_millis {
             Some(c) => &c,
             None => ptr::null(),
         };
-        let entity_id = match entity_id {
+        let entity_id = match payload.1 {
             Some(e) => &e.id,
             None => ptr::null(),
         };
-        let mut component_data = entity.into_raw();
+        let mut component_data = payload.0.into_raw();
         unsafe {
             RequestId::new(Worker_Connection_SendCreateEntityRequest(
                 self.connection_ptr.get(),
