@@ -1,4 +1,5 @@
-use std::env;
+extern crate cargo_spatial;
+
 use std::path::Path;
 
 #[cfg(windows)]
@@ -14,12 +15,12 @@ static PACKAGE_DIR: &str = "macos";
 static PACKAGE_DIR: &str = "win";
 
 fn main() {
-    let lib_dir = match env::var("SPATIAL_LIB_DIR") {
-        Ok(s) => s,
-        Err(_) => panic!("SPATIAL_LIB_DIR environment variable not set."),
-    };
 
-    let package_dir = Path::new(&lib_dir).join(PACKAGE_DIR);
+    cargo_spatial::download::download_sdk_version("./dependecies/".to_string(), "14.1.0".to_string(), false).ok();
+    let lib_dir  = "./dependecies";
+
+    let package_dir = Path::new(&lib_dir).join(PACKAGE_DIR).canonicalize().ok().unwrap();
+    
 
     println!("cargo:rustc-link-search={}", package_dir.to_str().unwrap());
 

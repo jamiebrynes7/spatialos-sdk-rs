@@ -5,3 +5,4 @@ Cargo.lock
 # SpatialOS SDK dependencies.
 dependencies/
 .idea/workspace.xml
+/spatialos-sdk-sys/dependecies/

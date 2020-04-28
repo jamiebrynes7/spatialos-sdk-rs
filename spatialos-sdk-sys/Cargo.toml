@@ -9,4 +9,5 @@ edition = "2018"
 links = "worker"
 build = "build.rs"
 
-[dependencies]
+[build-dependencies]
+cargo-spatial = {path = "../cargo-spatial"}

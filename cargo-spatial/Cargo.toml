@@ -19,3 +19,8 @@ spatialos-sdk-code-generator = { path = "../spatialos-sdk-code-generator" }
 structopt = "0.3"
 tempfile = "3.0"
 toml = "0.5"
+
+
+[lib]
+name = "cargo_spatial"
+path = "src/lib.rs"

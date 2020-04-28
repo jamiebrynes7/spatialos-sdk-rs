@@ -200,14 +200,15 @@ pub fn download_sdk(
         })?;
 
     info!("Downloading packages into: {}", spatial_lib_dir);
+    download_sdk_version(spatial_lib_dir, spatial_sdk_version, options.with_test_schema)
+}
+
+
+pub fn download_sdk_version(spatial_lib_dir:String, spatial_sdk_version: String, with_test_schema: bool)-> Result<(), Error<ErrorKind>>{
 
     // Clean existing directory.
     if Path::new(&spatial_lib_dir).exists() {
-        fs::remove_dir_all(&spatial_lib_dir).map_err(|e| Error {
-            kind: ErrorKind::IO,
-            msg: format!("Failed to remove directory {}.", &spatial_lib_dir),
-            inner: Some(Box::new(e)),
-        })?;
+       return Ok(());
     }
 
     fs::create_dir_all(&spatial_lib_dir).map_err(|e| Error {
@@ -225,7 +226,7 @@ pub fn download_sdk(
         download_package(*package, &spatial_sdk_version, &spatial_lib_dir)?;
     }
 
-    if options.with_test_schema {
+    if with_test_schema {
         download_package(
             SpatialPackageSource::Schema(SpatialSchemaPackage::ExhaustiveTestSchema),
             &spatial_sdk_version,
