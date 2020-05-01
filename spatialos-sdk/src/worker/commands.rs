@@ -84,10 +84,6 @@ impl<'a> CommandRequestRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the request impl `ObjectField`
-    // here, but in practice this will always be true for all component types. Future
-    // iterations should clean this up such that the `Component` trait can imply these
-    // other bounds automatically (i.e. by making them super traits of `Component`).
     pub(crate) fn get<C: Commands>(&self) -> Option<schema::Result<C::Request>> {
         if C::Component::ID != self.component_id {
             return None;
@@ -116,10 +112,6 @@ impl<'a> CommandResponseRef<'a> {
         }
     }
 
-    // NOTE: We manually declare that the response impl `ObjectField`
-    // here, but in practice this will always be true for all component types. Future
-    // iterations should clean this up such that the `Component` trait can imply these
-    // other bounds automatically (i.e. by making them super traits of `Component`).
     pub fn get<C: Commands>(&self) -> Option<schema::Result<C::Response>> {
         if C::Component::ID != self.component_id {
             return None;
