@@ -1,5 +1,6 @@
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
+use spatialos_sdk::worker::commands::*;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use <#= vec!["super".to_string(); self.depth() + 1].join("::") #>::generated as generated;
@@ -126,11 +127,40 @@ impl Update for <#= update_name #> {
     }
 }
 
+<# if (!&component.commands.is_empty()) { #>
+
 #[derive(Debug, Clone)]
 pub enum <#= component_name #>CommandRequest {<#
     for command in &component.commands {
     #>
     <#= command.name.to_camel_case() #>(<#= self.rust_fqname(&command.request_type) #>),<# } #>
+}
+
+impl Request for <#= component_name #>CommandRequest {
+    type Commands = <#= component_name #>;
+
+    fn from_schema(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<Self> {
+        match command_index {<#
+            for command in &component.commands {
+            #>
+            <#= command.command_index #> => {
+                <<#= self.rust_fqname(&command.request_type) #> as ObjectField>::from_object(&request.object())
+                    .map(Self::<#= command.name.to_camel_case() #>)
+            },<# } #>
+            _ => Err(Error::unknown_command::<Self>(command_index))
+        }
+    }
+
+    fn into_schema(&self, request: &mut SchemaCommandRequest) -> CommandIndex {
+        match self {<#
+            for command in &component.commands {
+            #>
+            Self::<#= command.name.to_camel_case() #>(ref inner) => {
+                <<#= self.rust_fqname(&command.request_type) #> as ObjectField>::into_object(inner, &mut request.object_mut());
+                <#= command.command_index #>
+            }, <# } #>
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -140,10 +170,43 @@ pub enum <#= component_name #>CommandResponse {<#
     <#= command.name.to_camel_case() #>(<#= self.rust_fqname(&command.response_type) #>),<# } #>
 }
 
+impl Response for <#= component_name #>CommandResponse {
+    type Commands = <#= component_name #>;
+
+    fn from_schema(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<Self> {
+        match command_index { <#
+            for command in &component.commands {
+            #>
+            <#= command.command_index #> => {
+                <<#= self.rust_fqname(&command.response_type) #> as ObjectField>::from_object(&response.object())
+                    .map(<#= component_name #>CommandResponse::<#= command.name.to_camel_case() #>)
+            }, <# } #>
+            _ => Err(Error::unknown_command::<Self>(command_index))
+        }
+    }
+
+    fn into_schema(&self, response: &mut SchemaCommandResponse) -> CommandIndex {
+        match self {<#
+            for command in &component.commands {
+            #>
+            Self::<#= command.name.to_camel_case() #>(ref inner) => {
+                <<#= self.rust_fqname(&command.response_type) #> as ObjectField>::into_object(inner, &mut response.object_mut());
+                <#= command.command_index #>
+            },<# } #>
+        }
+    }
+}
+
+impl Commands for <#= component_name #> {
+    type Component = <#= component_name #>;
+    type Request = <#= component_name #>CommandRequest;
+    type Response = <#= component_name #>CommandResponse;
+}
+
+<# } #>
+
 impl Component for <#= component_name #> {
     type Update = <#= update_name #>;
-    type CommandRequest = <#= self.rust_fqname(&component.qualified_name) #>CommandRequest;
-    type CommandResponse = <#= self.rust_fqname(&component.qualified_name) #>CommandResponse;
 
     const ID: ComponentId = <#= component.component_id #>;
 
@@ -151,74 +214,6 @@ impl Component for <#= component_name #> {
         for field in &component_fields {
         #>
         if let Some(value) = update.<#= field.name #> { self.<#= field.name #> = value; }<# } #>
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandRequest> {
-        match command_index {<#
-            for command in &component.commands {
-            #>
-            <#= command.command_index #> => {
-                <<#= self.rust_fqname(&command.request_type) #> as ObjectField>::from_object(&request.object())
-                    .map(<#= component_name #>CommandRequest::<#= command.name.to_camel_case() #>)
-            },<# } #>
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<<#= self.rust_fqname(&component.qualified_name) #>CommandResponse> {
-        match command_index {<#
-            for command in &component.commands {
-            #>
-            <#= command.command_index #> => {
-                <<#= self.rust_fqname(&command.response_type) #> as ObjectField>::from_object(&response.object())
-                    .map(<#= component_name #>CommandResponse::<#= command.name.to_camel_case() #>)
-            },<# } #>
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {<#
-            for command in &component.commands {
-            #>
-            <#= component_name #>CommandRequest::<#= command.name.to_camel_case() #>(ref data) => {
-                <<#= self.rust_fqname(&command.request_type) #> as ObjectField>::into_object(data, &mut serialized_request.object_mut());
-            },<# } #>
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &<#= self.rust_fqname(&component.qualified_name) #>CommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {<#
-            for command in &component.commands {
-            #>
-            <#= component_name #>CommandResponse::<#= command.name.to_camel_case() #>(ref data) => {
-                <<#= self.rust_fqname(&command.response_type) #> as ObjectField>::into_object(data, &mut serialized_response.object_mut());
-            },<# } #>
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &<#= self.rust_fqname(&component.qualified_name) #>CommandRequest) -> u32 {
-        match request {<#
-            for command in &component.commands {
-            #>
-            <#= component_name #>CommandRequest::<#= command.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &<#= self.rust_fqname(&component.qualified_name) #>CommandResponse) -> u32 {
-        match response {<#
-            for command in &component.commands {
-            #>
-            <#= component_name #>CommandResponse::<#= command.name.to_camel_case() #>(_) => <#= command.command_index #>,<# } #>
-            _ => unreachable!(),
-        }
     }
 }
 <# } #>

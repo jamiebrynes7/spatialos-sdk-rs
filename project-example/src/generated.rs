@@ -10,6 +10,7 @@
 
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
+use spatialos_sdk::worker::commands::*;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::generated as generated;
@@ -22,6 +23,7 @@ use super::generated as generated;
 pub mod example {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
+use spatialos_sdk::worker::commands::*;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::generated as generated;
@@ -254,63 +256,15 @@ impl Update for EntityIdTestUpdate {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum EntityIdTestCommandRequest {
-}
 
-#[derive(Debug, Clone)]
-pub enum EntityIdTestCommandResponse {
-}
 
 impl Component for EntityIdTest {
     type Update = EntityIdTestUpdate;
-    type CommandRequest = generated::example::EntityIdTestCommandRequest;
-    type CommandResponse = generated::example::EntityIdTestCommandResponse;
 
     const ID: ComponentId = 2001;
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.eid { self.eid = value; }
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EntityIdTestCommandRequest> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::EntityIdTestCommandResponse> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::example::EntityIdTestCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::example::EntityIdTestCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::example::EntityIdTestCommandRequest) -> u32 {
-        match request {
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::example::EntityIdTestCommandResponse) -> u32 {
-        match response {
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -354,63 +308,15 @@ impl Update for EntityTestUpdate {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum EntityTestCommandRequest {
-}
 
-#[derive(Debug, Clone)]
-pub enum EntityTestCommandResponse {
-}
 
 impl Component for EntityTest {
     type Update = EntityTestUpdate;
-    type CommandRequest = generated::example::EntityTestCommandRequest;
-    type CommandResponse = generated::example::EntityTestCommandResponse;
 
     const ID: ComponentId = 2003;
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.entity { self.entity = value; }
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EntityTestCommandRequest> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::EntityTestCommandResponse> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::example::EntityTestCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::example::EntityTestCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::example::EntityTestCommandRequest) -> u32 {
-        match request {
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::example::EntityTestCommandResponse) -> u32 {
-        match response {
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -454,63 +360,15 @@ impl Update for EnumTestComponentUpdate {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum EnumTestComponentCommandRequest {
-}
 
-#[derive(Debug, Clone)]
-pub enum EnumTestComponentCommandResponse {
-}
 
 impl Component for EnumTestComponent {
     type Update = EnumTestComponentUpdate;
-    type CommandRequest = generated::example::EnumTestComponentCommandRequest;
-    type CommandResponse = generated::example::EnumTestComponentCommandResponse;
 
     const ID: ComponentId = 2002;
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.test { self.test = value; }
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::EnumTestComponentCommandRequest> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::EnumTestComponentCommandResponse> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::example::EnumTestComponentCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::example::EnumTestComponentCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::example::EnumTestComponentCommandRequest) -> u32 {
-        match request {
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::example::EnumTestComponentCommandResponse) -> u32 {
-        match response {
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -554,9 +412,34 @@ impl Update for ExampleUpdate {
     }
 }
 
+
+
 #[derive(Debug, Clone)]
 pub enum ExampleCommandRequest {
     TestCommand(generated::example::CommandData),
+}
+
+impl Request for ExampleCommandRequest {
+    type Commands = Example;
+
+    fn from_schema(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<Self> {
+        match command_index {
+            1 => {
+                <generated::example::CommandData as ObjectField>::from_object(&request.object())
+                    .map(Self::TestCommand)
+            },
+            _ => Err(Error::unknown_command::<Self>(command_index))
+        }
+    }
+
+    fn into_schema(&self, request: &mut SchemaCommandRequest) -> CommandIndex {
+        match self {
+            Self::TestCommand(ref inner) => {
+                <generated::example::CommandData as ObjectField>::into_object(inner, &mut request.object_mut());
+                1
+            }, 
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -564,71 +447,44 @@ pub enum ExampleCommandResponse {
     TestCommand(generated::example::CommandData),
 }
 
+impl Response for ExampleCommandResponse {
+    type Commands = Example;
+
+    fn from_schema(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<Self> {
+        match command_index { 
+            1 => {
+                <generated::example::CommandData as ObjectField>::from_object(&response.object())
+                    .map(ExampleCommandResponse::TestCommand)
+            }, 
+            _ => Err(Error::unknown_command::<Self>(command_index))
+        }
+    }
+
+    fn into_schema(&self, response: &mut SchemaCommandResponse) -> CommandIndex {
+        match self {
+            Self::TestCommand(ref inner) => {
+                <generated::example::CommandData as ObjectField>::into_object(inner, &mut response.object_mut());
+                1
+            },
+        }
+    }
+}
+
+impl Commands for Example {
+    type Component = Example;
+    type Request = ExampleCommandRequest;
+    type Response = ExampleCommandResponse;
+}
+
+
+
 impl Component for Example {
     type Update = ExampleUpdate;
-    type CommandRequest = generated::example::ExampleCommandRequest;
-    type CommandResponse = generated::example::ExampleCommandResponse;
 
     const ID: ComponentId = 1000;
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.x { self.x = value; }
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::ExampleCommandRequest> {
-        match command_index {
-            1 => {
-                <generated::example::CommandData as ObjectField>::from_object(&request.object())
-                    .map(ExampleCommandRequest::TestCommand)
-            },
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::ExampleCommandResponse> {
-        match command_index {
-            1 => {
-                <generated::example::CommandData as ObjectField>::from_object(&response.object())
-                    .map(ExampleCommandResponse::TestCommand)
-            },
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::example::ExampleCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            ExampleCommandRequest::TestCommand(ref data) => {
-                <generated::example::CommandData as ObjectField>::into_object(data, &mut serialized_request.object_mut());
-            },
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::example::ExampleCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            ExampleCommandResponse::TestCommand(ref data) => {
-                <generated::example::CommandData as ObjectField>::into_object(data, &mut serialized_response.object_mut());
-            },
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::example::ExampleCommandRequest) -> u32 {
-        match request {
-            ExampleCommandRequest::TestCommand(_) => 1,
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::example::ExampleCommandResponse) -> u32 {
-        match response {
-            ExampleCommandResponse::TestCommand(_) => 1,
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -686,18 +542,10 @@ impl Update for RotateUpdate {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum RotateCommandRequest {
-}
 
-#[derive(Debug, Clone)]
-pub enum RotateCommandResponse {
-}
 
 impl Component for Rotate {
     type Update = RotateUpdate;
-    type CommandRequest = generated::example::RotateCommandRequest;
-    type CommandResponse = generated::example::RotateCommandResponse;
 
     const ID: ComponentId = 1001;
 
@@ -705,46 +553,6 @@ impl Component for Rotate {
         if let Some(value) = update.angle { self.angle = value; }
         if let Some(value) = update.center { self.center = value; }
         if let Some(value) = update.radius { self.radius = value; }
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::example::RotateCommandRequest> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::example::RotateCommandResponse> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::example::RotateCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::example::RotateCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::example::RotateCommandRequest) -> u32 {
-        match request {
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::example::RotateCommandResponse) -> u32 {
-        match response {
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -754,6 +562,7 @@ impl Component for Rotate {
 pub mod improbable {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
+use spatialos_sdk::worker::commands::*;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::generated as generated;
@@ -1060,64 +869,16 @@ impl Update for EntityAclUpdate {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum EntityAclCommandRequest {
-}
 
-#[derive(Debug, Clone)]
-pub enum EntityAclCommandResponse {
-}
 
 impl Component for EntityAcl {
     type Update = EntityAclUpdate;
-    type CommandRequest = generated::improbable::EntityAclCommandRequest;
-    type CommandResponse = generated::improbable::EntityAclCommandResponse;
 
     const ID: ComponentId = 50;
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.read_acl { self.read_acl = value; }
         if let Some(value) = update.component_write_acl { self.component_write_acl = value; }
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::EntityAclCommandRequest> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::EntityAclCommandResponse> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::improbable::EntityAclCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::improbable::EntityAclCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::improbable::EntityAclCommandRequest) -> u32 {
-        match request {
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::improbable::EntityAclCommandResponse) -> u32 {
-        match response {
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -1161,63 +922,15 @@ impl Update for InterestUpdate {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum InterestCommandRequest {
-}
 
-#[derive(Debug, Clone)]
-pub enum InterestCommandResponse {
-}
 
 impl Component for Interest {
     type Update = InterestUpdate;
-    type CommandRequest = generated::improbable::InterestCommandRequest;
-    type CommandResponse = generated::improbable::InterestCommandResponse;
 
     const ID: ComponentId = 58;
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.component_interest { self.component_interest = value; }
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::InterestCommandRequest> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::InterestCommandResponse> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::improbable::InterestCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::improbable::InterestCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::improbable::InterestCommandRequest) -> u32 {
-        match request {
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::improbable::InterestCommandResponse) -> u32 {
-        match response {
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -1261,63 +974,15 @@ impl Update for MetadataUpdate {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum MetadataCommandRequest {
-}
 
-#[derive(Debug, Clone)]
-pub enum MetadataCommandResponse {
-}
 
 impl Component for Metadata {
     type Update = MetadataUpdate;
-    type CommandRequest = generated::improbable::MetadataCommandRequest;
-    type CommandResponse = generated::improbable::MetadataCommandResponse;
 
     const ID: ComponentId = 53;
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.entity_type { self.entity_type = value; }
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::MetadataCommandRequest> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::MetadataCommandResponse> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::improbable::MetadataCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::improbable::MetadataCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::improbable::MetadataCommandRequest) -> u32 {
-        match request {
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::improbable::MetadataCommandResponse) -> u32 {
-        match response {
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -1354,62 +1019,14 @@ impl Update for PersistenceUpdate {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum PersistenceCommandRequest {
-}
 
-#[derive(Debug, Clone)]
-pub enum PersistenceCommandResponse {
-}
 
 impl Component for Persistence {
     type Update = PersistenceUpdate;
-    type CommandRequest = generated::improbable::PersistenceCommandRequest;
-    type CommandResponse = generated::improbable::PersistenceCommandResponse;
 
     const ID: ComponentId = 55;
 
     fn merge_update(&mut self, update: Self::Update) {
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PersistenceCommandRequest> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::PersistenceCommandResponse> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::improbable::PersistenceCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::improbable::PersistenceCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::improbable::PersistenceCommandRequest) -> u32 {
-        match request {
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::improbable::PersistenceCommandResponse) -> u32 {
-        match response {
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -1453,63 +1070,15 @@ impl Update for PositionUpdate {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum PositionCommandRequest {
-}
 
-#[derive(Debug, Clone)]
-pub enum PositionCommandResponse {
-}
 
 impl Component for Position {
     type Update = PositionUpdate;
-    type CommandRequest = generated::improbable::PositionCommandRequest;
-    type CommandResponse = generated::improbable::PositionCommandResponse;
 
     const ID: ComponentId = 54;
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.coords { self.coords = value; }
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::PositionCommandRequest> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::PositionCommandResponse> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::improbable::PositionCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::improbable::PositionCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::improbable::PositionCommandRequest) -> u32 {
-        match request {
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::improbable::PositionCommandResponse) -> u32 {
-        match response {
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -1518,6 +1087,7 @@ impl Component for Position {
 pub mod restricted {
 use spatialos_sdk::worker::schema::*;
 use spatialos_sdk::worker::component::*;
+use spatialos_sdk::worker::commands::*;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::super::generated as generated;
@@ -1680,63 +1250,15 @@ impl Update for PlayerClientUpdate {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum PlayerClientCommandRequest {
-}
 
-#[derive(Debug, Clone)]
-pub enum PlayerClientCommandResponse {
-}
 
 impl Component for PlayerClient {
     type Update = PlayerClientUpdate;
-    type CommandRequest = generated::improbable::restricted::PlayerClientCommandRequest;
-    type CommandResponse = generated::improbable::restricted::PlayerClientCommandResponse;
 
     const ID: ComponentId = 61;
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.player_identity { self.player_identity = value; }
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::PlayerClientCommandRequest> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::PlayerClientCommandResponse> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::improbable::restricted::PlayerClientCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::improbable::restricted::PlayerClientCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::improbable::restricted::PlayerClientCommandRequest) -> u32 {
-        match request {
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::improbable::restricted::PlayerClientCommandResponse) -> u32 {
-        match response {
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -1773,62 +1295,14 @@ impl Update for SystemUpdate {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum SystemCommandRequest {
-}
 
-#[derive(Debug, Clone)]
-pub enum SystemCommandResponse {
-}
 
 impl Component for System {
     type Update = SystemUpdate;
-    type CommandRequest = generated::improbable::restricted::SystemCommandRequest;
-    type CommandResponse = generated::improbable::restricted::SystemCommandResponse;
 
     const ID: ComponentId = 59;
 
     fn merge_update(&mut self, update: Self::Update) {
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::SystemCommandRequest> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::SystemCommandResponse> {
-        match command_index {
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::improbable::restricted::SystemCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::improbable::restricted::SystemCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::improbable::restricted::SystemCommandRequest) -> u32 {
-        match request {
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::improbable::restricted::SystemCommandResponse) -> u32 {
-        match response {
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -1886,9 +1360,34 @@ impl Update for WorkerUpdate {
     }
 }
 
+
+
 #[derive(Debug, Clone)]
 pub enum WorkerCommandRequest {
     Disconnect(generated::improbable::restricted::DisconnectRequest),
+}
+
+impl Request for WorkerCommandRequest {
+    type Commands = Worker;
+
+    fn from_schema(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<Self> {
+        match command_index {
+            1 => {
+                <generated::improbable::restricted::DisconnectRequest as ObjectField>::from_object(&request.object())
+                    .map(Self::Disconnect)
+            },
+            _ => Err(Error::unknown_command::<Self>(command_index))
+        }
+    }
+
+    fn into_schema(&self, request: &mut SchemaCommandRequest) -> CommandIndex {
+        match self {
+            Self::Disconnect(ref inner) => {
+                <generated::improbable::restricted::DisconnectRequest as ObjectField>::into_object(inner, &mut request.object_mut());
+                1
+            }, 
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -1896,10 +1395,39 @@ pub enum WorkerCommandResponse {
     Disconnect(generated::improbable::restricted::DisconnectResponse),
 }
 
+impl Response for WorkerCommandResponse {
+    type Commands = Worker;
+
+    fn from_schema(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<Self> {
+        match command_index { 
+            1 => {
+                <generated::improbable::restricted::DisconnectResponse as ObjectField>::from_object(&response.object())
+                    .map(WorkerCommandResponse::Disconnect)
+            }, 
+            _ => Err(Error::unknown_command::<Self>(command_index))
+        }
+    }
+
+    fn into_schema(&self, response: &mut SchemaCommandResponse) -> CommandIndex {
+        match self {
+            Self::Disconnect(ref inner) => {
+                <generated::improbable::restricted::DisconnectResponse as ObjectField>::into_object(inner, &mut response.object_mut());
+                1
+            },
+        }
+    }
+}
+
+impl Commands for Worker {
+    type Component = Worker;
+    type Request = WorkerCommandRequest;
+    type Response = WorkerCommandResponse;
+}
+
+
+
 impl Component for Worker {
     type Update = WorkerUpdate;
-    type CommandRequest = generated::improbable::restricted::WorkerCommandRequest;
-    type CommandResponse = generated::improbable::restricted::WorkerCommandResponse;
 
     const ID: ComponentId = 60;
 
@@ -1907,62 +1435,6 @@ impl Component for Worker {
         if let Some(value) = update.worker_id { self.worker_id = value; }
         if let Some(value) = update.worker_type { self.worker_type = value; }
         if let Some(value) = update.connection { self.connection = value; }
-    }
-
-    fn from_request(command_index: CommandIndex, request: &SchemaCommandRequest) -> Result<generated::improbable::restricted::WorkerCommandRequest> {
-        match command_index {
-            1 => {
-                <generated::improbable::restricted::DisconnectRequest as ObjectField>::from_object(&request.object())
-                    .map(WorkerCommandRequest::Disconnect)
-            },
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn from_response(command_index: CommandIndex, response: &SchemaCommandResponse) -> Result<generated::improbable::restricted::WorkerCommandResponse> {
-        match command_index {
-            1 => {
-                <generated::improbable::restricted::DisconnectResponse as ObjectField>::from_object(&response.object())
-                    .map(WorkerCommandResponse::Disconnect)
-            },
-            _ => Err(Error::unknown_command::<Self>(command_index))
-        }
-    }
-
-    fn to_request(request: &generated::improbable::restricted::WorkerCommandRequest) -> Owned<SchemaCommandRequest> {
-        let mut serialized_request = SchemaCommandRequest::new();
-        match request {
-            WorkerCommandRequest::Disconnect(ref data) => {
-                <generated::improbable::restricted::DisconnectRequest as ObjectField>::into_object(data, &mut serialized_request.object_mut());
-            },
-            _ => unreachable!()
-        }
-        serialized_request
-    }
-
-    fn to_response(response: &generated::improbable::restricted::WorkerCommandResponse) -> Owned<SchemaCommandResponse> {
-        let mut serialized_response = SchemaCommandResponse::new();
-        match response {
-            WorkerCommandResponse::Disconnect(ref data) => {
-                <generated::improbable::restricted::DisconnectResponse as ObjectField>::into_object(data, &mut serialized_response.object_mut());
-            },
-            _ => unreachable!()
-        }
-        serialized_response
-    }
-
-    fn get_request_command_index(request: &generated::improbable::restricted::WorkerCommandRequest) -> u32 {
-        match request {
-            WorkerCommandRequest::Disconnect(_) => 1,
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_response_command_index(response: &generated::improbable::restricted::WorkerCommandResponse) -> u32 {
-        match response {
-            WorkerCommandResponse::Disconnect(_) => 1,
-            _ => unreachable!(),
-        }
     }
 }
 

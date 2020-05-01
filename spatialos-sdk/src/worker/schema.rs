@@ -58,7 +58,7 @@
 //! }
 //! ```
 
-use crate::worker::component::CommandIndex;
+use crate::worker::commands::CommandIndex;
 use std::{
     convert::TryFrom,
     fmt::{self, Display, Formatter},

@@ -8,12 +8,12 @@ use futures::executor::block_on;
 use generated::{example, improbable};
 use rand::Rng;
 use spatialos_sdk::worker::{
-    commands::{EntityQueryRequest, ReserveEntityIdsRequest},
+    commands::{CreateEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest},
     component::{Component, UpdateParameters},
     connection::{Connection, WorkerConnection},
     entity_builder::EntityBuilder,
     metrics::{HistogramMetric, Metrics},
-    op::{StatusCode, WorkerOp},
+    op::WorkerOp,
     query::{EntityQuery, QueryConstraint, ResultType},
     {EntityId, InterestOverride, LogLevel},
 };
@@ -84,7 +84,7 @@ fn logic_loop(c: &mut WorkerConnection) {
 
     let entity = builder.build().unwrap();
 
-    let create_request_id = c.send_create_entity_request(entity, None, None);
+    let create_request_id = c.send_create_entity_request(CreateEntityRequest(entity, None), None);
     println!("Create entity request ID: {:?}", create_request_id);
 
     loop {
@@ -159,13 +159,20 @@ fn logic_loop(c: &mut WorkerConnection) {
                     id => println!("Received unknown component: {}", id),
                 },
                 WorkerOp::ReserveEntityIdsResponse(response) => match response.status_code {
-                    StatusCode::Success(range) => {
+                    Ok(range) => {
                         for entity_id in range {
                             println!("Reserved entity id: {:?}", entity_id);
                         }
                     }
                     _ => println!("ReserveEntityIds command request failed."),
                 },
+                // This code won't be called, but its a decent demonstration of how commands 'work'
+                WorkerOp::CommandRequest(request) => {
+                    if improbable::restricted::Worker::ID == request.component_id {
+                        let result = request.get::<improbable::restricted::Worker>();
+                        let _command = result.unwrap().unwrap();
+                    }
+                }
                 _ => {}
             }
         }
