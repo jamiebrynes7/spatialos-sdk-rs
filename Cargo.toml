@@ -2,6 +2,7 @@
 
 members = [
     "cargo-spatial",
+    "cargo-spatial-package-downloader",
     "project-example",
     "spatialos-sdk",
     "spatialos-sdk-code-generator",
