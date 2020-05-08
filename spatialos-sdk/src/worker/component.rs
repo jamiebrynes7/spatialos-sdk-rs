@@ -11,6 +11,7 @@ pub trait Component: ObjectField {
     const ID: ComponentId;
 
     fn merge_update(&mut self, update: Self::Update);
+    fn merge_update_ref(&mut self, update: &Self::Update);
 }
 
 pub trait Update: Sized + Clone {
