@@ -1,6 +1,6 @@
 use crate::worker::{
     component::Update,
-    schema::{DataPointer, Field, FieldId, Owned, OwnedPointer, Result, SchemaObject},
+    schema::{DataPointer, Field, FieldId, ObjectField, Owned, OwnedPointer, Result, SchemaObject},
 };
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
@@ -61,6 +61,20 @@ impl SchemaComponentUpdate {
         T: Field,
     {
         T::add_update(self, field, value);
+    }
+
+    pub fn get_event<T>(&self, event_index: FieldId, index: usize) -> Result<T>
+    where
+        T: ObjectField,
+    {
+        T::from_object(self.events().index_object(event_index, index))
+    }
+
+    pub fn add_event<T>(&mut self, event_index: FieldId, event: &T)
+    where
+        T: ObjectField,
+    {
+        event.into_object(self.events_mut().add_object(event_index))
     }
 }
 
