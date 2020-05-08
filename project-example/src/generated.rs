@@ -251,7 +251,7 @@ impl Update for EntityIdTestUpdate {
         update.add_field::<SchemaEntityId>(1, &self.eid);
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
         if update.eid.is_some() { self.eid = update.eid; }
     }
 }
@@ -265,6 +265,14 @@ impl Component for EntityIdTest {
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.eid { self.eid = value; }
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = EntityIdTestUpdate {
+            eid: update.eid,
+        };
+
+        self.merge_update(copy);
     }
 }
 
@@ -303,7 +311,7 @@ impl Update for EntityTestUpdate {
         update.add_field::<SchemaEntity>(1, &self.entity);
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
         if update.entity.is_some() { self.entity = update.entity; }
     }
 }
@@ -317,6 +325,14 @@ impl Component for EntityTest {
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.entity { self.entity = value; }
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = EntityTestUpdate {
+            entity: update.entity.clone(),
+        };
+
+        self.merge_update(copy);
     }
 }
 
@@ -355,7 +371,7 @@ impl Update for EnumTestComponentUpdate {
         update.add_field::<generated::example::TestEnum>(1, &self.test);
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
         if update.test.is_some() { self.test = update.test; }
     }
 }
@@ -369,6 +385,14 @@ impl Component for EnumTestComponent {
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.test { self.test = value; }
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = EnumTestComponentUpdate {
+            test: update.test,
+        };
+
+        self.merge_update(copy);
     }
 }
 
@@ -407,7 +431,7 @@ impl Update for ExampleUpdate {
         update.add_field::<SchemaFloat>(1, &self.x);
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
         if update.x.is_some() { self.x = update.x; }
     }
 }
@@ -486,6 +510,14 @@ impl Component for Example {
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.x { self.x = value; }
     }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = ExampleUpdate {
+            x: update.x,
+        };
+
+        self.merge_update(copy);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -535,7 +567,7 @@ impl Update for RotateUpdate {
         update.add_field::<SchemaDouble>(3, &self.radius);
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
         if update.angle.is_some() { self.angle = update.angle; }
         if update.center.is_some() { self.center = update.center; }
         if update.radius.is_some() { self.radius = update.radius; }
@@ -553,6 +585,16 @@ impl Component for Rotate {
         if let Some(value) = update.angle { self.angle = value; }
         if let Some(value) = update.center { self.center = value; }
         if let Some(value) = update.radius { self.radius = value; }
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = RotateUpdate {
+            angle: update.angle,
+            center: update.center.clone(),
+            radius: update.radius,
+        };
+
+        self.merge_update(copy);
     }
 }
 
@@ -863,7 +905,7 @@ impl Update for EntityAclUpdate {
         update.add_field::<Map<SchemaUint32, generated::improbable::WorkerRequirementSet>>(2, &self.component_write_acl);
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
         if update.read_acl.is_some() { self.read_acl = update.read_acl; }
         if update.component_write_acl.is_some() { self.component_write_acl = update.component_write_acl; }
     }
@@ -879,6 +921,15 @@ impl Component for EntityAcl {
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.read_acl { self.read_acl = value; }
         if let Some(value) = update.component_write_acl { self.component_write_acl = value; }
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = EntityAclUpdate {
+            read_acl: update.read_acl.clone(),
+            component_write_acl: update.component_write_acl.clone(),
+        };
+
+        self.merge_update(copy);
     }
 }
 
@@ -917,7 +968,7 @@ impl Update for InterestUpdate {
         update.add_field::<Map<SchemaUint32, generated::improbable::ComponentInterest>>(1, &self.component_interest);
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
         if update.component_interest.is_some() { self.component_interest = update.component_interest; }
     }
 }
@@ -931,6 +982,14 @@ impl Component for Interest {
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.component_interest { self.component_interest = value; }
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = InterestUpdate {
+            component_interest: update.component_interest.clone(),
+        };
+
+        self.merge_update(copy);
     }
 }
 
@@ -969,7 +1028,7 @@ impl Update for MetadataUpdate {
         update.add_field::<SchemaString>(1, &self.entity_type);
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
         if update.entity_type.is_some() { self.entity_type = update.entity_type; }
     }
 }
@@ -983,6 +1042,14 @@ impl Component for Metadata {
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.entity_type { self.entity_type = value; }
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = MetadataUpdate {
+            entity_type: update.entity_type.clone(),
+        };
+
+        self.merge_update(copy);
     }
 }
 
@@ -1015,7 +1082,7 @@ impl Update for PersistenceUpdate {
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
     }
 }
 
@@ -1027,6 +1094,13 @@ impl Component for Persistence {
     const ID: ComponentId = 55;
 
     fn merge_update(&mut self, update: Self::Update) {
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = PersistenceUpdate {
+        };
+
+        self.merge_update(copy);
     }
 }
 
@@ -1065,7 +1139,7 @@ impl Update for PositionUpdate {
         update.add_field::<generated::improbable::Coordinates>(1, &self.coords);
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
         if update.coords.is_some() { self.coords = update.coords; }
     }
 }
@@ -1079,6 +1153,14 @@ impl Component for Position {
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.coords { self.coords = value; }
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = PositionUpdate {
+            coords: update.coords.clone(),
+        };
+
+        self.merge_update(copy);
     }
 }
 
@@ -1245,7 +1327,7 @@ impl Update for PlayerClientUpdate {
         update.add_field::<generated::improbable::restricted::PlayerIdentity>(1, &self.player_identity);
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
         if update.player_identity.is_some() { self.player_identity = update.player_identity; }
     }
 }
@@ -1259,6 +1341,14 @@ impl Component for PlayerClient {
 
     fn merge_update(&mut self, update: Self::Update) {
         if let Some(value) = update.player_identity { self.player_identity = value; }
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = PlayerClientUpdate {
+            player_identity: update.player_identity.clone(),
+        };
+
+        self.merge_update(copy);
     }
 }
 
@@ -1291,7 +1381,7 @@ impl Update for SystemUpdate {
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
     }
 }
 
@@ -1303,6 +1393,13 @@ impl Component for System {
     const ID: ComponentId = 59;
 
     fn merge_update(&mut self, update: Self::Update) {
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = SystemUpdate {
+        };
+
+        self.merge_update(copy);
     }
 }
 
@@ -1353,7 +1450,7 @@ impl Update for WorkerUpdate {
         update.add_field::<generated::improbable::restricted::Connection>(3, &self.connection);
     }
 
-    fn merge(&mut self, update: Self) {
+    fn merge(&mut self, mut update: Self) {
         if update.worker_id.is_some() { self.worker_id = update.worker_id; }
         if update.worker_type.is_some() { self.worker_type = update.worker_type; }
         if update.connection.is_some() { self.connection = update.connection; }
@@ -1435,6 +1532,16 @@ impl Component for Worker {
         if let Some(value) = update.worker_id { self.worker_id = value; }
         if let Some(value) = update.worker_type { self.worker_type = value; }
         if let Some(value) = update.connection { self.connection = value; }
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = WorkerUpdate {
+            worker_id: update.worker_id.clone(),
+            worker_type: update.worker_type.clone(),
+            connection: update.connection.clone(),
+        };
+
+        self.merge_update(copy);
     }
 }
 
