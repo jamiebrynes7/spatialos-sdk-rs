@@ -10,3 +10,6 @@ links = "worker"
 build = "build.rs"
 
 [dependencies]
+
+[build-dependencies]
+cargo-spatial-package-downloader = { path = "../cargo-spatial-package-downloader" }

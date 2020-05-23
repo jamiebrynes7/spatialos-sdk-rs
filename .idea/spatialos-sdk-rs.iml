@@ -3,41 +3,42 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-sys/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-sys\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-sys\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-sys\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-sys/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-sys/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-sys/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/cargo-spatial/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/cargo-spatial\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/cargo-spatial\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/cargo-spatial\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/cargo-spatial/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cargo-spatial/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/cargo-spatial/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-code-generator/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-code-generator\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-code-generator\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-code-generator\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-code-generator/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-code-generator/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-code-generator/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-tools/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-tools\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-tools\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-tools\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-tools/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-tools/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk-tools/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk/examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/spatialos-sdk/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/test-suite/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/test-suite\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/test-suite\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/test-suite\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/test-suite/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test-suite/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/test-suite/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/project-example/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/project-example\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/project-example\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/project-example\benches" isTestSource="true" />
-      <excludeFolder url="file://$MODULE_DIR$/cargo-spatial\target" />
-      <excludeFolder url="file://$MODULE_DIR$/project-example\target" />
-      <excludeFolder url="file://$MODULE_DIR$/spatialos-sdk-code-generator\target" />
-      <excludeFolder url="file://$MODULE_DIR$/spatialos-sdk-sys\target" />
-      <excludeFolder url="file://$MODULE_DIR$/spatialos-sdk-tools\target" />
-      <excludeFolder url="file://$MODULE_DIR$/spatialos-sdk\target" />
-      <excludeFolder url="file://$MODULE_DIR$/test-suite\target" />
-      <excludeFolder url="file://$MODULE_DIR$/../spatialos-sdk-rs\target" />
+      <sourceFolder url="file://$MODULE_DIR$/project-example/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/project-example/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/project-example/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/cargo-spatial-package-downloader/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/cargo-spatial/target" />
+      <excludeFolder url="file://$MODULE_DIR$/project-example/target" />
+      <excludeFolder url="file://$MODULE_DIR$/spatialos-sdk-code-generator/target" />
+      <excludeFolder url="file://$MODULE_DIR$/spatialos-sdk-sys/target" />
+      <excludeFolder url="file://$MODULE_DIR$/spatialos-sdk-tools/target" />
+      <excludeFolder url="file://$MODULE_DIR$/spatialos-sdk/target" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+      <excludeFolder url="file://$MODULE_DIR$/test-suite/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
