@@ -345,7 +345,7 @@ impl Package {
         update: &str,
     ) -> String {
         format!(
-            "(0..update.events().object_count({event_index})).into_iter().map(|i| {}.get_event::<{}>({event_index}, i)).collect::<Result<_>>()?",
+            "(0..update.events().object_count({event_index})).map(|i| {}.get_event::<{}>({event_index}, i)).collect::<Result<_>>()?",
             update,
             self.rust_fqname(&event.type_reference),
             event_index = event.event_index
