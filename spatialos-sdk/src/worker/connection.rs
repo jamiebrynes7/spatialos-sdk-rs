@@ -43,8 +43,8 @@ pub enum ConnectionStatusErrorCode {
     Unknown,
 }
 
-impl From<u32> for ConnectionStatusErrorCode {
-    fn from(code: u32) -> Self {
+impl From<i32> for ConnectionStatusErrorCode {
+    fn from(code: i32) -> Self {
         match code {
             Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_INTERNAL_ERROR => {
                 ConnectionStatusErrorCode::InternalError
@@ -552,7 +552,7 @@ impl Connection for WorkerConnection {
     fn get_connection_status(&mut self) -> ConnectionStatus {
         let ptr = self.connection_ptr.get();
 
-        let code = unsafe { Worker_Connection_GetConnectionStatusCode(ptr) } as u32;
+        let code = unsafe { Worker_Connection_GetConnectionStatusCode(ptr) } as i32;
 
         if code == Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SUCCESS {
             return Ok(());
