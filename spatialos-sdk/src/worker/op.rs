@@ -127,8 +127,8 @@ pub enum CommandStatusCode {
     Unknown,
 }
 
-impl From<u32> for CommandStatusCode {
-    fn from(code: u32) -> CommandStatusCode {
+impl From<i32> for CommandStatusCode {
+    fn from(code: i32) -> CommandStatusCode {
         match code {
             Worker_StatusCode_WORKER_STATUS_CODE_TIMEOUT => CommandStatusCode::Timeout,
             Worker_StatusCode_WORKER_STATUS_CODE_NOT_FOUND => CommandStatusCode::NotFound,
@@ -280,11 +280,11 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     let op = &erased_op.command_response;
 
                     let result =
-                        if op.status_code as u32 == Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS {
+                        if op.status_code as i32 == Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS {
                             Ok(CommandResponseRef::from_raw(&op.response))
                         } else {
                             Err(CommandResponseError {
-                                code: CommandStatusCode::from(op.status_code as u32),
+                                code: CommandStatusCode::from(op.status_code as i32),
                                 detail: cstr_to_string(op.message),
                             })
                         };
@@ -301,14 +301,14 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     let op = erased_op.reserve_entity_ids_response;
 
                     let result =
-                        if op.status_code as u32 == Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS {
+                        if op.status_code as i32 == Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS {
                             Ok(ReservedEntityIdRange::new(
                                 op.first_entity_id,
                                 op.number_of_entity_ids,
                             ))
                         } else {
                             Err(CommandResponseError {
-                                code: CommandStatusCode::from(op.status_code as u32),
+                                code: CommandStatusCode::from(op.status_code as i32),
                                 detail: cstr_to_string(op.message),
                             })
                         };
@@ -323,11 +323,11 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     let op = erased_op.create_entity_response;
 
                     let result =
-                        if op.status_code as u32 == Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS {
+                        if op.status_code as i32 == Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS {
                             Ok(EntityId::new(op.entity_id))
                         } else {
                             Err(CommandResponseError {
-                                code: CommandStatusCode::from(op.status_code as u32),
+                                code: CommandStatusCode::from(op.status_code as i32),
                                 detail: cstr_to_string(op.message),
                             })
                         };
@@ -342,11 +342,11 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     let op = erased_op.delete_entity_response;
 
                     let result =
-                        if op.status_code as u32 == Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS {
+                        if op.status_code as i32 == Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS {
                             Ok(())
                         } else {
                             Err(CommandResponseError {
-                                code: CommandStatusCode::from(op.status_code as u32),
+                                code: CommandStatusCode::from(op.status_code as i32),
                                 detail: cstr_to_string(op.message),
                             })
                         };
@@ -362,7 +362,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                     let op = erased_op.entity_query_response;
 
                     let result =
-                        if op.status_code as u32 == Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS {
+                        if op.status_code as i32 == Worker_StatusCode_WORKER_STATUS_CODE_SUCCESS {
                             if op.results.is_null() {
                                 // Is count type.
                                 Ok(QueryResponse::Result(op.result_count))
@@ -382,7 +382,7 @@ impl<'a> From<&'a Worker_Op> for WorkerOp<'a> {
                             }
                         } else {
                             Err(CommandResponseError {
-                                code: CommandStatusCode::from(op.status_code as u32),
+                                code: CommandStatusCode::from(op.status_code as i32),
                                 detail: cstr_to_string(op.message),
                             })
                         };

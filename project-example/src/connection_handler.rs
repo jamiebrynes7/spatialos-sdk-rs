@@ -26,7 +26,7 @@ pub async fn get_connection(opt: Opt) -> Result<WorkerConnection, Box<dyn Error>
             connect_with_external_ip,
         } => {
             let params = ConnectionParameters::new(worker_type)
-                .using_udp()
+                .using_kcp()
                 .using_external_ip(connect_with_external_ip);
             WorkerConnection::connect_receptionist(
                 &worker_id,

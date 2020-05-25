@@ -5,6 +5,8 @@ use spatialos_sdk_sys::worker::*;
 
 use crate::worker::{
     parameters::ProtocolLoggingParameters,
+    parameters::LogsinkParameters,
+    parameters::logsinks_to_worker_sdk,
     utils::cstr_to_string,
     worker_future::{WorkerFuture, WorkerSdkFuture},
 };
@@ -55,6 +57,7 @@ pub struct LocatorParameters {
     pub credentials: PlayerIdentityCredentials,
     pub use_insecure_connection: bool,
     pub logging: Option<ProtocolLoggingParameters>,
+    pub logsinks: Vec<LogsinkParameters>,
 }
 
 impl LocatorParameters {
@@ -72,6 +75,8 @@ impl LocatorParameters {
                 None => ProtocolLoggingParameters::default().to_worker_sdk(),
             },
             enable_logging: self.logging.is_some() as u8,
+            logsink_count: self.logsinks.len() as u32,
+            logsinks: logsinks_to_worker_sdk(&self.logsinks),
         }
     }
 
@@ -80,6 +85,7 @@ impl LocatorParameters {
             credentials,
             use_insecure_connection: false,
             logging: None,
+            logsinks: Default::default(),
         }
     }
 

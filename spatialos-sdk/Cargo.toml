@@ -10,6 +10,7 @@ edition = "2018"
 [dependencies]
 derivative = "2.0.0"
 futures = "0.3.1"
+bitflags = "1.2.1"
 spatialos-sdk-sys = { path = "../spatialos-sdk-sys"}
 
 [dev-dependencies]

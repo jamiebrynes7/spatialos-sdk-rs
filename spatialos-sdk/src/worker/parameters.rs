@@ -13,6 +13,9 @@ pub struct ConnectionParameters {
     pub built_in_metrics_report_period_millis: u32,
     pub protocol_logging: ProtocolLoggingParameters,
     pub enable_protocol_logging_at_startup: bool,
+    pub logsinks: Vec<LogsinkParameters>,
+    pub enable_logging_at_startup: bool,
+    pub enable_dynamic_components: bool,
     pub thread_affinity: ThreadAffinityParameters,
 }
 
@@ -31,21 +34,21 @@ impl ConnectionParameters {
         self
     }
 
-    pub fn using_tcp(self) -> Self {
-        self.using_tcp_with_params(TcpNetworkParameters::default())
+    pub fn using_kcp(self) -> Self {
+        self.using_kcp_with_params(ModularKcpNetworkParameters::default())
     }
 
-    pub fn using_tcp_with_params(mut self, params: TcpNetworkParameters) -> Self {
-        self.network.protocol = ProtocolType::Tcp(params);
+    pub fn using_kcp_with_params(mut self, params: ModularKcpNetworkParameters) -> Self {
+        self.network.protocol = ProtocolType::Kcp(params);
         self
     }
 
-    pub fn using_udp(self) -> Self {
-        self.using_udp_with_params(UdpNetworkParameters::default())
+    pub fn using_tcp(self) -> Self {
+        self.using_tcp_with_params(ModularTcpNetworkParameters::default())
     }
 
-    pub fn using_udp_with_params(mut self, params: UdpNetworkParameters) -> Self {
-        self.network.protocol = ProtocolType::Udp(params);
+    pub fn using_tcp_with_params(mut self, params: ModularTcpNetworkParameters) -> Self {
+        self.network.protocol = ProtocolType::Tcp(params);
         self
     }
 
@@ -70,34 +73,17 @@ impl ConnectionParameters {
                 WORKER_DEFAULTS_BUILT_IN_METRICS_REPORT_PERIOD_MILLIS,
             protocol_logging: ProtocolLoggingParameters::default(),
             enable_protocol_logging_at_startup: false,
+            logsinks: vec![],
+            enable_logging_at_startup: false,
+            enable_dynamic_components: WORKER_DEFAULTS_ENABLE_DYNAMIC_COMPONENTS != 0,
             thread_affinity: ThreadAffinityParameters::default(),
         }
     }
 
     pub(crate) fn flatten(&self) -> IntermediateConnectionParameters<'_> {
         let protocol = match &self.network.protocol {
+            ProtocolType::Kcp(params) => IntermediateProtocolType::Kcp(params.to_worker_sdk()),
             ProtocolType::Tcp(params) => IntermediateProtocolType::Tcp(params.to_worker_sdk()),
-            ProtocolType::Udp(params) => IntermediateProtocolType::Udp {
-                security_type: params.security_type.to_worker_sdk(),
-                kcp: params.kcp.as_ref().map(KcpParameters::to_worker_sdk),
-
-                erasure_codec: params
-                    .erasure_codec
-                    .as_ref()
-                    .map(ErasureCodecParameters::to_worker_sdk),
-
-                heartbeat: params
-                    .heartbeat
-                    .as_ref()
-                    .map(HeartbeatParameters::to_worker_sdk),
-
-                flow_control: params
-                    .flow_control
-                    .as_ref()
-                    .map(FlowControlParameters::to_worker_sdk),
-
-                compression: Some(Worker_Alpha_CompressionParameters { place_holder: 0 }),
-            },
         };
 
         IntermediateConnectionParameters {
@@ -107,9 +93,190 @@ impl ConnectionParameters {
     }
 }
 
+#[repr(u8)]
+#[derive(Copy, Clone)]
+pub enum LogsinkType {
+    RotatingFile = Worker_LogsinkType_WORKER_LOGSINK_TYPE_ROTATING_FILE as u8,
+    Callback = Worker_LogsinkType_WORKER_LOGSINK_TYPE_CALLBACK as u8,
+    Stdout = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDOUT as u8,
+    StdoutANSI = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDOUT_ANSI as u8,
+    Stderr = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDERR as u8,
+    StderrANSI = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDERR_ANSI as u8,
+}
+
+bitflags! {
+    pub struct LogCategory: u32 {
+        const Receive         = 0x01;
+        const Send            = 0x02;
+        const NetworkStatus   = 0x04;
+        const NetworkTraffic  = 0x08;
+        const Login           = 0x10;
+        const API             = 0x20;
+        const All             = 0x3f;
+    }
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone)]
+pub enum LogLevel {
+    Debug = Worker_LogLevel_WORKER_LOG_LEVEL_DEBUG as u8,
+    Info = Worker_LogLevel_WORKER_LOG_LEVEL_INFO as u8,
+    Warn = Worker_LogLevel_WORKER_LOG_LEVEL_WARN as u8,
+    Error = Worker_LogLevel_WORKER_LOG_LEVEL_ERROR as u8,
+    Fatal = Worker_LogLevel_WORKER_LOG_LEVEL_FATAL as u8,
+}
+
+pub type LogFilter = fn(
+    categories: LogCategory,
+    level: LogLevel,
+) -> bool;
+
+pub struct LogFilterParameters {
+    pub categories: LogCategory,
+    pub level: LogLevel,
+    pub callback: Option<LogFilter>
+}
+
+impl LogFilterParameters {
+    pub fn default() -> Self {
+        LogFilterParameters {
+            categories: LogCategory::All,
+            level: LogLevel::Error,
+            callback: None
+        }
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_LogFilterParameters {
+        Worker_LogFilterParameters {
+            categories: self.categories.bits,
+            level: self.level as u8,
+            callback: match self.callback {
+                Some(_callback) => Some(worker_log_filter_callback),
+                None => None
+            },
+            user_data: unsafe { ::std::mem::transmute(self) }
+        }
+    }
+}
+
+#[no_mangle]
+pub extern fn worker_log_filter_callback(user_data: *mut ::std::os::raw::c_void,
+                                         categories: u32, level: Worker_LogLevel) -> u8 {
+    unsafe {
+        let params: &mut LogFilterParameters = &mut *(user_data as *mut LogFilterParameters);
+        match params.callback {
+            Some(callback) =>
+                callback(LogCategory::from_bits_unchecked(categories),
+                         ::std::mem::transmute(level as u8)) as u8,
+            _ => 0
+        }
+    }
+}
+
+pub struct LogData<'a> {
+    pub timestamp: &'a CStr,
+    pub categories: LogCategory,
+    pub log_level: LogLevel,
+    pub content: &'a CStr
+}
+
+pub type LogCallback = fn(message: LogData);
+
+pub struct LogCallbackParameters {
+    pub log_callback: Option<LogCallback>
+}
+
+impl LogCallbackParameters {
+    pub fn default() -> Self {
+        LogCallbackParameters {
+            log_callback: None
+        }
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_LogCallbackParameters {
+        Worker_LogCallbackParameters {
+            log_callback: match self.log_callback {
+                Some(_callback) => Some(worker_log_callback),
+                None => None
+            },
+            user_data: unsafe { ::std::mem::transmute(self) }
+        }
+    }
+}
+
+#[no_mangle]
+pub extern fn worker_log_callback(user_data: *mut ::std::os::raw::c_void, message: *const Worker_LogData) {
+    unsafe {
+        let params: &mut LogCallbackParameters = &mut *(user_data as *mut LogCallbackParameters);
+        match params.log_callback {
+            Some(callback) =>
+                callback(LogData {
+                    timestamp: CStr::from_ptr((*message).timestamp),
+                    categories: LogCategory::from_bits_unchecked((*message).categories),
+                    log_level: ::std::mem::transmute((*message).log_level),
+                    content: CStr::from_ptr((*message).content)
+                }),
+            _ => ()
+        };
+    }
+}
+
+pub struct RotatingLogFileParameters {
+    pub log_prefix: CString,
+    pub max_log_files: u32,
+    pub max_log_file_size_bytes: u32,
+}
+
+impl RotatingLogFileParameters {
+    pub fn default() -> Self {
+        RotatingLogFileParameters {
+            log_prefix: Default::default(),
+            max_log_files: 0,
+            max_log_file_size_bytes: 0
+        }
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_RotatingLogFileParameters {
+        Worker_RotatingLogFileParameters {
+            log_prefix: self.log_prefix.as_ptr(),
+            max_log_files: self.max_log_files,
+            max_log_file_size_bytes: self.max_log_file_size_bytes
+        }
+    }
+}
+
+pub struct LogsinkParameters {
+    pub logsink_type: LogsinkType,
+    pub filter_parameters: LogFilterParameters,
+    pub rotating_logfile_parameters : RotatingLogFileParameters,
+    pub log_callback_parameters: LogCallbackParameters,
+}
+
+impl LogsinkParameters {
+    pub fn default() -> Self {
+        LogsinkParameters {
+            logsink_type: LogsinkType::Stdout,
+            filter_parameters: LogFilterParameters::default(),
+            rotating_logfile_parameters: RotatingLogFileParameters::default(),
+            log_callback_parameters: LogCallbackParameters {
+                log_callback: None
+            },
+        }
+    }
+}
+
+pub fn logsinks_to_worker_sdk(logsinks: &Vec<LogsinkParameters>) -> *const Worker_LogsinkParameters {
+    logsinks.iter().map(|s| Worker_LogsinkParameters {
+        logsink_type: s.logsink_type as u8,
+        filter_parameters: s.filter_parameters.to_worker_sdk(),
+        rotating_logfile_parameters: s.rotating_logfile_parameters.to_worker_sdk(),
+        log_callback_parameters: s.log_callback_parameters.to_worker_sdk(),
+    }).collect::<Vec<Worker_LogsinkParameters>>().as_ptr()
+}
+
 pub enum ProtocolType {
-    Tcp(TcpNetworkParameters),
-    Udp(UdpNetworkParameters),
+    Kcp(ModularKcpNetworkParameters),
+    Tcp(ModularTcpNetworkParameters),
 }
 
 pub struct NetworkParameters {
@@ -123,58 +290,198 @@ impl NetworkParameters {
     pub fn default() -> Self {
         NetworkParameters {
             use_external_ip: false,
-            protocol: ProtocolType::Tcp(TcpNetworkParameters::default()),
+            protocol: ProtocolType::Kcp(ModularKcpNetworkParameters::default()),
             connection_timeout_millis: u64::from(WORKER_DEFAULTS_CONNECTION_TIMEOUT_MILLIS),
             default_command_timeout_millis: WORKER_DEFAULTS_DEFAULT_COMMAND_TIMEOUT_MILLIS,
         }
     }
 }
 
+// KCP
+
+pub struct ModularKcpNetworkParameters {
+    pub security_type: SecurityType,
+    pub multiplex_level: u8,
+    pub downstream_kcp: KcpTransportParameters,
+    pub upstream_kcp: KcpTransportParameters,
+    pub downstream_erasure_codec: Option<ErasureCodecParameters>,
+    pub upstream_erasure_codec: Option<ErasureCodecParameters>,
+    pub downstream_heartbeat: Option<HeartbeatParameters>,
+    pub upstream_heartbeat: Option<HeartbeatParameters>,
+    pub downstream_compression: Option<CompressionParameters>,
+    pub upstream_compression: Option<CompressionParameters>,
+    pub flow_control: Option<FlowControlParameters>,
+}
+
+impl ModularKcpNetworkParameters {
+    pub fn default() -> Self {
+        ModularKcpNetworkParameters {
+            security_type: SecurityType::Insecure,
+            multiplex_level: WORKER_DEFAULTS_KCP_MULTIPLEX_LEVEL as u8,
+            downstream_kcp: KcpTransportParameters::default(),
+            upstream_kcp: KcpTransportParameters::default(),
+            downstream_erasure_codec: None,
+            upstream_erasure_codec: None,
+            downstream_heartbeat: None,
+            upstream_heartbeat: None,
+            downstream_compression: None,
+            upstream_compression: None,
+            flow_control: Some(FlowControlParameters::default()),
+        }
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_ModularKcpNetworkParameters {
+        Worker_ModularKcpNetworkParameters {
+            security_type: self.security_type as u8,
+            multiplex_level: self.multiplex_level,
+            downstream_kcp: self.downstream_kcp.to_worker_sdk(),
+            upstream_kcp: self.upstream_kcp.to_worker_sdk(),
+            downstream_erasure_codec: match &self.downstream_erasure_codec {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
+            upstream_erasure_codec: match &self.upstream_erasure_codec {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
+            downstream_heartbeat: match &self.downstream_heartbeat {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
+            upstream_heartbeat: match &self.upstream_heartbeat {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
+            downstream_compression: match &self.downstream_compression {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
+            upstream_compression: match &self.upstream_compression {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
+            flow_control: match &self.flow_control {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
+        }
+    }
+}
+
+pub struct KcpTransportParameters {
+    pub flush_interval_millis: u32,
+    pub fast_retransmission: bool,
+    pub early_retransmission: bool,
+    pub disable_congestion_control: bool,
+    pub min_rto_millis: u32,
+}
+
+impl KcpTransportParameters {
+    pub fn default() -> Self {
+        KcpTransportParameters {
+            flush_interval_millis: WORKER_DEFAULTS_KCP_FLUSH_INTERVAL_MILLIS,
+            fast_retransmission: WORKER_DEFAULTS_KCP_FAST_RETRANSMISSION != 0,
+            early_retransmission: WORKER_DEFAULTS_KCP_EARLY_RETRANSMISSION != 0,
+            disable_congestion_control: WORKER_DEFAULTS_KCP_DISABLE_CONGESTION_CONTROL != 0,
+            min_rto_millis: WORKER_DEFAULTS_KCP_MIN_RTO_MILLIS,
+        }
+    }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_KcpTransportParameters {
+        Worker_KcpTransportParameters {
+            flush_interval_millis: self.flush_interval_millis,
+            fast_retransmission: self.fast_retransmission as u8,
+            early_retransmission: self.early_retransmission as u8,
+            disable_congestion_control: self.disable_congestion_control as u8,
+            min_rto_millis: self.min_rto_millis,
+        }
+    }
+}
+
 // TCP
 
-pub struct TcpNetworkParameters {
+pub struct ModularTcpNetworkParameters {
+    pub security_type: SecurityType,
     pub multiplex_level: u8,
-    pub send_buffer_size: u32,
-    pub receive_buffer_size: u32,
-    pub no_delay: bool,
+    pub downstream_tcp: TcpTransportParameters,
+    pub upstream_tcp: TcpTransportParameters,
+    pub downstream_heartbeat: Option<HeartbeatParameters>,
+    pub upstream_heartbeat: Option<HeartbeatParameters>,
+    pub downstream_compression: Option<CompressionParameters>,
+    pub upstream_compression: Option<CompressionParameters>,
+    pub flow_control: Option<FlowControlParameters>,
 }
 
-impl TcpNetworkParameters {
+impl ModularTcpNetworkParameters {
     pub fn default() -> Self {
-        TcpNetworkParameters {
-            multiplex_level: WORKER_DEFAULTS_TCP_MULTIPLEX_LEVEL as u8,
-            send_buffer_size: WORKER_DEFAULTS_TCP_SEND_BUFFER_SIZE,
-            receive_buffer_size: WORKER_DEFAULTS_TCP_RECEIVE_BUFFER_SIZE,
-            no_delay: WORKER_DEFAULTS_TCP_NO_DELAY != 0,
+        ModularTcpNetworkParameters {
+            security_type: SecurityType::Insecure,
+            multiplex_level: WORKER_DEFAULTS_MODULAR_TCP_MULTIPLEX_LEVEL as u8,
+            downstream_tcp: TcpTransportParameters::default(),
+            upstream_tcp: TcpTransportParameters::default(),
+            downstream_heartbeat: None,
+            upstream_heartbeat: None,
+            downstream_compression: None,
+            upstream_compression: None,
+            flow_control: Some(FlowControlParameters::default()),
         }
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_TcpNetworkParameters {
-        Worker_TcpNetworkParameters {
+    pub(crate) fn to_worker_sdk(&self) -> Worker_ModularTcpNetworkParameters {
+        Worker_ModularTcpNetworkParameters {
+            security_type: self.security_type as u8,
             multiplex_level: self.multiplex_level,
-            send_buffer_size: self.send_buffer_size,
-            receive_buffer_size: self.receive_buffer_size,
-            no_delay: self.no_delay as u8,
+            downstream_tcp: self.downstream_tcp.to_worker_sdk(),
+            upstream_tcp: self.upstream_tcp.to_worker_sdk(),
+            downstream_heartbeat: match &self.downstream_heartbeat {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
+            upstream_heartbeat: match &self.upstream_heartbeat {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
+            downstream_compression: match &self.downstream_compression {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
+            upstream_compression: match &self.upstream_compression {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
+            flow_control: match &self.flow_control {
+                Some(x) => &x.to_worker_sdk(),
+                None => 0 as *const _
+            },
         }
     }
 }
 
-// UDP
-
-pub enum SecurityType {
-    Insecure,
-    DTLS,
+pub struct TcpTransportParameters {
+    pub flush_delay_millis: u32
 }
 
-impl SecurityType {
-    pub(crate) fn to_worker_sdk(&self) -> u8 {
-        (match self {
-            SecurityType::Insecure => {
-                Worker_NetworkSecurityType_WORKER_NETWORK_SECURITY_TYPE_INSECURE
-            }
-            SecurityType::DTLS => Worker_NetworkSecurityType_WORKER_NETWORK_SECURITY_TYPE_DTLS,
-        }) as u8
+impl TcpTransportParameters {
+    pub fn default() -> Self {
+        TcpTransportParameters {
+            flush_delay_millis: WORKER_DEFAULTS_TCP_FLUSH_DELAY_MILLIS,
+        }
     }
+
+    pub(crate) fn to_worker_sdk(&self) -> Worker_TcpTransportParameters {
+        Worker_TcpTransportParameters {
+            flush_delay_millis: self.flush_delay_millis
+        }
+    }
+}
+
+// Network parameters
+
+#[repr(u8)]
+#[derive(Copy, Clone)]
+pub enum SecurityType {
+    Insecure = Worker_NetworkSecurityType_WORKER_NETWORK_SECURITY_TYPE_INSECURE as u8,
+    DTLS = Worker_NetworkSecurityType_WORKER_NETWORK_SECURITY_TYPE_DTLS as u8,
 }
 
 impl Default for SecurityType {
@@ -183,35 +490,14 @@ impl Default for SecurityType {
     }
 }
 
-pub struct KcpParameters {
-    pub fast_retransmission: bool,
-    pub early_retransmission: bool,
-    pub non_concessional_flow_control: bool,
-    pub multiplex_level: u32,
-    pub update_interval_millis: u32,
-    pub min_rto_millis: u32,
+pub struct CompressionParameters {
+
 }
 
-impl KcpParameters {
-    pub fn default() -> Self {
-        KcpParameters {
-            fast_retransmission: WORKER_DEFAULTS_KCP_FAST_RETRANSMISSION != 0,
-            early_retransmission: WORKER_DEFAULTS_KCP_EARLY_RETRANSMISSION != 0,
-            non_concessional_flow_control: WORKER_DEFAULTS_KCP_NON_CONCESSIONAL_FLOW_CONTROL != 0,
-            multiplex_level: WORKER_DEFAULTS_KCP_MULTIPLEX_LEVEL,
-            update_interval_millis: WORKER_DEFAULTS_KCP_UPDATE_INTERVAL_MILLIS,
-            min_rto_millis: WORKER_DEFAULTS_KCP_MIN_RTO_MILLIS,
-        }
-    }
-
-    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_KcpParameters {
-        Worker_Alpha_KcpParameters {
-            fast_retransmission: self.fast_retransmission as u8,
-            early_retransmission: self.early_retransmission as u8,
-            non_concessional_flow_control: self.non_concessional_flow_control as u8,
-            multiplex_level: self.multiplex_level,
-            update_interval_millis: self.update_interval_millis,
-            min_rto_millis: self.min_rto_millis,
+impl CompressionParameters {
+    pub(crate) fn to_worker_sdk(&self) -> Worker_CompressionParameters {
+        Worker_CompressionParameters {
+            place_holder: 0
         }
     }
 }
@@ -229,8 +515,8 @@ impl FlowControlParameters {
         }
     }
 
-    pub(crate) fn to_worker_sdk(&self) -> Worker_Alpha_FlowControlParameters {
-        Worker_Alpha_FlowControlParameters {
+    pub(crate) fn to_worker_sdk(&self) -> Worker_FlowControlParameters {
+        Worker_FlowControlParameters {
             downstream_window_size_bytes: self.downstream_window_size_bytes,
             upstream_window_size_bytes: self.upstream_window_size_bytes,
         }
@@ -278,26 +564,6 @@ impl HeartbeatParameters {
         Worker_HeartbeatParameters {
             interval_millis: self.interval_millis,
             timeout_millis: self.timeout_millis,
-        }
-    }
-}
-
-pub struct UdpNetworkParameters {
-    pub security_type: SecurityType,
-    pub kcp: Option<KcpParameters>,
-    pub erasure_codec: Option<ErasureCodecParameters>,
-    pub heartbeat: Option<HeartbeatParameters>,
-    pub flow_control: Option<FlowControlParameters>,
-}
-
-impl UdpNetworkParameters {
-    pub fn default() -> Self {
-        UdpNetworkParameters {
-            security_type: SecurityType::Insecure,
-            kcp: Some(KcpParameters::default()),
-            erasure_codec: None,
-            heartbeat: None,
-            flow_control: Some(FlowControlParameters::default()),
         }
     }
 }
@@ -432,78 +698,22 @@ impl<'a> IntermediateConnectionParameters<'a> {
             use_external_ip: self.params.network.use_external_ip as u8,
             connection_timeout_millis: self.params.network.connection_timeout_millis,
             default_command_timeout_millis: self.params.network.default_command_timeout_millis,
-
             ..Worker_NetworkParameters::default()
         };
 
         let network = match &self.protocol {
-            IntermediateProtocolType::Tcp(tcp) => Worker_NetworkParameters {
-                connection_type: Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_TCP
+            IntermediateProtocolType::Kcp(kcp) => Worker_NetworkParameters {
+                connection_type: Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_KCP
                     as u8,
-                tcp: *tcp,
-
+                modular_kcp: *kcp,
                 ..partial_network_params
             },
-
-            IntermediateProtocolType::Udp {
-                security_type,
-                kcp,
-                erasure_codec,
-                heartbeat,
-                flow_control,
-                compression,
-            } => {
-                let kcp = kcp
-                    .as_ref()
-                    .map(|param| param as *const _)
-                    .unwrap_or(ptr::null());
-
-                let erasure_codec = erasure_codec
-                    .as_ref()
-                    .map(|param| param as *const _)
-                    .unwrap_or(ptr::null());
-
-                let heartbeat = heartbeat
-                    .as_ref()
-                    .map(|param| param as *const _)
-                    .unwrap_or(ptr::null());
-
-                let flow_control = flow_control
-                    .as_ref()
-                    .map(|param| param as *const _)
-                    .unwrap_or(ptr::null());
-
-                let compression = compression
-                    .as_ref()
-                    .map(|param| param as *const _)
-                    .unwrap_or(ptr::null());
-
-                Worker_NetworkParameters {
-                    connection_type:
-                        Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_UDP
-                            as u8,
-
-                    modular_udp: Worker_Alpha_ModularUdpNetworkParameters {
-                        security_type: *security_type,
-
-                        downstream_kcp: kcp,
-                        upstream_kcp: kcp,
-
-                        downstream_erasure_codec: erasure_codec,
-                        upstream_erasure_codec: erasure_codec,
-
-                        downstream_heartbeat: heartbeat,
-                        upstream_heartbeat: heartbeat,
-
-                        downstream_compression: compression,
-                        upstream_compression: compression,
-
-                        flow_control,
-                    },
-
-                    ..partial_network_params
-                }
-            }
+            IntermediateProtocolType::Tcp(tcp) => Worker_NetworkParameters {
+                connection_type: Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_TCP
+                    as u8,
+                modular_tcp: *tcp,
+                ..partial_network_params
+            },
         };
 
         Worker_ConnectionParameters {
@@ -512,15 +722,14 @@ impl<'a> IntermediateConnectionParameters<'a> {
             send_queue_capacity: self.params.send_queue_capacity,
             receive_queue_capacity: self.params.receive_queue_capacity,
             log_message_queue_capacity: self.params.log_message_queue_capacity,
-            built_in_metrics_report_period_millis: self
-                .params
-                .built_in_metrics_report_period_millis,
+            built_in_metrics_report_period_millis: self.params.built_in_metrics_report_period_millis,
             protocol_logging: self.params.protocol_logging.to_worker_sdk(),
-            enable_protocol_logging_at_startup: self.params.enable_protocol_logging_at_startup
-                as u8,
+            enable_protocol_logging_at_startup: self.params.enable_protocol_logging_at_startup as u8,
+            logsink_count: self.params.logsinks.len() as u32,
+            logsinks: logsinks_to_worker_sdk(&self.params.logsinks),
+            enable_logging_at_startup: 0,
             enable_dynamic_components: 0,
             thread_affinity: self.params.thread_affinity.to_worker_sdk(),
-
             component_vtable_count: 0,
             component_vtables: ptr::null(),
             default_component_vtable: default_vtable,
@@ -529,14 +738,6 @@ impl<'a> IntermediateConnectionParameters<'a> {
 }
 
 enum IntermediateProtocolType {
-    Tcp(Worker_TcpNetworkParameters),
-
-    Udp {
-        security_type: u8,
-        kcp: Option<Worker_Alpha_KcpParameters>,
-        erasure_codec: Option<Worker_ErasureCodecParameters>,
-        heartbeat: Option<Worker_HeartbeatParameters>,
-        flow_control: Option<Worker_Alpha_FlowControlParameters>,
-        compression: Option<Worker_Alpha_CompressionParameters>,
-    },
+    Kcp(Worker_ModularKcpNetworkParameters),
+    Tcp(Worker_ModularTcpNetworkParameters),
 }
