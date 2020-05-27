@@ -20,27 +20,36 @@ use std::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum SpatialWorkerSdkPackage {
     CHeaders,
-    CApiWin,
-    CApiMac,
-    CApiLinux,
+    CApiWinStatic,
+    CApiMacStatic,
+    CApiLinuxStatic,
+    CApiWinDynamic,
+    CApiMacDynamic,
+    CApiLinuxDynamic,
 }
 
 impl SpatialWorkerSdkPackage {
     fn package_name(self) -> &'static str {
         match self {
             SpatialWorkerSdkPackage::CHeaders => "c_headers",
-            SpatialWorkerSdkPackage::CApiWin => "c-static-x86_64-vc141_mt-win32",
-            SpatialWorkerSdkPackage::CApiMac => "c-static-x86_64-clang-macos",
-            SpatialWorkerSdkPackage::CApiLinux => "c-static-x86_64-gcc510_pic-linux",
+            SpatialWorkerSdkPackage::CApiWinDynamic => "c-dynamic-x86_64-vc141_md-win32",
+            SpatialWorkerSdkPackage::CApiWinStatic => "c-static-x86_64-vc141_md-win32",
+            SpatialWorkerSdkPackage::CApiMacDynamic => "c-dynamic-x86_64-clang-macos",
+            SpatialWorkerSdkPackage::CApiMacStatic => "c-static-x86_64-clang-macos",
+            SpatialWorkerSdkPackage::CApiLinuxDynamic => "c-dynamic-x86_64-gcc510-linux",
+            SpatialWorkerSdkPackage::CApiLinuxStatic => "c-static-x86_64-gcc510_pic-linux",
         }
     }
 
     fn relative_target_directory(self) -> &'static str {
         match self {
             SpatialWorkerSdkPackage::CHeaders => "headers",
-            SpatialWorkerSdkPackage::CApiWin => "win",
-            SpatialWorkerSdkPackage::CApiMac => "macos",
-            SpatialWorkerSdkPackage::CApiLinux => "linux",
+            SpatialWorkerSdkPackage::CApiWinDynamic => "win",
+            SpatialWorkerSdkPackage::CApiWinStatic => "win",
+            SpatialWorkerSdkPackage::CApiMacDynamic => "macos",
+            SpatialWorkerSdkPackage::CApiMacStatic => "macos",
+            SpatialWorkerSdkPackage::CApiLinuxDynamic => "linux",
+            SpatialWorkerSdkPackage::CApiLinuxStatic => "linux",
         }
     }
 }
@@ -127,11 +136,19 @@ impl SpatialPackageSource {
 }
 
 // TODO: Allow users to specify which ones of these want? Linux is always required.
-static COMMON_PACKAGES: &[SpatialPackageSource] = &[
+static COMMON_STATIC_PACKAGES: &[SpatialPackageSource] = &[
     SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CHeaders),
-    SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiLinux),
-    SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiWin),
-    SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiMac),
+    SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiLinuxStatic),
+    SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiWinStatic),
+    SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiMacStatic),
+    SpatialPackageSource::Schema(SpatialSchemaPackage::StandardLibrary),
+];
+
+static COMMON_DYNAMIC_PACKAGES: &[SpatialPackageSource] = &[
+    SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CHeaders),
+    SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiLinuxDynamic),
+    SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiWinDynamic),
+    SpatialPackageSource::WorkerSdk(SpatialWorkerSdkPackage::CApiMacDynamic),
     SpatialPackageSource::Schema(SpatialSchemaPackage::StandardLibrary),
 ];
 
@@ -217,8 +234,14 @@ pub fn download_sdk(
     })?;
     trace!("Spatial lib directory cleaned.");
 
-    for package in COMMON_PACKAGES {
-        download_package(*package, &spatial_sdk_version, &spatial_lib_dir)?;
+    if options.dynamic {
+        for package in COMMON_DYNAMIC_PACKAGES {
+            download_package(*package, &spatial_sdk_version, &spatial_lib_dir)?;
+        }
+    } else {
+        for package in COMMON_STATIC_PACKAGES {
+            download_package(*package, &spatial_sdk_version, &spatial_lib_dir)?;
+        }
     }
 
     for package in PLATFORM_PACKAGES {

@@ -1,9 +1,13 @@
 use std::env;
 use std::path::Path;
 
-#[cfg(windows)]
+#[cfg(all(windows, feature = "dynamic"))]
+const LIBS: [&str; 1] = ["improbable_worker"];
+#[cfg(all(windows, not(feature = "dynamic")))]
 const LIBS: [&str; 4] = ["improbable_worker", "RakNetLibStatic", "ssl", "zlibstatic"];
-#[cfg(unix)]
+#[cfg(all(unix, feature = "dynamic"))]
+const LIBS: [&str; 1] = ["improbable_worker"];
+#[cfg(all(unix, not(feature = "dynamic")))]
 const LIBS: [&str; 4] = ["improbable_worker", "RakNetLibStatic", "ssl", "z"];
 
 #[cfg(target_os = "linux")]
@@ -24,7 +28,7 @@ fn main() {
     println!("cargo:rustc-link-search={}", package_dir.to_str().unwrap());
 
     for lib in LIBS.iter() {
-        println!("cargo:rustc-link-lib=static={}", lib)
+        println!("cargo:rustc-link-lib=dylib={}", lib)
     }
 
     #[cfg(target_os = "macos")]

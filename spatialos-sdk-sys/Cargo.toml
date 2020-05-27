@@ -10,3 +10,7 @@ links = "worker"
 build = "build.rs"
 
 [dependencies]
+
+[features]
+default = []
+dynamic = []
