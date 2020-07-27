@@ -241,7 +241,7 @@ impl WorkerConnection {
 
             let sdk_attr = Worker_Connection_GetWorkerAttributes(connection_ptr);
 
-            let attributes = if (*sdk_attr).attributes.is_null() {
+            let attributes = if cstr.to_bytes().len() == 0 || (*sdk_attr).attributes.is_null() {
                 Vec::new()
             } else {
                 ::std::slice::from_raw_parts(

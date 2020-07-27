@@ -103,6 +103,10 @@ pub struct DownloadSdk {
     #[structopt(long, short)]
     pub sdk_version: Option<String>,
 
+    // Specify if you want to download dynamic libs
+    #[structopt(long, short)]
+    pub dynamic: bool,
+
     /// Downloads the exhaustive test schema.
     #[structopt(long, short)]
     pub with_test_schema: bool,
