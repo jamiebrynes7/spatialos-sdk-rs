@@ -102,7 +102,9 @@ impl ObjectField for <#= component_name #> {
 pub struct <#= update_name #> {<#
     for field in &component_fields {
     #>
-    pub <#= field.name #>: Option<<#= self.generate_field_type(field) #>>,<# } #>
+    pub <#= field.name #>: Option<<#= self.generate_field_type(field) #>>,<# } #><#
+    for event in &component.events { #>
+    pub <#= event.name #>: Vec<<#= self.rust_fqname(&event.type_reference) #>>, <# } #>
 }
 
 impl Update for <#= update_name #> {
@@ -111,19 +113,25 @@ impl Update for <#= update_name #> {
     fn from_schema(update: &SchemaComponentUpdate) -> Result<Self> {
         Ok(Self {<#
             for field in &component_fields {#>
-            <#= field.name #>: <#= self.deserialize_update_field(field, "update") #>,<# } #>
+            <#= field.name #>: <#= self.deserialize_update_field(field, "update") #>,<# } #><#
+            for event in &component.events { #>
+            <#= event.name #> : <#= self.deserialize_update_event(event, "update") #>,<# } #>
         })
     }
 
     fn into_schema(&self, update: &mut SchemaComponentUpdate) {<#
-        for field in &component_fields {#>
-        <#= self.serialize_update_field(field, "update") #>;<# } #>
+        for field in &component_fields { #>
+        <#= self.serialize_update_field(field, "update") #>;<# } #><#
+        for event in &component.events { #>
+        <#= self.serialize_update_event(event, "update") #> <# } #>
     }
 
-    fn merge(&mut self, update: Self) {<#
+    fn merge(&mut self, mut update: Self) {<#
         for field in &component_fields {
         #>
-        if update.<#= field.name #>.is_some() { self.<#= field.name #> = update.<#= field.name #>; }<# } #>
+        if update.<#= field.name #>.is_some() { self.<#= field.name #> = update.<#= field.name #>; }<# } #><#
+        for event in &component.events { #>
+        self.<#= event.name #>.append(&mut update.<#= event.name #>);<# } #>
     }
 }
 
@@ -214,6 +222,16 @@ impl Component for <#= component_name #> {
         for field in &component_fields {
         #>
         if let Some(value) = update.<#= field.name #> { self.<#= field.name #> = value; }<# } #>
+    }
+
+    fn merge_update_ref(&mut self, update: &Self::Update) {
+        let copy = <#= update_name #> {<# for field in &component_fields { #>
+            <#= field.name #>: update.<#= field.name #><#= if self.field_needs_clone(&field) { ".clone()" } else { "" } #>,<# } #><#
+            for event in &component.events { #>
+            <#= event.name #>: Vec::new(),<# } #>
+        };
+
+        self.merge_update(copy);
     }
 }
 <# } #>

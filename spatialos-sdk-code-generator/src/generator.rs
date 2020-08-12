@@ -285,6 +285,29 @@ impl Package {
         false
     }
 
+    fn field_needs_clone(&self, field: &FieldDefinition) -> bool {
+        match field.field_type {
+            FieldDefinition_FieldType::Singular { ref type_reference } => {
+                self.type_needs_clone(type_reference)
+            }
+            FieldDefinition_FieldType::Option { ref inner_type } => {
+                self.type_needs_clone(inner_type)
+            }
+            FieldDefinition_FieldType::List { .. } | FieldDefinition_FieldType::Map { .. } => true,
+        }
+    }
+
+    fn type_needs_clone(&self, type_ref: &TypeReference) -> bool {
+        match type_ref {
+            TypeReference::Primitive(ref primitive) => match primitive {
+                PrimitiveType::String | PrimitiveType::Bytes | PrimitiveType::Entity => true,
+                _ => false,
+            },
+            TypeReference::Enum(_) => false,
+            TypeReference::Type(_) => true,
+        }
+    }
+
     // Generates an expression which serializes a field from an expression into a schema object. The generated
     // expression should always have type ().
     fn serialize_field(&self, field: &FieldDefinition, schema_object: &str) -> String {
@@ -316,6 +339,19 @@ impl Package {
         )
     }
 
+    fn deserialize_update_event(
+        &self,
+        event: &ComponentDefinition_EventDefinition,
+        update: &str,
+    ) -> String {
+        format!(
+            "(0..update.events().object_count({event_index})).map(|i| {}.get_event::<{}>({event_index}, i)).collect::<Result<_>>()?",
+            update,
+            self.rust_fqname(&event.type_reference),
+            event_index = event.event_index
+        )
+    }
+
     fn serialize_update_field(&self, field: &FieldDefinition, update: &str) -> String {
         format!(
             "{}.add_field::<{}>({}, &self.{})",
@@ -323,6 +359,20 @@ impl Package {
             self.field_type_name(&field.field_type),
             field.field_id,
             field.name,
+        )
+    }
+
+    fn serialize_update_event(
+        &self,
+        event: &ComponentDefinition_EventDefinition,
+        update: &str,
+    ) -> String {
+        format!(
+            "for ev in &self.{} {{ {}.add_event::<{}>({}, ev); }}",
+            event.name,
+            update,
+            self.rust_fqname(&event.type_reference),
+            event.event_index
         )
     }
 }
