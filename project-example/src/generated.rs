@@ -834,6 +834,18 @@ impl ObjectField for EdgeLength {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ShardedMap {
+}
+impl ObjectField for ShardedMap {
+    fn from_object(input: &SchemaObject) -> Result<Self> {
+        Ok(Self {
+        })
+    }
+    fn into_object(&self, output: &mut SchemaObject) {
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct WorkerAttributeSet {
     pub attribute: Vec<String>,
 }
