@@ -4,13 +4,16 @@
         <strong>An integration of the SpatialOS C API and the Rust programming language.</strong>
     </p>
     <p>
-        <a href="https://deps.rs/repo/github/jamiebrynes7/spatialos-sdk-rs"><img src="https://deps.rs/repo/github/jamiebrynes7/spatialos-sdk-rs/status.svg"/></a>
         <img src="https://img.shields.io/badge/rustc-1.39-blue.svg"/>
+        <a href="https://codecov.io/gh/jamiebrynes7/spatialos-sdk-rs">
+          <img src="https://codecov.io/gh/jamiebrynes7/spatialos-sdk-rs/branch/master/graph/badge.svg" />
+        </a>
+        <img src="https://github.com/jamiebrynes7/spatialos-sdk-rs/workflows/premerge/badge.svg">
     </p>
 </div>
 
 
-> **Note**: This is an **unofficial** integration of the [SpatialOS C API ](https://docs.improbable.io/reference/latest/capi/introduction) with Rust. Improbable does not officially support Rust as a worker language.
+> **Note**: This is an **unofficial** integration of the [SpatialOS C API](https://docs.improbable.io/reference/latest/capi/introduction) with Rust. Improbable does not officially support Rust as a worker language.
 
 # Quick start
 
@@ -20,6 +23,7 @@ To develop in this repository you'll need:
 
 1. Rust v1.39
 2. A [SpatialOS account](https://www.improbable.io/get-spatialos) 
+3. The [Spatial CLI](https://documentation.improbable.io/spatialos-tools/docs/cli-introduction) installed and available on your PATH.
 
 ## Setup
 
