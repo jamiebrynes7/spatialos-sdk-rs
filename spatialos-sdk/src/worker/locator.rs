@@ -4,9 +4,8 @@ use std::ptr;
 use spatialos_sdk_sys::worker::*;
 
 use crate::worker::{
+    logging::*,
     parameters::ProtocolLoggingParameters,
-    parameters::LogsinkParameters,
-    parameters::logsinks_to_worker_sdk,
     utils::cstr_to_string,
     worker_future::{WorkerFuture, WorkerSdkFuture},
 };
@@ -19,8 +18,8 @@ impl Locator {
     pub fn new<T: Into<Vec<u8>>>(hostname: T, port: u16, params: &LocatorParameters) -> Self {
         unsafe {
             let hostname = CString::new(hostname).unwrap();
-            let worker_params = params.to_worker_sdk();
-            let ptr = Worker_Locator_Create(hostname.as_ptr(), port, &worker_params);
+            let worker_params = params.flatten();
+            let ptr = Worker_Locator_Create(hostname.as_ptr(), port, &worker_params.as_raw());
             assert!(!ptr.is_null());
             Locator { locator: ptr }
         }
@@ -61,22 +60,16 @@ pub struct LocatorParameters {
 }
 
 impl LocatorParameters {
-    fn to_worker_sdk(&self) -> Worker_LocatorParameters {
-        Worker_LocatorParameters {
-            project_name: ::std::ptr::null(),
-            credentials_type:
-                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_PLAYER_IDENTITY_CREDENTIALS as u8,
-            login_token: Worker_LoginTokenCredentials::default(),
-            steam: Worker_SteamCredentials::default(),
-            player_identity: self.credentials.to_worker_sdk(),
-            use_insecure_connection: self.use_insecure_connection as u8,
-            logging: match self.logging {
-                Some(ref params) => params.to_worker_sdk(),
-                None => ProtocolLoggingParameters::default().to_worker_sdk(),
-            },
-            enable_logging: self.logging.is_some() as u8,
-            logsink_count: self.logsinks.len() as u32,
-            logsinks: logsinks_to_worker_sdk(&self.logsinks),
+    fn flatten(&self) -> IntermediateLocatorParameters<'_> {
+        let logsinks = self
+            .logsinks
+            .iter()
+            .map(LogsinkParameters::to_worker_sdk)
+            .collect::<Vec<Worker_LogsinkParameters>>();
+
+        IntermediateLocatorParameters {
+            params: self,
+            logsinks,
         }
     }
 
@@ -101,6 +94,34 @@ impl LocatorParameters {
     pub fn with_logging_params(mut self, params: ProtocolLoggingParameters) -> Self {
         self.logging = Some(params);
         self
+    }
+}
+
+struct IntermediateLocatorParameters<'a> {
+    params: &'a LocatorParameters,
+    logsinks: Vec<Worker_LogsinkParameters>,
+}
+
+impl<'a> IntermediateLocatorParameters<'a> {
+    fn as_raw(&self) -> Worker_LocatorParameters {
+        Worker_LocatorParameters {
+            project_name: ::std::ptr::null(),
+            credentials_type:
+                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_PLAYER_IDENTITY_CREDENTIALS as u8,
+            login_token: Worker_LoginTokenCredentials::default(),
+            steam: Worker_SteamCredentials::default(),
+            player_identity: self.params.credentials.to_worker_sdk(),
+            use_insecure_connection: self.params.use_insecure_connection as u8,
+            logging: self
+                .params
+                .logging
+                .as_ref()
+                .unwrap_or(&ProtocolLoggingParameters::default())
+                .to_worker_sdk(),
+            enable_logging: self.params.logging.is_some() as u8,
+            logsink_count: self.logsinks.len() as u32,
+            logsinks: self.logsinks.as_ptr(),
+        }
     }
 }
 

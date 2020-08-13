@@ -4,6 +4,7 @@ pub mod connection;
 pub mod entity;
 pub mod entity_builder;
 pub mod locator;
+pub mod logging;
 pub mod metrics;
 pub mod op;
 pub mod parameters;

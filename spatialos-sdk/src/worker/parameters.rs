@@ -1,3 +1,4 @@
+use crate::worker::logging::LogsinkParameters;
 use spatialos_sdk_sys::worker::*;
 use std::{
     ffi::{CStr, CString},
@@ -86,192 +87,18 @@ impl ConnectionParameters {
             ProtocolType::Tcp(params) => IntermediateProtocolType::Tcp(params.to_worker_sdk()),
         };
 
+        let logsinks = self
+            .logsinks
+            .iter()
+            .map(LogsinkParameters::to_worker_sdk)
+            .collect::<Vec<Worker_LogsinkParameters>>();
+
         IntermediateConnectionParameters {
             params: self,
             protocol,
+            logsinks,
         }
     }
-}
-
-#[repr(u8)]
-#[derive(Copy, Clone)]
-pub enum LogsinkType {
-    RotatingFile = Worker_LogsinkType_WORKER_LOGSINK_TYPE_ROTATING_FILE as u8,
-    Callback = Worker_LogsinkType_WORKER_LOGSINK_TYPE_CALLBACK as u8,
-    Stdout = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDOUT as u8,
-    StdoutANSI = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDOUT_ANSI as u8,
-    Stderr = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDERR as u8,
-    StderrANSI = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDERR_ANSI as u8,
-}
-
-bitflags! {
-    pub struct LogCategory: u32 {
-        const Receive         = 0x01;
-        const Send            = 0x02;
-        const NetworkStatus   = 0x04;
-        const NetworkTraffic  = 0x08;
-        const Login           = 0x10;
-        const API             = 0x20;
-        const All             = 0x3f;
-    }
-}
-
-#[repr(u8)]
-#[derive(Copy, Clone)]
-pub enum LogLevel {
-    Debug = Worker_LogLevel_WORKER_LOG_LEVEL_DEBUG as u8,
-    Info = Worker_LogLevel_WORKER_LOG_LEVEL_INFO as u8,
-    Warn = Worker_LogLevel_WORKER_LOG_LEVEL_WARN as u8,
-    Error = Worker_LogLevel_WORKER_LOG_LEVEL_ERROR as u8,
-    Fatal = Worker_LogLevel_WORKER_LOG_LEVEL_FATAL as u8,
-}
-
-pub type LogFilter = fn(
-    categories: LogCategory,
-    level: LogLevel,
-) -> bool;
-
-pub struct LogFilterParameters {
-    pub categories: LogCategory,
-    pub level: LogLevel,
-    pub callback: Option<LogFilter>
-}
-
-impl LogFilterParameters {
-    pub fn default() -> Self {
-        LogFilterParameters {
-            categories: LogCategory::All,
-            level: LogLevel::Error,
-            callback: None
-        }
-    }
-
-    pub(crate) fn to_worker_sdk(&self) -> Worker_LogFilterParameters {
-        Worker_LogFilterParameters {
-            categories: self.categories.bits,
-            level: self.level as u8,
-            callback: match self.callback {
-                Some(_callback) => Some(worker_log_filter_callback),
-                None => None
-            },
-            user_data: unsafe { ::std::mem::transmute(self) }
-        }
-    }
-}
-
-#[no_mangle]
-pub extern fn worker_log_filter_callback(user_data: *mut ::std::os::raw::c_void,
-                                         categories: u32, level: Worker_LogLevel) -> u8 {
-    unsafe {
-        let params: &mut LogFilterParameters = &mut *(user_data as *mut LogFilterParameters);
-        match params.callback {
-            Some(callback) =>
-                callback(LogCategory::from_bits_unchecked(categories),
-                         ::std::mem::transmute(level as u8)) as u8,
-            _ => 0
-        }
-    }
-}
-
-pub struct LogData<'a> {
-    pub timestamp: &'a CStr,
-    pub categories: LogCategory,
-    pub log_level: LogLevel,
-    pub content: &'a CStr
-}
-
-pub type LogCallback = fn(message: LogData);
-
-pub struct LogCallbackParameters {
-    pub log_callback: Option<LogCallback>
-}
-
-impl LogCallbackParameters {
-    pub fn default() -> Self {
-        LogCallbackParameters {
-            log_callback: None
-        }
-    }
-
-    pub(crate) fn to_worker_sdk(&self) -> Worker_LogCallbackParameters {
-        Worker_LogCallbackParameters {
-            log_callback: match self.log_callback {
-                Some(_callback) => Some(worker_log_callback),
-                None => None
-            },
-            user_data: unsafe { ::std::mem::transmute(self) }
-        }
-    }
-}
-
-#[no_mangle]
-pub extern fn worker_log_callback(user_data: *mut ::std::os::raw::c_void, message: *const Worker_LogData) {
-    unsafe {
-        let params: &mut LogCallbackParameters = &mut *(user_data as *mut LogCallbackParameters);
-        match params.log_callback {
-            Some(callback) =>
-                callback(LogData {
-                    timestamp: CStr::from_ptr((*message).timestamp),
-                    categories: LogCategory::from_bits_unchecked((*message).categories),
-                    log_level: ::std::mem::transmute((*message).log_level),
-                    content: CStr::from_ptr((*message).content)
-                }),
-            _ => ()
-        };
-    }
-}
-
-pub struct RotatingLogFileParameters {
-    pub log_prefix: CString,
-    pub max_log_files: u32,
-    pub max_log_file_size_bytes: u32,
-}
-
-impl RotatingLogFileParameters {
-    pub fn default() -> Self {
-        RotatingLogFileParameters {
-            log_prefix: Default::default(),
-            max_log_files: 0,
-            max_log_file_size_bytes: 0
-        }
-    }
-
-    pub(crate) fn to_worker_sdk(&self) -> Worker_RotatingLogFileParameters {
-        Worker_RotatingLogFileParameters {
-            log_prefix: self.log_prefix.as_ptr(),
-            max_log_files: self.max_log_files,
-            max_log_file_size_bytes: self.max_log_file_size_bytes
-        }
-    }
-}
-
-pub struct LogsinkParameters {
-    pub logsink_type: LogsinkType,
-    pub filter_parameters: LogFilterParameters,
-    pub rotating_logfile_parameters : RotatingLogFileParameters,
-    pub log_callback_parameters: LogCallbackParameters,
-}
-
-impl LogsinkParameters {
-    pub fn default() -> Self {
-        LogsinkParameters {
-            logsink_type: LogsinkType::Stdout,
-            filter_parameters: LogFilterParameters::default(),
-            rotating_logfile_parameters: RotatingLogFileParameters::default(),
-            log_callback_parameters: LogCallbackParameters {
-                log_callback: None
-            },
-        }
-    }
-}
-
-pub fn logsinks_to_worker_sdk(logsinks: &Vec<LogsinkParameters>) -> *const Worker_LogsinkParameters {
-    logsinks.iter().map(|s| Worker_LogsinkParameters {
-        logsink_type: s.logsink_type as u8,
-        filter_parameters: s.filter_parameters.to_worker_sdk(),
-        rotating_logfile_parameters: s.rotating_logfile_parameters.to_worker_sdk(),
-        log_callback_parameters: s.log_callback_parameters.to_worker_sdk(),
-    }).collect::<Vec<Worker_LogsinkParameters>>().as_ptr()
 }
 
 pub enum ProtocolType {
@@ -296,8 +123,6 @@ impl NetworkParameters {
         }
     }
 }
-
-// KCP
 
 pub struct ModularKcpNetworkParameters {
     pub security_type: SecurityType,
@@ -338,31 +163,31 @@ impl ModularKcpNetworkParameters {
             upstream_kcp: self.upstream_kcp.to_worker_sdk(),
             downstream_erasure_codec: match &self.downstream_erasure_codec {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
             upstream_erasure_codec: match &self.upstream_erasure_codec {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
             downstream_heartbeat: match &self.downstream_heartbeat {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
             upstream_heartbeat: match &self.upstream_heartbeat {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
             downstream_compression: match &self.downstream_compression {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
             upstream_compression: match &self.upstream_compression {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
             flow_control: match &self.flow_control {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
         }
     }
@@ -435,30 +260,30 @@ impl ModularTcpNetworkParameters {
             upstream_tcp: self.upstream_tcp.to_worker_sdk(),
             downstream_heartbeat: match &self.downstream_heartbeat {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
             upstream_heartbeat: match &self.upstream_heartbeat {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
             downstream_compression: match &self.downstream_compression {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
             upstream_compression: match &self.upstream_compression {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
             flow_control: match &self.flow_control {
                 Some(x) => &x.to_worker_sdk(),
-                None => 0 as *const _
+                None => ::std::ptr::null(),
             },
         }
     }
 }
 
 pub struct TcpTransportParameters {
-    pub flush_delay_millis: u32
+    pub flush_delay_millis: u32,
 }
 
 impl TcpTransportParameters {
@@ -470,7 +295,7 @@ impl TcpTransportParameters {
 
     pub(crate) fn to_worker_sdk(&self) -> Worker_TcpTransportParameters {
         Worker_TcpTransportParameters {
-            flush_delay_millis: self.flush_delay_millis
+            flush_delay_millis: self.flush_delay_millis,
         }
     }
 }
@@ -490,15 +315,11 @@ impl Default for SecurityType {
     }
 }
 
-pub struct CompressionParameters {
-
-}
+pub struct CompressionParameters {}
 
 impl CompressionParameters {
     pub(crate) fn to_worker_sdk(&self) -> Worker_CompressionParameters {
-        Worker_CompressionParameters {
-            place_holder: 0
-        }
+        Worker_CompressionParameters { place_holder: 0 }
     }
 }
 
@@ -687,6 +508,7 @@ impl ThreadAffinityParameters {
 pub(crate) struct IntermediateConnectionParameters<'a> {
     params: &'a ConnectionParameters,
     protocol: IntermediateProtocolType,
+    logsinks: Vec<Worker_LogsinkParameters>,
 }
 
 impl<'a> IntermediateConnectionParameters<'a> {
@@ -703,14 +525,14 @@ impl<'a> IntermediateConnectionParameters<'a> {
 
         let network = match &self.protocol {
             IntermediateProtocolType::Kcp(kcp) => Worker_NetworkParameters {
-                connection_type: Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_KCP
-                    as u8,
+                connection_type:
+                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_KCP as u8,
                 modular_kcp: *kcp,
                 ..partial_network_params
             },
             IntermediateProtocolType::Tcp(tcp) => Worker_NetworkParameters {
-                connection_type: Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_TCP
-                    as u8,
+                connection_type:
+                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_TCP as u8,
                 modular_tcp: *tcp,
                 ..partial_network_params
             },
@@ -722,13 +544,16 @@ impl<'a> IntermediateConnectionParameters<'a> {
             send_queue_capacity: self.params.send_queue_capacity,
             receive_queue_capacity: self.params.receive_queue_capacity,
             log_message_queue_capacity: self.params.log_message_queue_capacity,
-            built_in_metrics_report_period_millis: self.params.built_in_metrics_report_period_millis,
+            built_in_metrics_report_period_millis: self
+                .params
+                .built_in_metrics_report_period_millis,
             protocol_logging: self.params.protocol_logging.to_worker_sdk(),
-            enable_protocol_logging_at_startup: self.params.enable_protocol_logging_at_startup as u8,
-            logsink_count: self.params.logsinks.len() as u32,
-            logsinks: logsinks_to_worker_sdk(&self.params.logsinks),
-            enable_logging_at_startup: 0,
-            enable_dynamic_components: 0,
+            enable_protocol_logging_at_startup: self.params.enable_protocol_logging_at_startup
+                as u8,
+            logsink_count: self.logsinks.len() as u32,
+            logsinks: self.logsinks.as_ptr(),
+            enable_logging_at_startup: self.params.enable_logging_at_startup as u8,
+            enable_dynamic_components: self.params.enable_dynamic_components as u8,
             thread_affinity: self.params.thread_affinity.to_worker_sdk(),
             component_vtable_count: 0,
             component_vtables: ptr::null(),
