@@ -44,7 +44,20 @@ pub trait WorkerSdkFuture: Send + Unpin + 'static {
     type Output: Send;
 
     fn start(&self) -> *mut Self::RawPointer;
+
+    /// This method corresponds to the Worker_{Type}_Get C API call which _blocks_
+    /// until the future returns.
+    ///
+    /// # Safety
+    ///
+    /// This method should only be called once. Calling it more than once is an error.
     unsafe fn get(ptr: *mut Self::RawPointer) -> Self::Output;
+
+    /// This method corresponds to the Worker_{Type}_Destroy C API call which cancels
+    /// and disposes the native future.
+    ///
+    /// # Safety
+    /// This method should only be called once. Calling it more than once is an error.
     unsafe fn destroy(ptr: *mut Self::RawPointer);
 }
 
