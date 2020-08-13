@@ -8,7 +8,7 @@
         <a href="https://codecov.io/gh/jamiebrynes7/spatialos-sdk-rs">
           <img src="https://codecov.io/gh/jamiebrynes7/spatialos-sdk-rs/branch/master/graph/badge.svg" />
         </a>
-        <img src="https://github.com/jamiebrynes7/spatialos-sdk-rs/workflows/premerge/badge.svg">
+        <img src="https://github.com/jamiebrynes7/spatialos-sdk-rs/workflows/Premerge/badge.svg">
     </p>
 </div>
 
@@ -21,7 +21,7 @@
 
 To develop in this repository you'll need:
 
-1. Rust v1.39
+1. Rust v1.40
 2. A [SpatialOS account](https://www.improbable.io/get-spatialos) 
 3. The [Spatial CLI](https://documentation.improbable.io/spatialos-tools/docs/cli-introduction) installed and available on your PATH.
 
