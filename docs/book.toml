@@ -1,0 +1,6 @@
+[book]
+authors = ["Jamie Brynes"]
+language = "en"
+multilingual = false
+src = "src"
+title = "SpatialOS SDK for Rust"
