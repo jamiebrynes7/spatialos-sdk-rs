@@ -4,7 +4,7 @@
         <strong>An integration of the SpatialOS C API and the Rust programming language.</strong>
     </p>
     <p>
-        <img src="https://img.shields.io/badge/rustc-1.39-blue.svg"/>
+        <img src="https://img.shields.io/badge/rustc-1.40-blue.svg"/>
         <a href="https://codecov.io/gh/jamiebrynes7/spatialos-sdk-rs">
           <img src="https://codecov.io/gh/jamiebrynes7/spatialos-sdk-rs/branch/master/graph/badge.svg" />
         </a>
