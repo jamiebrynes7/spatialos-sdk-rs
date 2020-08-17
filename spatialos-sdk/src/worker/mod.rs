@@ -83,43 +83,6 @@ impl From<u8> for Authority {
         }
     }
 }
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd)]
-pub enum LogLevel {
-    Debug,
-    Info,
-    Warn,
-    Error,
-    Fatal,
-}
-
-impl LogLevel {
-    fn to_worker_sdk(self) -> u8 {
-        match self {
-            LogLevel::Debug => 1,
-            LogLevel::Info => 2,
-            LogLevel::Warn => 3,
-            LogLevel::Error => 4,
-            LogLevel::Fatal => 5,
-        }
-    }
-}
-
-// TODO: Replace with TryFrom when it stabilises: https://github.com/rust-lang/rust/issues/33417
-impl From<u8> for LogLevel {
-    fn from(log_level: u8) -> Self {
-        match log_level {
-            1 => LogLevel::Debug,
-            2 => LogLevel::Info,
-            3 => LogLevel::Warn,
-            4 => LogLevel::Error,
-            5 => LogLevel::Fatal,
-            _ => {
-                eprintln!("Unknown log level: {}, returning Error.", log_level);
-                LogLevel::Error
-            }
-        }
-    }
-}
 
 pub struct InterestOverride {
     pub component_id: ComponentId,

@@ -3,12 +3,13 @@ use crate::worker::{
     commands::*,
     component::*,
     locator::*,
+    logging::LogLevel,
     metrics::Metrics,
     op::OpList,
     parameters::ConnectionParameters,
     utils::cstr_to_string,
     worker_future::{WorkerFuture, WorkerSdkFuture},
-    {EntityId, InterestOverride, LogLevel, RequestId},
+    {EntityId, InterestOverride, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
 use std::{
@@ -203,7 +204,9 @@ pub trait Connection {
 
     fn flush(&mut self);
 
-    fn set_protocol_logging_enabled(&mut self, enabled: bool);
+    fn enable_logging(&mut self);
+
+    fn disable_logging(&mut self);
 
     fn get_connection_status(&mut self) -> ConnectionStatus;
 
@@ -300,7 +303,7 @@ impl Connection for WorkerConnection {
 
         unsafe {
             let log_message = Worker_LogMessage {
-                level: level.to_worker_sdk(),
+                level: level as u8,
                 logger_name: logger_name.as_ptr(),
                 message: message.as_ptr(),
                 entity_id: match entity_id {
@@ -541,11 +544,19 @@ impl Connection for WorkerConnection {
         unsafe { Worker_Connection_Alpha_Flush(self.connection_ptr.get()) }
     }
 
-    fn set_protocol_logging_enabled(&mut self, enabled: bool) {
+    fn enable_logging(&mut self) {
         assert!(!self.connection_ptr.is_null());
 
         unsafe {
-            Worker_Connection_SetProtocolLoggingEnabled(self.connection_ptr.get(), enabled as u8);
+            Worker_Connection_EnableLogging(self.connection_ptr.get());
+        }
+    }
+
+    fn disable_logging(&mut self) {
+        assert!(!self.connection_ptr.is_null());
+
+        unsafe {
+            Worker_Connection_DisableLogging(self.connection_ptr.get());
         }
     }
 

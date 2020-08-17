@@ -1,18 +1,7 @@
 use crate::worker::utils::cstr_to_string;
+use bitflags::bitflags;
 use spatialos_sdk_sys::worker::*;
 use std::ffi::CString;
-use std::ptr;
-
-#[repr(u8)]
-#[derive(Copy, Clone)]
-pub enum LogsinkType {
-    RotatingFile = Worker_LogsinkType_WORKER_LOGSINK_TYPE_ROTATING_FILE as u8,
-    Callback = Worker_LogsinkType_WORKER_LOGSINK_TYPE_CALLBACK as u8,
-    Stdout = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDOUT as u8,
-    StdoutANSI = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDOUT_ANSI as u8,
-    Stderr = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDERR as u8,
-    StderrANSI = Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDERR_ANSI as u8,
-}
 
 bitflags! {
     pub struct LogCategory: u32 {
@@ -27,7 +16,7 @@ bitflags! {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd)]
 pub enum LogLevel {
     Debug = Worker_LogLevel_WORKER_LOG_LEVEL_DEBUG as u8,
     Info = Worker_LogLevel_WORKER_LOG_LEVEL_INFO as u8,
@@ -36,39 +25,54 @@ pub enum LogLevel {
     Fatal = Worker_LogLevel_WORKER_LOG_LEVEL_FATAL as u8,
 }
 
+impl From<u8> for LogLevel {
+    fn from(log_level: u8) -> Self {
+        match log_level {
+            1 => LogLevel::Debug,
+            2 => LogLevel::Info,
+            3 => LogLevel::Warn,
+            4 => LogLevel::Error,
+            5 => LogLevel::Fatal,
+            _ => {
+                eprintln!("Unknown log level: {}, returning Error.", log_level);
+                LogLevel::Error
+            }
+        }
+    }
+}
+
 pub type LogFilter = fn(categories: LogCategory, level: LogLevel) -> bool;
 
-pub struct LogFilterParameters {
-    pub categories: LogCategory,
-    pub level: LogLevel,
-    pub callback: Option<LogFilter>,
+pub enum LogFilterParameters {
+    Simple(LogCategory, LogLevel),
+    Callback(LogFilter),
 }
 
 impl LogFilterParameters {
     pub(crate) fn to_worker_sdk(&self) -> Worker_LogFilterParameters {
         // TODO: This currently leaks the callback pointer. This should live for the duration of the `Connection`.
-        let callback_ptr = self
-            .callback
-            .map(Box::new)
-            .map(Box::into_raw)
-            .map(|ptr| ptr as *mut ::std::os::raw::c_void);
+        match self {
+            LogFilterParameters::Simple(category, level) => Worker_LogFilterParameters {
+                categories: category.bits,
+                level: *level as u8,
+                ..Default::default()
+            },
+            LogFilterParameters::Callback(filter) => {
+                let callback_ptr = Box::into_raw(Box::new(*filter)) as *mut ::std::os::raw::c_void;
 
-        Worker_LogFilterParameters {
-            categories: self.categories.bits,
-            level: self.level as u8,
-            callback: self.callback.map(|_| worker_log_filter_callback as _),
-            user_data: callback_ptr.unwrap_or(ptr::null_mut()),
+                Worker_LogFilterParameters {
+                    callback: Some(worker_log_filter_callback),
+                    user_data: callback_ptr,
+                    ..Default::default()
+                }
+            }
         }
     }
 }
 
 impl Default for LogFilterParameters {
     fn default() -> Self {
-        LogFilterParameters {
-            categories: LogCategory::All,
-            level: LogLevel::Error,
-            callback: None,
-        }
+        LogFilterParameters::Simple(LogCategory::All, LogLevel::Error)
     }
 }
 
@@ -94,45 +98,6 @@ pub struct LogData {
     pub content: String,
 }
 
-pub type LogCallback = fn(message: LogData);
-
-#[derive(Default)]
-pub struct LogCallbackParameters {
-    pub log_callback: Option<LogCallback>,
-}
-
-impl LogCallbackParameters {
-    pub(crate) fn to_worker_sdk(&self) -> Worker_LogCallbackParameters {
-        // TODO: This currently leaks the callback pointer. This should live for the duration of the `Connection`.
-        let callback_ptr = self
-            .log_callback
-            .map(Box::new)
-            .map(Box::into_raw)
-            .map(|ptr| ptr as *mut ::std::os::raw::c_void);
-
-        Worker_LogCallbackParameters {
-            log_callback: self.log_callback.map(|_| worker_log_callback as _),
-            user_data: callback_ptr.unwrap_or(ptr::null_mut()),
-        }
-    }
-}
-
-#[no_mangle]
-unsafe extern "C" fn worker_log_callback(
-    user_data: *mut ::std::os::raw::c_void,
-    message: *const Worker_LogData,
-) {
-    let params: &mut LogCallbackParameters = &mut *(user_data as *mut LogCallbackParameters);
-    if let Some(callback) = params.log_callback {
-        callback(LogData {
-            timestamp: cstr_to_string((*message).timestamp),
-            categories: LogCategory::from_bits_unchecked((*message).categories),
-            log_level: ::std::mem::transmute((*message).log_level),
-            content: cstr_to_string((*message).content),
-        })
-    };
-}
-
 pub struct RotatingLogFileParameters {
     pub log_prefix: CString,
     pub max_log_files: u32,
@@ -140,14 +105,6 @@ pub struct RotatingLogFileParameters {
 }
 
 impl RotatingLogFileParameters {
-    pub fn default() -> Self {
-        RotatingLogFileParameters {
-            log_prefix: Default::default(),
-            max_log_files: 0,
-            max_log_file_size_bytes: 0,
-        }
-    }
-
     /// Sets the prefix string to be used for log file names.
     ///
     /// # Panics
@@ -185,11 +142,57 @@ impl RotatingLogFileParameters {
     }
 }
 
+impl Default for RotatingLogFileParameters {
+    fn default() -> Self {
+        RotatingLogFileParameters {
+            log_prefix: Default::default(),
+            max_log_files: 0,
+            max_log_file_size_bytes: 0,
+        }
+    }
+}
+
+pub type LogCallback = fn(message: LogData);
+
+#[no_mangle]
+unsafe extern "C" fn worker_log_callback(
+    user_data: *mut ::std::os::raw::c_void,
+    message: *const Worker_LogData,
+) {
+    let callback: &mut LogCallback = &mut *(user_data as *mut LogCallback);
+    callback(LogData {
+        timestamp: cstr_to_string((*message).timestamp),
+        categories: LogCategory::from_bits_unchecked((*message).categories),
+        log_level: ::std::mem::transmute((*message).log_level),
+        content: cstr_to_string((*message).content),
+    });
+}
+
+pub enum LogsinkType {
+    RotatingFile(RotatingLogFileParameters),
+    Callback(LogCallback),
+    Stdout,
+    StdoutAnsi,
+    Stderr,
+    StderrAnsi,
+}
+
+impl LogsinkType {
+    pub(crate) fn worker_sdk_type(&self) -> i32 {
+        match self {
+            LogsinkType::RotatingFile(_) => Worker_LogsinkType_WORKER_LOGSINK_TYPE_ROTATING_FILE,
+            LogsinkType::Callback(_) => Worker_LogsinkType_WORKER_LOGSINK_TYPE_CALLBACK,
+            LogsinkType::Stdout => Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDOUT,
+            LogsinkType::StdoutAnsi => Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDOUT_ANSI,
+            LogsinkType::Stderr => Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDERR,
+            LogsinkType::StderrAnsi => Worker_LogsinkType_WORKER_LOGSINK_TYPE_STDERR_ANSI,
+        }
+    }
+}
+
 pub struct LogsinkParameters {
-    pub logsink_type: LogsinkType,
     pub filter_parameters: LogFilterParameters,
-    pub rotating_logfile_parameters: RotatingLogFileParameters,
-    pub log_callback_parameters: LogCallbackParameters,
+    pub logsink_type: LogsinkType,
 }
 
 impl LogsinkParameters {
@@ -200,11 +203,29 @@ impl LogsinkParameters {
     /// The returned `Worker_RotatingLogFileParameters` borrows data owned by `self`,
     /// and therefore must not outlive `self`.
     pub fn to_worker_sdk(&self) -> Worker_LogsinkParameters {
+        let rotating_logfile_parameters = match self.logsink_type {
+            LogsinkType::RotatingFile(ref params) => params.to_worker_sdk(),
+            _ => Default::default(),
+        };
+
+        let log_callback_parameters = match self.logsink_type {
+            LogsinkType::Callback(callback) => {
+                // TODO: This currently leaks the callback pointer. This should live for the duration of the `Connection`.
+                let callback_ptr = Box::into_raw(Box::new(callback)) as *mut ::std::os::raw::c_void;
+
+                Worker_LogCallbackParameters {
+                    log_callback: Some(worker_log_callback),
+                    user_data: callback_ptr,
+                }
+            }
+            _ => Default::default(),
+        };
+
         Worker_LogsinkParameters {
-            logsink_type: self.logsink_type as u8,
+            logsink_type: self.logsink_type.worker_sdk_type() as u8,
             filter_parameters: self.filter_parameters.to_worker_sdk(),
-            rotating_logfile_parameters: self.rotating_logfile_parameters.to_worker_sdk(),
-            log_callback_parameters: self.log_callback_parameters.to_worker_sdk(),
+            rotating_logfile_parameters,
+            log_callback_parameters,
         }
     }
 }
@@ -214,8 +235,6 @@ impl Default for LogsinkParameters {
         LogsinkParameters {
             logsink_type: LogsinkType::Stdout,
             filter_parameters: LogFilterParameters::default(),
-            rotating_logfile_parameters: RotatingLogFileParameters::default(),
-            log_callback_parameters: LogCallbackParameters { log_callback: None },
         }
     }
 }

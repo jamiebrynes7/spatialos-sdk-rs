@@ -6,10 +6,21 @@ use spatialos_sdk::worker::{
         Locator, LocatorParameters, LoginTokensRequest, PlayerIdentityCredentials,
         PlayerIdentityTokenRequest,
     },
+    logging::{
+        LogCategory, LogData, LogFilterParameters, LogLevel, LogsinkParameters, LogsinkType,
+    },
     parameters::ConnectionParameters,
 };
 use std::error::Error;
 use uuid::Uuid;
+
+fn log(data: LogData) {
+    println!("[{:?}]: {}", data.log_level, data.content);
+}
+
+fn log_filter(_: LogCategory, level: LogLevel) -> bool {
+    level >= LogLevel::Info
+}
 
 pub async fn get_connection(opt: Opt) -> Result<WorkerConnection, Box<dyn Error>> {
     let Opt {
@@ -19,15 +30,20 @@ pub async fn get_connection(opt: Opt) -> Result<WorkerConnection, Box<dyn Error>
     } = opt;
 
     let worker_id = worker_id.unwrap_or_else(|| format!("{}-{}", &worker_type, Uuid::new_v4()));
+    let params = ConnectionParameters::new(&worker_type)
+        .using_kcp()
+        .with_logsink(LogsinkParameters {
+            logsink_type: LogsinkType::Callback(log),
+            filter_parameters: LogFilterParameters::Callback(log_filter),
+        });
+
     let future = match command {
         Command::Receptionist {
             host,
             port,
             connect_with_external_ip,
         } => {
-            let params = ConnectionParameters::new(worker_type)
-                .using_kcp()
-                .using_external_ip(connect_with_external_ip);
+            let params = params.using_external_ip(connect_with_external_ip);
             WorkerConnection::connect_receptionist(
                 &worker_id,
                 &host.unwrap_or_else(|| "127.0.0.1".into()),
@@ -48,12 +64,7 @@ pub async fn get_connection(opt: Opt) -> Result<WorkerConnection, Box<dyn Error>
                     login_token,
                 )),
             );
-            WorkerConnection::connect_locator(
-                locator,
-                ConnectionParameters::new(worker_type)
-                    .using_tcp()
-                    .using_external_ip(true),
-            )
+            WorkerConnection::connect_locator(locator, params.using_external_ip(true))
         }
 
         Command::DevelopmentAuthentication { dev_auth_token } => {
@@ -84,12 +95,7 @@ pub async fn get_connection(opt: Opt) -> Result<WorkerConnection, Box<dyn Error>
                 &LocatorParameters::new(credentials),
             );
 
-            WorkerConnection::connect_locator(
-                locator,
-                ConnectionParameters::new(worker_type)
-                    .using_tcp()
-                    .using_external_ip(true),
-            )
+            WorkerConnection::connect_locator(locator, params.using_external_ip(true))
         }
     };
 

@@ -28,10 +28,8 @@ impl ConnectionParameters {
         params
     }
 
-    pub fn with_protocol_logging<T: AsRef<str>>(mut self, log_prefix: T) -> Self {
-        self.enable_protocol_logging_at_startup = true;
-        self.protocol_logging.log_prefix =
-            CString::new(log_prefix.as_ref()).expect("`log_prefix` contained a null byte");
+    pub fn with_logsink(mut self, logsink_params: LogsinkParameters) -> Self {
+        self.logsinks.push(logsink_params);
         self
     }
 
@@ -63,24 +61,6 @@ impl ConnectionParameters {
         self
     }
 
-    pub fn default() -> Self {
-        ConnectionParameters {
-            worker_type: CString::new("").unwrap(),
-            network: NetworkParameters::default(),
-            send_queue_capacity: WORKER_DEFAULTS_SEND_QUEUE_CAPACITY,
-            receive_queue_capacity: WORKER_DEFAULTS_RECEIVE_QUEUE_CAPACITY,
-            log_message_queue_capacity: WORKER_DEFAULTS_LOG_MESSAGE_QUEUE_CAPACITY,
-            built_in_metrics_report_period_millis:
-                WORKER_DEFAULTS_BUILT_IN_METRICS_REPORT_PERIOD_MILLIS,
-            protocol_logging: ProtocolLoggingParameters::default(),
-            enable_protocol_logging_at_startup: false,
-            logsinks: vec![],
-            enable_logging_at_startup: false,
-            enable_dynamic_components: WORKER_DEFAULTS_ENABLE_DYNAMIC_COMPONENTS != 0,
-            thread_affinity: ThreadAffinityParameters::default(),
-        }
-    }
-
     pub(crate) fn flatten(&self) -> IntermediateConnectionParameters<'_> {
         let protocol = match &self.network.protocol {
             ProtocolType::Kcp(params) => IntermediateProtocolType::Kcp(params.to_worker_sdk()),
@@ -97,6 +77,26 @@ impl ConnectionParameters {
             params: self,
             protocol,
             logsinks,
+        }
+    }
+}
+
+impl Default for ConnectionParameters {
+    fn default() -> Self {
+        ConnectionParameters {
+            worker_type: CString::new("").unwrap(),
+            network: NetworkParameters::default(),
+            send_queue_capacity: WORKER_DEFAULTS_SEND_QUEUE_CAPACITY,
+            receive_queue_capacity: WORKER_DEFAULTS_RECEIVE_QUEUE_CAPACITY,
+            log_message_queue_capacity: WORKER_DEFAULTS_LOG_MESSAGE_QUEUE_CAPACITY,
+            built_in_metrics_report_period_millis:
+                WORKER_DEFAULTS_BUILT_IN_METRICS_REPORT_PERIOD_MILLIS,
+            protocol_logging: ProtocolLoggingParameters::default(),
+            enable_protocol_logging_at_startup: false,
+            logsinks: vec![],
+            enable_logging_at_startup: false,
+            enable_dynamic_components: WORKER_DEFAULTS_ENABLE_DYNAMIC_COMPONENTS != 0,
+            thread_affinity: ThreadAffinityParameters::default(),
         }
     }
 }

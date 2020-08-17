@@ -4,10 +4,11 @@ use crate::worker::{
     commands::{CommandRequestRef, CommandResponseRef, Commands},
     component::{self, *},
     entity::Entity,
+    logging::LogLevel,
     metrics::Metrics,
     schema,
     utils::{cstr_array_to_vec_string, cstr_to_string},
-    {Authority, EntityId, LogLevel, RequestId},
+    {Authority, EntityId, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
 use std::{
