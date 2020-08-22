@@ -551,7 +551,11 @@ impl<'a> IntermediateConnectionParameters<'a> {
             built_in_metrics_report_period_millis: self
                 .params
                 .built_in_metrics_report_period_millis,
-            protocol_logging: Worker_ProtocolLoggingParameters::default(),
+            protocol_logging: Worker_ProtocolLoggingParameters {
+                log_prefix: WORKER_DEFAULTS_LOG_PREFIX.as_ptr() as *const i8,
+                max_log_files: 0,
+                max_log_file_size_bytes: 0,
+            },
             enable_protocol_logging_at_startup: 0,
             logsink_count: self.logsinks.len() as u32,
             logsinks: self.logsinks.as_ptr(),

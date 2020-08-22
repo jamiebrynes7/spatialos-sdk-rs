@@ -216,7 +216,11 @@ impl LogsinkParameters {
     pub fn to_worker_sdk(&self) -> (Worker_LogsinkParameters, Vec<ReleaseCallbackHandle>) {
         let rotating_logfile_parameters = match self.logsink_type {
             LogsinkType::RotatingFile(ref params) => params.to_worker_sdk(),
-            _ => Default::default(),
+            _ => Worker_RotatingLogFileParameters {
+                log_prefix: WORKER_DEFAULTS_LOG_PREFIX.as_ptr() as *const i8,
+                max_log_files: 0,
+                max_log_file_size_bytes: 0,
+            },
         };
 
         let (log_callback_parameters, release_log_callback_handle) = match self.logsink_type {
