@@ -250,7 +250,8 @@ impl WorkerConnection {
 
             let sdk_attr = Worker_Connection_GetWorkerAttributes(connection_ptr);
 
-            let attributes = if (*sdk_attr).attributes.is_null() {
+            // TODO: Remove first conditional when upgrading to 14.8.0
+            let attributes = if cstr.to_bytes().is_empty() || (*sdk_attr).attributes.is_null() {
                 Vec::new()
             } else {
                 ::std::slice::from_raw_parts(
