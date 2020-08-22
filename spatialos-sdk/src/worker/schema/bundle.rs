@@ -316,9 +316,7 @@ mod tests {
         assert!(read_bundle(true).is_ok(), "Valid bundle failed to load.")
     }
 
-    // TODO: This test current fails due to a bug in the Worker SDK.
-    // Uncomment the below line when upgrading to 14.5.0.
-    //#[test]
+    #[test]
     pub fn loading_bundle_fails_when_invalid_bundle() {
         assert!(
             read_bundle(false).is_err(),

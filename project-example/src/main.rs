@@ -12,10 +12,11 @@ use spatialos_sdk::worker::{
     component::{Component, UpdateParameters},
     connection::{Connection, WorkerConnection},
     entity_builder::EntityBuilder,
+    logging::LogLevel,
     metrics::{HistogramMetric, Metrics},
     op::WorkerOp,
     query::{EntityQuery, QueryConstraint, ResultType},
-    {EntityId, InterestOverride, LogLevel},
+    {EntityId, InterestOverride},
 };
 use std::{collections::HashMap, f64};
 use structopt::StructOpt;
@@ -95,7 +96,7 @@ fn logic_loop(c: &mut WorkerConnection) {
             if let WorkerOp::Metrics(_) = op {
                 println!("Received metrics.");
             } else {
-                println!("Received op: {:?}", op);
+                // println!("Received op: {:?}", op);
             }
 
             match op {
@@ -242,7 +243,7 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
     c.send_authority_loss_imminent_acknowledgement(EntityId::new(1), 1337);
 
     send_metrics(c);
-    c.set_protocol_logging_enabled(false);
+    c.enable_logging();
 
     println!("Testing completed");
 }

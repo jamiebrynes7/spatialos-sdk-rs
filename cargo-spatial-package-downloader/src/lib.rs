@@ -15,7 +15,7 @@ impl SpatialWorkerSdkPackage {
     fn package_name(self) -> &'static str {
         match self {
             SpatialWorkerSdkPackage::CHeaders => "c_headers",
-            SpatialWorkerSdkPackage::CApiWin => "c-static-x86_64-vc140_mt-win32",
+            SpatialWorkerSdkPackage::CApiWin => "c-static-x86_64-vc141_mt-win32",
             SpatialWorkerSdkPackage::CApiMac => "c-static-x86_64-clang-macos",
             SpatialWorkerSdkPackage::CApiLinux => "c-static-x86_64-gcc510_pic-linux",
         }

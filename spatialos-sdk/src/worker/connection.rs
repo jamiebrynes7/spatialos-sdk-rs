@@ -3,12 +3,13 @@ use crate::worker::{
     commands::*,
     component::*,
     locator::*,
+    logging::{LogLevel, ReleaseCallbackHandle},
     metrics::Metrics,
     op::OpList,
     parameters::ConnectionParameters,
     utils::cstr_to_string,
     worker_future::{WorkerFuture, WorkerSdkFuture},
-    {EntityId, InterestOverride, LogLevel, RequestId},
+    {EntityId, InterestOverride, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
 use std::{
@@ -43,8 +44,8 @@ pub enum ConnectionStatusErrorCode {
     Unknown,
 }
 
-impl From<u32> for ConnectionStatusErrorCode {
-    fn from(code: u32) -> Self {
+impl From<i32> for ConnectionStatusErrorCode {
+    fn from(code: i32) -> Self {
         match code {
             Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_INTERNAL_ERROR => {
                 ConnectionStatusErrorCode::InternalError
@@ -203,7 +204,9 @@ pub trait Connection {
 
     fn flush(&mut self);
 
-    fn set_protocol_logging_enabled(&mut self, enabled: bool);
+    fn enable_logging(&mut self);
+
+    fn disable_logging(&mut self);
 
     fn get_connection_status(&mut self) -> ConnectionStatus;
 
@@ -231,17 +234,24 @@ pub struct WorkerConnection {
     // Cached copies of static connection data. These are stored internally so that we can guarantee it will be safe to access this data through `&self`.
     id: String,
     attributes: Vec<String>,
+
+    // Set of callbacks to release Box-ed callbacks for logging
+    release_callback_handles: Vec<ReleaseCallbackHandle>,
 }
 
 impl WorkerConnection {
-    pub(crate) fn new(connection_ptr: *mut Worker_Connection) -> Self {
+    pub(crate) fn new(
+        connection_ptr: *mut Worker_Connection,
+        release_callback_handles: Vec<ReleaseCallbackHandle>,
+    ) -> Self {
         unsafe {
             let worker_id = Worker_Connection_GetWorkerId(connection_ptr);
             let cstr = CStr::from_ptr(worker_id);
 
             let sdk_attr = Worker_Connection_GetWorkerAttributes(connection_ptr);
 
-            let attributes = if (*sdk_attr).attributes.is_null() {
+            // TODO: Remove first conditional when upgrading to 14.8.0
+            let attributes = if cstr.to_bytes().is_empty() || (*sdk_attr).attributes.is_null() {
                 Vec::new()
             } else {
                 ::std::slice::from_raw_parts(
@@ -257,6 +267,7 @@ impl WorkerConnection {
                 connection_ptr: MutPtr::new(connection_ptr),
                 id: cstr.to_string_lossy().to_string(),
                 attributes,
+                release_callback_handles,
             }
         }
     }
@@ -271,8 +282,13 @@ impl WorkerConnection {
         let worker_id_cstr =
             CString::new(worker_id).expect("Received 0 byte in supplied Worker ID");
 
-        let future =
-            WorkerConnectionFuture::Receptionist(hostname_cstr, worker_id_cstr, port, params);
+        let future = WorkerConnectionFuture::Receptionist(
+            hostname_cstr,
+            worker_id_cstr,
+            port,
+            params,
+            Vec::new(),
+        );
 
         WorkerFuture::new(future)
     }
@@ -281,7 +297,7 @@ impl WorkerConnection {
         locator: Locator,
         params: ConnectionParameters,
     ) -> WorkerFuture<WorkerConnectionFuture> {
-        WorkerFuture::new(WorkerConnectionFuture::Locator(locator, params))
+        WorkerFuture::new(WorkerConnectionFuture::Locator(locator, params, Vec::new()))
     }
 }
 
@@ -300,7 +316,7 @@ impl Connection for WorkerConnection {
 
         unsafe {
             let log_message = Worker_LogMessage {
-                level: level.to_worker_sdk(),
+                level: level as u8,
                 logger_name: logger_name.as_ptr(),
                 message: message.as_ptr(),
                 entity_id: match entity_id {
@@ -541,18 +557,26 @@ impl Connection for WorkerConnection {
         unsafe { Worker_Connection_Alpha_Flush(self.connection_ptr.get()) }
     }
 
-    fn set_protocol_logging_enabled(&mut self, enabled: bool) {
+    fn enable_logging(&mut self) {
         assert!(!self.connection_ptr.is_null());
 
         unsafe {
-            Worker_Connection_SetProtocolLoggingEnabled(self.connection_ptr.get(), enabled as u8);
+            Worker_Connection_EnableLogging(self.connection_ptr.get());
+        }
+    }
+
+    fn disable_logging(&mut self) {
+        assert!(!self.connection_ptr.is_null());
+
+        unsafe {
+            Worker_Connection_DisableLogging(self.connection_ptr.get());
         }
     }
 
     fn get_connection_status(&mut self) -> ConnectionStatus {
         let ptr = self.connection_ptr.get();
 
-        let code = unsafe { Worker_Connection_GetConnectionStatusCode(ptr) } as u32;
+        let code = unsafe { Worker_Connection_GetConnectionStatusCode(ptr) } as i32;
 
         if code == Worker_ConnectionStatusCode_WORKER_CONNECTION_STATUS_CODE_SUCCESS {
             return Ok(());
@@ -618,6 +642,10 @@ impl Drop for WorkerConnection {
     fn drop(&mut self) {
         assert!(!self.connection_ptr.is_null());
         unsafe { Worker_Connection_Destroy(self.connection_ptr.get()) };
+
+        for callback in self.release_callback_handles.drain(..) {
+            callback();
+        }
     }
 }
 
@@ -626,8 +654,14 @@ unsafe impl Send for WorkerConnection {}
 unsafe impl Sync for WorkerConnection {}
 
 pub enum WorkerConnectionFuture {
-    Receptionist(CString, CString, u16, ConnectionParameters),
-    Locator(Locator, ConnectionParameters),
+    Receptionist(
+        CString,
+        CString,
+        u16,
+        ConnectionParameters,
+        Vec<ReleaseCallbackHandle>,
+    ),
+    Locator(Locator, ConnectionParameters, Vec<ReleaseCallbackHandle>),
 }
 
 unsafe impl Send for WorkerConnectionFuture {}
@@ -636,11 +670,18 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
     type RawPointer = Worker_ConnectionFuture;
     type Output = Result<WorkerConnection, ConnectionStatusError>;
 
-    fn start(&self) -> *mut Self::RawPointer {
+    fn start(&mut self) -> *mut Self::RawPointer {
         let default_vtable = Default::default();
-        match &self {
-            WorkerConnectionFuture::Receptionist(hostname, worker_id, port, params) => {
-                let params = params.flatten();
+        match self {
+            WorkerConnectionFuture::Receptionist(
+                hostname,
+                worker_id,
+                port,
+                params,
+                release_callback_handles,
+            ) => {
+                let (params, mut callbacks) = params.flatten();
+                release_callback_handles.append(&mut callbacks);
                 unsafe {
                     Worker_ConnectAsync(
                         hostname.as_ptr(),
@@ -650,8 +691,9 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
                     )
                 }
             }
-            WorkerConnectionFuture::Locator(locator, params) => {
-                let params = params.flatten();
+            WorkerConnectionFuture::Locator(locator, params, release_callback_handles) => {
+                let (params, mut callbacks) = params.flatten();
+                release_callback_handles.append(&mut callbacks);
                 unsafe {
                     Worker_Locator_ConnectAsync(locator.locator, &params.as_raw(&default_vtable))
                 }
@@ -660,17 +702,32 @@ impl WorkerSdkFuture for WorkerConnectionFuture {
     }
 
     unsafe fn get(
+        &mut self,
         ptr: *mut Worker_ConnectionFuture,
     ) -> Result<WorkerConnection, ConnectionStatusError> {
         let connection_ptr = Worker_ConnectionFuture_Get(ptr, ptr::null());
         assert!(!connection_ptr.is_null());
 
-        let mut connection = WorkerConnection::new(connection_ptr);
+        let callbacks = match self {
+            WorkerConnectionFuture::Receptionist(_, _, _, _, callbacks) => callbacks,
+            WorkerConnectionFuture::Locator(_, _, callbacks) => callbacks,
+        };
+
+        let mut connection = WorkerConnection::new(connection_ptr, callbacks.drain(..).collect());
         let status = connection.get_connection_status();
         status.map(|()| connection)
     }
 
-    unsafe fn destroy(ptr: *mut Worker_ConnectionFuture) {
+    unsafe fn destroy(&mut self, ptr: *mut Worker_ConnectionFuture) {
         Worker_ConnectionFuture_Destroy(ptr);
+
+        let callbacks = match self {
+            WorkerConnectionFuture::Receptionist(_, _, _, _, callbacks) => callbacks,
+            WorkerConnectionFuture::Locator(_, _, callbacks) => callbacks,
+        };
+
+        for cb in callbacks.drain(..) {
+            cb();
+        }
     }
 }

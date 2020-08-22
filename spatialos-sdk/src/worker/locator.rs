@@ -4,6 +4,7 @@ use std::ptr;
 use spatialos_sdk_sys::worker::*;
 
 use crate::worker::{
+    logging::*,
     parameters::ProtocolLoggingParameters,
     utils::cstr_to_string,
     worker_future::{WorkerFuture, WorkerSdkFuture},
@@ -11,16 +12,20 @@ use crate::worker::{
 
 pub struct Locator {
     pub(crate) locator: *mut Worker_Locator,
+    release_callback_handles: Vec<ReleaseCallbackHandle>,
 }
 
 impl Locator {
     pub fn new<T: Into<Vec<u8>>>(hostname: T, port: u16, params: &LocatorParameters) -> Self {
         unsafe {
             let hostname = CString::new(hostname).unwrap();
-            let worker_params = params.to_worker_sdk();
-            let ptr = Worker_Locator_Create(hostname.as_ptr(), port, &worker_params);
+            let (worker_params, release_callback_handles) = params.flatten();
+            let ptr = Worker_Locator_Create(hostname.as_ptr(), port, &worker_params.as_raw());
             assert!(!ptr.is_null());
-            Locator { locator: ptr }
+            Locator {
+                locator: ptr,
+                release_callback_handles,
+            }
         }
     }
 
@@ -48,6 +53,10 @@ impl Drop for Locator {
         if !self.locator.is_null() {
             unsafe { Worker_Locator_Destroy(self.locator) }
         }
+
+        for callback in self.release_callback_handles.drain(..) {
+            callback();
+        }
     }
 }
 
@@ -55,24 +64,29 @@ pub struct LocatorParameters {
     pub credentials: PlayerIdentityCredentials,
     pub use_insecure_connection: bool,
     pub logging: Option<ProtocolLoggingParameters>,
+    pub logsinks: Vec<LogsinkParameters>,
 }
 
 impl LocatorParameters {
-    fn to_worker_sdk(&self) -> Worker_LocatorParameters {
-        Worker_LocatorParameters {
-            project_name: ::std::ptr::null(),
-            credentials_type:
-                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_PLAYER_IDENTITY_CREDENTIALS as u8,
-            login_token: Worker_LoginTokenCredentials::default(),
-            steam: Worker_SteamCredentials::default(),
-            player_identity: self.credentials.to_worker_sdk(),
-            use_insecure_connection: self.use_insecure_connection as u8,
-            logging: match self.logging {
-                Some(ref params) => params.to_worker_sdk(),
-                None => ProtocolLoggingParameters::default().to_worker_sdk(),
+    fn flatten(
+        &self,
+    ) -> (
+        IntermediateLocatorParameters<'_>,
+        Vec<ReleaseCallbackHandle>,
+    ) {
+        let (logsinks, release_callbacks): (Vec<_>, Vec<_>) = self
+            .logsinks
+            .iter()
+            .map(LogsinkParameters::to_worker_sdk)
+            .unzip();
+
+        (
+            IntermediateLocatorParameters {
+                params: self,
+                logsinks,
             },
-            enable_logging: self.logging.is_some() as u8,
-        }
+            release_callbacks.into_iter().flatten().collect(),
+        )
     }
 
     pub fn new(credentials: PlayerIdentityCredentials) -> Self {
@@ -80,6 +94,7 @@ impl LocatorParameters {
             credentials,
             use_insecure_connection: false,
             logging: None,
+            logsinks: Default::default(),
         }
     }
 
@@ -95,6 +110,34 @@ impl LocatorParameters {
     pub fn with_logging_params(mut self, params: ProtocolLoggingParameters) -> Self {
         self.logging = Some(params);
         self
+    }
+}
+
+struct IntermediateLocatorParameters<'a> {
+    params: &'a LocatorParameters,
+    logsinks: Vec<Worker_LogsinkParameters>,
+}
+
+impl<'a> IntermediateLocatorParameters<'a> {
+    fn as_raw(&self) -> Worker_LocatorParameters {
+        Worker_LocatorParameters {
+            project_name: ::std::ptr::null(),
+            credentials_type:
+                Worker_LocatorCredentialsTypes_WORKER_LOCATOR_PLAYER_IDENTITY_CREDENTIALS as u8,
+            login_token: Worker_LoginTokenCredentials::default(),
+            steam: Worker_SteamCredentials::default(),
+            player_identity: self.params.credentials.to_worker_sdk(),
+            use_insecure_connection: self.params.use_insecure_connection as u8,
+            logging: self
+                .params
+                .logging
+                .as_ref()
+                .unwrap_or(&ProtocolLoggingParameters::default())
+                .to_worker_sdk(),
+            enable_logging: self.params.logging.is_some() as u8,
+            logsink_count: self.logsinks.len() as u32,
+            logsinks: self.logsinks.as_ptr(),
+        }
     }
 }
 
@@ -238,7 +281,7 @@ impl WorkerSdkFuture for PlayerIdentityTokenFuture {
     type RawPointer = Worker_Alpha_PlayerIdentityTokenResponseFuture;
     type Output = Result<PlayerIdentityTokenResponse, String>;
 
-    fn start(&self) -> *mut Self::RawPointer {
+    fn start(&mut self) -> *mut Self::RawPointer {
         unsafe {
             let mut params = self.request.to_worker_sdk();
             Worker_Alpha_CreateDevelopmentPlayerIdentityTokenAsync(
@@ -249,7 +292,7 @@ impl WorkerSdkFuture for PlayerIdentityTokenFuture {
         }
     }
 
-    unsafe fn get(ptr: *mut Self::RawPointer) -> Self::Output {
+    unsafe fn get(&mut self, ptr: *mut Self::RawPointer) -> Self::Output {
         let mut data: Result<PlayerIdentityTokenResponse, String> =
             Err("Callback never called.".into());
         Worker_Alpha_PlayerIdentityTokenResponseFuture_Get(
@@ -262,7 +305,7 @@ impl WorkerSdkFuture for PlayerIdentityTokenFuture {
         data
     }
 
-    unsafe fn destroy(ptr: *mut Self::RawPointer) {
+    unsafe fn destroy(&mut self, ptr: *mut Self::RawPointer) {
         Worker_Alpha_PlayerIdentityTokenResponseFuture_Destroy(ptr)
     }
 }
@@ -398,7 +441,7 @@ impl WorkerSdkFuture for LoginTokensFuture {
     type RawPointer = Worker_Alpha_LoginTokensResponseFuture;
     type Output = Result<LoginTokensResponse, String>;
 
-    fn start(&self) -> *mut Self::RawPointer {
+    fn start(&mut self) -> *mut Self::RawPointer {
         let mut params = self.request.to_worker_sdk();
         unsafe {
             Worker_Alpha_CreateDevelopmentLoginTokensAsync(
@@ -409,7 +452,7 @@ impl WorkerSdkFuture for LoginTokensFuture {
         }
     }
 
-    unsafe fn get(ptr: *mut Self::RawPointer) -> Self::Output {
+    unsafe fn get(&mut self, ptr: *mut Self::RawPointer) -> Self::Output {
         let mut data: Result<LoginTokensResponse, String> = Err("Callback never called.".into());
         Worker_Alpha_LoginTokensResponseFuture_Get(
             ptr,
@@ -421,7 +464,7 @@ impl WorkerSdkFuture for LoginTokensFuture {
         data
     }
 
-    unsafe fn destroy(ptr: *mut Self::RawPointer) {
+    unsafe fn destroy(&mut self, ptr: *mut Self::RawPointer) {
         Worker_Alpha_LoginTokensResponseFuture_Destroy(ptr)
     }
 }

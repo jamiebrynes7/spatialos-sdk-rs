@@ -43,7 +43,7 @@ pub trait WorkerSdkFuture: Send + Unpin + 'static {
     type RawPointer;
     type Output: Send;
 
-    fn start(&self) -> *mut Self::RawPointer;
+    fn start(&mut self) -> *mut Self::RawPointer;
 
     /// This method corresponds to the Worker_{Type}_Get C API call which _blocks_
     /// until the future returns.
@@ -51,14 +51,14 @@ pub trait WorkerSdkFuture: Send + Unpin + 'static {
     /// # Safety
     ///
     /// This method should only be called once. Calling it more than once is an error.
-    unsafe fn get(ptr: *mut Self::RawPointer) -> Self::Output;
+    unsafe fn get(&mut self, ptr: *mut Self::RawPointer) -> Self::Output;
 
     /// This method corresponds to the Worker_{Type}_Destroy C API call which cancels
     /// and disposes the native future.
     ///
     /// # Safety
     /// This method should only be called once. Calling it more than once is an error.
-    unsafe fn destroy(ptr: *mut Self::RawPointer);
+    unsafe fn destroy(&mut self, ptr: *mut Self::RawPointer);
 }
 
 impl<T: WorkerSdkFuture> Future for WorkerFuture<T> {
@@ -71,16 +71,16 @@ impl<T: WorkerSdkFuture> Future for WorkerFuture<T> {
         let mut future_state = inner.take().unwrap();
 
         match future_state {
-            WorkerFutureState::NotStarted(ftr) => {
+            WorkerFutureState::NotStarted(mut ftr) => {
                 let (tx, rx) = futures::channel::oneshot::channel();
                 let task = cx.waker().clone();
 
                 let thread = thread::spawn(move || unsafe {
                     let ptr = ftr.start();
-                    let value = T::get(ptr);
+                    let value = ftr.get(ptr);
                     tx.send(value).unwrap_or(());
                     task.wake();
-                    T::destroy(ptr)
+                    ftr.destroy(ptr);
                 });
 
                 let handle = InProgressHandle::<T> {
