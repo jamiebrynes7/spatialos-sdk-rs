@@ -1,4 +1,4 @@
-use crate::worker::logging::LogsinkParameters;
+use crate::worker::logging::{LogsinkParameters, ReleaseCallbackHandle};
 use spatialos_sdk_sys::worker::*;
 use std::{
     ffi::{CStr, CString},
@@ -12,8 +12,6 @@ pub struct ConnectionParameters {
     pub receive_queue_capacity: u32,
     pub log_message_queue_capacity: u32,
     pub built_in_metrics_report_period_millis: u32,
-    pub protocol_logging: ProtocolLoggingParameters,
-    pub enable_protocol_logging_at_startup: bool,
     pub logsinks: Vec<LogsinkParameters>,
     pub enable_logging_at_startup: bool,
     pub enable_dynamic_components: bool,
@@ -61,23 +59,31 @@ impl ConnectionParameters {
         self
     }
 
-    pub(crate) fn flatten(&self) -> IntermediateConnectionParameters<'_> {
+    pub(crate) fn flatten(
+        &self,
+    ) -> (
+        IntermediateConnectionParameters<'_>,
+        Vec<ReleaseCallbackHandle>,
+    ) {
         let protocol = match &self.network.protocol {
             ProtocolType::Kcp(params) => IntermediateProtocolType::Kcp(params.to_worker_sdk()),
             ProtocolType::Tcp(params) => IntermediateProtocolType::Tcp(params.to_worker_sdk()),
         };
 
-        let logsinks = self
+        let (logsinks, release_callbacks): (Vec<_>, Vec<_>) = self
             .logsinks
             .iter()
             .map(LogsinkParameters::to_worker_sdk)
-            .collect::<Vec<Worker_LogsinkParameters>>();
+            .unzip();
 
-        IntermediateConnectionParameters {
-            params: self,
-            protocol,
-            logsinks,
-        }
+        (
+            IntermediateConnectionParameters {
+                params: self,
+                protocol,
+                logsinks,
+            },
+            release_callbacks.into_iter().flatten().collect(),
+        )
     }
 }
 
@@ -91,8 +97,6 @@ impl Default for ConnectionParameters {
             log_message_queue_capacity: WORKER_DEFAULTS_LOG_MESSAGE_QUEUE_CAPACITY,
             built_in_metrics_report_period_millis:
                 WORKER_DEFAULTS_BUILT_IN_METRICS_REPORT_PERIOD_MILLIS,
-            protocol_logging: ProtocolLoggingParameters::default(),
-            enable_protocol_logging_at_startup: false,
             logsinks: vec![],
             enable_logging_at_startup: false,
             enable_dynamic_components: WORKER_DEFAULTS_ENABLE_DYNAMIC_COMPONENTS != 0,
@@ -223,7 +227,7 @@ impl KcpTransportParameters {
     }
 }
 
-// TCP
+// Tcp
 
 pub struct ModularTcpNetworkParameters {
     pub security_type: SecurityType,
@@ -547,9 +551,8 @@ impl<'a> IntermediateConnectionParameters<'a> {
             built_in_metrics_report_period_millis: self
                 .params
                 .built_in_metrics_report_period_millis,
-            protocol_logging: self.params.protocol_logging.to_worker_sdk(),
-            enable_protocol_logging_at_startup: self.params.enable_protocol_logging_at_startup
-                as u8,
+            protocol_logging: Worker_ProtocolLoggingParameters::default(),
+            enable_protocol_logging_at_startup: 0,
             logsink_count: self.logsinks.len() as u32,
             logsinks: self.logsinks.as_ptr(),
             enable_logging_at_startup: self.params.enable_logging_at_startup as u8,

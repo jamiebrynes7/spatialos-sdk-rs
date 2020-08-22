@@ -12,16 +12,20 @@ use crate::worker::{
 
 pub struct Locator {
     pub(crate) locator: *mut Worker_Locator,
+    release_callback_handles: Vec<ReleaseCallbackHandle>,
 }
 
 impl Locator {
     pub fn new<T: Into<Vec<u8>>>(hostname: T, port: u16, params: &LocatorParameters) -> Self {
         unsafe {
             let hostname = CString::new(hostname).unwrap();
-            let worker_params = params.flatten();
+            let (worker_params, release_callback_handles) = params.flatten();
             let ptr = Worker_Locator_Create(hostname.as_ptr(), port, &worker_params.as_raw());
             assert!(!ptr.is_null());
-            Locator { locator: ptr }
+            Locator {
+                locator: ptr,
+                release_callback_handles,
+            }
         }
     }
 
@@ -49,6 +53,10 @@ impl Drop for Locator {
         if !self.locator.is_null() {
             unsafe { Worker_Locator_Destroy(self.locator) }
         }
+
+        for callback in self.release_callback_handles.drain(..) {
+            callback();
+        }
     }
 }
 
@@ -60,17 +68,25 @@ pub struct LocatorParameters {
 }
 
 impl LocatorParameters {
-    fn flatten(&self) -> IntermediateLocatorParameters<'_> {
-        let logsinks = self
+    fn flatten(
+        &self,
+    ) -> (
+        IntermediateLocatorParameters<'_>,
+        Vec<ReleaseCallbackHandle>,
+    ) {
+        let (logsinks, release_callbacks): (Vec<_>, Vec<_>) = self
             .logsinks
             .iter()
             .map(LogsinkParameters::to_worker_sdk)
-            .collect::<Vec<Worker_LogsinkParameters>>();
+            .unzip();
 
-        IntermediateLocatorParameters {
-            params: self,
-            logsinks,
-        }
+        (
+            IntermediateLocatorParameters {
+                params: self,
+                logsinks,
+            },
+            release_callbacks.into_iter().flatten().collect(),
+        )
     }
 
     pub fn new(credentials: PlayerIdentityCredentials) -> Self {
@@ -265,7 +281,7 @@ impl WorkerSdkFuture for PlayerIdentityTokenFuture {
     type RawPointer = Worker_Alpha_PlayerIdentityTokenResponseFuture;
     type Output = Result<PlayerIdentityTokenResponse, String>;
 
-    fn start(&self) -> *mut Self::RawPointer {
+    fn start(&mut self) -> *mut Self::RawPointer {
         unsafe {
             let mut params = self.request.to_worker_sdk();
             Worker_Alpha_CreateDevelopmentPlayerIdentityTokenAsync(
@@ -276,7 +292,7 @@ impl WorkerSdkFuture for PlayerIdentityTokenFuture {
         }
     }
 
-    unsafe fn get(ptr: *mut Self::RawPointer) -> Self::Output {
+    unsafe fn get(&mut self, ptr: *mut Self::RawPointer) -> Self::Output {
         let mut data: Result<PlayerIdentityTokenResponse, String> =
             Err("Callback never called.".into());
         Worker_Alpha_PlayerIdentityTokenResponseFuture_Get(
@@ -289,7 +305,7 @@ impl WorkerSdkFuture for PlayerIdentityTokenFuture {
         data
     }
 
-    unsafe fn destroy(ptr: *mut Self::RawPointer) {
+    unsafe fn destroy(&mut self, ptr: *mut Self::RawPointer) {
         Worker_Alpha_PlayerIdentityTokenResponseFuture_Destroy(ptr)
     }
 }
@@ -425,7 +441,7 @@ impl WorkerSdkFuture for LoginTokensFuture {
     type RawPointer = Worker_Alpha_LoginTokensResponseFuture;
     type Output = Result<LoginTokensResponse, String>;
 
-    fn start(&self) -> *mut Self::RawPointer {
+    fn start(&mut self) -> *mut Self::RawPointer {
         let mut params = self.request.to_worker_sdk();
         unsafe {
             Worker_Alpha_CreateDevelopmentLoginTokensAsync(
@@ -436,7 +452,7 @@ impl WorkerSdkFuture for LoginTokensFuture {
         }
     }
 
-    unsafe fn get(ptr: *mut Self::RawPointer) -> Self::Output {
+    unsafe fn get(&mut self, ptr: *mut Self::RawPointer) -> Self::Output {
         let mut data: Result<LoginTokensResponse, String> = Err("Callback never called.".into());
         Worker_Alpha_LoginTokensResponseFuture_Get(
             ptr,
@@ -448,7 +464,7 @@ impl WorkerSdkFuture for LoginTokensFuture {
         data
     }
 
-    unsafe fn destroy(ptr: *mut Self::RawPointer) {
+    unsafe fn destroy(&mut self, ptr: *mut Self::RawPointer) {
         Worker_Alpha_LoginTokensResponseFuture_Destroy(ptr)
     }
 }

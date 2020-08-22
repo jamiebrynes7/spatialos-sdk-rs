@@ -3,6 +3,8 @@ use bitflags::bitflags;
 use spatialos_sdk_sys::worker::*;
 use std::ffi::CString;
 
+pub(crate) type ReleaseCallbackHandle = Box<dyn FnOnce()>;
+
 bitflags! {
     pub struct LogCategory: u32 {
         const Receive         = 0x01;
@@ -49,22 +51,31 @@ pub enum LogFilterParameters {
 }
 
 impl LogFilterParameters {
-    pub(crate) fn to_worker_sdk(&self) -> Worker_LogFilterParameters {
-        // TODO: This currently leaks the callback pointer. This should live for the duration of the `Connection`.
+    pub(crate) fn to_worker_sdk(
+        &self,
+    ) -> (Worker_LogFilterParameters, Option<ReleaseCallbackHandle>) {
         match self {
-            LogFilterParameters::Simple(category, level) => Worker_LogFilterParameters {
-                categories: category.bits,
-                level: *level as u8,
-                ..Default::default()
-            },
+            LogFilterParameters::Simple(category, level) => (
+                Worker_LogFilterParameters {
+                    categories: category.bits,
+                    level: *level as u8,
+                    ..Default::default()
+                },
+                None,
+            ),
             LogFilterParameters::Callback(filter) => {
                 let callback_ptr = Box::into_raw(Box::new(*filter)) as *mut ::std::os::raw::c_void;
 
-                Worker_LogFilterParameters {
-                    callback: Some(worker_log_filter_callback),
-                    user_data: callback_ptr,
-                    ..Default::default()
-                }
+                (
+                    Worker_LogFilterParameters {
+                        callback: Some(worker_log_filter_callback),
+                        user_data: callback_ptr,
+                        ..Default::default()
+                    },
+                    Some(Box::new(move || unsafe {
+                        Box::from_raw(callback_ptr as *mut LogFilter);
+                    })),
+                )
             }
         }
     }
@@ -200,33 +211,48 @@ impl LogsinkParameters {
     ///
     /// # Safety
     ///
-    /// The returned `Worker_RotatingLogFileParameters` borrows data owned by `self`,
+    /// The returned `Worker_LogsinkParameters` borrows data owned by `self`,
     /// and therefore must not outlive `self`.
-    pub fn to_worker_sdk(&self) -> Worker_LogsinkParameters {
+    pub fn to_worker_sdk(&self) -> (Worker_LogsinkParameters, Vec<ReleaseCallbackHandle>) {
         let rotating_logfile_parameters = match self.logsink_type {
             LogsinkType::RotatingFile(ref params) => params.to_worker_sdk(),
             _ => Default::default(),
         };
 
-        let log_callback_parameters = match self.logsink_type {
+        let (log_callback_parameters, release_log_callback_handle) = match self.logsink_type {
             LogsinkType::Callback(callback) => {
-                // TODO: This currently leaks the callback pointer. This should live for the duration of the `Connection`.
                 let callback_ptr = Box::into_raw(Box::new(callback)) as *mut ::std::os::raw::c_void;
 
-                Worker_LogCallbackParameters {
-                    log_callback: Some(worker_log_callback),
-                    user_data: callback_ptr,
-                }
+                (
+                    Worker_LogCallbackParameters {
+                        log_callback: Some(worker_log_callback),
+                        user_data: callback_ptr,
+                    },
+                    Some(Box::new(move || unsafe {
+                        Box::from_raw(callback_ptr as *mut LogCallback);
+                    }) as ReleaseCallbackHandle),
+                )
             }
             _ => Default::default(),
         };
 
-        Worker_LogsinkParameters {
-            logsink_type: self.logsink_type.worker_sdk_type() as u8,
-            filter_parameters: self.filter_parameters.to_worker_sdk(),
-            rotating_logfile_parameters,
-            log_callback_parameters,
-        }
+        let (filter_parameters, release_filter_callback_handle) =
+            self.filter_parameters.to_worker_sdk();
+
+        let release_handle_funcs = release_log_callback_handle
+            .into_iter()
+            .chain(release_filter_callback_handle.into_iter())
+            .collect();
+
+        (
+            Worker_LogsinkParameters {
+                logsink_type: self.logsink_type.worker_sdk_type() as u8,
+                filter_parameters,
+                rotating_logfile_parameters,
+                log_callback_parameters,
+            },
+            release_handle_funcs,
+        )
     }
 }
 
