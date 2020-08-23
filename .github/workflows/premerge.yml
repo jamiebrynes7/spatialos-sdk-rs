@@ -21,7 +21,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Install spatial
-        uses: jamiebrynes7/get-spatial-cli-action@v1.1
+        uses: jamiebrynes7/setup-spatialos-cli@v1.3
         with:
           version: 20190416.094616.a865bb5b54
           oauth_token: ${{ secrets.SPATIAL_OAUTH_TOKEN }}
@@ -103,7 +103,7 @@ jobs:
           override: true
 
       - name: Install spatial
-        uses: jamiebrynes7/get-spatial-cli-action@v1.1
+        uses: jamiebrynes7/setup-spatialos-cli@v1.3
         with:
           version: 20190416.094616.a865bb5b54
           oauth_token: ${{ secrets.SPATIAL_OAUTH_TOKEN }}
