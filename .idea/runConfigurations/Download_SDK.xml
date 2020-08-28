@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Download SDK" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="channel" value="DEFAULT" />
-    <option name="command" value="spatial download sdk --sdk-version 14.5.0 --with-test-schema" />
+    <option name="command" value="spatial download sdk --sdk-version 14.8.0 --with-test-schema" />
     <option name="allFeatures" value="false" />
     <option name="nocapture" value="false" />
     <option name="emulateTerminal" value="false" />
