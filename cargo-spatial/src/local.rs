@@ -42,7 +42,7 @@ pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Error<ErrorKi
         inner: Some(Box::new(e)),
     })?;
 
-    // Use `cargo install` to build workers and copy the exectuables to the build
+    // Use `cargo install` to build workers and copy the executables to the build
     // directory.
     //
     // TODO: Manually copy the built executables instead of using `cargo install`.
@@ -86,7 +86,13 @@ pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Error<ErrorKi
 
     // Run `spatial alpha local launch` with any user-specified flags.
     let mut command = process::Command::new("spatial");
-    command.args(&["alpha", "local", "launch"]);
+    command.args(&[
+        "alpha",
+        "local",
+        "launch",
+        "--runtime_version",
+        &config.runtime_version,
+    ]);
     if let Some(launch_config) = &launch.launch_config {
         command.arg(&format_arg("launch_config", launch_config));
     }
