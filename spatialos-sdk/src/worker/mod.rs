@@ -14,8 +14,6 @@ pub mod snapshot;
 pub(crate) mod utils;
 pub mod worker_future;
 
-use component::ComponentId;
-use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::fmt::{Display, Error, Formatter};
 
 // NOTE: This must be `repr(transparent)` in order for it to be ABI-compatible with
@@ -80,27 +78,6 @@ impl From<u8> for Authority {
             1 => Authority::Authoritative,
             2 => Authority::AuthorityLossImminent,
             _ => panic!("Unknown authority state: {}", auth),
-        }
-    }
-}
-
-pub struct InterestOverride {
-    pub component_id: ComponentId,
-    pub is_interested: bool,
-}
-
-impl InterestOverride {
-    pub fn new(component_id: ComponentId, is_interested: bool) -> Self {
-        InterestOverride {
-            component_id,
-            is_interested,
-        }
-    }
-
-    pub(crate) fn to_worker_sdk(&self) -> Worker_InterestOverride {
-        Worker_InterestOverride {
-            is_interested: self.is_interested as u8,
-            component_id: self.component_id,
         }
     }
 }
