@@ -3,10 +3,10 @@
 pub const SCHEMA_MAP_KEY_FIELD_ID: u32 = 1;
 pub const SCHEMA_MAP_VALUE_FIELD_ID: u32 = 2;
 pub const WORKER_API_VERSION_MAJOR: u32 = 14;
-pub const WORKER_API_VERSION_MINOR: u32 = 5;
+pub const WORKER_API_VERSION_MINOR: u32 = 8;
 pub const WORKER_API_VERSION_PATCH: u32 = 0;
-pub const WORKER_API_VERSION: u32 = 918784;
-pub const WORKER_API_VERSION_STR: &'static [u8; 7usize] = b"14.5.0\0";
+pub const WORKER_API_VERSION: u32 = 919552;
+pub const WORKER_API_VERSION_STR: &'static [u8; 7usize] = b"14.8.0\0";
 pub const WORKER_DEFAULTS_SEND_QUEUE_CAPACITY: u32 = 4096;
 pub const WORKER_DEFAULTS_RECEIVE_QUEUE_CAPACITY: u32 = 4096;
 pub const WORKER_DEFAULTS_LOG_MESSAGE_QUEUE_CAPACITY: u32 = 256;
@@ -24,7 +24,6 @@ pub const WORKER_DEFAULTS_MODULAR_TCP_MULTIPLEX_LEVEL: u32 = 1;
 pub const WORKER_DEFAULTS_TCP_MULTIPLEX_LEVEL: u32 = 32;
 pub const WORKER_DEFAULTS_TCP_SEND_BUFFER_SIZE: u32 = 65536;
 pub const WORKER_DEFAULTS_TCP_RECEIVE_BUFFER_SIZE: u32 = 65536;
-pub const WORKER_DEFAULTS_TCP_NO_DELAY: u32 = 0;
 pub const WORKER_DEFAULTS_TCP_FLUSH_DELAY_MILLIS: u32 = 1;
 pub const WORKER_DEFAULTS_RAKNET_HEARTBEAT_TIMEOUT_MILLIS: u32 = 60000;
 pub const WORKER_DEFAULTS_KCP_FAST_RETRANSMISSION: u32 = 1;
@@ -60,6 +59,138 @@ pub type int_fast8_t = i8;
 pub type uint_fast8_t = u8;
 pub type intmax_t = ::std::os::raw::c_longlong;
 pub type uintmax_t = ::std::os::raw::c_ulonglong;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Io_Storage {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Io_Stream {
+    _unused: [u8; 0],
+}
+#[doc = " Allow read operations on the stream. Read operations always occur at the read position, which"]
+#[doc = " is initialized to the beginning of the stream."]
+pub const Io_OpenMode_IO_OPEN_MODE_READ: Io_OpenMode = 1;
+#[doc = " Allow write operations on the stream. Write operations always occur at the write position,"]
+#[doc = " which is initialized to the end of the stream."]
+pub const Io_OpenMode_IO_OPEN_MODE_WRITE: Io_OpenMode = 2;
+#[doc = " Specify that any existing content should be truncated upon opening."]
+pub const Io_OpenMode_IO_OPEN_MODE_TRUNCATE: Io_OpenMode = 4;
+#[doc = " Specify that writes should be appended to the stream's existing content, if any exists."]
+pub const Io_OpenMode_IO_OPEN_MODE_APPEND: Io_OpenMode = 8;
+#[doc = " A bitmask type which controls the initial state of a stream upon opening. The semantics are"]
+#[doc = " analogous to C++'s std::ios_base::openmode except that streams are always opened in binary mode"]
+#[doc = " and reads and writes occur at the internally maintained read and write positions, which are"]
+#[doc = " initialized at the beginning and end of the stream respectively."]
+pub type Io_OpenMode = ::std::os::raw::c_int;
+extern "C" {
+    #[doc = " Creates a generic storage object."]
+    #[doc = ""]
+    #[doc = " Storage objects can be used in conjunction with other APIs to efficiently manage the lifetime"]
+    #[doc = " of various data (e.g. trace items)."]
+    #[doc = ""]
+    #[doc = " Memory stored in a given storage object remains valid until either the storage object is cleared"]
+    #[doc = " or it is destroyed."]
+    pub fn Io_Storage_Create() -> *mut Io_Storage;
+}
+extern "C" {
+    pub fn Io_Storage_Destroy(storage: *mut Io_Storage);
+}
+extern "C" {
+    #[doc = " Clears the storage object."]
+    #[doc = ""]
+    #[doc = " This marks memory previously stored in this storage object as available to re-use/overwrite"]
+    #[doc = " but does not actually free the memory. This leads to fewer allocations than, for example, using"]
+    #[doc = " a new storage object each time."]
+    pub fn Io_Storage_Clear(storage: *mut Io_Storage);
+}
+extern "C" {
+    #[doc = " Creates an I/O stream implemented as a ring buffer."]
+    #[doc = ""]
+    #[doc = " The ring buffer stream has a maximum write capacity equal to the number of bytes specified upon"]
+    #[doc = " creation. Attempted writes which would exceed this capacity will succeed, but return the lower,"]
+    #[doc = " actual number of bytes written. Reading from the stream increases write capacity by the amount of"]
+    #[doc = " bytes successfully read."]
+    #[doc = ""]
+    #[doc = " The stream has no readable data when first created."]
+    #[doc = ""]
+    #[doc = " Returns a pointer to a valid ring buffer stream. Never returns NULL."]
+    pub fn Io_CreateRingBufferStream(capacity_bytes: u32) -> *mut Io_Stream;
+}
+extern "C" {
+    #[doc = " Creates an I/O stream implemented as a read/write file."]
+    #[doc = ""]
+    #[doc = " The file stream has a conceptually infinite capacity; its true capacity depends on the"]
+    #[doc = " underlying filesystem."]
+    #[doc = ""]
+    #[doc = " The open_mode argument should be passed as a combination of Io_OpenMode values."]
+    #[doc = ""]
+    #[doc = " Returns a pointer to a file stream. Never returns NULL. Call Io_Stream_GetLastError to check if"]
+    #[doc = " an error occurred during file stream creation."]
+    pub fn Io_CreateFileStream(
+        filename: *const ::std::os::raw::c_char,
+        open_mode: u32,
+    ) -> *mut Io_Stream;
+}
+extern "C" {
+    pub fn Io_Stream_Destroy(stream: *mut Io_Stream);
+}
+extern "C" {
+    #[doc = " Writes as much of the given data as possible to the stream."]
+    #[doc = ""]
+    #[doc = " Returns the actual number of bytes written. This may be less than the given length iff the stream"]
+    #[doc = " has finite capacity and there is insufficient remaining capacity for the full write."]
+    #[doc = ""]
+    #[doc = " Returns -1 on error. Call Io_Stream_GetLastError to get the associated error message."]
+    pub fn Io_Stream_Write(stream: *mut Io_Stream, bytes: *const u8, length: u32) -> i64;
+}
+extern "C" {
+    #[doc = " Gets the remaining write capacity in bytes."]
+    #[doc = ""]
+    #[doc = " Returns the maximum value for stream implementations with conceptually infinite capacity, like"]
+    #[doc = " file streams, regardless of how much data has previously been written."]
+    pub fn Io_Stream_GetRemainingWriteCapacityBytes(stream: *mut Io_Stream) -> u32;
+}
+extern "C" {
+    #[doc = " Reads as much of the stream's data as possible into the given buffer."]
+    #[doc = ""]
+    #[doc = " Returns the actual number of bytes read. This may be less than the given length iff the stream"]
+    #[doc = " has less data than the requested amount."]
+    #[doc = ""]
+    #[doc = " Returns -1 on error. Call Io_Stream_GetLastError to get the associated error message."]
+    pub fn Io_Stream_Read(stream: *mut Io_Stream, bytes: *mut u8, length: u32) -> i64;
+}
+extern "C" {
+    #[doc = " Reads as much of the stream's data as possible into the given buffer without advancing the read"]
+    #[doc = " position i.e. a subsequent read of the same size would provide the same data."]
+    #[doc = ""]
+    #[doc = " Returns the actual number of bytes read. This may be less than the given length iff the stream"]
+    #[doc = " has less data than the requested amount."]
+    #[doc = ""]
+    #[doc = " Returns -1 on error. Call Io_Stream_GetLastError() to get the associated error message."]
+    pub fn Io_Stream_Peek(arg1: *mut Io_Stream, bytes: *mut u8, length: u32) -> i64;
+}
+extern "C" {
+    #[doc = " Extracts the given number of bytes from the stream and discards them."]
+    #[doc = ""]
+    #[doc = " Returns the actual number of bytes extracted i.e. the number of bytes by which the read position"]
+    #[doc = " has advanced. This may be less than the given length iff the stream has less data than the"]
+    #[doc = " requested amount."]
+    #[doc = ""]
+    #[doc = " Returns -1 on error. Call Io_Stream_GetLastError() to get the associated error message."]
+    pub fn Io_Stream_Ignore(arg1: *mut Io_Stream, length: u32) -> i64;
+}
+extern "C" {
+    #[doc = " Returns the last error which occurred during an API call on this stream. Returns nullptr if no"]
+    #[doc = " such error has occurred."]
+    pub fn Io_Stream_GetLastError(stream: *mut Io_Stream) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    #[doc = " Clears the stream's current error such that the next call to Io_Stream_GetLastError returns"]
+    #[doc = " nullptr."]
+    pub fn Io_Stream_ClearError(stream: *mut Io_Stream);
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Schema_GenericData {
@@ -118,8 +249,13 @@ pub type Schema_ErrorCallback = ::std::option::Option<
     ),
 >;
 extern "C" {
-    #[doc = " Load a serialized schema bundle from a byte buffer. This byte buffer should contain a fully"]
-    #[doc = " loaded schema bundle generated by the schema compiler using the `--bundle_out` argument."]
+    #[doc = " Load a serialized schema bundle from a byte buffer."]
+    #[doc = ""]
+    #[doc = " This byte buffer should contain a fully loaded binary schema bundle."]
+    #[doc = " You can load a schema bundle generated by the schema compiler using the `--bundle_out` argument"]
+    #[doc = " yourself, or alternatively, you can generate a file containing a set of C functions to access the"]
+    #[doc = " binary schema bundle data (`Worker_GetSchemaBundleData` and `Worker_GetSchemaBundleLength`)"]
+    #[doc = " using the schema compiler flag `--cpp_bundle_out`."]
     #[doc = ""]
     #[doc = " Make sure to call `Schema_Bundle_GetError` after loading to check if there were any errors when"]
     #[doc = " loading."]
@@ -1182,6 +1318,355 @@ extern "C" {
 pub type size_t = ::std::os::raw::c_ulonglong;
 pub type wchar_t = ::std::os::raw::c_ushort;
 pub type max_align_t = f64;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Trace_EventTracer {
+    _unused: [u8; 0],
+}
+#[doc = " An identifier for a span which can reasonably be expected to be unique across an entire"]
+#[doc = " deployment."]
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct Trace_SpanId {
+    pub data: [::std::os::raw::c_uchar; 16usize],
+}
+pub const Trace_ItemType_TRACE_ITEM_TYPE_SPAN: Trace_ItemType = 1;
+pub const Trace_ItemType_TRACE_ITEM_TYPE_EVENT: Trace_ItemType = 2;
+#[doc = " Item type, used by the Trace_Item struct."]
+pub type Trace_ItemType = ::std::os::raw::c_int;
+extern "C" {
+    #[doc = " Returns a span ID representing a special null ID. This can be used to indicate that a span"]
+    #[doc = " should not be actively traced."]
+    pub fn Trace_SpanId_Null() -> Trace_SpanId;
+}
+extern "C" {
+    #[doc = " Returns a randomly generated span ID. This should only be used for testing purposes."]
+    pub fn Trace_SpanId_GenerateTestSpanId() -> Trace_SpanId;
+}
+extern "C" {
+    #[doc = " Returns whether the given span IDs are equal."]
+    pub fn Trace_SpanId_Equal(a: Trace_SpanId, b: Trace_SpanId) -> u8;
+}
+extern "C" {
+    #[doc = " Returns a hash of the the given span ID."]
+    pub fn Trace_SpanId_Hash(span_id: Trace_SpanId) -> u32;
+}
+#[doc = " Data for adding a span, used by Trace_EventTracer_AddSpan."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Trace_SpanOptions {
+    pub cause_count: u32,
+    pub causes: *const Trace_SpanId,
+}
+impl Default for Trace_SpanOptions {
+    fn default() -> Self {
+        unsafe { ::std::mem::zeroed() }
+    }
+}
+#[doc = " Data for a span added to the event-tracer."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Trace_Span {
+    pub id: Trace_SpanId,
+    pub cause_count: u32,
+    pub causes: *const Trace_SpanId,
+}
+impl Default for Trace_Span {
+    fn default() -> Self {
+        unsafe { ::std::mem::zeroed() }
+    }
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Trace_EventData {
+    _unused: [u8; 0],
+}
+extern "C" {
+    #[doc = " Creates an empty event data object. This should be populated with Trace_EventData_AddStringField"]
+    #[doc = " before being added to the event-tracer."]
+    pub fn Trace_EventData_Create() -> *mut Trace_EventData;
+}
+extern "C" {
+    #[doc = " Frees resources for the event data object."]
+    pub fn Trace_EventData_Destroy(data: *mut Trace_EventData);
+}
+extern "C" {
+    #[doc = " Adds the key value pair as a field to the given event data object. Note that this may invalidate"]
+    #[doc = " any keys or values retrieved with Trace_EventData_Get*."]
+    pub fn Trace_EventData_AddStringFields(
+        data: *mut Trace_EventData,
+        count: u32,
+        keys: *mut *const ::std::os::raw::c_char,
+        values: *mut *const ::std::os::raw::c_char,
+    );
+}
+extern "C" {
+    #[doc = " Returns the number of fields on the given event data object."]
+    pub fn Trace_EventData_GetFieldCount(data: *const Trace_EventData) -> u32;
+}
+extern "C" {
+    #[doc = " Returns all the key value pairs in the event data object. keys and values must have capacity for"]
+    #[doc = " at least Trace_EventData_GetFieldCount(data) elements. This method is provided to discover key"]
+    #[doc = " value pairs of unknown event schema data, therefore the ordering of key value pairs is entirely"]
+    #[doc = " arbitrary."]
+    pub fn Trace_EventData_GetStringFields(
+        data: *const Trace_EventData,
+        keys: *mut *const ::std::os::raw::c_char,
+        values: *mut *const ::std::os::raw::c_char,
+    );
+}
+extern "C" {
+    #[doc = " Returns the value for the given key."]
+    pub fn Trace_EventData_GetFieldValue(
+        data: *const Trace_EventData,
+        key: *const ::std::os::raw::c_char,
+    ) -> *const ::std::os::raw::c_char;
+}
+#[doc = " Data for an event added to the event-tracer."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Trace_Event {
+    pub span_id: Trace_SpanId,
+    pub unix_timestamp_millis: u64,
+    pub message: *const ::std::os::raw::c_char,
+    pub type_: *const ::std::os::raw::c_char,
+    #[doc = " Use the Trace_EventData_* methods to read the data."]
+    pub data: *const Trace_EventData,
+}
+impl Default for Trace_Event {
+    fn default() -> Self {
+        unsafe { ::std::mem::zeroed() }
+    }
+}
+#[doc = " An item added to the event-tracer."]
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct Trace_Item {
+    #[doc = " The type of the item, defined using Trace_ItemType."]
+    pub item_type: u8,
+    pub item: Trace_Item_Trace_Item_Union,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union Trace_Item_Trace_Item_Union {
+    pub span: Trace_Span,
+    pub event: Trace_Event,
+    _bindgen_union_align: [u64; 6usize],
+}
+impl Default for Trace_Item_Trace_Item_Union {
+    fn default() -> Self {
+        unsafe { ::std::mem::zeroed() }
+    }
+}
+impl Default for Trace_Item {
+    fn default() -> Self {
+        unsafe { ::std::mem::zeroed() }
+    }
+}
+#[doc = " The callback type for spans or events added to the Trace_EventTracer. The Trace_Item will"]
+#[doc = " only be valid for the duration of the callback."]
+pub type Trace_Callback = ::std::option::Option<
+    unsafe extern "C" fn(user_data: *mut ::std::os::raw::c_void, item: *const Trace_Item),
+>;
+#[doc = " Parameters for configuring the event-tracer."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Trace_EventTracer_Parameters {
+    #[doc = " The callback to invoke when a span or event is added to the event-tracer."]
+    pub callback: Trace_Callback,
+    #[doc = " User data to provide to the callback above."]
+    pub user_data: *mut ::std::os::raw::c_void,
+}
+impl Default for Trace_EventTracer_Parameters {
+    fn default() -> Self {
+        unsafe { ::std::mem::zeroed() }
+    }
+}
+extern "C" {
+    #[doc = " Creates an event-tracer."]
+    #[doc = ""]
+    #[doc = " The event-tracer is initially disabled, meaning you won't receive any trace items via the"]
+    #[doc = " callback until you call Trace_EventTracer_Enable."]
+    pub fn Trace_EventTracer_Create(
+        parameters: *const Trace_EventTracer_Parameters,
+    ) -> *mut Trace_EventTracer;
+}
+extern "C" {
+    #[doc = " Frees resources for an event-tracer."]
+    pub fn Trace_EventTracer_Destroy(event_tracer: *mut Trace_EventTracer);
+}
+extern "C" {
+    #[doc = " Enables the event-tracer. When adding spans to the event-tracer, a non-null span ID will be"]
+    #[doc = " returned and the provided Trace_Callback will be invoked."]
+    #[doc = " Note that the Trace_Callback will NOT be invoked for events added with a null span ID. If a span"]
+    #[doc = " was added while the event-tracer was disabled, the Trace_Callback will NOT be invoked for any"]
+    #[doc = " events added to the span (even if the event-tracer is enabled)."]
+    pub fn Trace_EventTracer_Enable(event_tracer: *mut Trace_EventTracer);
+}
+extern "C" {
+    #[doc = " Disables the Trace_EventTracer. When adding spans to the event-tracer, a null span ID will be"]
+    #[doc = " returned and the provided Trace_Callback will NOT be invoked."]
+    #[doc = " Note that the Trace_Callback will be invoked for events added with a non-null span ID. If a span"]
+    #[doc = " was added while the event-tracer was enabled, the Trace_Callback will be invoked for any events"]
+    #[doc = " added to the span (even if the event-tracer is disabled)."]
+    pub fn Trace_EventTracer_Disable(event_tracer: *mut Trace_EventTracer);
+}
+extern "C" {
+    #[doc = " Sets the per thread active span ID for the Trace_EventTracer. This ID may be used internally by"]
+    #[doc = " the Worker API. For example, subsequent calls to Worker_Connection_Send* will attach the set ID"]
+    #[doc = " to the internal messages. Calling this function when there is already a non-null span ID active"]
+    #[doc = " is safe and will overwrite the existing active span ID with the given ID. We recommend unsetting"]
+    #[doc = " the active span ID when no longer needed to avoid creating causal relationships between"]
+    #[doc = " unrelated spans."]
+    pub fn Trace_EventTracer_SetActiveSpanId(
+        event_tracer: *mut Trace_EventTracer,
+        span_id: Trace_SpanId,
+    );
+}
+extern "C" {
+    #[doc = " Unsets the active span ID on the event-tracer for the current thread."]
+    #[doc = " Trace_EventTracer_GetActiveSpanId will return a null span ID."]
+    pub fn Trace_EventTracer_ClearActiveSpanId(event_tracer: *mut Trace_EventTracer);
+}
+extern "C" {
+    #[doc = " Gets the active span ID on the event-tracer."]
+    pub fn Trace_EventTracer_GetActiveSpanId(
+        event_tracer: *const Trace_EventTracer,
+    ) -> Trace_SpanId;
+}
+extern "C" {
+    #[doc = " Adds a span to the event-tracer."]
+    pub fn Trace_EventTracer_AddSpan(
+        event_tracer: *mut Trace_EventTracer,
+        causes: *const Trace_SpanId,
+        cause_count: u32,
+    ) -> Trace_SpanId;
+}
+extern "C" {
+    #[doc = " Adds an event to the event-tracer. Note that the `unix_timestamp_millis` field in the event will"]
+    #[doc = " be ignored. Ownership of the event is NOT taken by the event-tracer, it is up to the user to"]
+    #[doc = " free Trace_Event."]
+    pub fn Trace_EventTracer_AddEvent(
+        event_tracer: *mut Trace_EventTracer,
+        event: *const Trace_Event,
+    );
+}
+extern "C" {
+    #[doc = " Returns true if the given (partial) event object should be sampled. Currently, only the `span_id`"]
+    #[doc = " field of the event is considered. This method is useful if generation of the event's message or"]
+    #[doc = " data is expensive, e.g. if it involves allocation. Example usage:"]
+    #[doc = ""]
+    #[doc = "  Trace_Event event{span_id, 0u, nullptr, \"event_data_type\", nullptr};"]
+    #[doc = "  if (Trace_EventTracer_ShouldSampleEvent(event_tracer, &event)) {"]
+    #[doc = "    event.message = \"received component update\";"]
+    #[doc = ""]
+    #[doc = "    Trace_EventData* event_data = Trace_EventData_Create();"]
+    #[doc = "    const char* key = \"update_data\";"]
+    #[doc = "    const char* value = UpdateToString(update);"]
+    #[doc = "    Trace_EventData_AddStringFields(event_data, 1u, &key, &value);"]
+    #[doc = ""]
+    #[doc = "    event.data = event_data;"]
+    #[doc = "    Trace_EventTracer_AddEvent(event_tracer, &event);"]
+    #[doc = "    Trace_EventData_Destroy(event_data);"]
+    #[doc = "    free(value);"]
+    #[doc = "  }"]
+    #[doc = ""]
+    pub fn Trace_EventTracer_ShouldSampleEvent(
+        event_tracer: *const Trace_EventTracer,
+        event: *const Trace_Event,
+    ) -> u8;
+}
+extern "C" {
+    #[doc = " Create a new trace item from the memory owned by this storage. The item will be valid as long"]
+    #[doc = " as the storage's memory is valid i.e. until the storage is cleared or destroyed."]
+    #[doc = ""]
+    #[doc = " The item is initialized by copying the provided item; pass a NULL item argument to create an"]
+    #[doc = " item in an uninitialized state."]
+    #[doc = ""]
+    #[doc = " Directly creating a Trace_Item object (on the stack or the heap) by other means than calling this"]
+    #[doc = " method is discouraged as it will lead to undefined behaviour when passing that item to certain"]
+    #[doc = " trace API methods (e.g. Trace_SerializeItemToStream)."]
+    pub fn Trace_Item_Create(storage: *mut Io_Storage, item: *const Trace_Item) -> *mut Trace_Item;
+}
+extern "C" {
+    #[doc = " Returns a pointer to a thread-local trace item."]
+    #[doc = ""]
+    #[doc = " The item is initially uninitialized, but successive calls to this method on the same thread"]
+    #[doc = " always returns the same item, which may have been modified by previous usage."]
+    pub fn Trace_Item_GetThreadLocal() -> *mut Trace_Item;
+}
+extern "C" {
+    #[doc = " Get the serialized size of the trace item in bytes."]
+    #[doc = ""]
+    #[doc = " Note that each call to Trace_GetSerializedItemSize invalidates the internal state necessary to"]
+    #[doc = " serialize the previous item. Therefore, you must call Trace_SerializeItemToStream with one item"]
+    #[doc = " before calling Trace_GetSerializedItemSize with the next item."]
+    #[doc = ""]
+    #[doc = " Returns 0 on error. You can call Trace_GetLastError to get the associated error message,"]
+    #[doc = " but it is safe to pass 0 as the size to a subsequent call to Trace_SerializeItemToStream."]
+    pub fn Trace_GetSerializedItemSize(item: *const Trace_Item) -> u32;
+}
+extern "C" {
+    #[doc = " Serialize the given trace item to a stream which has been opened for writing."]
+    #[doc = ""]
+    #[doc = " The size argument must be the result of a call to Trace_GetSerializedItemSize with the same item."]
+    #[doc = " Otherwise, behaviour is undefined. It is not necessary to check that Trace_GetSerializedItemSize"]
+    #[doc = " returned a non-zero item size. Instead, this can be indirectly checked by passing the size to"]
+    #[doc = " this method and checking its return value for an error."]
+    #[doc = ""]
+    #[doc = " The caller is responsible for ensuring that the provided stream has sufficient remaining capacity"]
+    #[doc = " to hold the serialized item."]
+    #[doc = ""]
+    #[doc = " Returns 1 on success, 0 on error. Call Trace_GetLastError to get the associated error"]
+    #[doc = " message."]
+    pub fn Trace_SerializeItemToStream(
+        stream: *mut Io_Stream,
+        item: *const Trace_Item,
+        size: u32,
+    ) -> i8;
+}
+extern "C" {
+    #[doc = " Get the serialized size, in bytes, of the next serialized trace item to be read from the stream."]
+    #[doc = ""]
+    #[doc = " Returns 0 either if there was an error or the stream did not contain enough data to calculate"]
+    #[doc = " the next item's serialized size. You can call Trace_GetLastError to get the associated error"]
+    #[doc = " message, but it is safe to pass 0 as the size to a subsequent call to"]
+    #[doc = " Trace_DeserializeItemFromStream."]
+    pub fn Trace_GetNextSerializedItemSize(stream: *mut Io_Stream) -> u32;
+}
+extern "C" {
+    #[doc = " Deserialize the next trace item from a stream which has been opened for reading."]
+    #[doc = ""]
+    #[doc = " If the deserialized item does not need to be used after the next call to"]
+    #[doc = " Trace_DeserializeItemFromStream, it is recommended to pass the item returned by"]
+    #[doc = " Trace_Item_GetThreadLocal to deserialize into. Otherwise, pass an item stored in an Io_Storage"]
+    #[doc = " object."]
+    #[doc = ""]
+    #[doc = " The size argument must be the result of a previous call to Trace_GetNextSerializedItemSize."]
+    #[doc = " Otherwise, behaviour is undefined. It is not necessary to check that"]
+    #[doc = " Trace_GetNextSerializedItemSize returned a non-zero item size. Instead, this can be indirectly"]
+    #[doc = " checked by passing the size to this method and checking its return value for an error."]
+    #[doc = ""]
+    #[doc = " Returns 1 if the next serialized item was successfully deserialized into the provided item."]
+    #[doc = " Returns 0 if the stream only contained a partial (serialized) trace item. Writing the rest of"]
+    #[doc = " the data of the next serialized trace item to the stream may result in the next call to"]
+    #[doc = " Trace_DeserializeItemFromStream being successful."]
+    #[doc = " Returns -1 if there was an error during serialization. Call Trace_GetLastError to get the"]
+    #[doc = " associated error message."]
+    pub fn Trace_DeserializeItemFromStream(
+        stream: *mut Io_Stream,
+        item: *mut Trace_Item,
+        size: u32,
+    ) -> i8;
+}
+extern "C" {
+    #[doc = " Returns the last error which occurred during a trace API method call. Returns nullptr if no"]
+    #[doc = " such error has occurred."]
+    pub fn Trace_GetLastError() -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    pub fn Trace_ClearError();
+}
 pub type Worker_EntityId = i64;
 pub type Worker_ComponentId = u32;
 pub type Worker_CommandIndex = u32;
@@ -1240,7 +1725,8 @@ pub const Worker_LogCategory_WORKER_LOG_CATEGORY_NETWORK_STATUS: Worker_LogCateg
 pub const Worker_LogCategory_WORKER_LOG_CATEGORY_NETWORK_TRAFFIC: Worker_LogCategory = 8;
 pub const Worker_LogCategory_WORKER_LOG_CATEGORY_LOGIN: Worker_LogCategory = 16;
 pub const Worker_LogCategory_WORKER_LOG_CATEGORY_API: Worker_LogCategory = 32;
-pub const Worker_LogCategory_WORKER_LOG_CATEGORY_ALL: Worker_LogCategory = 63;
+pub const Worker_LogCategory_WORKER_LOG_CATEGORY_PARAMETERS: Worker_LogCategory = 64;
+pub const Worker_LogCategory_WORKER_LOG_CATEGORY_ALL: Worker_LogCategory = 127;
 #[doc = " Enum defining the available categories for log messages. Each log message has one or more of"]
 #[doc = " these categories attached."]
 pub type Worker_LogCategory = ::std::os::raw::c_int;
@@ -1342,6 +1828,7 @@ pub const Worker_Result_WORKER_RESULT_SUCCESS: Worker_Result = 0;
 pub type Worker_Result = ::std::os::raw::c_int;
 pub const Worker_Authority_WORKER_AUTHORITY_NOT_AUTHORITATIVE: Worker_Authority = 0;
 pub const Worker_Authority_WORKER_AUTHORITY_AUTHORITATIVE: Worker_Authority = 1;
+#[doc = " (deprecated)"]
 pub const Worker_Authority_WORKER_AUTHORITY_AUTHORITY_LOSS_IMMINENT: Worker_Authority = 2;
 #[doc = " Enum defining the possible authority states for an entity component."]
 pub type Worker_Authority = ::std::os::raw::c_int;
@@ -1871,7 +2358,7 @@ impl Default for Worker_EntityQuery {
         unsafe { ::std::mem::zeroed() }
     }
 }
-#[doc = " An interest override for a particular (entity ID, component ID) pair."]
+#[doc = " (Deprecated) An interest override for a particular (entity ID, component ID) pair."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct Worker_InterestOverride {
@@ -2198,6 +2685,9 @@ pub struct Worker_Op {
     #[doc = " The type of this op, defined in Worker_OpType."]
     pub op_type: u8,
     pub op: Worker_Op_Union,
+    #[doc = " The span ID of the op. You can use this, along with a Trace_EventTracer, to continue the op's"]
+    #[doc = " trace."]
+    pub span_id: Trace_SpanId,
 }
 impl Default for Worker_Op {
     fn default() -> Self {
@@ -2532,9 +3022,10 @@ pub struct Worker_ProtocolLoggingParameters {
     #[doc = " Log file names are prefixed with this prefix, are numbered, and have the extension .log."]
     pub log_prefix: *const ::std::os::raw::c_char,
     #[doc = " Maximum number of log files to keep. Note that logs from any previous protocol logging"]
-    #[doc = " sessions will be overwritten."]
+    #[doc = " sessions will be overwritten. Forced to 1 if <c>max_log_file_size_bytes == 0</c>."]
     pub max_log_files: u32,
     #[doc = " When a log file reaches this size, a new log file is created."]
+    #[doc = " If set to 0, only one file will be created without size restrictions."]
     pub max_log_file_size_bytes: u32,
 }
 impl Default for Worker_ProtocolLoggingParameters {
@@ -2549,9 +3040,10 @@ pub struct Worker_RotatingLogFileParameters {
     #[doc = " Log file names are prefixed with this prefix, are numbered, and have the extension .log."]
     pub log_prefix: *const ::std::os::raw::c_char,
     #[doc = " Maximum number of log files to keep. Note that logs from any previous protocol logging"]
-    #[doc = " sessions are overwritten."]
+    #[doc = " sessions are overwritten. Forced to 1 if `max_log_file_size_bytes == 0`."]
     pub max_log_files: u32,
     #[doc = " When a log file reaches this size, a new log file is created."]
+    #[doc = " If set to 0, only one file will be created without size restrictions."]
     pub max_log_file_size_bytes: u32,
 }
 impl Default for Worker_RotatingLogFileParameters {
@@ -2697,6 +3189,9 @@ pub struct Worker_ConnectionParameters {
     #[doc = " Whether to enable all logsinks at startup. Note that this is automatically true if"]
     #[doc = " enable_protocol_logging_at_startup is set to true."]
     pub enable_logging_at_startup: u8,
+    #[doc = " The event tracer to use for the Worker_Connection. The Trace_EventTracer must outlive"]
+    #[doc = " the Worker_Connection. Only used if not NULL."]
+    pub event_tracer: *const Trace_EventTracer,
     #[doc = " Whether to enable dynamic components."]
     #[doc = " If this field is true, add and remove component ops are emitted on authority change. These ops,"]
     #[doc = " like all add and remove component ops, must be treated in an idempotent way (i.e. they replace"]
@@ -3395,12 +3890,12 @@ extern "C" {
     );
 }
 extern "C" {
-    #[doc = " Sends a diff-based component interest update for the given entity to SpatialOS. By default, the"]
-    #[doc = " worker receives data for all entities according to the default component interest specified in"]
-    #[doc = " its bridge settings. This function allows interest override by (entity ID, component ID) pair to"]
-    #[doc = " force the data to either always be sent or never be sent. Note that this does not apply if the"]
-    #[doc = " worker is _authoritative_ over a particular (entity ID, component ID) pair, in which case the"]
-    #[doc = " data is always sent."]
+    #[doc = " (Deprecated) Sends a diff-based component interest update for the given entity to SpatialOS. By"]
+    #[doc = " default, the worker receives data for all entities according to the default component interest"]
+    #[doc = " specified in its bridge settings. This function allows interest override by (entity ID, component"]
+    #[doc = " ID) pair to force the data to either always be sent or never be sent. Note that this does not"]
+    #[doc = " apply if the worker is _authoritative_ over a particular (entity ID, component ID) pair, in which"]
+    #[doc = " case the data is always sent."]
     pub fn Worker_Connection_SendComponentInterest(
         connection: *mut Worker_Connection,
         entity_id: Worker_EntityId,
@@ -3409,9 +3904,9 @@ extern "C" {
     );
 }
 extern "C" {
-    #[doc = " Sends an acknowledgement of the receipt of an AuthorityLossImminent authority change for a"]
-    #[doc = " component. Sending the acknowledgement signifies that this worker is ready to lose authority"]
-    #[doc = " over the component."]
+    #[doc = " (deprecated) Sends an acknowledgement of the receipt of an AuthorityLossImminent authority change"]
+    #[doc = " for a component. Sending the acknowledgement signifies that this worker is ready to lose"]
+    #[doc = " authority over the component."]
     pub fn Worker_Connection_SendAuthorityLossImminentAcknowledgement(
         connection: *mut Worker_Connection,
         entity_id: Worker_EntityId,
