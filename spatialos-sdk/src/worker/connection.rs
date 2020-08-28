@@ -9,7 +9,7 @@ use crate::worker::{
     parameters::ConnectionParameters,
     utils::cstr_to_string,
     worker_future::{WorkerFuture, WorkerSdkFuture},
-    {EntityId, InterestOverride, RequestId},
+    {EntityId, RequestId},
 };
 use spatialos_sdk_sys::worker::*;
 use std::{
@@ -190,18 +190,6 @@ pub trait Connection {
         parameters: UpdateParameters,
     );
 
-    fn send_component_interest(
-        &mut self,
-        entity_id: EntityId,
-        interest_overrides: &[InterestOverride],
-    );
-
-    fn send_authority_loss_imminent_acknowledgement(
-        &mut self,
-        entity_id: EntityId,
-        component_id: u32,
-    );
-
     fn flush(&mut self);
 
     fn enable_logging(&mut self);
@@ -250,8 +238,7 @@ impl WorkerConnection {
 
             let sdk_attr = Worker_Connection_GetWorkerAttributes(connection_ptr);
 
-            // TODO: Remove first conditional when upgrading to 14.8.0
-            let attributes = if cstr.to_bytes().is_empty() || (*sdk_attr).attributes.is_null() {
+            let attributes = if (*sdk_attr).attributes.is_null() {
                 Vec::new()
             } else {
                 ::std::slice::from_raw_parts(
@@ -511,43 +498,6 @@ impl Connection for WorkerConnection {
                 entity_id.id,
                 &mut component_update,
                 &params,
-            );
-        }
-    }
-
-    fn send_component_interest(
-        &mut self,
-        entity_id: EntityId,
-        interest_overrides: &[InterestOverride],
-    ) {
-        assert!(!self.connection_ptr.is_null());
-        let worker_sdk_overrides = interest_overrides
-            .iter()
-            .map(InterestOverride::to_worker_sdk)
-            .collect::<Vec<Worker_InterestOverride>>();
-
-        unsafe {
-            Worker_Connection_SendComponentInterest(
-                self.connection_ptr.get(),
-                entity_id.id,
-                worker_sdk_overrides.as_ptr(),
-                worker_sdk_overrides.len() as u32,
-            );
-        }
-    }
-
-    fn send_authority_loss_imminent_acknowledgement(
-        &mut self,
-        entity_id: EntityId,
-        component_id: u32,
-    ) {
-        assert!(!self.connection_ptr.is_null());
-
-        unsafe {
-            Worker_Connection_SendAuthorityLossImminentAcknowledgement(
-                self.connection_ptr.get(),
-                entity_id.id,
-                component_id,
             );
         }
     }

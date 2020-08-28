@@ -13,7 +13,8 @@ bitflags! {
         const NetworkTraffic  = 0x08;
         const Login           = 0x10;
         const Api             = 0x20;
-        const All             = 0x3f;
+        const Parameters      = 0x40;
+        const All             = 0x7f;
     }
 }
 

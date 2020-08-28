@@ -14,8 +14,6 @@ pub mod snapshot;
 pub(crate) mod utils;
 pub mod worker_future;
 
-use component::ComponentId;
-use spatialos_sdk_sys::worker::Worker_InterestOverride;
 use std::fmt::{Display, Error, Formatter};
 
 // NOTE: This must be `repr(transparent)` in order for it to be ABI-compatible with
@@ -84,27 +82,6 @@ impl From<u8> for Authority {
     }
 }
 
-pub struct InterestOverride {
-    pub component_id: ComponentId,
-    pub is_interested: bool,
-}
-
-impl InterestOverride {
-    pub fn new(component_id: ComponentId, is_interested: bool) -> Self {
-        InterestOverride {
-            component_id,
-            is_interested,
-        }
-    }
-
-    pub(crate) fn to_worker_sdk(&self) -> Worker_InterestOverride {
-        Worker_InterestOverride {
-            is_interested: self.is_interested as u8,
-            component_id: self.component_id,
-        }
-    }
-}
-
 #[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
 pub enum ConnectionStatusCode {
     Success,
@@ -123,6 +100,6 @@ pub enum ConnectionStatusCode {
 
 pub mod constants {
     pub const LOCATOR_HOSTNAME: &str = "locator.improbable.io";
-    pub const LOCATOR_PORT: u16 = 444;
+    pub const LOCATOR_PORT: u16 = 443;
     pub const RECEPTIONIST_PORT: u16 = 7777;
 }
