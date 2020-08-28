@@ -565,6 +565,7 @@ impl<'a> IntermediateConnectionParameters<'a> {
             component_vtable_count: 0,
             component_vtables: ptr::null(),
             default_component_vtable: default_vtable,
+            event_tracer: ptr::null(),
         }
     }
 }
