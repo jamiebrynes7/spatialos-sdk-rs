@@ -12,6 +12,11 @@ pub struct Config {
     /// Defaults to the latest supported version.
     pub spatial_sdk_version: String,
 
+    /// The runtime version to use for local launches.
+    ///
+    /// Defaults to the latest version pinned by this `cargo-spatial` version.
+    pub runtime_version: String,
+
     /// The list of worker projects to be built.
     ///
     /// If empty, the root project is assumed to contain all workers.
@@ -54,6 +59,7 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             spatial_sdk_version: "14.8.0".into(),
+            runtime_version: "14.5.4".into(),
             workers: vec![".".into()],
             codegen_out: "src/generated.rs".into(),
             schema_paths: vec![],
