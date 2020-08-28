@@ -100,6 +100,6 @@ pub enum ConnectionStatusCode {
 
 pub mod constants {
     pub const LOCATOR_HOSTNAME: &str = "locator.improbable.io";
-    pub const LOCATOR_PORT: u16 = 444;
+    pub const LOCATOR_PORT: u16 = 443;
     pub const RECEPTIONIST_PORT: u16 = 7777;
 }
