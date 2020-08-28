@@ -16,7 +16,7 @@ use spatialos_sdk::worker::{
     metrics::{HistogramMetric, Metrics},
     op::WorkerOp,
     query::{EntityQuery, QueryConstraint, ResultType},
-    {EntityId, InterestOverride},
+    EntityId,
 };
 use std::{collections::HashMap, f64};
 use structopt::StructOpt;
@@ -234,13 +234,6 @@ fn exercise_connection_code_paths(c: &mut WorkerConnection) {
     let _ = c.get_op_list(0);
     c.send_reserve_entity_ids_request(ReserveEntityIdsRequest(1), None);
     send_query(c);
-
-    let interested = vec![
-        InterestOverride::new(1, true),
-        InterestOverride::new(100, false),
-    ];
-    c.send_component_interest(EntityId::new(1), &interested);
-    c.send_authority_loss_imminent_acknowledgement(EntityId::new(1), 1337);
 
     send_metrics(c);
     c.enable_logging();
