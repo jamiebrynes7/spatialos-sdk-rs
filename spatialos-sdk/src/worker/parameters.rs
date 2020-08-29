@@ -20,10 +20,11 @@ pub struct ConnectionParameters {
 
 impl ConnectionParameters {
     pub fn new<T: AsRef<str>>(worker_type: T) -> Self {
-        let mut params = ConnectionParameters::default();
-        params.worker_type =
-            CString::new(worker_type.as_ref()).expect("`worker_type` contains a null byte");
-        params
+        ConnectionParameters {
+            worker_type: CString::new(worker_type.as_ref())
+                .expect("`worker_type` contains a null byte"),
+            ..Default::default()
+        }
     }
 
     pub fn with_logsink(mut self, logsink_params: LogsinkParameters) -> Self {
@@ -117,8 +118,8 @@ pub struct NetworkParameters {
     pub default_command_timeout_millis: u32,
 }
 
-impl NetworkParameters {
-    pub fn default() -> Self {
+impl Default for NetworkParameters {
+    fn default() -> Self {
         NetworkParameters {
             use_external_ip: false,
             protocol: ProtocolType::Kcp(ModularKcpNetworkParameters::default()),
@@ -143,22 +144,6 @@ pub struct ModularKcpNetworkParameters {
 }
 
 impl ModularKcpNetworkParameters {
-    pub fn default() -> Self {
-        ModularKcpNetworkParameters {
-            security_type: SecurityType::Insecure,
-            multiplex_level: WORKER_DEFAULTS_KCP_MULTIPLEX_LEVEL as u8,
-            downstream_kcp: KcpTransportParameters::default(),
-            upstream_kcp: KcpTransportParameters::default(),
-            downstream_erasure_codec: None,
-            upstream_erasure_codec: None,
-            downstream_heartbeat: None,
-            upstream_heartbeat: None,
-            downstream_compression: None,
-            upstream_compression: None,
-            flow_control: Some(FlowControlParameters::default()),
-        }
-    }
-
     pub(crate) fn to_worker_sdk(&self) -> Worker_ModularKcpNetworkParameters {
         Worker_ModularKcpNetworkParameters {
             security_type: self.security_type as u8,
@@ -197,6 +182,24 @@ impl ModularKcpNetworkParameters {
     }
 }
 
+impl Default for ModularKcpNetworkParameters {
+    fn default() -> Self {
+        ModularKcpNetworkParameters {
+            security_type: SecurityType::Insecure,
+            multiplex_level: WORKER_DEFAULTS_KCP_MULTIPLEX_LEVEL as u8,
+            downstream_kcp: KcpTransportParameters::default(),
+            upstream_kcp: KcpTransportParameters::default(),
+            downstream_erasure_codec: Some(ErasureCodecParameters::default()),
+            upstream_erasure_codec: Some(ErasureCodecParameters::default()),
+            downstream_heartbeat: Some(HeartbeatParameters::default()),
+            upstream_heartbeat: Some(HeartbeatParameters::default()),
+            downstream_compression: None,
+            upstream_compression: None,
+            flow_control: Some(FlowControlParameters::default()),
+        }
+    }
+}
+
 pub struct KcpTransportParameters {
     pub flush_interval_millis: u32,
     pub fast_retransmission: bool,
@@ -206,16 +209,6 @@ pub struct KcpTransportParameters {
 }
 
 impl KcpTransportParameters {
-    pub fn default() -> Self {
-        KcpTransportParameters {
-            flush_interval_millis: WORKER_DEFAULTS_KCP_FLUSH_INTERVAL_MILLIS,
-            fast_retransmission: WORKER_DEFAULTS_KCP_FAST_RETRANSMISSION != 0,
-            early_retransmission: WORKER_DEFAULTS_KCP_EARLY_RETRANSMISSION != 0,
-            disable_congestion_control: WORKER_DEFAULTS_KCP_DISABLE_CONGESTION_CONTROL != 0,
-            min_rto_millis: WORKER_DEFAULTS_KCP_MIN_RTO_MILLIS,
-        }
-    }
-
     pub(crate) fn to_worker_sdk(&self) -> Worker_KcpTransportParameters {
         Worker_KcpTransportParameters {
             flush_interval_millis: self.flush_interval_millis,
@@ -227,7 +220,17 @@ impl KcpTransportParameters {
     }
 }
 
-// Tcp
+impl Default for KcpTransportParameters {
+    fn default() -> Self {
+        KcpTransportParameters {
+            flush_interval_millis: WORKER_DEFAULTS_KCP_FLUSH_INTERVAL_MILLIS,
+            fast_retransmission: WORKER_DEFAULTS_KCP_FAST_RETRANSMISSION != 0,
+            early_retransmission: WORKER_DEFAULTS_KCP_EARLY_RETRANSMISSION != 0,
+            disable_congestion_control: WORKER_DEFAULTS_KCP_DISABLE_CONGESTION_CONTROL != 0,
+            min_rto_millis: WORKER_DEFAULTS_KCP_MIN_RTO_MILLIS,
+        }
+    }
+}
 
 pub struct ModularTcpNetworkParameters {
     pub security_type: SecurityType,
@@ -242,20 +245,6 @@ pub struct ModularTcpNetworkParameters {
 }
 
 impl ModularTcpNetworkParameters {
-    pub fn default() -> Self {
-        ModularTcpNetworkParameters {
-            security_type: SecurityType::Insecure,
-            multiplex_level: WORKER_DEFAULTS_MODULAR_TCP_MULTIPLEX_LEVEL as u8,
-            downstream_tcp: TcpTransportParameters::default(),
-            upstream_tcp: TcpTransportParameters::default(),
-            downstream_heartbeat: None,
-            upstream_heartbeat: None,
-            downstream_compression: None,
-            upstream_compression: None,
-            flow_control: Some(FlowControlParameters::default()),
-        }
-    }
-
     pub(crate) fn to_worker_sdk(&self) -> Worker_ModularTcpNetworkParameters {
         Worker_ModularTcpNetworkParameters {
             security_type: self.security_type as u8,
@@ -286,17 +275,27 @@ impl ModularTcpNetworkParameters {
     }
 }
 
+impl Default for ModularTcpNetworkParameters {
+    fn default() -> Self {
+        ModularTcpNetworkParameters {
+            security_type: SecurityType::Insecure,
+            multiplex_level: WORKER_DEFAULTS_MODULAR_TCP_MULTIPLEX_LEVEL as u8,
+            downstream_tcp: TcpTransportParameters::default(),
+            upstream_tcp: TcpTransportParameters::default(),
+            downstream_heartbeat: Some(HeartbeatParameters::default()),
+            upstream_heartbeat: Some(HeartbeatParameters::default()),
+            downstream_compression: None,
+            upstream_compression: None,
+            flow_control: Some(FlowControlParameters::default()),
+        }
+    }
+}
+
 pub struct TcpTransportParameters {
     pub flush_delay_millis: u32,
 }
 
 impl TcpTransportParameters {
-    pub fn default() -> Self {
-        TcpTransportParameters {
-            flush_delay_millis: WORKER_DEFAULTS_TCP_FLUSH_DELAY_MILLIS,
-        }
-    }
-
     pub(crate) fn to_worker_sdk(&self) -> Worker_TcpTransportParameters {
         Worker_TcpTransportParameters {
             flush_delay_millis: self.flush_delay_millis,
@@ -304,7 +303,13 @@ impl TcpTransportParameters {
     }
 }
 
-// Network parameters
+impl Default for TcpTransportParameters {
+    fn default() -> Self {
+        TcpTransportParameters {
+            flush_delay_millis: WORKER_DEFAULTS_TCP_FLUSH_DELAY_MILLIS,
+        }
+    }
+}
 
 #[repr(u8)]
 #[derive(Copy, Clone)]
@@ -333,17 +338,19 @@ pub struct FlowControlParameters {
 }
 
 impl FlowControlParameters {
-    pub fn default() -> Self {
-        FlowControlParameters {
-            downstream_window_size_bytes: WORKER_DEFAULTS_FLOW_CONTROL_DOWNSTREAM_WINDOW_SIZE_BYTES,
-            upstream_window_size_bytes: WORKER_DEFAULTS_FLOW_CONTROL_UPSTREAM_WINDOW_SIZE_BYTES,
-        }
-    }
-
     pub(crate) fn to_worker_sdk(&self) -> Worker_FlowControlParameters {
         Worker_FlowControlParameters {
             downstream_window_size_bytes: self.downstream_window_size_bytes,
             upstream_window_size_bytes: self.upstream_window_size_bytes,
+        }
+    }
+}
+
+impl Default for FlowControlParameters {
+    fn default() -> Self {
+        FlowControlParameters {
+            downstream_window_size_bytes: WORKER_DEFAULTS_FLOW_CONTROL_DOWNSTREAM_WINDOW_SIZE_BYTES,
+            upstream_window_size_bytes: WORKER_DEFAULTS_FLOW_CONTROL_UPSTREAM_WINDOW_SIZE_BYTES,
         }
     }
 }
@@ -355,19 +362,21 @@ pub struct ErasureCodecParameters {
 }
 
 impl ErasureCodecParameters {
-    pub fn default() -> Self {
-        ErasureCodecParameters {
-            original_packet_count: WORKER_DEFAULTS_ERASURE_CODEC_ORIGINAL_PACKET_COUNT as u8,
-            recovery_packet_count: WORKER_DEFAULTS_ERASURE_CODEC_RECOVERY_PACKET_COUNT as u8,
-            window_size: WORKER_DEFAULTS_ERASURE_CODEC_WINDOW_SIZE as u8,
-        }
-    }
-
     pub(crate) fn to_worker_sdk(&self) -> Worker_ErasureCodecParameters {
         Worker_ErasureCodecParameters {
             original_packet_count: self.original_packet_count,
             recovery_packet_count: self.recovery_packet_count,
             window_size: self.window_size,
+        }
+    }
+}
+
+impl Default for ErasureCodecParameters {
+    fn default() -> Self {
+        ErasureCodecParameters {
+            original_packet_count: WORKER_DEFAULTS_ERASURE_CODEC_ORIGINAL_PACKET_COUNT as u8,
+            recovery_packet_count: WORKER_DEFAULTS_ERASURE_CODEC_RECOVERY_PACKET_COUNT as u8,
+            window_size: WORKER_DEFAULTS_ERASURE_CODEC_WINDOW_SIZE as u8,
         }
     }
 }
@@ -378,17 +387,19 @@ pub struct HeartbeatParameters {
 }
 
 impl HeartbeatParameters {
-    pub fn default() -> Self {
-        HeartbeatParameters {
-            interval_millis: u64::from(WORKER_DEFAULTS_HEARTBEAT_INTERVAL_MILLIS),
-            timeout_millis: u64::from(WORKER_DEFAULTS_HEARTBEAT_TIMEOUT_MILLIS),
-        }
-    }
-
     pub(crate) fn to_worker_sdk(&self) -> Worker_HeartbeatParameters {
         Worker_HeartbeatParameters {
             interval_millis: self.interval_millis,
             timeout_millis: self.timeout_millis,
+        }
+    }
+}
+
+impl Default for HeartbeatParameters {
+    fn default() -> Self {
+        HeartbeatParameters {
+            interval_millis: u64::from(WORKER_DEFAULTS_HEARTBEAT_INTERVAL_MILLIS),
+            timeout_millis: u64::from(WORKER_DEFAULTS_HEARTBEAT_TIMEOUT_MILLIS),
         }
     }
 }
@@ -491,19 +502,21 @@ pub struct ThreadAffinityParameters {
 }
 
 impl ThreadAffinityParameters {
-    pub fn default() -> Self {
-        ThreadAffinityParameters {
-            receive_threads_affinity_mask: 0,
-            send_threads_affinity_mask: 0,
-            temporary_threads_affinity_mask: 0,
-        }
-    }
-
     pub(crate) fn to_worker_sdk(&self) -> Worker_ThreadAffinityParameters {
         Worker_ThreadAffinityParameters {
             receive_threads_affinity_mask: self.receive_threads_affinity_mask,
             send_threads_affinity_mask: self.send_threads_affinity_mask,
             temporary_threads_affinity_mask: self.temporary_threads_affinity_mask,
+        }
+    }
+}
+
+impl Default for ThreadAffinityParameters {
+    fn default() -> Self {
+        ThreadAffinityParameters {
+            receive_threads_affinity_mask: 0,
+            send_threads_affinity_mask: 0,
+            temporary_threads_affinity_mask: 0,
         }
     }
 }
