@@ -1,6 +1,6 @@
-use spatialos_sdk::worker::schema::*;
-use spatialos_sdk::worker::component::*;
-use spatialos_sdk::worker::commands::*;
+use spatialos_sdk::schema::*;
+use spatialos_sdk::component::*;
+use spatialos_sdk::commands::*;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use <#= vec!["super".to_string(); self.depth() + 1].join("::") #>::generated as generated;

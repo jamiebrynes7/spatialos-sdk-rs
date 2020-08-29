@@ -1,4 +1,4 @@
-use crate::worker::{
+use crate::{
     component::{Component, ComponentId},
     entity::Entity,
     query::EntityQuery,
@@ -143,7 +143,7 @@ impl<'a> CommandResponseRef<'a> {
 /// # Examples
 ///
 /// ```
-/// use spatialos_sdk::worker::commands::CommandParameters;
+/// use spatialos_sdk::commands::CommandParameters;
 /// use tap::*;
 ///
 /// let params = CommandParameters::new()

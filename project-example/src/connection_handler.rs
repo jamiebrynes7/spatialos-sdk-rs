@@ -1,5 +1,5 @@
 use crate::{Command, Opt};
-use spatialos_sdk::worker::{
+use spatialos_sdk::{
     connection::WorkerConnection,
     constants::{LOCATOR_HOSTNAME, LOCATOR_PORT, RECEPTIONIST_PORT},
     locator::{

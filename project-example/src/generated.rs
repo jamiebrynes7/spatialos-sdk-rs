@@ -8,9 +8,9 @@
 #![allow(clippy::unreadable_literal)]
 #![allow(clippy::option_option)]
 
-use spatialos_sdk::worker::schema::*;
-use spatialos_sdk::worker::component::*;
-use spatialos_sdk::worker::commands::*;
+use spatialos_sdk::schema::*;
+use spatialos_sdk::component::*;
+use spatialos_sdk::commands::*;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::generated as generated;
@@ -21,9 +21,9 @@ use super::generated as generated;
 
 
 pub mod example {
-use spatialos_sdk::worker::schema::*;
-use spatialos_sdk::worker::component::*;
-use spatialos_sdk::worker::commands::*;
+use spatialos_sdk::schema::*;
+use spatialos_sdk::component::*;
+use spatialos_sdk::commands::*;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::generated as generated;
@@ -134,7 +134,7 @@ impl ObjectField for CommandData {
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct MapTypes {
     pub first: BTreeMap<generated::example::SomeEnum, i32>,
-    pub second: BTreeMap<spatialos_sdk::worker::entity::Entity, i32>,
+    pub second: BTreeMap<spatialos_sdk::entity::Entity, i32>,
 }
 impl ObjectField for MapTypes {
     fn from_object(input: &SchemaObject) -> Result<Self> {
@@ -218,7 +218,7 @@ impl ObjectField for Vector3d {
 /* Components. */ 
 #[derive(Debug, Clone, Default)]
 pub struct EntityIdTest {
-    pub eid: spatialos_sdk::worker::EntityId,
+    pub eid: spatialos_sdk::EntityId,
 }
 
 impl ObjectField for EntityIdTest {
@@ -235,7 +235,7 @@ impl ObjectField for EntityIdTest {
 
 #[derive(Debug, Clone, Default)]
 pub struct EntityIdTestUpdate {
-    pub eid: Option<spatialos_sdk::worker::EntityId>,
+    pub eid: Option<spatialos_sdk::EntityId>,
 }
 
 impl Update for EntityIdTestUpdate {
@@ -278,7 +278,7 @@ impl Component for EntityIdTest {
 
 #[derive(Debug, Clone, Default)]
 pub struct EntityTest {
-    pub entity: spatialos_sdk::worker::entity::Entity,
+    pub entity: spatialos_sdk::entity::Entity,
 }
 
 impl ObjectField for EntityTest {
@@ -295,7 +295,7 @@ impl ObjectField for EntityTest {
 
 #[derive(Debug, Clone, Default)]
 pub struct EntityTestUpdate {
-    pub entity: Option<spatialos_sdk::worker::entity::Entity>,
+    pub entity: Option<spatialos_sdk::entity::Entity>,
 }
 
 impl Update for EntityTestUpdate {
@@ -602,9 +602,9 @@ impl Component for Rotate {
 }
 
 pub mod improbable {
-use spatialos_sdk::worker::schema::*;
-use spatialos_sdk::worker::component::*;
-use spatialos_sdk::worker::commands::*;
+use spatialos_sdk::schema::*;
+use spatialos_sdk::component::*;
+use spatialos_sdk::commands::*;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::generated as generated;
@@ -1179,9 +1179,9 @@ impl Component for Position {
 
 
 pub mod restricted {
-use spatialos_sdk::worker::schema::*;
-use spatialos_sdk::worker::component::*;
-use spatialos_sdk::worker::commands::*;
+use spatialos_sdk::schema::*;
+use spatialos_sdk::component::*;
+use spatialos_sdk::commands::*;
 use std::{collections::BTreeMap, convert::TryFrom};
 
 use super::super::super::generated as generated;

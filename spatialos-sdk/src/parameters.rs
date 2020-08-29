@@ -1,4 +1,4 @@
-use crate::worker::logging::{LogsinkParameters, ReleaseCallbackHandle};
+use crate::logging::{LogsinkParameters, ReleaseCallbackHandle};
 use spatialos_sdk_sys::worker::*;
 use std::{
     ffi::{CStr, CString},
@@ -427,7 +427,7 @@ impl Default for HeartbeatParameters {
 /// # Examples
 ///
 /// ```
-/// use spatialos_sdk::worker::parameters::ProtocolLoggingParameters;
+/// use spatialos_sdk::parameters::ProtocolLoggingParameters;
 /// use tap::*;
 ///
 /// let params = ProtocolLoggingParameters::new()

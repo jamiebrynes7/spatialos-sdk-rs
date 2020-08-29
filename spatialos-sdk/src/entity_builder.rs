@@ -1,4 +1,4 @@
-use crate::worker::{component::Component, component::ComponentId, entity::Entity, schema::*};
+use crate::{component::Component, component::ComponentId, entity::Entity, schema::*};
 use std::{
     collections::{BTreeMap, HashSet},
     result::Result,

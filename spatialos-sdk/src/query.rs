@@ -1,7 +1,7 @@
 use std::ptr;
 
-use crate::worker::component::ComponentId;
-use crate::worker::EntityId;
+use crate::component::ComponentId;
+use crate::EntityId;
 
 use spatialos_sdk_sys::worker::{
     Worker_AndConstraint, Worker_ComponentConstraint, Worker_Constraint,
@@ -261,8 +261,8 @@ impl QueryConstraint {
 #[allow(clippy::float_cmp)]
 #[cfg(test)]
 mod test {
-    use crate::worker::query::{EntityQuery, QueryConstraint, ResultType};
-    use crate::worker::EntityId;
+    use crate::query::{EntityQuery, QueryConstraint, ResultType};
+    use crate::EntityId;
     use std::slice::from_raw_parts;
 
     use spatialos_sdk_sys::worker::{

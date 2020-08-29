@@ -1,6 +1,6 @@
 #![allow(non_upper_case_globals)]
 
-use crate::worker::{
+use crate::{
     commands::{CommandRequestRef, CommandResponseRef, Commands},
     component::{self, *},
     entity::Entity,
@@ -32,7 +32,7 @@ impl OpList {
     /// # Examples
     ///
     /// ```no_run
-    /// # use spatialos_sdk::worker::connection::*;
+    /// # use spatialos_sdk::connection::*;
     /// # let mut connection: WorkerConnection = unimplemented!();
     /// for op in connection.get_op_list(0).iter() {
     ///     // Process `op`.

@@ -179,8 +179,8 @@ impl Package {
                 PrimitiveType::Float => "FloatOrd<f32>",
                 PrimitiveType::Double => "FloatOrd<f64>",
                 PrimitiveType::String => "String",
-                PrimitiveType::EntityId => "spatialos_sdk::worker::EntityId",
-                PrimitiveType::Entity => "spatialos_sdk::worker::entity::Entity",
+                PrimitiveType::EntityId => "spatialos_sdk::EntityId",
+                PrimitiveType::Entity => "spatialos_sdk::entity::Entity",
                 PrimitiveType::Bytes => "Vec<u8>",
             }
             .to_string(),

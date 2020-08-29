@@ -5,7 +5,7 @@
 //! Serialization example using `Optional`:
 //!
 //! ```
-//! use spatialos_sdk::worker::schema::*;
+//! use spatialos_sdk::schema::*;
 //!
 //! let mut data = SchemaComponentData::new();
 //! let object = data.fields_mut();
@@ -36,7 +36,7 @@
 //! The following code would be used to handle serialization:
 //!
 //! ```
-//! use spatialos_sdk::worker::schema::{self, *};
+//! use spatialos_sdk::schema::{self, *};
 //!
 //! #[derive(Debug, Default, Clone)]
 //! pub struct MyType {
@@ -58,7 +58,7 @@
 //! }
 //! ```
 
-use crate::worker::commands::CommandIndex;
+use crate::commands::CommandIndex;
 use std::{
     convert::TryFrom,
     fmt::{self, Display, Formatter},
@@ -279,50 +279,47 @@ pub trait EnumField:
 #[macro_export]
 macro_rules! impl_field_for_enum_field {
     ($type:ty) => {
-        impl $crate::worker::schema::Field for $type {
+        impl $crate::schema::Field for $type {
             type RustType = Self;
 
             fn get(
-                object: &$crate::worker::schema::SchemaObject,
-                field: $crate::worker::schema::FieldId,
-            ) -> $crate::worker::schema::Result<Self::RustType> {
-                Self::try_from(object.get::<$crate::worker::schema::SchemaEnum>(field)?)
-                    .map_err(Into::into)
+                object: &$crate::schema::SchemaObject,
+                field: $crate::schema::FieldId,
+            ) -> $crate::schema::Result<Self::RustType> {
+                Self::try_from(object.get::<$crate::schema::SchemaEnum>(field)?).map_err(Into::into)
             }
 
             fn add(
-                object: &mut $crate::worker::schema::SchemaObject,
-                field: $crate::worker::schema::FieldId,
+                object: &mut $crate::schema::SchemaObject,
+                field: $crate::schema::FieldId,
                 value: &Self::RustType,
             ) {
-                object.add::<$crate::worker::schema::SchemaEnum>(field, &(*value).into());
+                object.add::<$crate::schema::SchemaEnum>(field, &(*value).into());
             }
 
             fn has_update(
-                update: &$crate::worker::schema::SchemaComponentUpdate,
-                field: $crate::worker::schema::FieldId,
+                update: &$crate::schema::SchemaComponentUpdate,
+                field: $crate::schema::FieldId,
             ) -> bool {
                 Self::count(update.fields(), field) > 0
             }
         }
 
-        impl $crate::worker::schema::IndexedField for $type {
+        impl $crate::schema::IndexedField for $type {
             fn count(
-                object: &$crate::worker::schema::SchemaObject,
-                field: $crate::worker::schema::FieldId,
+                object: &$crate::schema::SchemaObject,
+                field: $crate::schema::FieldId,
             ) -> usize {
-                object.count::<$crate::worker::schema::SchemaEnum>(field)
+                object.count::<$crate::schema::SchemaEnum>(field)
             }
 
             fn index(
-                object: &$crate::worker::schema::SchemaObject,
-                field: $crate::worker::schema::FieldId,
+                object: &$crate::schema::SchemaObject,
+                field: $crate::schema::FieldId,
                 index: usize,
-            ) -> $crate::worker::schema::Result<Self::RustType> {
-                Self::try_from(
-                    object.get_index::<$crate::worker::schema::SchemaEnum>(field, index)?,
-                )
-                .map_err(Into::into)
+            ) -> $crate::schema::Result<Self::RustType> {
+                Self::try_from(object.get_index::<$crate::schema::SchemaEnum>(field, index)?)
+                    .map_err(Into::into)
             }
         }
     };

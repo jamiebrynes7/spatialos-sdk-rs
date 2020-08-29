@@ -1,4 +1,4 @@
-use crate::worker::schema::{
+use crate::schema::{
     Error, Field, FieldId, IndexedField, ObjectField, Result, SchemaComponentUpdate, SchemaObject,
 };
 use spatialos_sdk_sys::worker::*;

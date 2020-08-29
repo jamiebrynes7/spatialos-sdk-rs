@@ -1,4 +1,4 @@
-use crate::worker::{
+use crate::{
     component::Update,
     schema::{DataPointer, Field, FieldId, ObjectField, Owned, OwnedPointer, Result, SchemaObject},
 };

@@ -15,7 +15,7 @@ macro_rules! pointer_type_tests {
         static_assertions::const_assert!(std::mem::size_of::<$type>() == 0);
 
         static_assertions::assert_eq_align!(
-            *mut <$type as $crate::worker::schema::ptr::DataPointer>::Raw,
+            *mut <$type as $crate::schema::ptr::DataPointer>::Raw,
             &$type,
             &mut $type,
         );

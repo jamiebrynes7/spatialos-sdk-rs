@@ -1,9 +1,9 @@
 use approx;
-use spatialos_sdk::worker::{entity::Entity, snapshot::*, EntityId};
+use spatialos_sdk::{entity::Entity, snapshot::*, EntityId};
 use std::env;
 
 use crate::generated::improbable::*;
-use spatialos_sdk::worker::entity_builder::EntityBuilder;
+use spatialos_sdk::entity_builder::EntityBuilder;
 
 #[test]
 pub fn writing_invalid_entity_returns_error() {

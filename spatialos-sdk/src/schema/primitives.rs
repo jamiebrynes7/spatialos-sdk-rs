@@ -1,5 +1,5 @@
-use crate::worker::entity::Entity;
-use crate::worker::{
+use crate::entity::Entity;
+use crate::{
     schema::{
         DataPointer, Error, Field, FieldId, FloatOrd, IndexedField, Result, SchemaComponentUpdate,
         SchemaObject,

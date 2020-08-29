@@ -1,5 +1,5 @@
 use crate::ptr::MutPtr;
-use crate::worker::{
+use crate::{
     commands::*,
     component::*,
     locator::*,

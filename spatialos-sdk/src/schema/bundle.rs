@@ -1,4 +1,4 @@
-use crate::worker::{component::ComponentId, schema::*, utils::cstr_to_string};
+use crate::{component::ComponentId, schema::*, utils::cstr_to_string};
 use spatialos_sdk_sys::worker::*;
 use std::ffi::CString;
 use std::ptr::NonNull;
@@ -305,7 +305,7 @@ impl Drop for Bundle {
 
 #[cfg(test)]
 mod tests {
-    use crate::worker::{component::ComponentId, schema::*};
+    use crate::{component::ComponentId, schema::*};
     use approx::assert_abs_diff_eq;
     use serde_json::Value;
     use std::{fs::File, io::Read, path::PathBuf};
