@@ -50,7 +50,7 @@ impl Into<u32> for <#= enum_rust_name #> {
 impl_field_for_enum_field!(<#= enum_rust_name #>);
 <# } #>
 /* Types. */<# for type_name in &self.types { let type_def = self.get_type_definition(type_name); #>
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct <#= self.rust_name(&type_def.qualified_name) #> {<#
     for field in &type_def.fields {
     #>
@@ -76,7 +76,7 @@ impl ObjectField for <#= self.rust_name(&type_def.qualified_name) #> {
     let component_fields = self.get_component_fields(&component);
     let component_name = self.rust_name(&component.qualified_name);
     let update_name = format!("{}Update", component_name); #>
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct <#= component_name #> {<#
     for field in &component_fields {
     #>
