@@ -1,4 +1,4 @@
-use crate::worker::{
+use crate::{
     component::{Component, ComponentId},
     schema,
     schema::*,

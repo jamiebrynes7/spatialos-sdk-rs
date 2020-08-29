@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::ffi::CString;
 use std::slice;
 
-use crate::worker::utils::cstr_to_string;
+use crate::utils::cstr_to_string;
 use spatialos_sdk_sys::worker::{
     Worker_GaugeMetric, Worker_HistogramMetric, Worker_HistogramMetricBucket, Worker_Metrics,
 };
@@ -275,7 +275,7 @@ impl HistogramMetricBucket {
 
 #[cfg(test)]
 mod test {
-    use crate::worker::metrics::HistogramMetric;
+    use crate::metrics::HistogramMetric;
 
     #[test]
     pub fn histogram_metric_bounds_are_sorted() {

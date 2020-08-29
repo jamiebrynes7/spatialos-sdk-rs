@@ -1,7 +1,7 @@
 use crate::generated::improbable::*;
 use approx;
-use spatialos_sdk::worker::component::Component;
-use spatialos_sdk::worker::entity_builder::EntityBuilder;
+use spatialos_sdk::component::Component;
+use spatialos_sdk::entity_builder::EntityBuilder;
 
 #[test]
 fn position_is_serialized_correctly() {

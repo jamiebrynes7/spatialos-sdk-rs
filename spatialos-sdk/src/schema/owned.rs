@@ -14,7 +14,7 @@
 //! [`Owned`]: struct.Owned.html
 //! [`Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 
-use crate::worker::schema::OwnedPointer;
+use crate::schema::OwnedPointer;
 use std::cmp::Ordering;
 use std::{
     borrow::Borrow,

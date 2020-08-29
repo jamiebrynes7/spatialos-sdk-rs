@@ -7,7 +7,7 @@ use crate::{connection_handler::*, opt::*};
 use futures::executor::block_on;
 use generated::{example, improbable};
 use rand::Rng;
-use spatialos_sdk::worker::{
+use spatialos_sdk::{
     commands::{CreateEntityRequest, EntityQueryRequest, ReserveEntityIdsRequest},
     component::{Component, UpdateParameters},
     connection::{Connection, WorkerConnection},

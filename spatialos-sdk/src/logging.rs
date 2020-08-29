@@ -1,4 +1,4 @@
-use crate::worker::utils::cstr_to_string;
+use crate::utils::cstr_to_string;
 use bitflags::bitflags;
 use spatialos_sdk_sys::worker::*;
 use std::ffi::{CStr, CString};

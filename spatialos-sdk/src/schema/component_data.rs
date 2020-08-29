@@ -1,4 +1,4 @@
-use crate::worker::{
+use crate::{
     component::Component,
     schema::{DataPointer, Owned, OwnedPointer, Result, SchemaObject},
 };

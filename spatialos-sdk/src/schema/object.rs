@@ -1,5 +1,5 @@
-use crate::worker::schema::{DataPointer, Field, FieldId, IndexedField, Result};
-use crate::worker::utils::cstr_to_string;
+use crate::schema::{DataPointer, Field, FieldId, IndexedField, Result};
+use crate::utils::cstr_to_string;
 use spatialos_sdk_sys::worker::*;
 use std::marker::PhantomData;
 

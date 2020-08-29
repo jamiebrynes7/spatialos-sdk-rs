@@ -1,4 +1,4 @@
-use crate::worker::schema::{self, *};
+use crate::schema::{self, *};
 use spatialos_sdk_sys::worker::*;
 use std::ops::DerefMut;
 
@@ -63,7 +63,7 @@ impl<U: Update> From<&U> for ComponentUpdate {
 /// # Examples
 ///
 /// ```
-/// use spatialos_sdk::worker::component::UpdateParameters;
+/// use spatialos_sdk::component::UpdateParameters;
 /// use tap::*;
 ///
 /// let params = UpdateParameters::new()

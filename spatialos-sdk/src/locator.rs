@@ -3,7 +3,7 @@ use std::ptr;
 
 use spatialos_sdk_sys::worker::*;
 
-use crate::worker::{
+use crate::{
     logging::*,
     parameters::ProtocolLoggingParameters,
     utils::cstr_to_string,
