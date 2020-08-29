@@ -26,6 +26,12 @@ macro_rules! float_ord_impl {
             }
         }
 
+        impl Default for FloatOrd<$f> {
+            fn default() -> Self {
+                0.0.into()
+            }
+        }
+
         impl PartialEq for FloatOrd<$f> {
             fn eq(&self, other: &Self) -> bool {
                 self.convert() == other.convert()
