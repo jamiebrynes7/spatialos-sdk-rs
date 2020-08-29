@@ -286,8 +286,7 @@ macro_rules! impl_field_for_enum_field {
                 object: &$crate::schema::SchemaObject,
                 field: $crate::schema::FieldId,
             ) -> $crate::schema::Result<Self::RustType> {
-                Self::try_from(object.get::<$crate::schema::SchemaEnum>(field)?)
-                    .map_err(Into::into)
+                Self::try_from(object.get::<$crate::schema::SchemaEnum>(field)?).map_err(Into::into)
             }
 
             fn add(
@@ -319,10 +318,8 @@ macro_rules! impl_field_for_enum_field {
                 field: $crate::schema::FieldId,
                 index: usize,
             ) -> $crate::schema::Result<Self::RustType> {
-                Self::try_from(
-                    object.get_index::<$crate::schema::SchemaEnum>(field, index)?,
-                )
-                .map_err(Into::into)
+                Self::try_from(object.get_index::<$crate::schema::SchemaEnum>(field, index)?)
+                    .map_err(Into::into)
             }
         }
     };
