@@ -1,7 +1,7 @@
 use crate::worker::utils::cstr_to_string;
 use bitflags::bitflags;
 use spatialos_sdk_sys::worker::*;
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 
 pub(crate) type ReleaseCallbackHandle = Box<dyn FnOnce()>;
 
@@ -157,7 +157,9 @@ impl RotatingLogFileParameters {
 impl Default for RotatingLogFileParameters {
     fn default() -> Self {
         RotatingLogFileParameters {
-            log_prefix: Default::default(),
+            log_prefix: CStr::from_bytes_with_nul(&WORKER_DEFAULTS_LOG_PREFIX[..])
+                .unwrap()
+                .to_owned(),
             max_log_files: 0,
             max_log_file_size_bytes: 0,
         }
