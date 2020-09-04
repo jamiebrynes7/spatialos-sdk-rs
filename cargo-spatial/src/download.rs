@@ -194,7 +194,7 @@ mod windows {
 
 #[cfg(target_os = "macos")]
 mod macos {
-    use anyhow::{Context, Result};
+    use anyhow::{anyhow, Context, Result};
     use log::info;
     use std::process;
     use tempfile;
