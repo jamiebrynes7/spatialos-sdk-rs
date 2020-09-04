@@ -145,8 +145,10 @@ fn get_installer(download_url: &str, directory: &Path) -> Result<PathBuf> {
 
 #[cfg(target_os = "linux")]
 mod linux {
-    pub fn download_cli() -> Result<(), Box<dyn std::error::Error>> {
-        Err("Linux installer is unsupported. Follow the instructions here to install the Spatial CLI: https://docs.improbable.io/reference/latest/shared/setup/linux".to_owned().into())
+    use anyhow::{anyhow, Result};
+
+    pub fn download_cli() -> Result<()> {
+        Err(anyhow!("Linux installer is unsupported. Follow the instructions here to install the Spatial CLI: https://docs.improbable.io/reference/latest/shared/setup/linux"))
     }
 }
 
