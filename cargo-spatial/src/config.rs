@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::prelude::*;
@@ -73,17 +74,16 @@ impl Default for Config {
 
 impl Config {
     /// Attempts to load the project configuration from a `Spatial.toml` file.
-    pub fn load() -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn load() -> Result<Self> {
         // TODO: Traverse up the directory hierarchy until a `Spatial.toml` file is
         // found or the root directory is reached.
-
-        let mut file = File::open("Spatial.toml")
-            .map_err(|_| "Could not find a `Spatial.toml` in current directory")?;
         let mut contents = String::new();
-        file.read_to_string(&mut contents)
-            .map_err(|_| "Failed to read contents of Spatial.toml")?;
-        toml::from_str(&contents)
-            .map_err(|err| format!("Failed to deserialize Spatial.toml: {}", err).into())
+        File::open("Spatial.toml")
+            .context("Could not find a `Spatial.toml` in current directory")?
+            .read_to_string(&mut contents)
+            .context("Failed to read contents of Spatial.toml")?;
+
+        toml::from_str(&contents).context("Failed to deserialize Spatial.toml")
     }
 
     /// Returns the path to the output directory to be used for schema compilation.
