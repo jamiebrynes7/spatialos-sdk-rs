@@ -220,7 +220,7 @@ mod macos {
         if !status.success() {
             return Err(anyhow!(
                 "Installer returned a non-zero exit code: '{}'",
-                stauts.code()
+                status.code().unwrap()
             ));
         }
 
