@@ -46,6 +46,7 @@ impl From<u8> for LogLevel {
 
 pub type LogFilter = fn(categories: LogCategory, level: LogLevel) -> bool;
 
+#[derive(Debug)]
 pub enum LogFilterParameters {
     Simple(LogCategory, LogLevel),
     Callback(LogFilter),
@@ -110,6 +111,7 @@ pub struct LogData {
     pub content: String,
 }
 
+#[derive(Debug)]
 pub struct RotatingLogFileParameters {
     pub log_prefix: CString,
     pub max_log_files: u32,
@@ -182,6 +184,7 @@ unsafe extern "C" fn worker_log_callback(
     });
 }
 
+#[derive(Debug)]
 pub enum LogsinkType {
     RotatingFile(RotatingLogFileParameters),
     Callback(LogCallback),
@@ -204,6 +207,7 @@ impl LogsinkType {
     }
 }
 
+#[derive(Debug)]
 pub struct LogsinkParameters {
     pub filter_parameters: LogFilterParameters,
     pub logsink_type: LogsinkType,
