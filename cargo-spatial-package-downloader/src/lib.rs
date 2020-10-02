@@ -115,7 +115,7 @@ impl SpatialPackageSource {
 #[derive(Debug)]
 pub struct Error {
     pub msg: String,
-    pub inner: Option<Box<dyn std::error::Error>>,
+    pub inner: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
 }
 
 impl Display for Error {
@@ -132,7 +132,9 @@ impl Display for Error {
 
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        self.inner.as_ref().map(|e| e.as_ref())
+        self.inner
+            .as_ref()
+            .map(|e| e.as_ref() as &(dyn std::error::Error + 'static))
     }
 }
 

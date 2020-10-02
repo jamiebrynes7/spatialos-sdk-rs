@@ -3,7 +3,6 @@ use std::ffi::{OsStr, OsString};
 pub mod codegen;
 pub mod config;
 pub mod download;
-pub mod errors;
 pub mod local;
 pub mod opt;
 

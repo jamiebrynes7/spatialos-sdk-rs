@@ -1,9 +1,10 @@
+use anyhow::Result;
 use cargo_spatial::{codegen, config::Config, download, local, opt::*};
 use log::*;
 use simplelog::*;
 use structopt::StructOpt;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<()> {
     let opt = Opt::from_args();
 
     // Initialize the logger.

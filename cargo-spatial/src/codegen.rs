@@ -1,4 +1,5 @@
-use crate::{config::Config, errors::Error, format_arg};
+use crate::{config::Config, format_arg};
+use anyhow::{anyhow, Context, Result};
 use log::*;
 use spatialos_sdk_code_generator::{generator, schema_bundle};
 use std::{
@@ -32,22 +33,15 @@ impl Display for ErrorKind {
 ///
 /// Assumes that the current working directory is the root directory of the project,
 /// i.e. the directory that has the `Spatial.toml` file.
-pub fn run_codegen(config: &Config) -> Result<(), Error<ErrorKind>> {
+pub fn run_codegen(config: &Config) -> Result<()> {
     if !crate::current_dir_is_root() {
-        return Err(Error {
-            msg: "Current directory should be the project root.".into(),
-            kind: ErrorKind::BadConfig,
-            inner: None,
-        });
+        return Err(anyhow!("The current directory is not the project root."));
     }
 
     // Ensure that the path to the Spatial SDK has been specified.
     let spatial_lib_dir = config.spatial_lib_dir()
         .map(PathBuf::from)
-        .ok_or(Error {
-            msg: "spatial_lib_dir value must be set in the config, or the SPATIAL_LIB_DIR environment variable must be set.".into(),
-            kind: ErrorKind::BadConfig,
-            inner: None})?;
+        .context("'spatial_lib_dir' value must be set in the config, or the 'SPATIAL_LIB_DIR' environment variable must be set.")?;
 
     // Determine the paths the the schema compiler and protoc relative the the lib
     // dir path.
@@ -60,14 +54,9 @@ pub fn run_codegen(config: &Config) -> Result<(), Error<ErrorKind>> {
     let schema_descriptor_path = output_dir.join("schema.descriptor");
 
     // Create the output directory if it doesn't already exist.
-    fs::create_dir_all(&output_dir).map_err(|e| {
-        let msg = format!("Failed to create {}", output_dir.display());
-        Error {
-            msg,
-            kind: ErrorKind::IO,
-            inner: Some(Box::new(e)),
-        }
-    })?;
+    fs::create_dir_all(&output_dir)
+        .with_context(|| format!("Failed to create {}", output_dir.display()))?;
+
     trace!("Created schema output dir: {}", output_dir.display());
 
     // Prepare initial flags for the schema compiler.
@@ -94,56 +83,41 @@ pub fn run_codegen(config: &Config) -> Result<(), Error<ErrorKind>> {
     }
 
     trace!("{:#?}", command);
-    let status = command.status().map_err(|e| Error {
-        msg: "Failed to compile schema files".into(),
-        kind: ErrorKind::SchemaCompiler,
-        inner: Some(Box::new(e)),
-    })?;
+    let status = command.status().context("Failed to compile schema files")?;
 
     if !status.success() {
-        return Err(Error {
-            msg: "Failed to run schema compilation".into(),
-            kind: ErrorKind::SchemaCompiler,
-            inner: None,
-        });
+        return Err(anyhow!("Failed to run schema compilation"));
     }
 
     // Load bundle.json, which describes the schema definitions for all components.
-    let mut input_file = File::open(&bundle_json_path).map_err(|e| Error {
-        msg: "Failed to open bundle.json".into(),
-        kind: ErrorKind::SchemaCompiler,
-        inner: Some(Box::new(e)),
-    })?;
+    let mut input_file = File::open(&bundle_json_path)
+        .with_context(|| format!("Failed to open {}", bundle_json_path.display()))?;
 
     let mut contents = String::new();
     input_file
         .read_to_string(&mut contents)
-        .map_err(|e| Error {
-            msg: "Failed to read contents of bundle.json".into(),
-            kind: ErrorKind::IO,
-            inner: Some(Box::new(e)),
-        })?;
+        .with_context(|| format!("Failed to read contents of {}", bundle_json_path.display()))?;
 
     // Run code generation.
-    let bundle = schema_bundle::load_bundle(&contents).map_err(|e| Error {
-        msg: "Failed to parse contents of bundle.json".into(),
-        kind: ErrorKind::InvalidBundle,
-        inner: Some(Box::new(e)),
-    })?;
+    let bundle = schema_bundle::load_bundle(&contents)
+        .with_context(|| format!("Failed to parse contents of {}", bundle_json_path.display()))?;
+
     let generated_file = generator::generate_code(bundle);
 
     // Write the generated code to the output file.
     File::create(&config.codegen_out)
-        .map_err(|e| Error {
-            msg: "Unable to create codegen output file".into(),
-            kind: ErrorKind::IO,
-            inner: Some(Box::new(e)),
+        .with_context(|| {
+            format!(
+                "Unable to create codegen output file: '{}'",
+                &config.codegen_out
+            )
         })?
         .write_all(generated_file.as_bytes())
-        .map_err(|e| Error {
-            msg: "Failed to write generated code to file".into(),
-            kind: ErrorKind::IO,
-            inner: Some(Box::new(e)),
+        .with_context(|| {
+            format!(
+                "Failed to write generated code to output file: '{}'",
+                &config.codegen_out
+            )
         })?;
 
     Ok(())

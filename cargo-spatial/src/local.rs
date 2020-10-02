@@ -1,7 +1,7 @@
 use crate::config::{BuildProfile, Config};
-use crate::errors::Error;
 use crate::format_arg;
 use crate::opt::*;
+use anyhow::{anyhow, Context, Result};
 use serde::export::Formatter;
 use std::fmt::Display;
 use std::path::*;
@@ -29,18 +29,13 @@ impl Display for ErrorKind {
 /// Before launching the deployment, this will first run code generation and build
 /// workers in the project. Assumes that the current working directory is the root
 /// directory of the project, i.e. the directory that has the `Spatial.toml` file.
-pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Error<ErrorKind>> {
-    assert!(
-        crate::current_dir_is_root(),
-        "Current directory should be the project root"
-    );
+pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<()> {
+    if !crate::current_dir_is_root() {
+        return Err(anyhow!("The current directory is not the project root."));
+    }
 
     // Run codegen and such.
-    crate::codegen::run_codegen(config).map_err(|e| Error {
-        kind: ErrorKind::Codegen,
-        msg: "Failed to generate code".into(),
-        inner: Some(Box::new(e)),
-    })?;
+    crate::codegen::run_codegen(config).context("Failed to generate code.")?;
 
     // Use `cargo install` to build workers and copy the executables to the build
     // directory.
@@ -68,18 +63,12 @@ pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Error<ErrorKi
                 command.arg("--debug");
             }
 
-            let status = command.status().map_err(|e| Error {
-                kind: ErrorKind::Build,
-                msg: "Failed to execute 'cargo install'.".into(),
-                inner: Some(Box::new(e)),
-            })?;
+            let status = command
+                .status()
+                .context("Failed to execute 'cargo install'")?;
 
             if !status.success() {
-                return Err(Error {
-                    kind: ErrorKind::Build,
-                    msg: "Failed to build worker.".into(),
-                    inner: None,
-                });
+                return Err(anyhow!("Failed to build worker."));
             }
         }
     }
@@ -97,11 +86,7 @@ pub fn launch(config: &Config, launch: &LocalLaunch) -> Result<(), Error<ErrorKi
         command.arg(&format_arg("launch_config", launch_config));
     }
 
-    command.status().map_err(|err| Error {
-        kind: ErrorKind::Launch,
-        msg: "Failed to launch deployment.".into(),
-        inner: Some(Box::new(err)),
-    })?;
+    command.status().context("Failed to launch deployment.")?;
 
     Ok(())
 }

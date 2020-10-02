@@ -9,6 +9,7 @@ authors = [
 edition = "2018"
 
 [dependencies]
+anyhow = "1.0.32"
 cargo-spatial-package-downloader = { path = "../cargo-spatial-package-downloader" }
 log = "0.4.1"
 rand = "0.7"
