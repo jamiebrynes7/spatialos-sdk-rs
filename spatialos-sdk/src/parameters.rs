@@ -5,6 +5,7 @@ use std::{
     ptr,
 };
 
+#[derive(Debug)]
 pub struct ConnectionParameters {
     pub worker_type: CString,
     pub network: NetworkParameters,
@@ -67,8 +68,66 @@ impl ConnectionParameters {
         Vec<ReleaseCallbackHandle>,
     ) {
         let protocol = match &self.network.protocol {
-            ProtocolType::Kcp(params) => IntermediateProtocolType::Kcp(params.to_worker_sdk()),
-            ProtocolType::Tcp(params) => IntermediateProtocolType::Tcp(params.to_worker_sdk()),
+            ProtocolType::Kcp(params) => IntermediateProtocolType::Kcp {
+                security_type: params.security_type as u8,
+                multiplex_level: params.multiplex_level,
+                downstream_kcp: params.downstream_kcp.to_worker_sdk(),
+                upstream_kcp: params.upstream_kcp.to_worker_sdk(),
+                downstream_erasure_codec: params
+                    .downstream_erasure_codec
+                    .as_ref()
+                    .map(ErasureCodecParameters::to_worker_sdk),
+                upstream_erasure_codec: params
+                    .upstream_erasure_codec
+                    .as_ref()
+                    .map(ErasureCodecParameters::to_worker_sdk),
+                downstream_heartbeat: params
+                    .downstream_heartbeat
+                    .as_ref()
+                    .map(HeartbeatParameters::to_worker_sdk),
+                upstream_heartbeat: params
+                    .upstream_heartbeat
+                    .as_ref()
+                    .map(HeartbeatParameters::to_worker_sdk),
+                downstream_compression: params
+                    .downstream_compression
+                    .as_ref()
+                    .map(CompressionParameters::to_worker_sdk),
+                upstream_compression: params
+                    .upstream_compression
+                    .as_ref()
+                    .map(CompressionParameters::to_worker_sdk),
+                flow_control: params
+                    .flow_control
+                    .as_ref()
+                    .map(FlowControlParameters::to_worker_sdk),
+            },
+            ProtocolType::Tcp(params) => IntermediateProtocolType::Tcp {
+                security_type: params.security_type as u8,
+                multiplex_level: params.multiplex_level,
+                downstream_tcp: params.downstream_tcp.to_worker_sdk(),
+                upstream_tcp: params.upstream_tcp.to_worker_sdk(),
+                downstream_heartbeat: params
+                    .downstream_heartbeat
+                    .as_ref()
+                    .map(HeartbeatParameters::to_worker_sdk),
+                upstream_heartbeat: params
+                    .upstream_heartbeat
+                    .as_ref()
+                    .map(HeartbeatParameters::to_worker_sdk),
+                downstream_compression: params
+                    .downstream_compression
+                    .as_ref()
+                    .map(CompressionParameters::to_worker_sdk),
+                upstream_compression: params
+                    .upstream_compression
+                    .as_ref()
+                    .map(CompressionParameters::to_worker_sdk),
+                flow_control: params
+                    .flow_control
+                    .as_ref()
+                    .map(FlowControlParameters::to_worker_sdk),
+            },
         };
 
         let (logsinks, release_callbacks): (Vec<_>, Vec<_>) = self
@@ -106,11 +165,13 @@ impl Default for ConnectionParameters {
     }
 }
 
+#[derive(Debug)]
 pub enum ProtocolType {
     Kcp(ModularKcpNetworkParameters),
     Tcp(ModularTcpNetworkParameters),
 }
 
+#[derive(Debug)]
 pub struct NetworkParameters {
     pub use_external_ip: bool,
     pub protocol: ProtocolType,
@@ -129,6 +190,7 @@ impl Default for NetworkParameters {
     }
 }
 
+#[derive(Debug)]
 pub struct ModularKcpNetworkParameters {
     pub security_type: SecurityType,
     pub multiplex_level: u8,
@@ -141,45 +203,6 @@ pub struct ModularKcpNetworkParameters {
     pub downstream_compression: Option<CompressionParameters>,
     pub upstream_compression: Option<CompressionParameters>,
     pub flow_control: Option<FlowControlParameters>,
-}
-
-impl ModularKcpNetworkParameters {
-    pub(crate) fn to_worker_sdk(&self) -> Worker_ModularKcpNetworkParameters {
-        Worker_ModularKcpNetworkParameters {
-            security_type: self.security_type as u8,
-            multiplex_level: self.multiplex_level,
-            downstream_kcp: self.downstream_kcp.to_worker_sdk(),
-            upstream_kcp: self.upstream_kcp.to_worker_sdk(),
-            downstream_erasure_codec: match &self.downstream_erasure_codec {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-            upstream_erasure_codec: match &self.upstream_erasure_codec {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-            downstream_heartbeat: match &self.downstream_heartbeat {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-            upstream_heartbeat: match &self.upstream_heartbeat {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-            downstream_compression: match &self.downstream_compression {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-            upstream_compression: match &self.upstream_compression {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-            flow_control: match &self.flow_control {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-        }
-    }
 }
 
 impl Default for ModularKcpNetworkParameters {
@@ -200,6 +223,7 @@ impl Default for ModularKcpNetworkParameters {
     }
 }
 
+#[derive(Debug)]
 pub struct KcpTransportParameters {
     pub flush_interval_millis: u32,
     pub fast_retransmission: bool,
@@ -232,6 +256,7 @@ impl Default for KcpTransportParameters {
     }
 }
 
+#[derive(Debug)]
 pub struct ModularTcpNetworkParameters {
     pub security_type: SecurityType,
     pub multiplex_level: u8,
@@ -242,37 +267,6 @@ pub struct ModularTcpNetworkParameters {
     pub downstream_compression: Option<CompressionParameters>,
     pub upstream_compression: Option<CompressionParameters>,
     pub flow_control: Option<FlowControlParameters>,
-}
-
-impl ModularTcpNetworkParameters {
-    pub(crate) fn to_worker_sdk(&self) -> Worker_ModularTcpNetworkParameters {
-        Worker_ModularTcpNetworkParameters {
-            security_type: self.security_type as u8,
-            multiplex_level: self.multiplex_level,
-            downstream_tcp: self.downstream_tcp.to_worker_sdk(),
-            upstream_tcp: self.upstream_tcp.to_worker_sdk(),
-            downstream_heartbeat: match &self.downstream_heartbeat {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-            upstream_heartbeat: match &self.upstream_heartbeat {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-            downstream_compression: match &self.downstream_compression {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-            upstream_compression: match &self.upstream_compression {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-            flow_control: match &self.flow_control {
-                Some(x) => &x.to_worker_sdk(),
-                None => ::std::ptr::null(),
-            },
-        }
-    }
 }
 
 impl Default for ModularTcpNetworkParameters {
@@ -291,6 +285,7 @@ impl Default for ModularTcpNetworkParameters {
     }
 }
 
+#[derive(Debug)]
 pub struct TcpTransportParameters {
     pub flush_delay_millis: u32,
 }
@@ -312,7 +307,7 @@ impl Default for TcpTransportParameters {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum SecurityType {
     Insecure = Worker_NetworkSecurityType_WORKER_NETWORK_SECURITY_TYPE_INSECURE as u8,
     DTLS = Worker_NetworkSecurityType_WORKER_NETWORK_SECURITY_TYPE_DTLS as u8,
@@ -324,6 +319,7 @@ impl Default for SecurityType {
     }
 }
 
+#[derive(Debug)]
 pub struct CompressionParameters {}
 
 impl CompressionParameters {
@@ -332,6 +328,7 @@ impl CompressionParameters {
     }
 }
 
+#[derive(Debug)]
 pub struct FlowControlParameters {
     pub downstream_window_size_bytes: u32,
     pub upstream_window_size_bytes: u32,
@@ -355,6 +352,7 @@ impl Default for FlowControlParameters {
     }
 }
 
+#[derive(Debug)]
 pub struct ErasureCodecParameters {
     pub original_packet_count: u8,
     pub recovery_packet_count: u8,
@@ -381,6 +379,7 @@ impl Default for ErasureCodecParameters {
     }
 }
 
+#[derive(Debug)]
 pub struct HeartbeatParameters {
     pub interval_millis: u64,
     pub timeout_millis: u64,
@@ -495,6 +494,7 @@ impl Default for ProtocolLoggingParameters {
     }
 }
 
+#[derive(Debug)]
 pub struct ThreadAffinityParameters {
     pub receive_threads_affinity_mask: u64,
     pub send_threads_affinity_mask: u64,
@@ -541,18 +541,123 @@ impl<'a> IntermediateConnectionParameters<'a> {
         };
 
         let network = match &self.protocol {
-            IntermediateProtocolType::Kcp(kcp) => Worker_NetworkParameters {
-                connection_type:
-                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_KCP as u8,
-                modular_kcp: *kcp,
-                ..partial_network_params
-            },
-            IntermediateProtocolType::Tcp(tcp) => Worker_NetworkParameters {
-                connection_type:
-                    Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_TCP as u8,
-                modular_tcp: *tcp,
-                ..partial_network_params
-            },
+            IntermediateProtocolType::Kcp {
+                security_type,
+                multiplex_level,
+                downstream_kcp,
+                upstream_kcp,
+                downstream_erasure_codec,
+                upstream_erasure_codec,
+                downstream_heartbeat,
+                upstream_heartbeat,
+                downstream_compression,
+                upstream_compression,
+                flow_control,
+            } => {
+                let downstream_erasure_codec = downstream_erasure_codec
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+                let upstream_erasure_codec = upstream_erasure_codec
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+
+                let downstream_heartbeat = downstream_heartbeat
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+                let upstream_heartbeat = upstream_heartbeat
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+
+                let downstream_compression = downstream_compression
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+                let upstream_compression = upstream_compression
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+
+                let flow_control = flow_control
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+
+                Worker_NetworkParameters {
+                    connection_type:
+                        Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_KCP
+                            as u8,
+                    modular_kcp: Worker_ModularKcpNetworkParameters {
+                        security_type: *security_type,
+                        multiplex_level: *multiplex_level,
+                        downstream_kcp: *downstream_kcp,
+                        upstream_kcp: *upstream_kcp,
+                        downstream_erasure_codec,
+                        upstream_erasure_codec,
+                        downstream_heartbeat,
+                        upstream_heartbeat,
+                        downstream_compression,
+                        upstream_compression,
+                        flow_control,
+                    },
+                    ..partial_network_params
+                }
+            }
+            IntermediateProtocolType::Tcp {
+                security_type,
+                multiplex_level,
+                downstream_tcp,
+                upstream_tcp,
+                downstream_heartbeat,
+                upstream_heartbeat,
+                downstream_compression,
+                upstream_compression,
+                flow_control,
+            } => {
+                let downstream_heartbeat = downstream_heartbeat
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+                let upstream_heartbeat = upstream_heartbeat
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+
+                let downstream_compression = downstream_compression
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+                let upstream_compression = upstream_compression
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+
+                let flow_control = flow_control
+                    .as_ref()
+                    .map(|params| params as *const _)
+                    .unwrap_or(ptr::null());
+
+                Worker_NetworkParameters {
+                    connection_type:
+                        Worker_NetworkConnectionType_WORKER_NETWORK_CONNECTION_TYPE_MODULAR_TCP
+                            as u8,
+                    modular_tcp: Worker_ModularTcpNetworkParameters {
+                        security_type: *security_type,
+                        multiplex_level: *multiplex_level,
+                        downstream_tcp: *downstream_tcp,
+                        upstream_tcp: *upstream_tcp,
+                        downstream_heartbeat,
+                        upstream_heartbeat,
+                        downstream_compression,
+                        upstream_compression,
+                        flow_control,
+                    },
+                    ..partial_network_params
+                }
+            }
         };
 
         Worker_ConnectionParameters {
@@ -584,6 +689,28 @@ impl<'a> IntermediateConnectionParameters<'a> {
 }
 
 enum IntermediateProtocolType {
-    Kcp(Worker_ModularKcpNetworkParameters),
-    Tcp(Worker_ModularTcpNetworkParameters),
+    Kcp {
+        security_type: u8,
+        multiplex_level: u8,
+        downstream_kcp: Worker_KcpTransportParameters,
+        upstream_kcp: Worker_KcpTransportParameters,
+        downstream_erasure_codec: Option<Worker_ErasureCodecParameters>,
+        upstream_erasure_codec: Option<Worker_ErasureCodecParameters>,
+        downstream_heartbeat: Option<Worker_HeartbeatParameters>,
+        upstream_heartbeat: Option<Worker_HeartbeatParameters>,
+        downstream_compression: Option<Worker_CompressionParameters>,
+        upstream_compression: Option<Worker_CompressionParameters>,
+        flow_control: Option<Worker_FlowControlParameters>,
+    },
+    Tcp {
+        security_type: u8,
+        multiplex_level: u8,
+        downstream_tcp: Worker_TcpTransportParameters,
+        upstream_tcp: Worker_TcpTransportParameters,
+        downstream_heartbeat: Option<Worker_HeartbeatParameters>,
+        upstream_heartbeat: Option<Worker_HeartbeatParameters>,
+        downstream_compression: Option<Worker_CompressionParameters>,
+        upstream_compression: Option<Worker_CompressionParameters>,
+        flow_control: Option<Worker_FlowControlParameters>,
+    },
 }
