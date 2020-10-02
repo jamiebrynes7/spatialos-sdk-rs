@@ -13,4 +13,4 @@ futures = "0.3.1"
 uuid = { version = "0.8", features = ["v4"] }
 structopt = "0.3"
 rand = "0.7"
-tap = "0.4"
+tap = "1.0"
