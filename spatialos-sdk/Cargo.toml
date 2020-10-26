@@ -14,7 +14,7 @@ bitflags = "1.2.1"
 spatialos-sdk-sys = { path = "../spatialos-sdk-sys"}
 
 [dev-dependencies]
-approx = "0.3"
+approx = "0.4"
 static_assertions = "1.1.0"
 structopt = "0.3"
 tap="0.4"

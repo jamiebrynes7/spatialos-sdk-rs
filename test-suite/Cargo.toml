@@ -6,4 +6,4 @@ edition = "2018"
 
 [dependencies]
 spatialos-sdk = { path = "../spatialos-sdk"}
-approx = "0.3"
+approx = "0.4"
