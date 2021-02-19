@@ -13,7 +13,7 @@ anyhow = "1.0.32"
 cargo-spatial-package-downloader = { path = "../cargo-spatial-package-downloader" }
 log = "0.4.1"
 rand = "0.7"
-reqwest = { version = "0.10.0", features = ["blocking"] }
+reqwest = { version = "0.11.1", features = ["blocking"] }
 simplelog = "0.8"
 serde = { version = "1.0.38", features = ["derive"] }
 serde_json = "1.0.38"
