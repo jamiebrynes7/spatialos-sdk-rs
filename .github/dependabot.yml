@@ -1,0 +1,23 @@
+version: 2
+updates:
+- package-ecosystem: cargo
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - jamiebrynes7
+  ignore:
+  - dependency-name: bindgen
+    versions:
+    - 0.56.0
+    - 0.57.0
+    - 0.58.0
+  - dependency-name: reqwest
+    versions:
+    - 0.11.0
+    - 0.11.1
+    - 0.11.2
+  - dependency-name: simplelog
+    versions:
+    - 0.9.0
